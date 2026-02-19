@@ -107,23 +107,18 @@ static vx_status VX_CALLBACK validateRicap(vx_node node, const vx_reference para
 
 static vx_status VX_CALLBACK processRicap(vx_node node, const vx_reference* parameters, vx_uint32 num)
 {
-    vx_status return_status = VX_SUCCESS;
     RicapLocalData* data = nullptr;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     STATUS_ERROR_CHECK(refreshRicap(node, parameters, num, data));
-
-    RppStatus rpp_status = RPP_SUCCESS;
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        rpp_status = rppt_ricap_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pPermutation, data->pInputCropRoi, data->roiType, data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+    RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+#else
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
+    RppBackend backend = RPP_HOST_BACKEND;
 #endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_ricap_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pPermutation, data->pInputCropRoi, data->roiType, data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-    }
-
-    return return_status;
+    RppStatus rpp_status = rppt_ricap(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pPermutation, data->pInputCropRoi, data->roiType, data->handle->rppHandle, backend);
+    return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 }
 
 static vx_status VX_CALLBACK initializeRicap(vx_node node, const vx_reference* parameters, vx_uint32 num)

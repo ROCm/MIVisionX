@@ -176,8 +176,6 @@ find_package_handle_standard_args(
         OPENVX_INCLUDE_DIR
         OPENVX_LIBRARY
         RUNVX_EXECUTABLE
-        VX_RPP_INCLUDE_DIR
-        VX_RPP_LIBRARY
         MIVISIONX_INCLUDE_DIR
         MIVISIONX_LIBRARIES
         MIVISIONX_BACKEND

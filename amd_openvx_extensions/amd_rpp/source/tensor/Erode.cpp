@@ -50,8 +50,9 @@ static vx_status VX_CALLBACK refreshErode(vx_node node, const vx_reference *para
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
 #endif
     } else {
-        // HOST backend not implemented for Erode
-        return VX_ERROR_NOT_SUPPORTED;
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
     data->pSrcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
 
@@ -112,24 +113,19 @@ static vx_status VX_CALLBACK validateErode(vx_node node, const vx_reference para
 }
 
 static vx_status VX_CALLBACK processErode(vx_node node, const vx_reference *parameters, vx_uint32 num) {
-    vx_status return_status = VX_SUCCESS;
-    RppStatus rpp_status = RPP_SUCCESS;
-
     ErodeLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshErode(node, parameters, num, data);
-
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+    vx_status status = refreshErode(node, parameters, num, data);
+    if (status != VX_SUCCESS) return status;
 #if ENABLE_HIP
-        rpp_status = rppt_erode_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->kernelSize, data->pSrcRoi, data->roiType, data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+    RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+#else
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
+    RppBackend backend = RPP_HOST_BACKEND;
 #endif
-    } else {
-        // HOST backend not supported
-        return_status = VX_ERROR_NOT_SUPPORTED;
-    }
-
-    return return_status;
+    RppStatus rpp_status = rppt_erode(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->kernelSize, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
+    return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 }
 
 static vx_status VX_CALLBACK initializeErode(vx_node node, const vx_reference *parameters, vx_uint32 num) {

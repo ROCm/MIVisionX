@@ -133,14 +133,14 @@ static vx_status VX_CALLBACK validateBrightness(vx_node node, const vx_reference
     // Check for input tensor
     size_t num_tensor_dims;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
-    if(num_tensor_dims < 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Brightness: tensor: #0 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);
+    if (num_tensor_dims < 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Brightness: tensor: #0 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);
 
     // Check for output tensor
     vx_uint8 tensor_fixed_point_position;
     size_t tensor_dims[RPP_MAX_TENSOR_DIMS];
     vx_enum tensor_dtype;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
-    if(num_tensor_dims < 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Brightness: tensor: #2 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);
+    if (num_tensor_dims < 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: Brightness: tensor: #2 dimensions=%lu (must be greater than or equal to 4)\n", num_tensor_dims);
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &tensor_dims, sizeof(tensor_dims)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &tensor_dtype, sizeof(tensor_dtype)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_FIXED_POINT_POSITION, &tensor_fixed_point_position, sizeof(tensor_fixed_point_position)));
@@ -152,37 +152,24 @@ static vx_status VX_CALLBACK validateBrightness(vx_node node, const vx_reference
 }
 
 static vx_status VX_CALLBACK processBrightness(vx_node node, const vx_reference *parameters, vx_uint32 num) {
-    RppStatus rpp_status = RPP_SUCCESS;
-    vx_status return_status = VX_SUCCESS;
     BrightnessLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshBrightness(node, parameters, num, data);
+    vx_status status = refreshBrightness(node, parameters, num, data);
+    if (status != VX_SUCCESS) return status;
+#if ENABLE_HIP
+    RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+#else
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
+    RppBackend backend = RPP_HOST_BACKEND;
+#endif
+    RppStatus rpp_status = RPP_SUCCESS;
     if (data->inputLayout == vxTensorLayout::VX_NDHWC || data->inputLayout == vxTensorLayout::VX_NCDHW) {
-        if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-    #if ENABLE_OPENCL
-            return_status = VX_ERROR_NOT_IMPLEMENTED;
-    #elif ENABLE_HIP
-            rpp_status = rppt_fused_multiply_add_scalar_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pAlpha, data->pBeta, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
-            return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-    #endif
-        } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-            rpp_status = rppt_fused_multiply_add_scalar_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pAlpha, data->pBeta, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle);
-            return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-        }
+        rpp_status = rppt_fused_multiply_add_scalar(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->pAlpha, data->pBeta, data->pSrcRoi3D, (RpptRoi3DType)data->roiType, data->handle->rppHandle, backend);
     } else {
-        if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-    #if ENABLE_OPENCL
-            return_status = VX_ERROR_NOT_IMPLEMENTED;
-    #elif ENABLE_HIP
-            rpp_status = rppt_brightness_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,  data->pAlpha, data->pBeta, data->pSrcRoi, data->roiType, data->handle->rppHandle);
-            return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-    #endif
-        } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-            rpp_status = rppt_brightness_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pAlpha, data->pBeta, data->pSrcRoi, data->roiType, data->handle->rppHandle);
-            return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-        }
+        rpp_status = rppt_brightness(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pAlpha, data->pBeta, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
     }
-    return return_status;
+    return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 }
 
 static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_reference *parameters, vx_uint32 num) {

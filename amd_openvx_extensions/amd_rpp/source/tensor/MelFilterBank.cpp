@@ -137,8 +137,8 @@ static vx_status VX_CALLBACK processMelFilterBank(vx_node node, const vx_referen
     }
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
 #if RPP_AUDIO
-        rpp_status = rppt_mel_filter_bank_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcDims, data->freqHigh, data->freqLow,
-                                               data->melFormula, data->nfilter, data->sampleRate, data->normalize, data->handle->rppHandle);
+        rpp_status = rppt_mel_filter_bank(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcDims, data->freqHigh, data->freqLow,
+                                          data->melFormula, data->nfilter, data->sampleRate, data->normalize, data->handle->rppHandle, RPP_HOST_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #else
         return_status = VX_ERROR_NOT_SUPPORTED;

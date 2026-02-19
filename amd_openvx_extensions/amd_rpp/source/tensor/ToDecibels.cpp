@@ -112,7 +112,7 @@ static vx_status VX_CALLBACK processToDecibels(vx_node node, const vx_reference 
     }
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
 #if RPP_AUDIO
-        rpp_status = rppt_to_decibels_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcDims, data->cutOffDB, data->multiplier, data->referenceMagnitude, data->handle->rppHandle);
+        rpp_status = rppt_to_decibels(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcDims, data->cutOffDB, data->multiplier, data->referenceMagnitude, data->handle->rppHandle, RPP_HOST_BACKEND);
         return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #else
         return_status = VX_ERROR_NOT_SUPPORTED;

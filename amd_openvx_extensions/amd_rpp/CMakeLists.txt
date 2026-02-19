@@ -38,7 +38,7 @@ project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/lib/cmake)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
-find_package(rpp 3.0.0 REQUIRED)
+find_package(rpp 3.1.0 REQUIRED)
 
 message("-- ${White}${PROJECT_NAME}: rpp found with find_package(rpp REQUIRED)${ColourReset}")
 message("-- \t${White}rpp_INCLUDE_DIR -- ${rpp_INCLUDE_DIR}${ColourReset}")
@@ -217,4 +217,4 @@ install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMP
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
 install(FILES include/vx_ext_rpp.h include/vx_ext_rpp_version.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/tests/vx_rpp_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
+install(DIRECTORY ${MIVISIONX_ROOT_DIR}/tests/vx_rpp_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)

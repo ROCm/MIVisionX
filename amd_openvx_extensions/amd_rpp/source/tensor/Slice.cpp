@@ -43,9 +43,67 @@ struct SliceLocalData {
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
 
+void updateDestinationRoi(SliceLocalData *data, unsigned *src_roi, unsigned *dst_roi, const vx_reference parameters[]) {
+    // Query the Anchor / Shape Tensor Dims to determine the per-sample dimensionality
+    RppSize_t num_dims;
+    size_t anchorTensorDims[RPP_MAX_TENSOR_DIMS];
+    vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims));
+    vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DIMS, &anchorTensorDims, sizeof(vx_size) * num_dims);
+    uint dims_per_sample = 1;
+    for (uint n = 0; n < num_dims; n++)
+        dims_per_sample *= anchorTensorDims[n];
+    dims_per_sample /= anchorTensorDims[0];
+
+    unsigned batchSize = data->inputTensorDims[0];
+    bool enablePadding = (data->policy == 0);  // PAD = 0
+
+    if (dims_per_sample == 1) {
+        // 1D input: dst_roi layout is [begin_x, begin_y, end_x, end_y] per sample (2D ROI with y=0, h=1)
+        for (unsigned i = 0, j = 0; i < batchSize; i++, j += 4) {
+            dst_roi[j] = 0;      // begin_x
+            dst_roi[j + 1] = 0;  // begin_y
+            Rpp32s shape_val = data->pShape[i];
+            if (!enablePadding) {
+                // TRIMTOSHAPE: clamp shape to available data from anchor within the source extent
+                Rpp32s anchor_val = data->pAnchor[i];
+                Rpp32s src_length = static_cast<Rpp32s>(src_roi[i * 4 + 2]);  // src end_x (roiWidth)
+                Rpp32s available = src_length - anchor_val;
+                if (available < 0) available = 0;
+                if (shape_val > available) shape_val = available;
+            }
+            dst_roi[j + 2] = static_cast<unsigned>(shape_val);  // end_x (width)
+            dst_roi[j + 3] = 1;                                 // end_y (height)
+        }
+    } else {
+        // nD input: dst_roi layout is [begin_0..begin_(D-1), end_0..end_(D-1)] per sample
+        for (unsigned i = 0; i < batchSize; i++) {
+            unsigned dst_offset = i * dims_per_sample * 2;
+            unsigned src_offset = i * dims_per_sample * 2;
+            unsigned shape_offset = i * dims_per_sample;
+            // Set begin to zeros
+            for (unsigned d = 0; d < dims_per_sample; d++) {
+                dst_roi[dst_offset + d] = 0;
+            }
+            // Set end to the effective output shape
+            for (unsigned d = 0; d < dims_per_sample; d++) {
+                Rpp32s shape_val = data->pShape[shape_offset + d];
+                if (!enablePadding) {
+                    // TRIMTOSHAPE: clamp shape to available data from anchor within source ROI
+                    Rpp32s anchor_val = data->pAnchor[shape_offset + d];
+                    Rpp32s src_end = static_cast<Rpp32s>(src_roi[src_offset + dims_per_sample + d]);
+                    Rpp32s available = src_end - anchor_val;
+                    if (available < 0) available = 0;
+                    if (shape_val > available) shape_val = available;
+                }
+                dst_roi[dst_offset + dims_per_sample + d] = static_cast<unsigned>(shape_val);
+            }
+        }
+    }
+}
+
 static vx_status VX_CALLBACK refreshSlice(vx_node node, const vx_reference *parameters, SliceLocalData *data) {
     vx_status status = VX_SUCCESS;
-    void *roi_tensor_ptr;
+    void *roi_tensor_ptr, *roi_tensor_ptr_dst;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
         return VX_ERROR_NOT_IMPLEMENTED;
@@ -53,23 +111,25 @@ static vx_status VX_CALLBACK refreshSlice(vx_node node, const vx_reference *para
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &data->pAnchor, sizeof(data->pAnchor)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HIP, &data->pShape, sizeof(data->pShape)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HIP, &data->pAnchor, sizeof(data->pAnchor)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_BUFFER_HIP, &data->pShape, sizeof(data->pShape)));
         if (!data->pFillValues) {
             hipError_t err = hipHostMalloc(&data->pFillValues, data->inputTensorDims[0] * sizeof(Rpp32f), hipHostMallocDefault);
             if (err != hipSuccess)
                 return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * sizeof(Rpp32f));
         }
-        STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[5], 0, data->inputTensorDims[0], sizeof(float), data->pFillValues, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[6], 0, data->inputTensorDims[0], sizeof(float), data->pFillValues, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &data->pAnchor, sizeof(data->pAnchor)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HOST, &data->pShape, sizeof(data->pShape)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HOST, &data->pAnchor, sizeof(data->pAnchor)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_BUFFER_HOST, &data->pShape, sizeof(data->pShape)));
         if (!data->pFillValues) data->pFillValues = new Rpp32f[data->inputTensorDims[0]];
-        STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[5], 0, data->inputTensorDims[0], sizeof(float), data->pFillValues, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[6], 0, data->inputTensorDims[0], sizeof(float), data->pFillValues, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     }
     RppSize_t numDims;
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &numDims, sizeof(numDims)));
@@ -86,15 +146,15 @@ static vx_status VX_CALLBACK refreshSlice(vx_node node, const vx_reference *para
     } else {
         data->pSrcRoi3D = static_cast<unsigned *>(roi_tensor_ptr);
     }
+    unsigned *src_roi = static_cast<unsigned *>(roi_tensor_ptr);
+    unsigned *dst_roi = static_cast<unsigned *>(roi_tensor_ptr_dst);
+    updateDestinationRoi(data, src_roi, dst_roi, parameters);
     return status;
 }
 
 static vx_status VX_CALLBACK validateSlice(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[]) {
     vx_status status = VX_SUCCESS;
     vx_enum scalar_type;
-    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[6], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-    if (scalar_type != VX_TYPE_UINT32)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #6 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[7], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_INT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #7 type=%d (must be size)\n", scalar_type);
@@ -102,8 +162,11 @@ static vx_status VX_CALLBACK validateSlice(vx_node node, const vx_reference para
     if (scalar_type != VX_TYPE_INT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #8 type=%d (must be size)\n", scalar_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[9], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-    if (scalar_type != VX_TYPE_UINT32)
+    if (scalar_type != VX_TYPE_INT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #9 type=%d (must be size)\n", scalar_type);
+    STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[10], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+    if (scalar_type != VX_TYPE_UINT32)
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #10 type=%d (must be size)\n", scalar_type);
 
     // Check for input parameters
     size_t num_tensor_dims;
@@ -152,10 +215,10 @@ static vx_status VX_CALLBACK initializeSlice(vx_node node, const vx_reference *p
 
         vx_enum input_tensor_dtype, output_tensor_dtype;
         vx_int32 roi_type, input_layout;
-        STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[6], &data->policy));
-        STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-        STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[8], &roi_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-        STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[9], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[7], &data->policy));
+        STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[8], &input_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[9], &roi_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[10], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
         data->roiType = static_cast<RpptRoiType>(roi_type);
         data->inputLayout = static_cast<vxTensorLayout>(input_layout);
 
@@ -230,7 +293,7 @@ vx_status Slice_Register(vx_context context) {
     vx_kernel kernel = vxAddUserKernel(context, "org.rpp.Slice",
                                        VX_KERNEL_RPP_SLICE,
                                        processSlice,
-                                       10,
+                                       11,
                                        validateSlice,
                                        initializeSlice,
                                        uninitializeSlice);
@@ -253,11 +316,12 @@ vx_status Slice_Register(vx_context context) {
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 7, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 8, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 9, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 10, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
     }
     if (status != VX_SUCCESS) {

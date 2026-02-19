@@ -57,17 +57,11 @@ static vx_status VX_CALLBACK refreshFlip(vx_node node, const vx_reference *param
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
-        if (!data->pSrcRoi3D) {
-            hipError_t err = hipHostMalloc(&data->pSrcRoi3D, data->inputTensorDims[0] * sizeof(RpptROI3D), hipHostMallocDefault);
-            if (err != hipSuccess)
-                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * sizeof(RpptROI3D));
-        }
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
-        if (!data->pSrcRoi3D) data->pSrcRoi3D = new RpptROI3D[data->inputTensorDims[0]];
     }
     if (data->inputLayout == vxTensorLayout::VX_NDHWC) {
         unsigned *src_roi_ptr = (unsigned *)roi_tensor_ptr;
@@ -111,6 +105,11 @@ static vx_status VX_CALLBACK refreshFlip(vx_node node, const vx_reference *param
 static vx_status VX_CALLBACK validateFlip(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[]) {
     vx_status status = VX_SUCCESS;
     vx_enum scalar_type;
+    // Validate depth-flag array parameter #5
+    vx_enum item_type;
+    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[5], VX_ARRAY_ITEMTYPE, &item_type, sizeof(item_type)));
+    if (item_type != VX_TYPE_UINT32)
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #5 type=%d (must be VX_TYPE_UINT32)\n", item_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[6], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_INT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #6 type=%d (must be size)\n", scalar_type);
@@ -223,11 +222,18 @@ static vx_status VX_CALLBACK initializeFlip(vx_node node, const vx_reference *pa
         CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pHorizontalFlag, data->inputTensorDims[0] * sizeof(vx_uint32)));
         CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pVerticalFlag, data->inputTensorDims[0] * sizeof(vx_uint32)));
         CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pDepthFlag, data->inputTensorDims[0] * sizeof(vx_uint32)));
+        if (data->inputLayout == vxTensorLayout::VX_NDHWC || data->inputLayout == vxTensorLayout::VX_NCDHW) {
+            hipError_t err = hipHostMalloc(&data->pSrcRoi3D, data->inputTensorDims[0] * sizeof(RpptROI3D), hipHostMallocDefault);
+            if (err != hipSuccess)
+                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * sizeof(RpptROI3D));
+        }
 #endif
     } else {
         data->pHorizontalFlag = new vx_uint32[data->inputTensorDims[0]];
         data->pVerticalFlag = new vx_uint32[data->inputTensorDims[0]];
         data->pDepthFlag = new vx_uint32[data->inputTensorDims[0]];
+        if (data->inputLayout == vxTensorLayout::VX_NDHWC || data->inputLayout == vxTensorLayout::VX_NCDHW)
+            data->pSrcRoi3D = new RpptROI3D[data->inputTensorDims[0]];
     }
     refreshFlip(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));

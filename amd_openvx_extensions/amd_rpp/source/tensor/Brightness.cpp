@@ -57,17 +57,11 @@ static vx_status VX_CALLBACK refreshBrightness(vx_node node, const vx_reference 
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
-        if (!data->pSrcRoi3D) {
-            hipError_t err = hipHostMalloc(&data->pSrcRoi3D, data->inputTensorDims[0] * sizeof(RpptROI3D), hipHostMallocDefault);
-            if (err != hipSuccess)
-                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * sizeof(RpptROI3D));
-        }
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
-        if (!data->pSrcRoi3D) data->pSrcRoi3D = new RpptROI3D[data->inputTensorDims[0]];
     }
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
         if (!data->pConditionalExecution[i]) {
@@ -227,10 +221,17 @@ static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_referen
 #if ENABLE_HIP
         CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pAlpha, data->inputTensorDims[0] * sizeof(vx_float32)));
         CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pBeta, data->inputTensorDims[0] * sizeof(vx_float32)));
+        if (data->inputLayout == vxTensorLayout::VX_NDHWC || data->inputLayout == vxTensorLayout::VX_NCDHW) {
+            hipError_t err = hipHostMalloc(&data->pSrcRoi3D, data->inputTensorDims[0] * sizeof(RpptROI3D), hipHostMallocDefault);
+            if (err != hipSuccess)
+                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * sizeof(RpptROI3D));
+        }
 #endif
     } else {
         data->pAlpha = new vx_float32[data->inputTensorDims[0]];
         data->pBeta = new vx_float32[data->inputTensorDims[0]];
+        if (data->inputLayout == vxTensorLayout::VX_NDHWC || data->inputLayout == vxTensorLayout::VX_NCDHW)
+            data->pSrcRoi3D = new RpptROI3D[data->inputTensorDims[0]];
     }
     data->pConditionalExecution = new vx_int32[data->inputTensorDims[0]];
     refreshBrightness(node, parameters, num, data);

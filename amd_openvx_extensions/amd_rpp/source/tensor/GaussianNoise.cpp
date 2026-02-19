@@ -58,17 +58,11 @@ static vx_status VX_CALLBACK refreshGaussianNoise(vx_node node, const vx_referen
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
-        if (!data->pSrcRoi3D) {
-            hipError_t err = hipHostMalloc(&data->pSrcRoi3D, data->inputTensorDims[0] * sizeof(RpptROI3D), hipHostMallocDefault);
-            if (err != hipSuccess)
-                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * sizeof(RpptROI3D));
-        }
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
-        if (!data->pSrcRoi3D) data->pSrcRoi3D = new RpptROI3D[data->inputTensorDims[0]];
     }
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
         if (!data->pConditionalExecution[i]) {
@@ -121,6 +115,11 @@ static vx_status VX_CALLBACK refreshGaussianNoise(vx_node node, const vx_referen
 static vx_status VX_CALLBACK validateGaussianNoise(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[]) {
     vx_status status = VX_SUCCESS;
     vx_enum scalar_type;
+    // Validate conditional_execution array parameter #5
+    vx_enum item_type;
+    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[5], VX_ARRAY_ITEMTYPE, &item_type, sizeof(item_type)));
+    if (item_type != VX_TYPE_INT32)
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #5 type=%d (must be VX_TYPE_INT32)\n", item_type);
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[6], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_UINT32)
         return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #6 type=%d (must be size)\n", scalar_type);
@@ -236,10 +235,17 @@ static vx_status VX_CALLBACK initializeGaussianNoise(vx_node node, const vx_refe
 #if ENABLE_HIP
         CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMean, data->inputTensorDims[0] * sizeof(vx_float32)));
         CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pStdDev, data->inputTensorDims[0] * sizeof(vx_float32)));
+        if (data->inputLayout == vxTensorLayout::VX_NDHWC || data->inputLayout == vxTensorLayout::VX_NCDHW) {
+            hipError_t err = hipHostMalloc(&data->pSrcRoi3D, data->inputTensorDims[0] * sizeof(RpptROI3D), hipHostMallocDefault);
+            if (err != hipSuccess)
+                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * sizeof(RpptROI3D));
+        }
 #endif
     } else {
         data->pMean = new vx_float32[data->inputTensorDims[0]];
         data->pStdDev = new vx_float32[data->inputTensorDims[0]];
+        if (data->inputLayout == vxTensorLayout::VX_NDHWC || data->inputLayout == vxTensorLayout::VX_NCDHW)
+            data->pSrcRoi3D = new RpptROI3D[data->inputTensorDims[0]];
     }
     data->pConditionalExecution = new vx_int32[data->inputTensorDims[0]];
     refreshGaussianNoise(node, parameters, num, data);

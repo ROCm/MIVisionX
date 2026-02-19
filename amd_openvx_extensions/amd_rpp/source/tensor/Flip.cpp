@@ -218,20 +218,19 @@ static vx_status VX_CALLBACK initializeFlip(vx_node node, const vx_reference *pa
         fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
     }
 
-    const size_t rpp_batch_size = data->pSrcDesc ? data->pSrcDesc->n : data->inputTensorDims[0];
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pHorizontalFlag, rpp_batch_size * sizeof(vx_uint32)));
-        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pVerticalFlag, rpp_batch_size * sizeof(vx_uint32)));
-        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pDepthFlag, rpp_batch_size * sizeof(vx_uint32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pHorizontalFlag, data->inputTensorDims[0] * sizeof(vx_uint32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pVerticalFlag, data->inputTensorDims[0] * sizeof(vx_uint32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pDepthFlag, data->inputTensorDims[0] * sizeof(vx_uint32)));
 #endif
     } else {
-        data->pHorizontalFlag = new vx_uint32[rpp_batch_size];
-        data->pVerticalFlag = new vx_uint32[rpp_batch_size];
-        data->pDepthFlag = new vx_uint32[rpp_batch_size];
+        data->pHorizontalFlag = new vx_uint32[data->inputTensorDims[0]];
+        data->pVerticalFlag = new vx_uint32[data->inputTensorDims[0]];
+        data->pDepthFlag = new vx_uint32[data->inputTensorDims[0]];
     }
     refreshFlip(node, parameters, num, data);
-    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, rpp_batch_size, data->deviceType));
+    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }

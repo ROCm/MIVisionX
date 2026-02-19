@@ -223,19 +223,18 @@ static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_referen
         fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
     }
 
-    const size_t rpp_batch_size = data->pSrcDesc ? data->pSrcDesc->n : data->inputTensorDims[0];
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pAlpha, rpp_batch_size * sizeof(vx_float32)));
-        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pBeta, rpp_batch_size * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pAlpha, data->inputTensorDims[0] * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pBeta, data->inputTensorDims[0] * sizeof(vx_float32)));
 #endif
     } else {
-        data->pAlpha = new vx_float32[rpp_batch_size];
-        data->pBeta = new vx_float32[rpp_batch_size];
+        data->pAlpha = new vx_float32[data->inputTensorDims[0]];
+        data->pBeta = new vx_float32[data->inputTensorDims[0]];
     }
     data->pConditionalExecution = new vx_int32[data->inputTensorDims[0]];
     refreshBrightness(node, parameters, num, data);
-    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, rpp_batch_size, data->deviceType));
+    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }

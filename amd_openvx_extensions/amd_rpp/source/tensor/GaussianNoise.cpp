@@ -232,19 +232,18 @@ static vx_status VX_CALLBACK initializeGaussianNoise(vx_node node, const vx_refe
         fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
     }
 
-    const size_t rpp_batch_size = data->pSrcDesc ? data->pSrcDesc->n : data->inputTensorDims[0];
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMean, rpp_batch_size * sizeof(vx_float32)));
-        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pStdDev, rpp_batch_size * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pMean, data->inputTensorDims[0] * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pStdDev, data->inputTensorDims[0] * sizeof(vx_float32)));
 #endif
     } else {
-        data->pMean = new vx_float32[rpp_batch_size];
-        data->pStdDev = new vx_float32[rpp_batch_size];
+        data->pMean = new vx_float32[data->inputTensorDims[0]];
+        data->pStdDev = new vx_float32[data->inputTensorDims[0]];
     }
     data->pConditionalExecution = new vx_int32[data->inputTensorDims[0]];
     refreshGaussianNoise(node, parameters, num, data);
-    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, rpp_batch_size, data->deviceType));
+    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }

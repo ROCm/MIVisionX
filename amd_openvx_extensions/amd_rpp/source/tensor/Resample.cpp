@@ -170,7 +170,12 @@ static vx_status VX_CALLBACK processResample(vx_node node, const vx_reference *p
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshResample(node, parameters, num, data);
 #if ENABLE_HIP
-    RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+    RppBackend backend = RPP_HOST_BACKEND;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+        backend = RPP_HIP_BACKEND;
+        // Modify the strides in the destination tensor descriptor to match the expected layout for RPP HIP backend
+        data->pDstDesc->strides.hStride = data->pDstDesc->strides.nStride;
+    }
 #else
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
         return VX_ERROR_NOT_IMPLEMENTED;

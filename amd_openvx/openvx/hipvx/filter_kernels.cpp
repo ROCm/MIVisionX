@@ -975,6 +975,12 @@ Hip_Convolve_U8_U8_3x3(uint dstWidth, uint dstHeight,
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
+        const int loadSize = (int)sizeof(uint2);
+        if (goffset < 0) {
+            goffset = 0;
+        } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+            goffset = (int)(srcImageBufferSize - loadSize);
+        }
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 2) {
@@ -987,7 +993,12 @@ Hip_Convolve_U8_U8_3x3(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad && goffset < srcImageBufferSize) {
+        if (doExtraLoad) {
+            if (goffset < 0) {
+                goffset = 0;
+            } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+                goffset = (int)(srcImageBufferSize - loadSize);
+            }
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -1145,6 +1156,12 @@ Hip_Convolve_U8_U8_5x5(uint dstWidth, uint dstHeight,
     { // load 136x20 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 2) * srcImageStrideInBytes + x - 4;
+        const int loadSize = (int)sizeof(uint2);
+        if (goffset < 0) {
+            goffset = 0;
+        } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+            goffset = (int)(srcImageBufferSize - loadSize);
+        }
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 4) {
@@ -1157,7 +1174,12 @@ Hip_Convolve_U8_U8_5x5(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 2) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 20) ? true : false;
         }
-        if (doExtraLoad && goffset < srcImageBufferSize) {
+        if (doExtraLoad) {
+            if (goffset < 0) {
+                goffset = 0;
+            } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+                goffset = (int)(srcImageBufferSize - loadSize);
+            }
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -1479,6 +1501,12 @@ Hip_Convolve_U8_U8_7x7(uint dstWidth, uint dstHeight,
     { // load 136x22 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 3) * srcImageStrideInBytes + x - 4;
+        const int loadSize = (int)sizeof(uint2);
+        if (goffset < 0) {
+            goffset = 0;
+        } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+            goffset = (int)(srcImageBufferSize - loadSize);
+        }
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 6) {
@@ -1491,7 +1519,12 @@ Hip_Convolve_U8_U8_7x7(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 3) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 22) ? true : false;
         }
-        if (doExtraLoad && goffset < srcImageBufferSize) {
+        if (doExtraLoad) {
+            if (goffset < 0) {
+                goffset = 0;
+            } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+                goffset = (int)(srcImageBufferSize - loadSize);
+            }
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -2049,6 +2082,12 @@ Hip_Convolve_U8_U8_3x9(uint dstWidth, uint dstHeight,
     { // load 136x24 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 4) * srcImageStrideInBytes + x - 4;
+        const int loadSize = (int)sizeof(uint2);
+        if (goffset < 0) {
+            goffset = 0;
+        } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+            goffset = (int)(srcImageBufferSize - loadSize);
+        }
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 8) {
@@ -2061,7 +2100,12 @@ Hip_Convolve_U8_U8_3x9(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 4) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 24) ? true : false;
         }
-        if (doExtraLoad && goffset < srcImageBufferSize) {
+        if (doExtraLoad) {
+            if (goffset < 0) {
+                goffset = 0;
+            } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+                goffset = (int)(srcImageBufferSize - loadSize);
+            }
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -2441,6 +2485,12 @@ Hip_Convolve_U8_U8_9x3(uint dstWidth, uint dstHeight,
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
+        const int loadSize = (int)sizeof(uint2);
+        if (goffset < 0) {
+            goffset = 0;
+        } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+            goffset = (int)(srcImageBufferSize - loadSize);
+        }
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 2) {
@@ -2453,7 +2503,12 @@ Hip_Convolve_U8_U8_9x3(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad && goffset < srcImageBufferSize) {
+        if (doExtraLoad) {
+            if (goffset < 0) {
+                goffset = 0;
+            } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+                goffset = (int)(srcImageBufferSize - loadSize);
+            }
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -3699,6 +3754,12 @@ Hip_Convolve_S16_U8_3x3(uint dstWidth, uint dstHeight,
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
+        const int loadSize = (int)sizeof(uint2);
+        if (goffset < 0) {
+            goffset = 0;
+        } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+            goffset = (int)(srcImageBufferSize - loadSize);
+        }
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 2) {
@@ -3711,7 +3772,12 @@ Hip_Convolve_S16_U8_3x3(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad && goffset < srcImageBufferSize) {
+        if (doExtraLoad) {
+            if (goffset < 0) {
+                goffset = 0;
+            } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+                goffset = (int)(srcImageBufferSize - loadSize);
+            }
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -3866,6 +3932,12 @@ Hip_Convolve_S16_U8_5x5(uint dstWidth, uint dstHeight,
     { // load 136x20 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 2) * srcImageStrideInBytes + x - 4;
+        const int loadSize = (int)sizeof(uint2);
+        if (goffset < 0) {
+            goffset = 0;
+        } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+            goffset = (int)(srcImageBufferSize - loadSize);
+        }
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 4) {
@@ -3878,7 +3950,12 @@ Hip_Convolve_S16_U8_5x5(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 2) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 20) ? true : false;
         }
-        if (doExtraLoad && goffset < srcImageBufferSize) {
+        if (doExtraLoad) {
+            if (goffset < 0) {
+                goffset = 0;
+            } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+                goffset = (int)(srcImageBufferSize - loadSize);
+            }
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -4206,6 +4283,12 @@ Hip_Convolve_S16_U8_7x7(uint dstWidth, uint dstHeight,
     { // load 136x22 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 3) * srcImageStrideInBytes + x - 4;
+        const int loadSize = (int)sizeof(uint2);
+        if (goffset < 0) {
+            goffset = 0;
+        } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+            goffset = (int)(srcImageBufferSize - loadSize);
+        }
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 6) {
@@ -4218,7 +4301,12 @@ Hip_Convolve_S16_U8_7x7(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 3) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 22) ? true : false;
         }
-        if (doExtraLoad && goffset < srcImageBufferSize) {
+        if (doExtraLoad) {
+            if (goffset < 0) {
+                goffset = 0;
+            } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+                goffset = (int)(srcImageBufferSize - loadSize);
+            }
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -4781,6 +4869,13 @@ Hip_Convolve_S16_U8_3x9(uint dstWidth, uint dstHeight,
     { // load 136x24 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 4) * srcImageStrideInBytes + x - 4;
+        // Clamp to valid range: for first output rows (y=0,1,2,3) goffset is negative -> illegal read -> HIP 700
+        const int loadSize = (int)sizeof(uint2);
+        if (goffset < 0) {
+            goffset = 0;
+        } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+            goffset = (int)(srcImageBufferSize - loadSize);
+        }
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 8) {
@@ -4793,7 +4888,12 @@ Hip_Convolve_S16_U8_3x9(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 4) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 24) ? true : false;
         }
-        if (doExtraLoad && goffset < srcImageBufferSize) {
+        if (doExtraLoad) {
+            if (goffset < 0) {
+                goffset = 0;
+            } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+                goffset = (int)(srcImageBufferSize - loadSize);
+            }
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -5178,6 +5278,12 @@ Hip_Convolve_S16_U8_9x3(uint dstWidth, uint dstHeight,
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
+        const int loadSize = (int)sizeof(uint2);
+        if (goffset < 0) {
+            goffset = 0;
+        } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+            goffset = (int)(srcImageBufferSize - loadSize);
+        }
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 2) {
@@ -5190,7 +5296,12 @@ Hip_Convolve_S16_U8_9x3(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad && goffset < srcImageBufferSize) {
+        if (doExtraLoad) {
+            if (goffset < 0) {
+                goffset = 0;
+            } else if (goffset > (int)(srcImageBufferSize - loadSize)) {
+                goffset = (int)(srcImageBufferSize - loadSize);
+            }
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();

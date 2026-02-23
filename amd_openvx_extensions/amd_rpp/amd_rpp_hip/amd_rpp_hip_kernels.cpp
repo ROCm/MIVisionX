@@ -32,19 +32,19 @@ __global__ void __attribute__((visibility("default"))) HipTensorMulScalar(
     dstPtr[id_x] = srcPtr[id_x] * scalarValue;
 }
 
-    int HipExecTensorMulScalar(hipStream_t stream, const float* srcPtr,
-                            float* dstPtr, float scalarValue,
-                            size_t maxTensorSize) {
-    int localThreadsX = 256, localThreadsY = 1;
-    int globalThreadsX = maxTensorSize, globalThreadsY = 1;
-    hipLaunchKernelGGL(HipTensorMulScalar,
-                        dim3(ceil((float)globalThreadsX / localThreadsX),
-                            ceil((float)globalThreadsY / localThreadsY)),
-                        dim3(localThreadsX, localThreadsY), 0, stream, srcPtr,
-                        dstPtr, scalarValue, maxTensorSize);
-    HIP_CHECK(hipStreamSynchronize(stream));
-    return VX_SUCCESS;
-    }
+int HipExecTensorMulScalar(hipStream_t stream, const float* srcPtr,
+                        float* dstPtr, float scalarValue,
+                        size_t maxTensorSize) {
+int localThreadsX = 256, localThreadsY = 1;
+int globalThreadsX = maxTensorSize, globalThreadsY = 1;
+hipLaunchKernelGGL(HipTensorMulScalar,
+                    dim3(ceil((float)globalThreadsX / localThreadsX),
+                        ceil((float)globalThreadsY / localThreadsY)),
+                    dim3(localThreadsX, localThreadsY), 0, stream, srcPtr,
+                    dstPtr, scalarValue, maxTensorSize);
+HIP_CHECK(hipStreamSynchronize(stream));
+return VX_SUCCESS;
+}
 
 // adds tensors of size [batchsize, height, width] with [batchsize, 1]
 __global__ void __attribute__((visibility("default"))) HipTensorAddTensor(
@@ -61,7 +61,7 @@ __global__ void __attribute__((visibility("default"))) HipTensorAddTensor(
     uint srcIdx, dstIdx;
     srcIdx = dstIdx = (id_z * srcStridesNH.x + id_y * srcStridesNH.y + id_x);
     dstPtr[srcIdx] = src1Ptr[srcIdx] + src2Ptr[id_z];
-    }
+}
 
 int HipExecTensorAddTensor(hipStream_t stream, const float* src1Ptr,
                         const float* src2Ptr, float* dstPtr, RpptROI* srcROI,

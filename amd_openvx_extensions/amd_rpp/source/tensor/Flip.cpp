@@ -63,6 +63,7 @@ static vx_status VX_CALLBACK refreshFlip(vx_node node, const vx_reference *param
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
+    // Parse ROI tensor based on input layout and populate pSrcRoi or pSrcRoi3D accordingly
     if (data->inputLayout == vxTensorLayout::VX_NDHWC) {
         unsigned *src_roi_ptr = (unsigned *)roi_tensor_ptr;
         for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {

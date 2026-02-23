@@ -63,12 +63,14 @@ static vx_status VX_CALLBACK refreshBrightness(vx_node node, const vx_reference 
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
+    // If conditional execution for a particular sample is false, set alpha and beta accordingly to ensure output is same as input for that sample
     for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
         if (!data->pConditionalExecution[i]) {
             data->pAlpha[i] = 1.0f;
             data->pBeta[i] = 0.0f;
         }
     }
+    // Parse ROI tensor based on input layout and populate pSrcRoi or pSrcRoi3D accordingly
     if (data->inputLayout == vxTensorLayout::VX_NDHWC) {
         unsigned *src_roi_ptr = (unsigned *)roi_tensor_ptr;
         for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {

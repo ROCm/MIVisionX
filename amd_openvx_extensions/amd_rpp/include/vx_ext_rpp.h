@@ -81,7 +81,7 @@ extern "C"
 	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
 	 * \param [in] pAlpha The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the alpha data.
 	 * \param [in] pBeta The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the beta data.
-	 * \param [in] conditional_execution The conditional_execution array in <tt>\ref VX_TYPE_INT32</tt> format containing the coin flip data.
+	 * \param [in] conditional_execution The conditional_execution array in <tt>\ref VX_TYPE_INT32</tt> format containing a value per sample in the batch that determines whether the augmentation is applied to that sample (1 = apply, 0 = skip).
 	 * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of input tensor.
 	 * \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of output tensor.
 	 * \param [in] roiType The type of roi <tt>\ref VX_TYPE_INT32</tt> denotes whether source roi is of XYWH/LTRB type.
@@ -416,7 +416,7 @@ extern "C"
 	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_FLOAT32</tt> or <tt>\ref VX_TYPE_FLOAT16</tt> or <tt>\ref VX_TYPE_INT8</tt> format data.
 	 * \param [in] pMean The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the mean data for Gaussian noise.
 	 * \param [in] pStdDev The input array in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the standard deviation data for Gaussian noise.
-	 * \param [in] conditional_execution The conditional_execution array in <tt>\ref VX_TYPE_INT32</tt> format containing the coin flip data.
+	 * \param [in] conditional_execution The conditional_execution array in <tt>\ref VX_TYPE_INT32</tt> format containing a value per sample in the batch that determines whether the augmentation is applied to that sample (1 = apply, 0 = skip).
 	 * \param [in] seed The input scalar in <tt>\ref VX_TYPE_UINT32</tt> contains the seed value.
 	 * \param [in] inputLayout The input layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of input tensor.
 	 * \param [in] outputLayout The output layout in <tt>\ref VX_TYPE_INT32</tt> denotes the layout of output tensor.

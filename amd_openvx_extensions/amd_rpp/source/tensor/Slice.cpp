@@ -44,35 +44,58 @@ struct SliceLocalData {
 };
 
 void updateDestinationRoi(SliceLocalData *data, unsigned *src_roi, unsigned *dst_roi, const vx_reference parameters[]) {
-    // Query the Anchor / Shape Tensor Dims
+    // Query the Anchor / Shape Tensor Dims to determine the per-sample dimensionality
     RppSize_t num_dims;
     size_t anchorTensorDims[RPP_MAX_TENSOR_DIMS];
     vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims));
     vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DIMS, &anchorTensorDims, sizeof(vx_size) * num_dims);
-    uint total_anchor_dims = 1;
+    uint dims_per_sample = 1;
     for (uint n = 0; n < num_dims; n++)
-        total_anchor_dims *= anchorTensorDims[n];
+        dims_per_sample *= anchorTensorDims[n];
+    dims_per_sample /= anchorTensorDims[0];
 
-    total_anchor_dims /= anchorTensorDims[0];
+    unsigned batchSize = data->inputTensorDims[0];
+    bool enablePadding = (data->policy == 0);  // PAD = 0
 
-    if (total_anchor_dims == 1) {
-        // if input is 1D - shape will be of size (batchSize) or (batchSize, 1) - so fill only 1st dim of length in dst_roi from buffer and set 2nd dim of length to 1
-        for (unsigned i = 0, j = 0; i < data->inputTensorDims[0]; i++, j += 4) {
-            dst_roi[j] = data->pAnchor[i];
-            dst_roi[j + 1] = 0;
-            dst_roi[j + 2] = data->pShape[i];
-            dst_roi[j + 3] = 1;
+    if (dims_per_sample == 1) {
+        // 1D input: dst_roi layout is [begin_x, begin_y, end_x, end_y] per sample (2D ROI with y=0, h=1)
+        for (unsigned i = 0, j = 0; i < batchSize; i++, j += 4) {
+            dst_roi[j] = 0;      // begin_x
+            dst_roi[j + 1] = 0;  // begin_y
+            Rpp32s shape_val = data->pShape[i];
+            if (!enablePadding) {
+                // TRIMTOSHAPE: clamp shape to available data from anchor within the source extent
+                Rpp32s anchor_val = data->pAnchor[i];
+                Rpp32s src_length = static_cast<Rpp32s>(src_roi[i * 4 + 2]);  // src end_x (roiWidth)
+                Rpp32s available = src_length - anchor_val;
+                if (available < 0) available = 0;
+                if (shape_val > available) shape_val = available;
+            }
+            dst_roi[j + 2] = static_cast<unsigned>(shape_val);  // end_x (width)
+            dst_roi[j + 3] = 1;                                 // end_y (height)
         }
     } else {
-        // if input is nD - shape will be of size (batchSize * n) - so fill dst_roi using both values
-        unsigned *tensor_shape = dst_roi;
-        uint anchor_index = 0, shape_index = 0;
-        for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
-            anchor_index = i * total_anchor_dims * 2;
-            shape_index = anchor_index + total_anchor_dims;
-            for (unsigned d = 0; d < total_anchor_dims; d++) {
-                tensor_shape[anchor_index + d] = data->pAnchor[data->inputTensorDims[1] * i + d];
-                tensor_shape[shape_index + d] = data->pShape[data->inputTensorDims[1] * i + d];
+        // nD input: dst_roi layout is [begin_0..begin_(D-1), end_0..end_(D-1)] per sample
+        for (unsigned i = 0; i < batchSize; i++) {
+            unsigned dst_offset = i * dims_per_sample * 2;
+            unsigned src_offset = i * dims_per_sample * 2;
+            unsigned shape_offset = i * dims_per_sample;
+            // Set begin to zeros
+            for (unsigned d = 0; d < dims_per_sample; d++) {
+                dst_roi[dst_offset + d] = 0;
+            }
+            // Set end to the effective output shape
+            for (unsigned d = 0; d < dims_per_sample; d++) {
+                Rpp32s shape_val = data->pShape[shape_offset + d];
+                if (!enablePadding) {
+                    // TRIMTOSHAPE: clamp shape to available data from anchor within source ROI
+                    Rpp32s anchor_val = data->pAnchor[shape_offset + d];
+                    Rpp32s src_end = static_cast<Rpp32s>(src_roi[src_offset + dims_per_sample + d]);
+                    Rpp32s available = src_end - anchor_val;
+                    if (available < 0) available = 0;
+                    if (shape_val > available) shape_val = available;
+                }
+                dst_roi[dst_offset + dims_per_sample + d] = static_cast<unsigned>(shape_val);
             }
         }
     }
@@ -88,6 +111,7 @@ static vx_status VX_CALLBACK refreshSlice(vx_node node, const vx_reference *para
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HIP, &data->pAnchor, sizeof(data->pAnchor)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_BUFFER_HIP, &data->pShape, sizeof(data->pShape)));
         if (!data->pFillValues) {
@@ -98,7 +122,7 @@ static vx_status VX_CALLBACK refreshSlice(vx_node node, const vx_reference *para
         STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[6], 0, data->inputTensorDims[0], sizeof(float), data->pFillValues, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(&data->pSrc)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
@@ -231,7 +255,13 @@ static vx_status VX_CALLBACK uninitializeSlice(vx_node node, const vx_reference 
     SliceLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     if (data->pSrcDims) delete[] data->pSrcDims;
-    if (data->pFillValues) delete[] data->pFillValues;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        if (data->pFillValues) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pFillValues));
+#endif
+    } else {
+        if (data->pFillValues) delete[] data->pFillValues;
+    }
     if (data->pSrcDesc) delete data->pSrcDesc;
     if (data->pDstDesc) delete data->pDstDesc;
     if (data->pSrcGenericDesc) delete data->pSrcGenericDesc;

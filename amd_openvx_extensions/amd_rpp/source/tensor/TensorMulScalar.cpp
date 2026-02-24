@@ -51,11 +51,9 @@ static vx_status VX_CALLBACK refreshTensorMulScalar(vx_node node, const vx_refer
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
 #endif
-    }
-    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
-        return status;
     }
     return status;
 }
@@ -103,8 +101,7 @@ static vx_status VX_CALLBACK processTensorMulScalar(vx_node node, const vx_refer
         return VX_ERROR_NOT_SUPPORTED;
     }
 #endif
-    }
-    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         if (data->inputTensorType == vx_type_e::VX_TYPE_FLOAT32 && data->outputTensorType == vx_type_e::VX_TYPE_FLOAT32) {
             __m256 pMul = _mm256_set1_ps(data->scalarValue);
             float scalarValue = data->scalarValue;

@@ -65,6 +65,10 @@ inline void windowed_sinc(RpptResamplingWindow &window, int32_t coeffs, int32_t 
             window.lookupPinned = nullptr;
         }
 #endif
+        if (!window.lookupPinned) {
+            fprintf(stderr, "Runtime error: window.lookupPinned is not allocated for HIP backend \n");
+            return;
+        }
     } else {
         window.lookup.clear();
         window.lookup.resize(coeffs + 5);

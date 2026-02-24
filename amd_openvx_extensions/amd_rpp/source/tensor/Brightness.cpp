@@ -224,10 +224,17 @@ static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_referen
         fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
     }
 
+    // Determine the effective batch size for buffer allocation
+    // For VX_NFHWC/VX_NFCHW layouts, pSrcDesc->n is N*F (set by fillDescriptionPtrfromDims),
+    // and the refresh function expands per-sample values across all frames
+    Rpp32u bufferBatchSize = static_cast<Rpp32u>(data->inputTensorDims[0]);
+    if (data->pSrcDesc && (data->inputLayout == vxTensorLayout::VX_NFHWC || data->inputLayout == vxTensorLayout::VX_NFCHW))
+        bufferBatchSize = data->pSrcDesc->n;
+
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pAlpha, data->inputTensorDims[0] * sizeof(vx_float32)));
-        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pBeta, data->inputTensorDims[0] * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pAlpha, bufferBatchSize * sizeof(vx_float32)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pBeta, bufferBatchSize * sizeof(vx_float32)));
         if (data->inputLayout == vxTensorLayout::VX_NDHWC || data->inputLayout == vxTensorLayout::VX_NCDHW) {
             hipError_t err = hipHostMalloc(&data->pSrcRoi3D, data->inputTensorDims[0] * sizeof(RpptROI3D), hipHostMallocDefault);
             if (err != hipSuccess)
@@ -235,14 +242,14 @@ static vx_status VX_CALLBACK initializeBrightness(vx_node node, const vx_referen
         }
 #endif
     } else {
-        data->pAlpha = new vx_float32[data->inputTensorDims[0]];
-        data->pBeta = new vx_float32[data->inputTensorDims[0]];
+        data->pAlpha = new vx_float32[bufferBatchSize];
+        data->pBeta = new vx_float32[bufferBatchSize];
         if (data->inputLayout == vxTensorLayout::VX_NDHWC || data->inputLayout == vxTensorLayout::VX_NCDHW)
             data->pSrcRoi3D = new RpptROI3D[data->inputTensorDims[0]];
     }
     data->pConditionalExecution = new vx_int32[data->inputTensorDims[0]];
     refreshBrightness(node, parameters, num, data);
-    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->inputTensorDims[0], data->deviceType));
+    STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, bufferBatchSize, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     return VX_SUCCESS;
 }

@@ -22,7 +22,8 @@ include( utils.cmake )
 set( MIVISIONX "mivisionx" )
 set( BUILD_ENABLE_LINTIAN_OVERRIDES OFF CACHE BOOL "Enable/Disable Lintian Overrides" )
 set( BUILD_DEBIAN_PKGING_FLAG OFF CACHE BOOL "Internal Status Flag to indicate Debian Packaging Build" )
-option(DISABLE_LINTIAN "disable lintian" ON) 
+# LINTIAN-CPACK interferes with inbox packaging, add an option to disable it
+option(DISABLE_LINTIAN_SUPPORT "disable LINTIAN Support from building" ON)
 
 # ROCM Path
 if(DEFINED ENV{ROCM_PATH})
@@ -373,8 +374,9 @@ else()
   endif()
 endif()
 
-if(NOT DISABLE_LINTIAN)
-    configure_pkg( ${MIVISIONX} ${COMP_TYPE} ${CPACK_PACKAGE_VERSION} ${PKG_MAINTAINER_NM} ${PKG_MAINTAINER_EMAIL} )
+if(NOT DISABLE_LINTIAN_SUPPORT)
+  # Configure Lintian Specific Package Data
+  configure_pkg( ${MIVISIONX} ${COMP_TYPE} ${CPACK_PACKAGE_VERSION} ${PKG_MAINTAINER_NM} ${PKG_MAINTAINER_EMAIL} )
 endif()
 
 include(CPack)

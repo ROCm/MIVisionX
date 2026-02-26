@@ -39,5 +39,4 @@ int HipExecTensorAddTensor(hipStream_t stream,
                            float *dstPtr,
                            RpptROI *srcROI,
                            size_t *inputTensorDims);
-    
 #endif //AMD_RPP_HIP_HOST_DECLS_H

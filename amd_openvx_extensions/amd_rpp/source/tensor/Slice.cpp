@@ -265,13 +265,6 @@ static vx_status VX_CALLBACK uninitializeSlice(vx_node node, const vx_reference 
     if (data->pDstDesc) delete data->pDstDesc;
     if (data->pSrcGenericDesc) delete data->pSrcGenericDesc;
     if (data->pDstGenericDesc) delete data->pDstGenericDesc;
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
-        if (data->pFillValues) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pFillValues));
-#endif
-    } else {
-        if (data->pFillValues) delete[] data->pFillValues;
-    }
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     delete data;
     return VX_SUCCESS;

@@ -36,23 +36,35 @@ int HipExecTensorMulScalar(hipStream_t stream, const float* srcPtr,
                         float* dstPtr, float scalarValue,
                         size_t maxTensorSize) {
 int localThreadsX = 256, localThreadsY = 1;
-int globalThreadsX = maxTensorSize, globalThreadsY = 1;
-hipLaunchKernelGGL(HipTensorMulScalar,
-                    dim3(ceil((float)globalThreadsX / localThreadsX),
-                        ceil((float)globalThreadsY / localThreadsY)),
-                    dim3(localThreadsX, localThreadsY), 0, stream, srcPtr,
-                    dstPtr, scalarValue, maxTensorSize);
-HIP_CHECK(hipStreamSynchronize(stream));
-return VX_SUCCESS;
+    int globalThreadsX = static_cast<int>(maxTensorSize), globalThreadsY = 1;
+
+    hipLaunchKernelGGL(HipTensorMulScalar,
+                       dim3(ceil((float)globalThreadsX / localThreadsX),
+                            ceil((float)globalThreadsY / localThreadsY)),
+                       dim3(localThreadsX, localThreadsY), 0, stream, srcPtr,
+                       dstPtr, scalarValue, maxTensorSize);
+
+    hipError_t err = hipGetLastError();
+    if (err != hipSuccess)
+        return VX_FAILURE;
+
+    err = hipStreamSynchronize(stream);
+    if (err != hipSuccess)
+        return VX_FAILURE;
+
+    return VX_SUCCESS;
 }
 
 // adds tensors of size [batchsize, height, width] with [batchsize, 1]
 __global__ void __attribute__((visibility("default"))) HipTensorAddTensor(
     const float* src1Ptr, const float* src2Ptr, uint2 srcStridesNH,
-    float* dstPtr, RpptROI* srcROI) {
+    float* dstPtr, RpptROI* srcROI, size_t batchSize) {
     int id_x = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
     int id_y = (hipBlockIdx_y * hipBlockDim_y + hipThreadIdx_y);
     int id_z = (hipBlockIdx_z * hipBlockDim_z + hipThreadIdx_z);
+
+    if (id_z >= batchSize)
+        return;
 
     if (id_x >= srcROI[id_z].xywhROI.roiWidth ||
         id_y >= srcROI[id_z].xywhROI.roiHeight)
@@ -64,31 +76,36 @@ __global__ void __attribute__((visibility("default"))) HipTensorAddTensor(
 }
 
 int HipExecTensorAddTensor(hipStream_t stream, const float* src1Ptr,
-                        const float* src2Ptr, float* dstPtr, RpptROI* srcROI,
-                        size_t* inputTensorDims) {
-    int localThreadsX, localThreadsY, localThreadsZ;
-    int globalThreadsX, globalThreadsY, globalThreadsZ;
-    localThreadsX = 16;
-    localThreadsY = 16;
-    localThreadsZ = 1;
-    globalThreadsX = inputTensorDims[1];
-    globalThreadsY = inputTensorDims[2];
-    globalThreadsZ = inputTensorDims[0];
+                           const float* src2Ptr, float* dstPtr, RpptROI* srcROI,
+                           size_t* inputTensorDims) {
+    int localThreadsX = 16, localThreadsY = 16, localThreadsZ = 1;
+    int globalThreadsX = static_cast<int>(inputTensorDims[1]);
+    int globalThreadsY = static_cast<int>(inputTensorDims[2]);
+    int globalThreadsZ = static_cast<int>(inputTensorDims[0]);
 
-    // update localThreadX, localThreadsY if any of the input dimension is 1
+    // Update localThreadX, localThreadsY if any of the input dimension is 1
     if (globalThreadsX == 1 || globalThreadsY == 1) {
         localThreadsX = 256;
         localThreadsY = 1;
     }
+
     hipLaunchKernelGGL(
         HipTensorAddTensor,
         dim3(ceil((float)globalThreadsX / localThreadsX),
-            ceil((float)globalThreadsY / localThreadsY),
-            ceil((float)globalThreadsZ / localThreadsZ)),
+             ceil((float)globalThreadsY / localThreadsY),
+             ceil((float)globalThreadsZ / localThreadsZ)),
         dim3(localThreadsX, localThreadsY, localThreadsZ), 0, stream, src1Ptr,
         src2Ptr,
         make_uint2(inputTensorDims[2] * inputTensorDims[1], inputTensorDims[2]),
-        dstPtr, srcROI);
-    HIP_CHECK(hipStreamSynchronize(stream));
+        dstPtr, srcROI, inputTensorDims[0]);
+
+    hipError_t err = hipGetLastError();
+    if (err != hipSuccess)
+        return VX_FAILURE;
+
+    err = hipStreamSynchronize(stream);
+    if (err != hipSuccess)
+        return VX_FAILURE;
+
     return VX_SUCCESS;
 }

@@ -94,12 +94,19 @@ static vx_status VX_CALLBACK processTensorMulScalar(vx_node node, const vx_refer
     refreshTensorMulScalar(node, parameters, num, data);
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-    if (data->inputTensorType == vx_type_e::VX_TYPE_FLOAT32 && data->outputTensorType == vx_type_e::VX_TYPE_FLOAT32) {
-        HipExecTensorMulScalar(data->handle->hipstream, static_cast<float *>(data->pSrc), static_cast<float *>(data->pDst), data->scalarValue, data->tensorSize / sizeof(float));
-    }
-    else {
-        return VX_ERROR_NOT_SUPPORTED;
-    }
+        if (data->inputTensorType == vx_type_e::VX_TYPE_FLOAT32 && data->outputTensorType == vx_type_e::VX_TYPE_FLOAT32) {
+            const int hip_status = HipExecTensorMulScalar(data->handle->hipstream,
+                                                          static_cast<float *>(data->pSrc),
+                                                          static_cast<float *>(data->pDst),
+                                                          data->scalarValue,
+                                                          data->tensorSize / sizeof(float));
+            if (hip_status != VX_SUCCESS)
+                return VX_FAILURE;
+        } else {
+            return VX_ERROR_NOT_SUPPORTED;
+        }
+#else
+        return VX_ERROR_NOT_IMPLEMENTED;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         if (data->inputTensorType == vx_type_e::VX_TYPE_FLOAT32 && data->outputTensorType == vx_type_e::VX_TYPE_FLOAT32) {

@@ -22,6 +22,8 @@ THE SOFTWARE.
 
 #include "internal_publishKernels.h"
 
+#define RESAMPLE_LOOKUP_PADDING 5
+
 struct ResampleLocalData {
     vxRppHandle *handle;
     Rpp32u deviceType;
@@ -52,14 +54,15 @@ inline double hann(double x) {
 // initialization function used for filling the values in Resampling window (RpptResamplingWindow)
 // using the coeffs and lobes value this function generates a LUT (look up table) which is further used in Resample audio augmentation
 #if RPP_AUDIO
-inline void windowed_sinc(RpptResamplingWindow &window, int32_t coeffs, int32_t lobes, bool is_pinned_memory) {
+
+inline vx_status windowed_sinc(RpptResamplingWindow &window, int32_t coeffs, int32_t lobes, bool is_pinned_memory) {
     float scale = 2.0f * lobes / (coeffs - 1);
     float scale_envelope = 2.0f / coeffs;
     window.coeffs = coeffs;
     window.lobes = lobes;
     if (is_pinned_memory) {
 #if ENABLE_HIP
-        auto status = hipHostMalloc(&(window.lookupPinned), (coeffs + 5) * sizeof(float));
+        auto status = hipHostMalloc(&(window.lookupPinned), (coeffs + RESAMPLE_LOOKUP_PADDING) * sizeof(float));
         if (status != hipSuccess) {
             fprintf(stderr, "Runtime error: hipHostMalloc for window.lookupPinned returned %d at %s:%d\n", status, __FILE__, __LINE__);
             window.lookupPinned = nullptr;
@@ -67,14 +70,14 @@ inline void windowed_sinc(RpptResamplingWindow &window, int32_t coeffs, int32_t 
 #endif
         if (!window.lookupPinned) {
             fprintf(stderr, "Runtime error: window.lookupPinned is not allocated for HIP backend \n");
-            return;
+            return VX_FAILURE;
         }
     } else {
         window.lookup.clear();
-        window.lookup.resize(coeffs + 5);
+        window.lookup.resize(coeffs + RESAMPLE_LOOKUP_PADDING);
     }
-    
-    window.lookupSize = coeffs + 5;
+
+    window.lookupSize = coeffs + RESAMPLE_LOOKUP_PADDING;
     int32_t center = (coeffs - 1) * 0.5f;
     float* lookupPtr = is_pinned_memory ? window.lookupPinned : window.lookup.data();
     for (int32_t i = 0; i < coeffs; i++) {
@@ -87,6 +90,7 @@ inline void windowed_sinc(RpptResamplingWindow &window, int32_t coeffs, int32_t 
     window.scale = 1.0f / scale;
     window.pCenter = _mm_set1_ps(window.center);
     window.pScale = _mm_set1_ps(window.scale);
+    return VX_SUCCESS;
 }
 #endif
 
@@ -233,7 +237,11 @@ static vx_status VX_CALLBACK initializeResample(vx_node node, const vx_reference
             data->pInRateTensor = new float[data->pSrcDesc->n];
             data->window = new RpptResamplingWindow();
         }
-        windowed_sinc(*(data->window), lookupSize, lobes, data->deviceType == AGO_TARGET_AFFINITY_GPU);
+
+        vx_status window_status = windowed_sinc(*(data->window), lookupSize, lobes, data->deviceType == AGO_TARGET_AFFINITY_GPU);
+        if (window_status != VX_SUCCESS) {
+            return VX_FAILURE;
+        }
 #endif
         refreshResample(node, parameters, num, data);
         STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));

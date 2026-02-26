@@ -43,8 +43,9 @@ struct TensorAddTensorLocalData {
     RpptROI *pDstRoi = nullptr;
     size_t inputTensorDims1[RPP_MAX_TENSOR_DIMS];
     size_t inputTensorDims2[RPP_MAX_TENSOR_DIMS];
-    vx_enum inTensorType;
-    vx_enum outTensorType;
+    vx_enum pSrc1Type;
+    vx_enum pSrc2Type;
+    vx_enum pDstType;
 };
 
 static vx_status VX_CALLBACK refreshTensorAddTensor(vx_node node, const vx_reference *parameters, vx_uint32 num, TensorAddTensorLocalData *data) {
@@ -110,15 +111,28 @@ static vx_status VX_CALLBACK processTensorAddTensor(vx_node node, const vx_refer
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        if (data->inTensorType == vx_type_e::VX_TYPE_FLOAT32 && data->outTensorType == vx_type_e::VX_TYPE_FLOAT32) {
-            HipExecTensorAddTensor(data->handle->hipstream, static_cast<float *>(data->pSrc1), static_cast<float *>(data->pSrc2), static_cast<float *>(data->pDst), data->pSrcRoi, data->inputTensorDims1);
+        if (data->pSrc1Type == vx_type_e::VX_TYPE_FLOAT32 &&
+            data->pSrc2Type == vx_type_e::VX_TYPE_FLOAT32 &&
+            data->pDstType == vx_type_e::VX_TYPE_FLOAT32) {
+            const int hip_status = HipExecTensorAddTensor(data->handle->hipstream,
+                                                          static_cast<float *>(data->pSrc1),
+                                                          static_cast<float *>(data->pSrc2),
+                                                          static_cast<float *>(data->pDst),
+                                                          data->pSrcRoi,
+                                                          data->inputTensorDims1);
+            if (hip_status != VX_SUCCESS)
+                return VX_FAILURE;
         } else {
             return VX_ERROR_NOT_SUPPORTED;
         }
+#else
+        return VX_ERROR_NOT_IMPLEMENTED;
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         // Currently supports adding audio tensors and distribution node tensors - (BS, samples, 1) and (BS, 1) - will be extended to include all tensors of supported layouts
-        if (data->inTensorType == vx_type_e::VX_TYPE_FLOAT32 && data->outTensorType == vx_type_e::VX_TYPE_FLOAT32) {
+        if (data->pSrc1Type == vx_type_e::VX_TYPE_FLOAT32 &&
+            data->pSrc2Type == vx_type_e::VX_TYPE_FLOAT32 &&
+            data->pDstType == vx_type_e::VX_TYPE_FLOAT32) {
             size_t nStride = data->inputTensorDims1[1] * data->inputTensorDims1[2];
             for (uint i = 0; i < data->inputTensorDims1[0]; i++) {
                 float *src1Temp = static_cast<float *>(data->pSrc1) + i * nStride;
@@ -160,11 +174,11 @@ static vx_status VX_CALLBACK initializeTensorAddTensor(vx_node node, const vx_re
         vx_size num_of_dims1, num_of_dims2;
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims1, sizeof(vx_size)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims1, sizeof(vx_size) * num_of_dims1));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &data->inTensorType, sizeof(data->inTensorType)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &data->pSrc1Type, sizeof(data->pSrc1Type)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims2, sizeof(vx_size)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, &data->inputTensorDims2, sizeof(vx_size) * num_of_dims2));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &data->inTensorType, sizeof(data->inTensorType)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &data->outTensorType, sizeof(data->outTensorType)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &data->pSrc2Type, sizeof(data->pSrc2Type)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &data->pDstType, sizeof(data->pDstType)));
 
         STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
         STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, 1, data->deviceType));

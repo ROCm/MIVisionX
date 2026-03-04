@@ -48,9 +48,10 @@ Hip_Threshold_U8_U8_Binary(uint dstWidth, uint dstHeight,
     uint2 src = *((uint2 *)(&pSrcImage[srcIdx]));
     uint2 dst;
 
-    float4 thr = (float4)hip_unpack0(thresholdValue);
-    dst.x = hip_pack((hip_unpack(src.x) - thr) * (float4)256.0f);
-    dst.y = hip_pack((hip_unpack(src.y) - thr) * (float4)256.0f);
+    float4 thr = make_float4(hip_unpack0(thresholdValue), hip_unpack0(thresholdValue),
+                         hip_unpack0(thresholdValue), hip_unpack0(thresholdValue));
+    dst.x = hip_pack((hip_unpack(src.x) - thr) * make_float4(256.0f, 256.0f, 256.0f, 256.0f));
+    dst.y = hip_pack((hip_unpack(src.y) - thr) * make_float4(256.0f, 256.0f, 256.0f, 256.0f));
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -90,14 +91,16 @@ Hip_Threshold_U8_U8_Range(uint dstWidth, uint dstHeight,
     uint2 src = *((uint2 *)(&pSrcImage[srcIdx]));
     uint2 dst;
 
-    float4 thr0 = (float4)(hip_unpack0(thresholdLower) - 1.0f);
-    float4 thr1 = (float4)(hip_unpack0(thresholdUpper) + 1.0f);
+    float thr0_val = hip_unpack0(thresholdLower) - 1.0f;
+    float thr1_val = hip_unpack0(thresholdUpper) + 1.0f;
+    float4 thr0 = make_float4(thr0_val, thr0_val, thr0_val, thr0_val);
+    float4 thr1 = make_float4(thr1_val, thr1_val, thr1_val, thr1_val);
     float4 pix0 = hip_unpack(src.x);
     float4 pix1 = hip_unpack(src.y);
-    dst.x  = hip_pack((pix0 - thr0) * (float4)256.0f);
-    dst.x &= hip_pack((thr1 - pix0) * (float4)256.0f);
-    dst.y  = hip_pack((pix1 - thr0) * (float4)256.0f);
-    dst.y &= hip_pack((thr1 - pix1) * (float4)256.0f);
+    dst.x  = hip_pack((pix0 - thr0) * make_float4(256.0f, 256.0f, 256.0f, 256.0f));
+    dst.x &= hip_pack((thr1 - pix0) * make_float4(256.0f, 256.0f, 256.0f, 256.0f));
+    dst.y  = hip_pack((pix1 - thr0) * make_float4(256.0f, 256.0f, 256.0f, 256.0f));
+    dst.y &= hip_pack((thr1 - pix1) * make_float4(256.0f, 256.0f, 256.0f, 256.0f));
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }

@@ -494,8 +494,8 @@ Hip_ScaleImage_U8_U8_Area(uint dstWidth, uint dstHeight,
     }
 
     uint2 dst;
-    dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * (float4)(iSxSy));
-    dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * (float4)(iSxSy));
+    dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
+    dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -544,8 +544,8 @@ Hip_ScaleImage_U8_U8_Area_Sad(uint dstWidth, uint dstHeight,
     f.data[6] = (float)sum.data[6];
     f.data[7] = (float)sum.data[7];
 
-    dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * (float4)(iSxSy));
-    dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * (float4)(iSxSy));
+    dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
+    dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -715,8 +715,8 @@ Hip_ScaleImage_U8_U8_Area_Bytealign(uint dstWidth, uint dstHeight,
     }
 
     uint2 dst;
-    dst.x = hip_pack(make_float4(ftotal.data[0], ftotal.data[1], ftotal.data[2], ftotal.data[3]) * (float4)(iSxSy));
-    dst.y = hip_pack(make_float4(ftotal.data[4], ftotal.data[5], ftotal.data[6], ftotal.data[7]) * (float4)(iSxSy));
+    dst.x = hip_pack(make_float4(ftotal.data[0], ftotal.data[1], ftotal.data[2], ftotal.data[3]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
+    dst.y = hip_pack(make_float4(ftotal.data[4], ftotal.data[5], ftotal.data[6], ftotal.data[7]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
 

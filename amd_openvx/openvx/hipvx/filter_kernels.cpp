@@ -7058,7 +7058,7 @@ Hip_ScaleGaussianHalf_U8_U8_3x3(uint dstWidth, uint dstHeight,
     v = fmaf(hip_unpack0(L1.z), 2.0f, v);
     v += hip_unpack0(L2.z);
     sum.w += v;
-    sum = sum * (float4)0.0625f;
+    sum = sum * make_float4(0.0625f, 0.0625f, 0.0625f, 0.0625f);
 
     if (valid) {
         *((uint *)(&pDstImage[dstIdx])) = hip_pack(sum);
@@ -7314,7 +7314,7 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
     sum.z += (float)(L0_01.y & 0xffff);
     sum.w += (float)(L0_01.y >> 16);
 
-    sum = sum * (float4)0.00390625f;
+    sum = sum * make_float4(0.00390625f, 0.00390625f, 0.00390625f, 0.00390625f);
     if (valid) {
         *((uint *)(&pDstImage[dstIdx])) = hip_pack(sum);
     }

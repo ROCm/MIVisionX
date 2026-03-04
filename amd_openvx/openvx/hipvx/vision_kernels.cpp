@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2024 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -5511,7 +5511,7 @@ Hip_HarrisScore_HVC_HG3_3x3(uint dstWidth, uint dstHeight,
 
     gx = gx << 2;
     if ((gx < dstWidth) && (gy < dstHeight)) {
-        float4 score = (float4)0.0f;
+        float4 score = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
         if ((gy >= border) && (gy < dstHeight - border)) {
             score = sum0 * sum2 - sum1 * sum1;
             sum0 += sum2;
@@ -5520,7 +5520,7 @@ Hip_HarrisScore_HVC_HG3_3x3(uint dstWidth, uint dstHeight,
             score.y = fmaf(sum0.y, -sensitivity, score.y);
             score.z = fmaf(sum0.z, -sensitivity, score.z);
             score.w = fmaf(sum0.w, -sensitivity, score.w);
-            score *= (float4)normFactor;
+            score *= make_float4(normFactor, normFactor, normFactor, normFactor);
             score.x = HIPSELECT(0.0f, score.x, score.x > strength_threshold);
             score.y = HIPSELECT(0.0f, score.y, score.y > strength_threshold);
             score.z = HIPSELECT(0.0f, score.z, score.z > strength_threshold);
@@ -5847,7 +5847,7 @@ Hip_HarrisScore_HVC_HG3_5x5(uint dstWidth, uint dstHeight,
 
     gx = gx << 2;
     if ((gx < dstWidth) && (gy < dstHeight)) {
-        float4 score = (float4)0.0f;
+        float4 score = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
         if ((gy >= border) && (gy < dstHeight - border)) {
             score = sum0 * sum2 - sum1 * sum1;
             sum0 += sum2;
@@ -5856,7 +5856,7 @@ Hip_HarrisScore_HVC_HG3_5x5(uint dstWidth, uint dstHeight,
             score.y = fmaf(sum0.y, -sensitivity, score.y);
             score.z = fmaf(sum0.z, -sensitivity, score.z);
             score.w = fmaf(sum0.w, -sensitivity, score.w);
-            score *= (float4)normFactor;
+            score *= make_float4(normFactor, normFactor, normFactor, normFactor);
             score.x = HIPSELECT(0.0f, score.x, score.x > strength_threshold);
             score.y = HIPSELECT(0.0f, score.y, score.y > strength_threshold);
             score.z = HIPSELECT(0.0f, score.z, score.z > strength_threshold);
@@ -6250,7 +6250,7 @@ Hip_HarrisScore_HVC_HG3_7x7(uint dstWidth, uint dstHeight,
 
     gx = gx << 2;
     if ((gx < dstWidth) && (gy < dstHeight)) {
-        float4 score = (float4)0.0f;
+        float4 score = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
         if ((gy >= border) && (gy < dstHeight - border)) {
             score = sum0 * sum2 - sum1 * sum1;
             sum0 += sum2;
@@ -6259,7 +6259,7 @@ Hip_HarrisScore_HVC_HG3_7x7(uint dstWidth, uint dstHeight,
             score.y = fmaf(sum0.y, -sensitivity, score.y);
             score.z = fmaf(sum0.z, -sensitivity, score.z);
             score.w = fmaf(sum0.w, -sensitivity, score.w);
-            score *= (float4)normFactor;
+            score *= make_float4(normFactor, normFactor, normFactor, normFactor);
             score.x = HIPSELECT(0.0f, score.x, score.x > strength_threshold);
             score.y = HIPSELECT(0.0f, score.y, score.y > strength_threshold);
             score.z = HIPSELECT(0.0f, score.z, score.z > strength_threshold);

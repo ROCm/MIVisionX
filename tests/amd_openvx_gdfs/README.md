@@ -137,25 +137,31 @@ Arguments:
    1     - Box_U8_U8_3x3.gdf             
    2     - Convolve_S16_U8_3x3.gdf       
    3     - Convolve_S16_U8_9x3.gdf       
-   4     - Convolve_S16_U8_9x9.gdf       
-   5     - Convolve_U8_U8_3x3.gdf        
-   6     - Convolve_U8_U8_9x3.gdf        
-   7     - Convolve_U8_U8_9x9.gdf        
-   8     - Dilate_U1_U1_3x3.gdf          
-   9     - Dilate_U1_U8_3x3.gdf          
-   10    - Dilate_U8_U1_3x3.gdf          
-   11    - Dilate_U8_U8_3x3.gdf          
-   12    - Erode_U1_U1_3x3.gdf           
-   13    - Erode_U1_U8_3x3.gdf           
-   14    - Erode_U8_U1_3x3.gdf           
-   15    - Erode_U8_U8_3x3.gdf           
-   16    - Gaussian_U8_U8_3x3.gdf        
-   17    - Median_U8_U8_3x3.gdf          
-   18    - ScaleGaussianHalf_U8_U8_3x3.gdf
-   19    - ScaleGaussianHalf_U8_U8_5x5.gdf
-   20    - Sobel_S16S16_U8_3x3_GXY.gdf   
-   21    - Sobel_S16_U8_3x3_GX.gdf       
-   22    - Sobel_S16_U8_3x3_GY.gdf       
+   4     - Convolve_S16_U8_9x9.gdf 
+   5     - Convolve_S16_U8_3x9.gdf
+   6     - Convolve_S16_U8_5x5.gdf
+   7     - Convolve_S16_U8_7x7.gdf      
+   8     - Convolve_U8_U8_3x3.gdf        
+   9     - Convolve_U8_U8_9x3.gdf        
+   10    - Convolve_U8_U8_9x9.gdf
+   11    - Convolve_U8_U8_3x9.gdf
+   12    - Convolve_U8_U8_5x5.gdf
+   13    - Convolve_U8_U8_7x7.gdf              
+   14    - Dilate_U1_U1_3x3.gdf          
+   15    - Dilate_U1_U8_3x3.gdf          
+   16    - Dilate_U8_U1_3x3.gdf          
+   17    - Dilate_U8_U8_3x3.gdf          
+   18    - Erode_U1_U1_3x3.gdf           
+   19    - Erode_U1_U8_3x3.gdf           
+   20    - Erode_U8_U1_3x3.gdf           
+   21    - Erode_U8_U8_3x3.gdf           
+   22    - Gaussian_U8_U8_3x3.gdf        
+   23    - Median_U8_U8_3x3.gdf          
+   24    - ScaleGaussianHalf_U8_U8_3x3.gdf
+   25    - ScaleGaussianHalf_U8_U8_5x5.gdf
+   26    - Sobel_S16S16_U8_3x3_GXY.gdf   
+   27    - Sobel_S16_U8_3x3_GX.gdf       
+   28    - Sobel_S16_U8_3x3_GY.gdf       
 ```
 
 ### Geometric Node Tests
@@ -380,13 +386,7 @@ Arguments:
    15    - ColorConvert_UV12_RGBX.gdf    
    16    - CopyNode.gdf                  
    17    - FastCornerMerge_XY_XY.gdf     
-   18    - GPU_FAIL_Convolve_S16_U8_3x9.gdf
-   19    - GPU_FAIL_Convolve_S16_U8_5x5.gdf
-   20    - GPU_FAIL_Convolve_S16_U8_7x7.gdf
    21    - GPU_FAIL_Convolve_S16_U8_odd.gdf
-   22    - GPU_FAIL_Convolve_U8_U8_3x9.gdf
-   23    - GPU_FAIL_Convolve_U8_U8_5x5.gdf
-   24    - GPU_FAIL_Convolve_U8_U8_7x7.gdf
    25    - GPU_FAIL_Convolve_U8_U8_odd.gdf
    26    - GeometricScale.gdf            
    27    - HistogramMerge_DATA_DATA.gdf  

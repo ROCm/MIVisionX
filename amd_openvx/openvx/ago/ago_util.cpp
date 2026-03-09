@@ -957,7 +957,7 @@ void agoGetDescriptionFromData(AgoContext * acontext, char * desc, AgoData * dat
     else if (data->ref.type == VX_TYPE_TENSOR) {
         char dims[64] = "";
         for (vx_size i = 0; i < data->u.tensor.num_dims; i++)
-            snprintf(dims + strlen(dims), sizeof(dims), "%s%u", i ? "," : "", (vx_uint32)data->u.tensor.dims[i]);
+            snprintf(dims + strlen(dims), sizeof(dims) - strlen(dims), "%s%u", i ? "," : "", (vx_uint32)data->u.tensor.dims[i]);
         snprintf(desc + strlen(desc), MAX_DESCRIPTION_DATA_SIZE, "tensor%s:%u,{%s},%s,%u", virt, (vx_uint32)data->u.tensor.num_dims, dims, agoEnum2Name(data->u.tensor.data_type), (vx_uint32)data->u.tensor.fixed_point_pos);
     }
     else if (data->ref.type == AGO_TYPE_MEANSTDDEV_DATA) {

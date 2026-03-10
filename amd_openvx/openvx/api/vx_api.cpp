@@ -2372,8 +2372,32 @@ VX_API_ENTRY vx_status VX_API_CALL vxRegisterKernelLibrary(vx_context context, c
     vx_status status = VX_ERROR_INVALID_REFERENCE;
     if (agoIsValidContext(context))
     {
-        // TBD: add support to load obj files or static libs
-        status = VX_SUCCESS;
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (module && publish)
+        {
+            CAgoLock lock(context->cs);
+            // check if the module is already registered
+            for (auto& reg : context->registered_modules) {
+                if (strcmp(module, reg.module_name) == 0) {
+                    return VX_SUCCESS;
+                }
+            }
+            // check if the module is already loaded
+            for (vx_uint32 index = 0; index < context->num_active_modules; index++) {
+                if (strcmp(module, context->modules[index].module_name) == 0) {
+                    return VX_SUCCESS;
+                }
+            }
+            ModuleData data = {};
+            strncpy(data.module_name, module, sizeof(data.module_name) - 1);
+            data.hmodule = NULL;
+            data.module_internal_data_ptr = nullptr;
+            data.module_internal_data_size = 0;
+            data.publish = publish;
+            data.unpublish = unpublish;
+            context->registered_modules.push_back(data);
+            status = VX_SUCCESS;
+        }
     }
     return status;
 }

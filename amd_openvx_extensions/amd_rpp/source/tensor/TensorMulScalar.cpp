@@ -49,9 +49,9 @@ static vx_status VX_CALLBACK refreshTensorMulScalar(vx_node node, const vx_refer
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
     }
-    RpptROI* srcRoi = static_cast<RpptROI *>(roi_tensor_ptr_src);
+    RpptROI* src_roi = static_cast<RpptROI *>(roi_tensor_ptr_src);
     for (uint i = 0; i < data->inputTensorDims[0]; i++) {
-        data->pSrcLengthTensor[i] = static_cast<Rpp32s>(srcRoi[i].xywhROI.roiWidth);
+        data->pSrcLengthTensor[i] = static_cast<Rpp32s>(src_roi[i].xywhROI.roiWidth);
     }
     return status;
 }
@@ -116,8 +116,10 @@ static vx_status VX_CALLBACK initializeTensorMulScalar(vx_node node, const vx_re
         
         vx_enum input_tensor_dtype, output_tensor_dtype;
         // Querying for input tensor
+
+        data->pSrcDesc = new RpptDesc;
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcDesc->numDims, sizeof(data->pSrcDesc->numDims)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims1, sizeof(vx_size) * data->pSrcDesc->numDims));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcDesc->numDims));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_dtype, sizeof(input_tensor_dtype)));
         data->pSrcDesc->dataType = getRpptDataType(input_tensor_dtype);
         data->pSrcDesc->offsetInBytes = 0;
@@ -140,10 +142,9 @@ static vx_status VX_CALLBACK initializeTensorMulScalar(vx_node node, const vx_re
         } else {
             data->pSrcLengthTensor = new Rpp32s[data->pSrcDesc->n];
         }
-#endif
-
-        STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
+        refreshTensorMulScalar(node, parameters, num, data);
         STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
+        STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
         return VX_SUCCESS;
     } else {
         return VX_FAILURE;
@@ -213,7 +214,7 @@ vx_status TensorMulScalar_Register(vx_context context) {
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+        PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
     }

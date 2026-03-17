@@ -30,7 +30,7 @@ struct TensorAddTensorLocalData {
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
     Rpp32s *pSrcLengthTensor;
-    size_t inputTensorDims1[RPP_MAX_TENSOR_DIMS];
+    size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
 };
 
@@ -49,12 +49,12 @@ static vx_status VX_CALLBACK refreshTensorAddTensor(vx_node node, const vx_refer
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
     }
-    data->pDstRoi = static_cast<RpptROI *>(roi_tensor_ptr_dst);
-    data->pSrcRoi = static_cast<RpptROI *>(roi_tensor_ptr_src);
-    for (uint i = 0; i < data->inputTensorDims1[0]; i++) {
-        data->pDstRoi[i].xywhROI.roiWidth = data->pSrcRoi[i].xywhROI.roiWidth;
-        data->pDstRoi[i].xywhROI.roiHeight = data->pSrcRoi[i].xywhROI.roiHeight;
-        data->pSrcLengthTensor[i] = data->pSrcRoi[i].xywhROI.roiWidth;
+    RpptROI* dst_roi = static_cast<RpptROI *>(roi_tensor_ptr_dst);
+    RpptROI* src_roi = static_cast<RpptROI *>(roi_tensor_ptr_src);
+    for (uint i = 0; i < data->inputTensorDims[0]; i++) {
+        dst_roi[i].xywhROI.roiWidth = src_roi[i].xywhROI.roiWidth;
+        dst_roi[i].xywhROI.roiHeight = src_roi[i].xywhROI.roiHeight;
+        data->pSrcLengthTensor[i] = src_roi[i].xywhROI.roiWidth;
     }
     return status;
 }
@@ -64,17 +64,19 @@ static vx_status VX_CALLBACK validateTensorAddTensor(vx_node node, const vx_refe
     vx_enum scalar_type;
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[5], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_UINT32)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #4 type=%d (must be size)\n", scalar_type);
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #5 type=%d (must be size)\n", scalar_type);
 
     // Validate for input parameters
     size_t num_tensor_dims;
+    size_t inputTensorDims1[RPP_MAX_TENSOR_DIMS];
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
-    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate Resample: tensor #0 dimensions=%lu (must be greater than or equal to 3)\n", num_tensor_dims);
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &inputTensorDims1, sizeof(vx_size) * num_tensor_dims));
+    if (num_tensor_dims < 3) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate TensorAddTensor: tensor #0 dimensions=%lu (must be greater than or equal to 3)\n", num_tensor_dims);
 
     size_t inputTensorDims2[RPP_MAX_TENSOR_DIMS];
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, &inputTensorDims2, sizeof(vx_size) * num_tensor_dims));
-    if (inputTensorDims2[0] != data->inputTensorDims1[0]) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: TensorAddTensor: tensor #1 batch size=%lu (must be same as tensor #0 batch size=%lu)\n", inputTensorDims2[0], data->inputTensorDims1[0]);
+    if (inputTensorDims2[0] != inputTensorDims1[0]) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: TensorAddTensor: tensor #1 batch size=%lu (must be same as tensor #0 batch size=%lu)\n", inputTensorDims2[0], inputTensorDims1[0]);
 
     // Validate for output parameters
     vx_uint8 tensor_fixed_point_position;
@@ -119,8 +121,9 @@ static vx_status VX_CALLBACK initializeTensorAddTensor(vx_node node, const vx_re
 
         vx_enum input_tensor_dtype, output_tensor_dtype;
         // Querying for input tensor
+        data->pSrcDesc = new RpptDesc;
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcDesc->numDims, sizeof(data->pSrcDesc->numDims)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims1, sizeof(vx_size) * data->pSrcDesc->numDims));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcDesc->numDims));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_dtype, sizeof(input_tensor_dtype)));
         data->pSrcDesc->dataType = getRpptDataType(input_tensor_dtype);
         data->pSrcDesc->offsetInBytes = 0;
@@ -142,11 +145,14 @@ static vx_status VX_CALLBACK initializeTensorAddTensor(vx_node node, const vx_re
         } else {
             data->pSrcLengthTensor = new Rpp32s[data->pSrcDesc->n];
         }
+        
+        refreshTensorAddTensor(node, parameters, num, data);
+        STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
         STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
         return VX_SUCCESS;
     } else {
         return VX_FAILURE;
-    }    
+    }
 }
 
 static vx_status VX_CALLBACK uninitializeTensorAddTensor(vx_node node, const vx_reference *parameters, vx_uint32 num) {

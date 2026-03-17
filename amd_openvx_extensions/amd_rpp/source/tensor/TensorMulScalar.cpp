@@ -23,6 +23,7 @@ THE SOFTWARE.
 #include "internal_publishKernels.h"
 
 struct TensorMulScalarLocalData {
+    vxRppHandle *handle;
     Rpp32u deviceType;
     RppPtr_t pSrc;
     RppPtr_t pDst;
@@ -43,8 +44,7 @@ static vx_status VX_CALLBACK refreshTensorMulScalar(vx_node node, const vx_refer
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
 #endif
-    }
-    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));

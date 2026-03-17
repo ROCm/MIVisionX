@@ -116,7 +116,6 @@ static vx_status VX_CALLBACK initializeTensorMulScalar(vx_node node, const vx_re
         
         vx_enum input_tensor_dtype, output_tensor_dtype;
         // Querying for input tensor
-
         data->pSrcDesc = new RpptDesc;
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &data->pSrcDesc->numDims, sizeof(data->pSrcDesc->numDims)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcDesc->numDims));

@@ -259,16 +259,20 @@ static vx_status VX_CALLBACK uninitializeResample(vx_node node, const vx_referen
 #if ENABLE_HIP
         if (data->pInRateTensor) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pInRateTensor));
         if (data->pSrcRoi) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSrcRoi));
+#if RPP_AUDIO
         if (data->window) {
             if (data->window->lookupPinned)
                 CHECK_HIP_RETURN_STATUS(hipHostFree(data->window->lookupPinned));
             CHECK_HIP_RETURN_STATUS(hipHostFree(data->window));
         }
 #endif
+#endif
     } else {
         if (data->pInRateTensor) delete[] data->pInRateTensor;
         if (data->pSrcRoi) delete[] data->pSrcRoi;
+#if RPP_AUDIO
         if (data->window) delete data->window;
+#endif
     }
     if (data->pSrcDesc) delete data->pSrcDesc;
     if (data->pDstDesc) delete data->pDstDesc;

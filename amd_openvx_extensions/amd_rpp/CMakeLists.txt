@@ -31,7 +31,7 @@ endif()
 
 # VX_RPP Version
 # * must match with include/vx_ext_rpp_version.h
-set(VERSION "3.2.1")
+set(VERSION "3.3.2")
 
 project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 

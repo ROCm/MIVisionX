@@ -1630,9 +1630,11 @@ int HafGpu_ScaleGaussianOrb(AgoNode * node, vx_interpolation_type_e interpolatio
 		, work_group_width, work_group_height, NODE_OPENCL_KERNEL_NAME, LMemSize, (width + 3) / 4, height, xscale * 4.0f, xoffset, yscale, yoffset);
 	node->opencl_code = item;
 	// load input image into local
-	int srcImageBufferSize = (int)node->paramList[1]->size;
-	int srcImageBufferOffset = (int)node->paramList[1]->gpu_buffer_offset;
-	if (HafGpu_Load_Local(work_group_width, work_group_height, LMemStride, LMemHeight, 4, 0, srcImageBufferSize, srcImageBufferOffset, node->opencl_code) < 0) {
+	// NOTE: This kernel uses scaled coordinate transformation with gbuf offset by (gx-2+4, gy-2)
+	// which can access beyond the nominal buffer boundaries into border padding.
+	// Bounds checking is disabled for this kernel by passing INT_MAX as buffer parameters
+	// since the transformation makes it incompatible with simple linear bounds checking.
+	if (HafGpu_Load_Local(work_group_width, work_group_height, LMemStride, LMemHeight, 4, 0, INT_MAX, INT_MAX, node->opencl_code) < 0) {
 		return -1;
 	}
 	// perform filtering

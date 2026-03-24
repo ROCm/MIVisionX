@@ -69,7 +69,7 @@ static vx_status VX_CALLBACK validateTensorAddTensor(vx_node node, const vx_refe
     vx_enum scalar_type;
     STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[5], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if (scalar_type != VX_TYPE_UINT32)
-        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #5 type=%d (must be size)\n", scalar_type);
+        return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Parameter: #5 type=%d (must be size)\n", scalar_type);
 
     // Validate for input parameters
     size_t num_tensor_dims;
@@ -114,6 +114,8 @@ static vx_status VX_CALLBACK processTensorAddTensor(vx_node node, const vx_refer
     RppStatus rpp_status = RPP_SUCCESS;
 #if RPP_AUDIO
     rpp_status = rppt_audio_tensor_add_tensor(data->pSrc1, data->pSrc2, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcLengthTensor, data->handle->rppHandle, backend);
+#else
+    return VX_ERROR_NOT_SUPPORTED;
 #endif
     return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 }
@@ -163,12 +165,16 @@ static vx_status VX_CALLBACK initializeTensorAddTensor(vx_node node, const vx_re
 static vx_status VX_CALLBACK uninitializeTensorAddTensor(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     TensorAddTensorLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+    if (data) {
+        if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        if (data->pSrcLengthTensor) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSrcLengthTensor));
+            if (data->pSrcLengthTensor) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSrcLengthTensor));
 #endif
-    } else {
-        if (data->pSrcLengthTensor) delete[] data->pSrcLengthTensor;
+        } else {
+            if (data->pSrcLengthTensor) delete[] data->pSrcLengthTensor;
+        }
+        if (data->pSrcDesc) delete data->pSrcDesc;
+        if (data->pDstDesc) delete data->pDstDesc;
     }
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     if (data) delete data;

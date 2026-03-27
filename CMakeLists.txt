@@ -50,6 +50,31 @@ set(VERSION "3.5.0")
 # Set Project Version and Language
 project(mivisionx VERSION ${VERSION} LANGUAGES CXX)
 
+# Determine if we are building using the TheRock install of ROCm.
+set(USING_THE_ROCK OFF)
+if (EXISTS "${ROCM_PATH}/lib/rocm_sysdeps/lib")
+    set(USING_THE_ROCK ON)
+endif()
+message("-- ${White}${PROJECT_NAME} -- USING_THE_ROCK: ${USING_THE_ROCK}${ColorReset}")
+
+# Set device library path for TheRock install of ROCm.
+if (USING_THE_ROCK)
+    if (NOT DEFINED ENV{HIP_DEVICE_LIB_PATH})
+        set(ENV{HIP_DEVICE_LIB_PATH} ${ROCM_PATH}/lib/llvm/amdgcn/bitcode)
+        set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "HIP_DEVICE_LIB_PATH=${ROCM_PATH}/lib/llvm/amdgcn/bitcode")
+    endif()
+endif()
+
+# Set HIP_PLATFORM to amd if not set. This is required before finding HIP.
+if (NOT DEFINED ENV{HIP_PLATFORM})
+    set(ENV{HIP_PLATFORM} "amd")
+endif()
+
+# Do not embed build-tree paths in binaries; install RPATH is set per target.
+set(CMAKE_SKIP_BUILD_RPATH ON)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
+set(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib")
+
 set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
 include(GNUInstallDirs)
 
@@ -98,7 +123,6 @@ message("-- ${BoldBlue}MIVisionX Source Root Path -- ${MIVISIONX_ROOT_DIR}${Colo
 
 if(APPLE)
   set(CMAKE_MACOSX_RPATH ON)
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
   set(GPU_SUPPORT OFF)
   set(BACKEND "CPU")
   message("-- ${Magenta}Apple macOS Detected -- GPU Support turned OFF${ColourReset}")
@@ -186,7 +210,8 @@ if(NOT DEFINED MIN_DEPS_MODE)
   if(EXISTS "/etc/os-release")
     file(READ "/etc/os-release" OS_RELEASE)
     string(REGEX MATCH "22.04" UBUNTU_22_FOUND ${OS_RELEASE})
-    if(NOT UBUNTU_22_FOUND)
+    string(REGEX MATCH "24.04" UBUNTU_24_FOUND ${OS_RELEASE})
+    if(NOT UBUNTU_22_FOUND AND NOT UBUNTU_24_FOUND)
       set(MIN_DEPS_MODE ON)
       message("-- ${Yellow}${PROJECT_NAME} Warning -- Non-Ubuntu OS, Min dependency option turned on${ColourReset}")
     endif()

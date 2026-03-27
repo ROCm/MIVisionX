@@ -70,7 +70,7 @@ if (NOT DEFINED ENV{HIP_PLATFORM})
     set(ENV{HIP_PLATFORM} "amd")
 endif()
 
-# Do not embed build-tree paths in binaries; install RPATH is set per target.
+# Set RPATH to $ORIGIN/../lib for all targets.
 set(CMAKE_SKIP_BUILD_RPATH ON)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
 set(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib")

@@ -606,7 +606,14 @@ int HafCpu_CannyEdgeTrace_U8_U8XY
 		vx_uint32              xyStackTop
 	)
 {
+	// Clamp stackTop to capacity to prevent reading beyond buffer
+	if (xyStackTop > capacityOfXY) {
+		xyStackTop = capacityOfXY;
+	}
+
 	ago_coord2d_ushort_t *pxyStack = xyStack + xyStackTop;
+	ago_coord2d_ushort_t *pxyStackEnd = xyStack + capacityOfXY;
+
 	while (pxyStack != xyStack){
 			pxyStack--;
 			vx_uint16 x = pxyStack->x;
@@ -616,12 +623,21 @@ int HafCpu_CannyEdgeTrace_U8_U8XY
 			const ago_coord2d_short_t offs = dir_offsets[i];
 			vx_int16 x1 = x + offs.x;
 			vx_int16 y1 = y + offs.y;
-			vx_uint8 *pDst = pDstImage + y1*dstImageStrideInBytes + x1;
-			if (*pDst == 127)
-			{
-				*pDst |= 0x80;		// *pDst = 255
-				*((unsigned *)pxyStack) = (y1<<16)|x1;
-				pxyStack++;
+
+			// Add bounds checking for image access
+			if (x1 >= 0 && x1 < (vx_int16)dstWidth &&
+			    y1 >= 0 && y1 < (vx_int16)dstHeight) {
+				vx_uint8 *pDst = pDstImage + y1*dstImageStrideInBytes + x1;
+				if (*pDst == 127)
+				{
+					*pDst |= 0x80;		// *pDst = 255
+
+					// Check capacity before pushing to stack
+					if (pxyStack < pxyStackEnd) {
+						*((unsigned *)pxyStack) = (y1<<16)|x1;
+						pxyStack++;
+					}
+				}
 			}
 		}
 	}

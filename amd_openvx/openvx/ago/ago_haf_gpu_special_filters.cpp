@@ -127,7 +127,9 @@ int HafGpu_NonLinearFilter_3x3_ANY_U8(AgoNode * node)
 		"  int gy = y;\n"
 		"  int gstride = stride;\n"
 		"  __global uchar * gbuf = p;\n";
-	if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemStride, LMemHeight + 2 * LMemSideTB, LMemSideLR, LMemSideTB, code) < 0) {
+	int srcImageBufferSize = (int)node->paramList[1]->size;
+	int srcImageBufferOffset = (int)node->paramList[1]->gpu_buffer_offset;
+	if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemStride, LMemHeight + 2 * LMemSideTB, LMemSideLR, LMemSideTB, srcImageBufferSize, srcImageBufferOffset, code) < 0) {
 		return -1;
 	}
 
@@ -950,7 +952,9 @@ int HafGpu_CannySuppThreshold(AgoNode * node)
 		, work_group_width, work_group_height, NODE_OPENCL_KERNEL_NAME, xyarg, LMemSize, (width + 3) / 4, height);
 	node->opencl_code = item;
 	// load U16 into local
-	if (HafGpu_Load_Local(work_group_width, work_group_height, LMemStride, work_group_height + 2, 2 * 2, 1, node->opencl_code) < 0) {
+	int srcImageBufferSize = (int)node->paramList[1]->size;
+	int srcImageBufferOffset = (int)node->paramList[1]->gpu_buffer_offset;
+	if (HafGpu_Load_Local(work_group_width, work_group_height, LMemStride, work_group_height + 2, 2 * 2, 1, srcImageBufferSize, srcImageBufferOffset, node->opencl_code) < 0) {
 		return -1;
 	}
 	// load U16 pixels from local and perform non-max supression
@@ -1191,7 +1195,9 @@ int HafGpu_HarrisScoreFilters(AgoNode * node)
 				, width * 4 * component);
 		}
 		node->opencl_code += item;
-		if (HafGpu_Load_Local(work_group_width, work_group_height, LMemStride, 16 + N - 1, LMemSideLR * 4, (N >> 1), node->opencl_code) < 0) {
+		int srcImageBufferSize = (int)node->paramList[1]->size;
+		int srcImageBufferOffset = (int)node->paramList[1]->gpu_buffer_offset;
+		if (HafGpu_Load_Local(work_group_width, work_group_height, LMemStride, 16 + N - 1, LMemSideLR * 4, (N >> 1), srcImageBufferSize, srcImageBufferOffset, node->opencl_code) < 0) {
 			return -1;
 		}
 		// horizontal sum
@@ -1332,7 +1338,9 @@ int HafGpu_NonMaxSupp_XY_ANY_3x3(AgoNode * node)
 		, work_group_width, work_group_height, NODE_OPENCL_KERNEL_NAME, LMemSize);
 	node->opencl_code = item;
 	// load into local
-	if (HafGpu_Load_Local(work_group_width, work_group_height, LMemStride, work_group_height + 2, LMemSideLR, LMemSideTB, node->opencl_code) < 0) {
+	int srcImageBufferSize = (int)node->paramList[1]->size;
+	int srcImageBufferOffset = (int)node->paramList[1]->gpu_buffer_offset;
+	if (HafGpu_Load_Local(work_group_width, work_group_height, LMemStride, work_group_height + 2, LMemSideLR, LMemSideTB, srcImageBufferSize, srcImageBufferOffset, node->opencl_code) < 0) {
 		return -1;
 	}
 	// load pixels from local and perform non-max supression
@@ -1622,7 +1630,11 @@ int HafGpu_ScaleGaussianOrb(AgoNode * node, vx_interpolation_type_e interpolatio
 		, work_group_width, work_group_height, NODE_OPENCL_KERNEL_NAME, LMemSize, (width + 3) / 4, height, xscale * 4.0f, xoffset, yscale, yoffset);
 	node->opencl_code = item;
 	// load input image into local
-	if (HafGpu_Load_Local(work_group_width, work_group_height, LMemStride, LMemHeight, 4, 0, node->opencl_code) < 0) {
+	// NOTE: This kernel uses scaled coordinate transformation with gbuf offset by (gx-2+4, gy-2)
+	// which can access beyond the nominal buffer boundaries into border padding.
+	// Bounds checking is disabled for this kernel by passing INT_MAX as buffer parameters
+	// since the transformation makes it incompatible with simple linear bounds checking.
+	if (HafGpu_Load_Local(work_group_width, work_group_height, LMemStride, LMemHeight, 4, 0, INT_MAX, INT_MAX, node->opencl_code) < 0) {
 		return -1;
 	}
 	// perform filtering

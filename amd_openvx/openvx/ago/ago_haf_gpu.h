@@ -42,7 +42,7 @@ THE SOFTWARE.
 //     ly      - local work item [1]
 //     lbuf    - local buffer pointer
 //
-int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int gxoffset, int gyoffset, std::string& code);
+int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int gxoffset, int gyoffset, int bufferSize, int bufferOffset, std::string& code);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Generate OpenCL code to load into local memory based on image size:

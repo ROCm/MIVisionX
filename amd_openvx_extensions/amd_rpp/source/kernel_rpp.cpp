@@ -958,7 +958,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppResample(vx_graph graph, vx_tensor pSrc
     return node;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtRppTensorMulScalar(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_scalar scalarValue) {
+VX_API_ENTRY vx_node VX_API_CALL vxExtRppTensorMulScalar(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_scalar scalarValue, vx_tensor pSrcRoi) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
@@ -968,8 +968,9 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtRppTensorMulScalar(vx_graph graph, vx_tens
             (vx_reference)pSrc,
             (vx_reference)pDst,
             (vx_reference)scalarValue,
+            (vx_reference)pSrcRoi,
             (vx_reference)deviceType};
-        node = createNode(graph, VX_KERNEL_RPP_TENSORMULSCALAR, params, 4);
+        node = createNode(graph, VX_KERNEL_RPP_TENSORMULSCALAR, params, 5);
     }
     return node;
 }
@@ -1806,7 +1807,16 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims
     descPtr->strides.hStride = descPtr->c * descPtr->w;
     descPtr->strides.wStride = descPtr->c;
     descPtr->strides.cStride = 1;
-    descPtr->numDims = 4;
+    // Audio Tensor can have only 2/3 Dims, including batch size
+    if (maxTensorDims[2] == 1) {
+        // 1d tensor - num_dims = 2 - BS x dim1 [dim2 = 1]
+        descPtr->numDims = 2;
+    } else if(maxTensorDims[2] > 1) {
+        // 2d tensor - num_dims = 3 - BS x dim1 x dim2
+        descPtr->numDims = 3;
+    } else {
+        throw std::runtime_error("Invalid tensor dimensions for audio tensor.");
+    }
     if(tensorLayoutMapping.find(layout) != tensorLayoutMapping.end()) {
         descPtr->layout = tensorLayoutMapping.at(layout);
     } else {

@@ -703,9 +703,10 @@ extern "C"
 	 * \param [in] pSrc The input tensor in <tt>\ref VX_TYPE_FLOAT32<tt> format data.
 	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_FLOAT32<tt> format data.
 	 * \param [in] scalarValue The input scalar in <tt>\ref VX_TYPE_FLOAT32</tt> format containing the value used to multiply the input tensor
+	 * \param [in] pSrcRoi The input tensor of batch size in <tt>\ref VX_TYPE_UINT32</tt> containing the roi values for the input1.
 	 * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
 	 */
-	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppTensorMulScalar(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_scalar scalarValue);
+	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppTensorMulScalar(vx_graph graph, vx_tensor pSrc, vx_tensor pDst, vx_scalar scalarValue, vx_tensor pSrcRoi);
 
 	/*! \brief [Graph] Adds two tensors and returns the output.
 	 * \ingroup group_amd_rpp
@@ -713,8 +714,8 @@ extern "C"
 	 * \param [in] pSrc1 The input tensor1 in <tt>\ref VX_TYPE_FLOAT32<tt> format data.
 	 * \param [in] pSrc2 The input tensor2 in <tt>\ref VX_TYPE_FLOAT32<tt> format data.
 	 * \param [out] pDst The output tensor in <tt>\ref VX_TYPE_FLOAT32<tt> format data.
-	 * \param [in] pSrcRoi The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input1.
-	 * \param [in] pDstRoi The input tensor of batch size in <tt>unsigned int<tt> containing the roi values for the input2.
+	 * \param [in] pSrcRoi The input tensor of batch size in <tt>\ref VX_TYPE_UINT32</tt> containing the roi values for the input1.
+	 * \param [in] pDstRoi The input tensor of batch size in <tt>\ref VX_TYPE_UINT32</tt> containing the roi values for the input2.
 	 * \return A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
 	 */
 	SHARED_PUBLIC vx_node VX_API_CALL vxExtRppTensorAddTensor(vx_graph graph, vx_tensor pSrc1, vx_tensor pSrc2, vx_tensor pDst, vx_tensor pSrcRoi, vx_tensor pDstRoi);

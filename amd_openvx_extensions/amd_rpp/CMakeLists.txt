@@ -31,7 +31,7 @@ endif()
 
 # VX_RPP Version
 # * must match with include/vx_ext_rpp_version.h
-set(VERSION "3.2.0")
+set(VERSION "3.3.2")
 
 project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 
@@ -186,7 +186,7 @@ if(EXISTS ${rpp_INCLUDE_DIR}/rpp/rpp_audio_augmentations_support.h)
 endif()
 
 # Audio features for VX_RPP
-if((${rpp_VERSION_MAJOR} VERSION_GREATER "1") OR (${rpp_VERSION_MAJOR} VERSION_EQUAL "1" AND ${rpp_VERSION_MINOR} VERSION_GREATER_EQUAL "8" AND ${rpp_VERSION_PATCH} VERSION_GREATER_EQUAL "0")
+if((${rpp_VERSION_MAJOR} VERSION_GREATER "3") OR (${rpp_VERSION_MAJOR} VERSION_EQUAL "3" AND ${rpp_VERSION_MINOR} VERSION_GREATER_EQUAL "1" AND ${rpp_VERSION_PATCH} VERSION_GREATER_EQUAL "1")
 AND RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DAUDIO_SUPPORT=1")
     message("-- ${White}vx_rpp Audio Features Included${ColourReset}")

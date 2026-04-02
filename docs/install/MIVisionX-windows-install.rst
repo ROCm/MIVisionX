@@ -4,10 +4,10 @@
 
 
 ******************************************
-Install MIVisionX on Windows 
+Install MIVisionX on Windows
 ******************************************
 
-.. note:: 
+.. note::
 
     The HIP backend is not supported on Windows.
 
@@ -21,7 +21,7 @@ To install MIVisionX on Windows, you will need:
 
 Set the ``OpenCV_DIR`` environment variable to point to the ``OpenCV/build`` folder.
 
-Add ``%OpenCV_DIR%\x64\vc14\bin`` and ``%OpenCV_DIR%\x64\vc15\bin`` to your ``$PATH``.
+Add ``%OpenCV_DIR%\x64\vc14\bin`` or ``%OpenCV_DIR%\x64\vc15\bin`` to your ``$PATH``.
 
 Build ``MIVisionX.sln`` in Visual Studio for the x64 platform. The MIVisionX libraries and executables will be saved to ``MIVisionX/x64`` folder.
 

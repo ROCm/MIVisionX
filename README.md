@@ -1,7 +1,7 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![doc](https://img.shields.io/badge/doc-readthedocs-blueviolet)](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/)
 
-<p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/MIVisionX.png" /></p>
+<p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/MIVisionX.png" /></p>
 
 > [!NOTE]
 > The published documentation is available at [MIVisionX](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/index.html) in an organized, easy-to-read format, with search and a table of contents. The documentation source files reside in the `docs` folder of this repository. As with all ROCm projects, the documentation is open source. For more information on contributing to the documentation, see [Contribute to ROCm documentation](https://rocm.docs.amd.com/en/latest/contribute/contributing.html).
@@ -14,7 +14,7 @@ AMD MIVisionX is a comprehensive computer vision and machine intelligence toolki
 
 ## AMD OpenVX&trade;
 
-<p align="center"><img width="30%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/OpenVX_logo.png" /></p>
+<p align="center"><img width="30%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/OpenVX_logo.png" /></p>
 
 [AMD OpenVX&trade;](amd_openvx/README.md) is a highly optimized conformant open source implementation of the <a href="https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html" target="_blank">Khronos OpenVX&trade; 1.3</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
@@ -24,7 +24,7 @@ AMD MIVisionX is a comprehensive computer vision and machine intelligence toolki
 
 The OpenVX framework provides a mechanism for vendors to add new vision functionality. This project includes the following OpenVX [modules](amd_openvx_extensions/README.md) that extend [amd_openvx](amd_openvx/README.md), the AMD OpenVX&trade; Core Engine.
 
-<p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/MIVisionX-OpenVX-Extensions.png" /></p>
+<p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/MIVisionX-OpenVX-Extensions.png" /></p>
 
 * [amd_custom](amd_openvx_extensions/amd_custom/README.md): User-defined custom nodes for OpenVX graphs
 * [amd_loomsl](amd_openvx_extensions/amd_loomsl/README.md): Loom stitching library for live 360-degree video applications
@@ -39,11 +39,11 @@ The OpenVX framework provides a mechanism for vendors to add new vision function
 
 MIVisionX includes several [applications](apps/README.md#applications) built on top of OpenVX modules, serving as prototypes and samples for developers.
 
-<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/MIVisionX-applications.png" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/MIVisionX-applications.png" /></p>
 
 ## Neural network model compiler and optimizer
 
-<p align="center"><img width="80%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/modelCompilerWorkflow.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/modelCompilerWorkflow.png" /></p>
 
 [Neural net model compiler and optimizer](model_compiler/README.md#neural-net-model-compiler--optimizer) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
 
@@ -207,7 +207,7 @@ macOS [build instructions](https://github.com/ROCm/MIVisionX/wiki/macOS#macos-bu
 #### Verify with sample application
   **Canny Edge Detection**
 
-  <p align="center"><img width="60%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/canny_image.PNG" /></p>
+  <p align="center"><img width="60%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/samples/images/canny_image.PNG" /></p>
 
   ```shell
   export PATH=$PATH:/opt/rocm/bin

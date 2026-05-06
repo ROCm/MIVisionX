@@ -91,6 +91,8 @@ height = args.height
 widthDiv2 = int(width / 2)
 heightDiv2 = int(height / 2)
 perfCounters = args.perf_counters.upper()
+if backendType == "OPENCL":
+    backendType = 'OCL'
 
 # OpenVX Vision Functions 1080P
 openvxNodes = [

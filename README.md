@@ -1,12 +1,12 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![doc](https://img.shields.io/badge/doc-readthedocs-blueviolet)](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/)
 
-<p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/MIVisionX.png" /></p>
+<p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/MIVisionX.png" /></p>
 
 > [!NOTE]
 > The published documentation is available at [MIVisionX](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/index.html) in an organized, easy-to-read format, with search and a table of contents. The documentation source files reside in the `docs` folder of this repository. As with all ROCm projects, the documentation is open source. For more information on contributing to the documentation, see [Contribute to ROCm documentation](https://rocm.docs.amd.com/en/latest/contribute/contributing.html).
 
-MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized conformant open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX&trade;</a> and OpenVX&trade; Extensions along with Convolution Neural Net Model Compiler & Optimizer supporting <a href="https://onnx.ai/" target="_blank">ONNX</a>, and <a href="https://www.khronos.org/nnef" target="_blank">Khronos NNEF&trade;</a> exchange formats. The toolkit allows for rapid prototyping and deployment of optimized computer vision and machine learning inference workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
+AMD MIVisionX is a comprehensive computer vision and machine intelligence toolkit. It delivers a highly optimized, conformant open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX&trade;</a> and OpenVX&trade; Extensions, along with a neural net model compiler & optimizer supporting <a href="https://onnx.ai/" target="_blank">ONNX</a> and <a href="https://www.khronos.org/nnef" target="_blank">Khronos NNEF&trade;</a> exchange formats. MIVisionX enables rapid prototyping and deployment of optimized computer vision and machine learning inference workloads on a wide range of hardware, including x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
 
 #### Latest release
 
@@ -14,7 +14,7 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 
 ## AMD OpenVX&trade;
 
-<p align="center"><img width="30%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/OpenVX_logo.png" /></p>
+<p align="center"><img width="30%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/OpenVX_logo.png" /></p>
 
 [AMD OpenVX&trade;](amd_openvx/README.md) is a highly optimized conformant open source implementation of the <a href="https://www.khronos.org/registry/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html" target="_blank">Khronos OpenVX&trade; 1.3</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
@@ -22,51 +22,41 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 
 ## AMD OpenVX&trade; Extensions
 
-The OpenVX framework provides a mechanism to add new vision functionality to OpenVX by vendors. This project has below listed OpenVX [modules](amd_openvx_extensions/README.md) and utilities to extend [amd_openvx](amd_openvx/README.md), which contains the AMD OpenVX&trade; Core Engine.
+The OpenVX framework provides a mechanism for vendors to add new vision functionality. This project includes the following OpenVX [modules](amd_openvx_extensions/README.md) that extend [amd_openvx](amd_openvx/README.md), the AMD OpenVX&trade; Core Engine.
 
-<p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/MIVisionX-OpenVX-Extensions.png" /></p>
+<p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/MIVisionX-OpenVX-Extensions.png" /></p>
 
-* [amd_loomsl](amd_openvx_extensions/amd_loomsl/README.md): AMD Loom stitching library for live 360 degree video applications
-
-* [amd_media](amd_openvx_extensions/amd_media/README.md): AMD media extension module is for encode and decode applications
-
-* [amd_migraphx](amd_openvx_extensions/amd_migraphx/README.md): AMD MIGraphX extension integrates the <a href="https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx" target="_blank"> AMD's MIGraphx </a> into an OpenVX graph. This extension allows developers to combine the vision funcions in OpenVX with the MIGraphX and build an end-to-end application for inference
-
-* [amd_nn](amd_openvx_extensions/amd_nn/README.md): OpenVX neural network module
-
-* [amd_opencv](amd_openvx_extensions/amd_opencv/README.md): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels
-
-* [amd_rpp](amd_openvx_extensions/amd_rpp/README.md): OpenVX extension providing an interface to some of the [ROCm Performance Primitives](https://github.com/ROCm/rpp) (RPP) functions. This extension enables [rocAL](https://github.com/ROCm/rocAL) to perform image augmentation
-
-* [amd_winml](amd_openvx_extensions/amd_winml/README.md): AMD WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision` / `generic` / `user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This extension aims to help developers to build an end to end application for inference
+* [amd_custom](amd_openvx_extensions/amd_custom/README.md): User-defined custom nodes for OpenVX graphs
+* [amd_loomsl](amd_openvx_extensions/amd_loomsl/README.md): Loom stitching library for live 360-degree video applications
+* [amd_media](amd_openvx_extensions/amd_media/README.md): Video and image encode/decode extension
+* [amd_migraphx](amd_openvx_extensions/amd_migraphx/README.md): <a href="https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx" target="_blank">AMD MIGraphX</a> integration for end-to-end inference
+* [amd_nn](amd_openvx_extensions/amd_nn/README.md): Neural network extension module
+* [amd_opencv](amd_openvx_extensions/amd_opencv/README.md): OpenCV interop providing OpenCV functions as OpenVX kernels
+* [amd_rpp](amd_openvx_extensions/amd_rpp/README.md): Interface to [ROCm Performance Primitives](https://github.com/ROCm/rpp) (RPP) for image augmentation via [rocAL](https://github.com/ROCm/rocAL)
+* [amd_winml](amd_openvx_extensions/amd_winml/README.md): WinML extension to import ONNX models with pre & post processing for inference on Windows
 
 ## Applications
 
-MIVisionX has several [applications](apps/README.md#applications) built on top of OpenVX modules. These applications can serve as excellent prototypes and samples for developers to build upon.
+MIVisionX includes several [applications](apps/README.md#applications) built on top of OpenVX modules, serving as prototypes and samples for developers.
 
-<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/MIVisionX-applications.png" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/MIVisionX-applications.png" /></p>
 
 ## Neural network model compiler and optimizer
 
-<p align="center"><img width="80%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/modelCompilerWorkflow.png" /></p>
+<p align="center"><img width="80%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/modelCompilerWorkflow.png" /></p>
 
 [Neural net model compiler and optimizer](model_compiler/README.md#neural-net-model-compiler--optimizer) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
 
 ## Toolkit
 
-[MIVisionX Toolkit](toolkit/README.md) is a comprehensive set of helpful tools for neural net creation, development, training, and deployment. The Toolkit provides useful tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The Toolkit has been designed to help you deploy your work on any AMD or 3rd party hardware, from embedded to servers.
-
-MIVisionX toolkit provides tools for accomplishing your tasks throughout the whole neural net life-cycle, from creating a model to deploying them for your target platforms.
+[MIVisionX Toolkit](toolkit/README.md) is a comprehensive set of helpful tools for neural net creation, development, training, and deployment. The Toolkit provides tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework, and deploy on any AMD or 3rd party hardware.
 
 ## Utilities
 
-* [loom_shell](utilities/loom_shell/README.md#radeon-loomsh): an interpreter to prototype 360 degree video stitching applications using a script
-
-* [mv_deploy](utilities/mv_deploy/README.md): consists of a model-compiler and necessary header/.cpp files which are required to run inference for a specific NeuralNet model
-
-* [RunCL](utilities/runcl/README.md#amd-runcl): command-line utility to build, execute, and debug OpenCL programs
-
-* [RunVX](utilities/runvx/README.md#amd-runvx): command-line utility to execute OpenVX graph described in GDF text file
+* [loom_shell](utilities/loom_shell/README.md#radeon-loomsh): Interpreter for prototyping 360-degree video stitching applications
+* [mv_deploy](utilities/mv_deploy/README.md): Model compiler and runtime files for neural net inference deployment
+* [RunCL](utilities/runcl/README.md#amd-runcl): Command-line utility to build, execute, and debug OpenCL programs
+* [RunVX](utilities/runvx/README.md#amd-runvx): Command-line utility to execute OpenVX graphs described in GDF text files
 
 ## Prerequisites
 
@@ -77,7 +67,7 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
 * **APU**: [AMD Radeon&trade; `Mobile`/`Embedded`](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html) [optional]
 
 > [!IMPORTANT]
-> Some modules in MIVisionX can be built for `CPU ONLY`. To take advantage of `Advanced Features And Modules` we recommend using `AMD GPUs` or `AMD APUs`.
+> Some modules can be built for CPU only. To take advantage of advanced features and modules, we recommend using AMD GPUs or AMD APUs.
 
 ### Operating Systems
 
@@ -94,82 +84,47 @@ MIVisionX toolkit provides tools for accomplishing your tasks throughout the who
 
 ### Compiler
 * AMD Clang++ Version `18.0.0` or later - installed with ROCm
->[!NOTE]
+> [!NOTE]
 > AMD Clang++ is the preferred cxx compiler, users can change this with the `CMAKE_CXX_COMPILER` variable
 
 ### Libraries
-* CMake - Version `3.10` or later
-  ```shell
-  sudo apt install cmake
-  ```
-* HIP
-  ```shell
-  sudo apt install hip-dev
-  ```
-* OpenMP
-  ```shell
-  sudo apt install openmp-extras-dev
-  ```
-* Half-precision floating-point(half) library - Version `1.12.0`
-  ```shell
-  sudo apt install half
-  ```
-* MIOpen
-  ```shell
-  sudo apt install miopen-hip-dev
-  ```
-* MIGraphX
-  ```shell
-  sudo apt install migraphx-dev
-  ```
-* RPP
-  ```shell
-  sudo apt install rpp-dev
-  ```
-* OpenCV - Version `3.X`/`4.X`
-  ```shell
-  sudo apt install libopencv-dev
-  ```
-* pkg-config
-  ```shell
-  sudo apt install pkg-config
-  ```
-* FFmpeg - Version `4.4.2` or later
-  ```shell
-  sudo apt install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
-  ```
+
+| Package | Minimum Version |
+|---------|----------------|
+| CMake | `3.10` |
+| HIP | - |
+| OpenMP | - |
+| Half | `1.12.0` |
+| MIOpen | - |
+| MIGraphX | - |
+| RPP | `3.1.0` |
+| OpenCV | `3.X` / `4.X` |
+| FFmpeg | `4.4.2` |
+| pkg-config | - |
+
+```shell
+sudo apt install cmake hip-dev openmp-extras-dev half miopen-hip-dev migraphx-dev rpp-dev libopencv-dev pkg-config libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
+```
 
 > [!IMPORTANT]
-> * Required compiler support
->    * C++17
->    * OpenMP
->    * Threads
->
-> * On `Ubuntu 22.04` - Additional package required: `libstdc++-12-dev`
->
->  ```shell
->  sudo apt install libstdc++-12-dev
->  ```
+> * Required compiler support: `C++17`, `OpenMP`, `Threads`
+> * On `Ubuntu 22.04` - Additional package required: `sudo apt install libstdc++-12-dev`
 
->[!NOTE]
+> [!NOTE]
 > All package installs are shown with the `apt` package manager. Use the appropriate package manager for your operating system.
 
 ## Installation instructions
 
 ### Linux
 
-The installation process uses the following steps:
+Verify you have [ROCm-supported hardware](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html), then install ROCm `7.0.0` or later with [amdgpu-install](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/amdgpu-install.html) using `--usecase=rocm`.
 
-* [ROCm-supported hardware](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html) install verification
-
-* Install ROCm `7.0.0` or later with [amdgpu-install](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/amdgpu-install.html) with `--usecase=rocm`
-
->[!IMPORTANT]
+> [!IMPORTANT]
 > Use **either** [package install](#package-install) **or** [source install](#source-install) as described below.
 
 #### Package install
 
-Install MIVisionX runtime, development, and test packages. 
+Install MIVisionX runtime, development, and test packages.
 * Runtime package - `mivisionx` only provides the dynamic libraries and executables
 * Development package - `mivisionx-dev`/`mivisionx-devel` provides the libraries, executables, header files, and samples
 * Test package - `mivisionx-test` provides ctest to verify installation
@@ -178,7 +133,7 @@ Install MIVisionX runtime, development, and test packages.
   ```shell
   sudo apt-get install mivisionx mivisionx-dev mivisionx-test
   ```
-##### CentOS / RedHat
+##### RedHat
   ```shell
   sudo yum install mivisionx mivisionx-devel mivisionx-test
   ```
@@ -193,62 +148,25 @@ Install MIVisionX runtime, development, and test packages.
 
 #### Source install
 
-##### Prerequisites setup script
-
-For your convenience, we provide the setup script, `MIVisionX-setup.py`, which installs all required dependencies.
-
-  ```shell
-  python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
-                            --opencv    [OpenCV Version - optional (default for non Ubuntu:4.6.0)]
-                            --neural_net[MIVisionX Neural Net Dependency Install - optional (default:ON) [options:ON/OFF]]
-                            --inference [MIVisionX Inference Dependency Install - optional (default:ON) [options:ON/OFF]]
-                            --developer [Setup Developer Options - optional (default:OFF) [options:ON/OFF]]
-                            --reinstall [Remove previous setup and reinstall (default:OFF)[options:ON/OFF]]
-                            --backend   [MIVisionX Dependency Backend - optional (default:HIP) [options:HIP/OCL/CPU]]
-                            --rocm_path [ROCm Installation Path - optional (default:/opt/rocm ROCm Installation Required)]
-  ```
+Use the `MIVisionX-setup.py` script to install all required dependencies, then build from source.
 
 > [!NOTE]
-> * Install ROCm before running the setup script
-> * This script only needs to be executed once
-> * ROCm upgrade requires the setup script rerun
+> Install ROCm before running the setup script. This script only needs to be executed once (rerun after ROCm upgrades).
 
-##### Using MIVisionX-setup.py 
+```shell
+git clone https://github.com/ROCm/MIVisionX.git
+cd MIVisionX
+python MIVisionX-setup.py
+mkdir build-hip && cd build-hip
+cmake ../
+make -j8
+sudo make install
+make test
+```
 
-* Clone MIVisionX git repository
+Run `python MIVisionX-setup.py --help` for all setup options including `--backend`, `--opencv`, and `--rocm_path`.
 
-  ```shell
-  git clone https://github.com/ROCm/MIVisionX.git
-  ```
-
-> [!IMPORTANT]
-> MIVisionX has support for two GPU backends: **OPENCL** and **HIP**
-
-* Instructions for building MIVisionX with the **HIP** GPU backend (default backend):
-
-    + run the setup script to install all the dependencies required by the **HIP** GPU backend:
-  
-  ```shell
-  cd MIVisionX
-  python MIVisionX-setup.py
-  ```
-
-    + run the below commands to build MIVisionX with the **HIP** GPU backend:
-
-  ```shell
-  mkdir build-hip
-  cd build-hip
-  cmake ../
-  make -j8
-  sudo make install
-  ```
-
-    + run tests - [test option instructions](https://github.com/ROCm/MIVisionX/wiki/CTest)
-
-  ```shell
-  make test
-  ```
-
+* [Test option instructions](https://github.com/ROCm/MIVisionX/wiki/CTest)
 * Instructions for building MIVisionX with [**OPENCL** GPU backend](https://github.com/ROCm/MIVisionX/wiki/OpenCL-Backend)
 
 ### Windows
@@ -289,7 +207,7 @@ macOS [build instructions](https://github.com/ROCm/MIVisionX/wiki/macOS#macos-bu
 #### Verify with sample application
   **Canny Edge Detection**
 
-  <p align="center"><img width="60%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/canny_image.PNG" /></p>
+  <p align="center"><img width="60%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/samples/images/canny_image.PNG" /></p>
 
   ```shell
   export PATH=$PATH:/opt/rocm/bin
@@ -303,13 +221,14 @@ macOS [build instructions](https://github.com/ROCm/MIVisionX/wiki/macOS#macos-bu
 
 #### Verify with mivisionx-test package
 
-Test package will install ctest module to test MIVisionX. Follow below steps to test packge install
+Test package provides a ctest module to verify MIVisionX installation.
 
 ```shell
 mkdir mivisionx-test && cd mivisionx-test
 cmake /opt/rocm/share/mivisionx/test/
 ctest -VV
 ```
+
 ### Windows
 
 * `MIVisionX.sln` builds the libraries & executables in the folder `MIVisionX/x64`
@@ -321,58 +240,40 @@ ctest -VV
 
 ## Docker
 
-MIVisionX provides developers with docker images for Ubuntu `22.04`. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
+MIVisionX provides [Docker images](docker/README.md#mivisionx-docker) for Ubuntu `22.04` to quickly prototype and build applications.
 
-Docker files to build MIVisionX containers and suggested workflow are [available](docker/README.md#mivisionx-docker)
-
-### MIVisionX docker
-* [Ubuntu 22.04](https://cloud.docker.com/repository/docker/mivisionx/ubuntu-22.04)
+* [Ubuntu 22.04](https://hub.docker.com/repository/docker/mivisionx/ubuntu-22.04)
 
 ## Documentation
 
-Run the steps below to build documentation locally.
-* sphinx documentation
-```Bash
-cd docs
-pip3 install -r sphinx/requirements.txt
-python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
-```
-* Doxygen 
-```Bash
-doxygen .Doxyfile
-```
+* [Published documentation](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/)
+* Build locally: `cd docs && pip3 install -r sphinx/requirements.txt && python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html`
+* Doxygen: `doxygen .Doxyfile`
 
 ## Technical support
 
-Please email `mivisionx.support@amd.com` for questions, and feedback on MIVisionX.
-
-Please submit your feature requests, and bug reports on the [GitHub issues](https://github.com/ROCm/MIVisionX/issues) page.
+Please email `mivisionx.support@amd.com` for questions and feedback, or submit feature requests and bug reports on the [GitHub issues](https://github.com/ROCm/MIVisionX/issues) page.
 
 ## Release notes
 
-### Latest release version
-
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/ROCm/MIVisionX?style=for-the-badge)](https://github.com/ROCm/MIVisionX/releases)
 
-### Changelog
-
-Review all notable [changes](CHANGELOG.md#changelog) with the latest release
+Review all notable [changes](CHANGELOG.md#changelog) with the latest release.
 
 ### Tested configurations
 
 * Windows `10` / `11`
 * Linux distribution
   + Ubuntu - `22.04` / `24.04`
-  + RHEL - `8` / `9`
-  + SLES - `15 SP7`
-* ROCm: `7.0.0`
-* RPP - `2.0.0`
+  + RedHat - `8` / `9`
+  + SLES - `15-SP7`
+* ROCm: `7.2.1`
+* RPP - `3.1.0`
 * miopen-hip - `3.4.0`
 * migraphx - `2.13.0`
 * OpenCV - `4.5.4`/`4.6`
 * FFMPEG - `4.4.2`
-* Dependencies for all the above packages
 * MIVisionX Setup Script - `V4.0.0`
 
 ### Known issues
-* MIVisionX Package install in `RHEL`/`SLES` requires manual `OpenCV` and `FFMPEG` development packages installed
+* Package install on `RedHat`/`SLES` requires manual `OpenCV` and `FFMPEG` development packages installed

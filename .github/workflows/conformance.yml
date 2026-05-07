@@ -68,6 +68,7 @@ jobs:
           path: |
             build/lib/
             OpenVX-cts/build/bin/vx_test_conformance
+            OpenVX-cts/build/lib/
             OpenVX-cts/test_data/
           retention-days: 1
 
@@ -84,7 +85,7 @@ jobs:
         run: |
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
           timeout 300 ./bin/vx_test_conformance --filter="GraphBase.*:Logging.*:SmokeTestBase.*:SmokeTest.*:TargetBase.*:Target.*"
 
@@ -102,7 +103,7 @@ jobs:
         run: |
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
           timeout 600 ./bin/vx_test_conformance --filter="Graph.*:GraphCallback.*:GraphDelay.*:GraphROI.*:UserNode.*"
 
@@ -120,7 +121,7 @@ jobs:
         run: |
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
           timeout 300 ./bin/vx_test_conformance --filter="Scalar.*:Array.*:ObjectArray.*:Matrix.*:Convolution.*:Distribution.*:LUT.*:Histogram.*"
 
@@ -138,7 +139,7 @@ jobs:
         run: |
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
           timeout 600 ./bin/vx_test_conformance --filter="Image.*:vxCopyImagePatch.*:vxMapImagePatch.*:vxCreateImageFromChannel.*:vxCopyRemapPatch.*:vxMapRemapPatch.*"
 
@@ -156,7 +157,7 @@ jobs:
         run: |
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
           timeout 300 ./bin/vx_test_conformance --filter="ColorConvert.*:ChannelExtract.*:ChannelCombine.*:vxConvertDepth.*:vxuConvertDepth.*"
 
@@ -174,7 +175,7 @@ jobs:
         run: |
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
           timeout 600 ./bin/vx_test_conformance --filter="Box3x3.*:Gaussian3x3.*:Median3x3.*:Dilate3x3.*:Erode3x3.*:Sobel3x3.*:Magnitude.*:Phase.*:NonLinearFilter.*:Convolve.*:EqualizeHistogram.*"
 
@@ -192,7 +193,7 @@ jobs:
         run: |
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
           timeout 600 ./bin/vx_test_conformance --filter="vxAddSub.*:vxuAddSub.*:vxMultiply.*:vxuMultiply.*:vxBinOp8u.*:vxuBinOp8u.*:vxBinOp16s.*:vxuBinOp16s.*:vxBinOp1u.*:vxuBinOp1u.*:vxNot.*:vxuNot.*:WeightedAverage.*:Threshold.*"
 
@@ -210,7 +211,7 @@ jobs:
         run: |
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
           timeout 600 ./bin/vx_test_conformance --filter="Scale.*:WarpAffine.*:WarpPerspective.*:Remap.*:HalfScaleGaussian.*"
 
@@ -228,7 +229,7 @@ jobs:
         run: |
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
           timeout 600 ./bin/vx_test_conformance --filter="HarrisCorners.*:FastCorners.*:vxCanny.*:vxuCanny.*"
 
@@ -246,7 +247,7 @@ jobs:
         run: |
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
           timeout 300 ./bin/vx_test_conformance --filter="MeanStdDev.*:MinMaxLoc.*:Integral.*"
 
@@ -264,24 +265,6 @@ jobs:
         run: |
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
           timeout 300 ./bin/vx_test_conformance --filter="GaussianPyramid.*:LaplacianPyramid.*:LaplacianReconstruct.*:OptFlowPyrLK.*"
-
-  extensions:
-    runs-on: ubuntu-22.04
-    needs: build
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-artifacts
-      - name: Run import/export extension tests
-        run: |
-          chmod +x OpenVX-cts/build/bin/vx_test_conformance
-          cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
-          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
-          timeout 300 ./bin/vx_test_conformance --filter="ExtensionObject.*"

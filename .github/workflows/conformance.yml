@@ -194,7 +194,7 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
-          timeout 600 ./bin/vx_test_conformance --filter="vxAddSub.*:vxuAddSub.*:vxMultiply.*:vxuMultiply.*:vxBinOp8u.*:vxuBinOp8u.*:vxBinOp16s.*:vxuBinOp16s.*:vxNot.*:vxuNot.*:WeightedAverage.*:Threshold.*"
+          timeout 600 ./bin/vx_test_conformance --filter="vxAddSub.*:vxuAddSub.*:vxMultiply.*:vxuMultiply.*:vxBinOp8u.*:vxuBinOp8u.*:vxBinOp16s.*:vxuBinOp16s.*:vxBinOp1u.*:vxuBinOp1u.*:vxNot.*:vxuNot.*:WeightedAverage.*:Threshold.*"
 
   vision-geometric:
     runs-on: ubuntu-22.04
@@ -267,3 +267,21 @@ jobs:
           export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
           timeout 300 ./bin/vx_test_conformance --filter="GaussianPyramid.*:LaplacianPyramid.*:LaplacianReconstruct.*:OptFlowPyrLK.*"
+
+  extensions:
+    runs-on: ubuntu-22.04
+    needs: build
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+      - name: Run import/export extension tests
+        run: |
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          timeout 300 ./bin/vx_test_conformance --filter="ExtensionObject.*"

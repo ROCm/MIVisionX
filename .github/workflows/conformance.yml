@@ -1,0 +1,269 @@
+# Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+name: AMD OpenVX Conformance Tests
+
+on:
+  push:
+    branches: [master, main, develop]
+  pull_request:
+    branches: [master, main, develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
+
+      - name: Build AMD OpenVX (CPU backend)
+        run: |
+          mkdir build && cd build
+          cmake .. -DGPU_SUPPORT=OFF
+          make -j$(nproc)
+
+      - name: Clone OpenVX CTS
+        run: |
+          git clone --depth 1 -b openvx_1.3 https://github.com/KhronosGroup/OpenVX-cts.git
+
+      - name: Build OpenVX CTS
+        run: |
+          cd OpenVX-cts
+          mkdir -p build && cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENVX_INCLUDES="${{ github.workspace }}/amd_openvx/openvx/include" \
+            -DOPENVX_LIBRARIES="${{ github.workspace }}/build/lib/libopenvx.so;${{ github.workspace }}/build/lib/libvxu.so;pthread;dl;m;rt" \
+            -DOPENVX_CONFORMANCE_VISION=ON
+          make -j$(nproc)
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            build/lib/
+            OpenVX-cts/build/bin/vx_test_conformance
+            OpenVX-cts/test_data/
+          retention-days: 1
+
+  baseline:
+    runs-on: ubuntu-22.04
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+      - name: Run baseline tests
+        run: |
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          timeout 300 ./bin/vx_test_conformance --filter="GraphBase.*:Logging.*:SmokeTestBase.*:SmokeTest.*:TargetBase.*:Target.*"
+
+  graph:
+    runs-on: ubuntu-22.04
+    needs: build
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+      - name: Run graph tests
+        run: |
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          timeout 600 ./bin/vx_test_conformance --filter="Graph.*:GraphCallback.*:GraphDelay.*:GraphROI.*:UserNode.*"
+
+  data-objects:
+    runs-on: ubuntu-22.04
+    needs: build
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+      - name: Run data object tests
+        run: |
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          timeout 300 ./bin/vx_test_conformance --filter="Scalar.*:Array.*:ObjectArray.*:Matrix.*:Convolution.*:Distribution.*:LUT.*:Histogram.*"
+
+  image-ops:
+    runs-on: ubuntu-22.04
+    needs: build
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+      - name: Run image operation tests
+        run: |
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          timeout 600 ./bin/vx_test_conformance --filter="Image.*:vxCopyImagePatch.*:vxMapImagePatch.*:vxCreateImageFromChannel.*:vxCopyRemapPatch.*:vxMapRemapPatch.*"
+
+  vision-color:
+    runs-on: ubuntu-22.04
+    needs: build
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+      - name: Run color and channel tests
+        run: |
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          timeout 300 ./bin/vx_test_conformance --filter="ColorConvert.*:ChannelExtract.*:ChannelCombine.*:vxConvertDepth.*:vxuConvertDepth.*"
+
+  vision-filters:
+    runs-on: ubuntu-22.04
+    needs: build
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+      - name: Run filter and morphology tests
+        run: |
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          timeout 600 ./bin/vx_test_conformance --filter="Box3x3.*:Gaussian3x3.*:Median3x3.*:Dilate3x3.*:Erode3x3.*:Sobel3x3.*:Magnitude.*:Phase.*:NonLinearFilter.*:Convolve.*:EqualizeHistogram.*"
+
+  vision-arithmetic:
+    runs-on: ubuntu-22.04
+    needs: build
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+      - name: Run arithmetic and bitwise tests
+        run: |
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          timeout 600 ./bin/vx_test_conformance --filter="vxAddSub.*:vxuAddSub.*:vxMultiply.*:vxuMultiply.*:vxBinOp8u.*:vxuBinOp8u.*:vxBinOp16s.*:vxuBinOp16s.*:vxNot.*:vxuNot.*:WeightedAverage.*:Threshold.*"
+
+  vision-geometric:
+    runs-on: ubuntu-22.04
+    needs: build
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+      - name: Run geometric transform tests
+        run: |
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          timeout 600 ./bin/vx_test_conformance --filter="Scale.*:WarpAffine.*:WarpPerspective.*:Remap.*:HalfScaleGaussian.*"
+
+  vision-features:
+    runs-on: ubuntu-22.04
+    needs: build
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+      - name: Run feature and edge detection tests
+        run: |
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          timeout 600 ./bin/vx_test_conformance --filter="HarrisCorners.*:FastCorners.*:vxCanny.*:vxuCanny.*"
+
+  vision-statistics:
+    runs-on: ubuntu-22.04
+    needs: build
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+      - name: Run statistics and analysis tests
+        run: |
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          timeout 300 ./bin/vx_test_conformance --filter="MeanStdDev.*:MinMaxLoc.*:Integral.*"
+
+  vision-pyramid:
+    runs-on: ubuntu-22.04
+    needs: build
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+      - name: Run pyramid and optical flow tests
+        run: |
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          timeout 300 ./bin/vx_test_conformance --filter="GaussianPyramid.*:LaplacianPyramid.*:LaplacianReconstruct.*:OptFlowPyrLK.*"

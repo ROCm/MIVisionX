@@ -229,6 +229,47 @@ jobs:
             --max-cv 5.0 \
             --summary-out "$GITHUB_STEP_SUMMARY"
 
+      - name: Post PR benchmark summary
+        if: always()
+        run: |
+          PR=${{ github.workspace }}/openvx-mark/build-pr/benchmark_results/benchmark_results.json
+          if [ ! -f "$PR" ]; then
+            echo "_No PR benchmark results found._" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          python3 - "$PR" >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import json, sys
+          with open(sys.argv[1]) as f:
+              report = json.load(f)
+          results = report.get("results", [])
+          if not results:
+              print("_No benchmark results._")
+              sys.exit(0)
+          print()
+          print("---")
+          print("## PR Benchmark Summary")
+          print()
+          si = report.get("system", {})
+          if si:
+              print(f'**Runner:** {si.get("cpu_model", "N/A")} '
+                    f'({si.get("cpu_cores", "?")} cores, '
+                    f'{si.get("ram_gb", "?")} GB RAM)')
+              print()
+          print("| Kernel | Mode | Res | MP/s | Median (ms) | CV% | Verified |")
+          print("|:---|---|---|---:|---:|---:|:---:|")
+          for r in sorted(results, key=lambda x: x.get("name", "")):
+              wc = r.get("wall_clock", {}) or {}
+              v = "PASS" if r.get("verified", False) else "FAIL"
+              print(f'| `{r.get("name","")}` '
+                    f'| {r.get("mode","")} '
+                    f'| {r.get("resolution","")} '
+                    f'| {r.get("megapixels_per_sec", 0):.2f} '
+                    f'| {wc.get("median_ms", 0):.3f} '
+                    f'| {wc.get("cv_percent", 0):.2f} '
+                    f'| {v} |')
+          print()
+          PY
+
       - name: Upload PR benchmark results
         if: always()
         uses: actions/upload-artifact@v4

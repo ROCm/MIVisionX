@@ -23,8 +23,14 @@ name: AMD OpenVX Conformance Tests
 on:
   push:
     branches: [master, main, develop]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   pull_request:
     branches: [master, main, develop]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
 
 jobs:
   build:
@@ -71,6 +77,214 @@ jobs:
             OpenVX-cts/build/lib/
             OpenVX-cts/test_data/
           retention-days: 1
+
+  # Build AMD OpenVX from the merge-target branch (main/develop) in its
+  # own job, in parallel with the PR's `build` job. The downstream
+  # `perf-gate` job pulls both archives onto a single runner so the
+  # PR-vs-main bench comparison runs on identical hardware.
+  #
+  # Skipped on push events (no merge target to diff against).
+  build-main:
+    name: Build AMD OpenVX (main)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout merge target ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
+
+      - name: Build AMD OpenVX (CPU backend)
+        run: |
+          mkdir build && cd build
+          cmake .. -DGPU_SUPPORT=OFF
+          make -j$(nproc)
+
+      - name: Upload main build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-main
+          path: |
+            build/lib/
+            amd_openvx/openvx/include/
+          retention-days: 1
+
+  # ---------------------------------------------------------------------------
+  # Perf gate (PR AMD OpenVX vs main AMD OpenVX)
+  #
+  # Downloads the two AMD OpenVX build archives produced in parallel by
+  # `build` (PR) and `build-main` (merge target), builds openvx-mark
+  # against each, runs both benchmarks back-to-back on the same runner
+  # VM, and compares results with `.github/scripts/perf_gate.py`.
+  # Same-VM bench is the whole point — hardware variance between
+  # separate runs would swamp any real regression.
+  #
+  # Threshold rationale (see `.github/scripts/perf_gate.py`):
+  #   * --geomean-floor 0.95  -> aggregate move > 5% slower fails
+  #   * --kernel-floor  0.90  -> single-kernel hard fail > 10% regression
+  #   * --warn-floor    0.95  -> soft-warn band [0.90, 0.95)
+  #   * --max-cv        5.0   -> auto-skip noisy kernels
+  #
+  # Trigger: pull_request only.
+  # ---------------------------------------------------------------------------
+  perf-gate:
+    name: Perf gate (PR vs main)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-22.04
+    needs:
+      - build
+      - build-main
+    steps:
+      - name: Checkout repo (for perf_gate.py script)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake git python3
+
+      - name: Download PR build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: ${{ github.workspace }}/pr-pkg
+
+      - name: Download main build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-main
+          path: ${{ github.workspace }}/main-pkg
+
+      - name: Clone openvx-mark
+        run: |
+          git clone --depth 1 https://github.com/kiritigowda/openvx-mark.git \
+            ${{ github.workspace }}/openvx-mark
+
+      - name: Build openvx-mark against PR
+        run: |
+          mkdir -p ${{ github.workspace }}/openvx-mark/build-pr
+          cd ${{ github.workspace }}/openvx-mark/build-pr
+          cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DOPENVX_INCLUDES=${{ github.workspace }}/amd_openvx/openvx/include \
+            -DOPENVX_LIB_DIR=${{ github.workspace }}/pr-pkg/build/lib \
+            ..
+          cmake --build . -j$(nproc)
+
+      - name: Build openvx-mark against main
+        run: |
+          mkdir -p ${{ github.workspace }}/openvx-mark/build-main
+          cd ${{ github.workspace }}/openvx-mark/build-main
+          cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DOPENVX_INCLUDES=${{ github.workspace }}/main-pkg/amd_openvx/openvx/include \
+            -DOPENVX_LIB_DIR=${{ github.workspace }}/main-pkg/build/lib \
+            ..
+          cmake --build . -j$(nproc)
+
+      - name: Bench PR (warmup + measure)
+        run: |
+          cd ${{ github.workspace }}/openvx-mark/build-pr
+          export LD_LIBRARY_PATH=${{ github.workspace }}/pr-pkg/build/lib
+          # Warmup: prime caches
+          ./openvx-mark --resolution FHD --iterations 5 --warmup 0 \
+            --output /tmp/warmup-pr-throwaway >/dev/null 2>&1 || true
+          # Real measurement
+          ./openvx-mark --resolution FHD --iterations 20 --warmup 5
+
+      - name: Bench main (warmup + measure)
+        run: |
+          cd ${{ github.workspace }}/openvx-mark/build-main
+          export LD_LIBRARY_PATH=${{ github.workspace }}/main-pkg/build/lib
+          # Warmup: prime caches
+          ./openvx-mark --resolution FHD --iterations 5 --warmup 0 \
+            --output /tmp/warmup-main-throwaway >/dev/null 2>&1 || true
+          # Real measurement
+          ./openvx-mark --resolution FHD --iterations 20 --warmup 5
+
+      - name: Run perf gate
+        run: |
+          set -euo pipefail
+          PR=${{ github.workspace }}/openvx-mark/build-pr/benchmark_results/benchmark_results.json
+          MAIN=${{ github.workspace }}/openvx-mark/build-main/benchmark_results/benchmark_results.json
+          if [ ! -f "$PR" ] || [ ! -f "$MAIN" ]; then
+            echo "::error::Missing benchmark JSONs (PR=$PR, MAIN=$MAIN)."
+            ls -la "$(dirname "$PR")" "$(dirname "$MAIN")" 2>/dev/null || true
+            exit 1
+          fi
+
+          python3 ${{ github.workspace }}/.github/scripts/perf_gate.py \
+            "$MAIN" "$PR" \
+            --geomean-floor 0.95 \
+            --kernel-floor 0.90 \
+            --warn-floor 0.95 \
+            --max-cv 5.0 \
+            --summary-out "$GITHUB_STEP_SUMMARY"
+
+      - name: Post PR benchmark summary
+        if: always()
+        run: |
+          PR=${{ github.workspace }}/openvx-mark/build-pr/benchmark_results/benchmark_results.json
+          if [ ! -f "$PR" ]; then
+            echo "_No PR benchmark results found._" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          python3 - "$PR" >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import json, sys
+          with open(sys.argv[1]) as f:
+              report = json.load(f)
+          results = report.get("results", [])
+          if not results:
+              print("_No benchmark results._")
+              sys.exit(0)
+          print()
+          print("---")
+          print("## PR Benchmark Summary")
+          print()
+          si = report.get("system", {})
+          if si:
+              print(f'**Runner:** {si.get("cpu_model", "N/A")} '
+                    f'({si.get("cpu_cores", "?")} cores, '
+                    f'{si.get("ram_gb", "?")} GB RAM)')
+              print()
+          print("| Kernel | Mode | Res | MP/s | Median (ms) | CV% | Verified |")
+          print("|:---|---|---|---:|---:|---:|:---:|")
+          for r in sorted(results, key=lambda x: x.get("name", "")):
+              wc = r.get("wall_clock", {}) or {}
+              v = "PASS" if r.get("verified", False) else "FAIL"
+              print(f'| `{r.get("name","")}` '
+                    f'| {r.get("mode","")} '
+                    f'| {r.get("resolution","")} '
+                    f'| {r.get("megapixels_per_sec", 0):.2f} '
+                    f'| {wc.get("median_ms", 0):.3f} '
+                    f'| {wc.get("cv_percent", 0):.2f} '
+                    f'| {v} |')
+          print()
+          PY
+
+      - name: Upload PR benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-gate-results-pr
+          path: ${{ github.workspace }}/openvx-mark/build-pr/benchmark_results/
+          if-no-files-found: ignore
+
+      - name: Upload main benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-gate-results-main
+          path: ${{ github.workspace }}/openvx-mark/build-main/benchmark_results/
+          if-no-files-found: ignore
 
   baseline:
     runs-on: ubuntu-22.04

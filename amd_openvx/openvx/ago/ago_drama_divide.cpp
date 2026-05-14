@@ -29,8 +29,10 @@ THE SOFTWARE.
 int agoDramaDivideAppend(AgoNodeList * nodeList, AgoNode * anode, vx_enum new_kernel_id, vx_reference * paramList, vx_uint32 paramCount)
 {
 	if (new_kernel_id == VX_KERNEL_AMD_INVALID) {
-		// TBD: error handling
-		agoAddLogEntry(&anode->akernel->ref, VX_FAILURE, "ERROR: agoDramaDivideAppend(*,0x%08x[%s],INVALID) not implemented\n", anode->akernel->id, anode->akernel->name);
+		// TODO: implement drama divide for remaining kernels (scale_image, warp_affine, warp_perspective, remap)
+#ifndef NDEBUG
+		agoAddLogEntry(&anode->akernel->ref, VX_FAILURE, "DEBUG: agoDramaDivideAppend(*,0x%08x[%s],INVALID) not implemented\n", anode->akernel->id, anode->akernel->name);
+#endif
 		return -1;
 	}
 	// create a new AgoNode and add it to the nodeList
@@ -2172,8 +2174,10 @@ int agoOptimizeDramaDivide(AgoGraph * agraph)
 				anode = next;
 			}
 			else {
-				// TBD: error handling
-				agoAddLogEntry(&anode->akernel->ref, VX_FAILURE, "ERROR: agoOptimizeDramaDivide: failed for node %s (not implemented yet)\n", anode->akernel->name);
+				// TODO: implement drama divide optimization for unsupported node types to eliminate fallback path
+#ifndef NDEBUG
+				agoAddLogEntry(&anode->akernel->ref, VX_FAILURE, "DEBUG: agoOptimizeDramaDivide: skipped for node %s (not implemented yet)\n", anode->akernel->name);
+#endif
 				astatus = -1;
 				// advance to next node, since node divide failed
 				aprev = anode;

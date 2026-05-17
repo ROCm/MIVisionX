@@ -1,0 +1,4 @@
+# Exercise postfix in ColorConvert_Y_RGBX
+data output = image:1277,719,U008
+data input = image:1277,719,RGBA
+node com.amd.openvx.ColorConvert_Y_RGBX output input

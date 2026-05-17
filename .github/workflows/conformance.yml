@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-name: AMD OpenVX Conformance Tests
+name: AMD OpenVX CI
 
 on:
   push:
@@ -33,6 +33,11 @@ on:
       - 'docs/**'
 
 jobs:
+  # ===========================================================================
+  # Build Stage — three builds run in parallel
+  # ===========================================================================
+
+  # Release build of the PR (or push) branch — used by perf-gate
   build:
     runs-on: ubuntu-22.04
     steps:
@@ -45,45 +50,20 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential cmake
 
-      - name: Build AMD OpenVX (CPU backend)
+      - name: Build AMD OpenVX (CPU backend, Release)
         run: |
           mkdir build && cd build
           cmake .. -DGPU_SUPPORT=OFF
-          make -j$(nproc)
-
-      - name: Clone OpenVX CTS
-        run: |
-          git clone --depth 1 -b openvx_1.3 https://github.com/KhronosGroup/OpenVX-cts.git
-
-      - name: Build OpenVX CTS
-        run: |
-          cd OpenVX-cts
-          mkdir -p build && cd build
-          cmake .. \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-            -DOPENVX_INCLUDES="${{ github.workspace }}/amd_openvx/openvx/include" \
-            -DOPENVX_LIBRARIES="${{ github.workspace }}/build/lib/libopenvx.so;${{ github.workspace }}/build/lib/libvxu.so;pthread;dl;m;rt" \
-            -DOPENVX_CONFORMANCE_VISION=ON
           make -j$(nproc)
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
-          path: |
-            build/lib/
-            OpenVX-cts/build/bin/vx_test_conformance
-            OpenVX-cts/build/lib/
-            OpenVX-cts/test_data/
+          path: build/lib/
           retention-days: 1
 
-  # Build AMD OpenVX from the merge-target branch (main/develop) in its
-  # own job, in parallel with the PR's `build` job. The downstream
-  # `perf-gate` job pulls both archives onto a single runner so the
-  # PR-vs-main bench comparison runs on identical hardware.
-  #
-  # Skipped on push events (no merge target to diff against).
+  # Release build of the merge-target branch — used by perf-gate (PR only)
   build-main:
     name: Build AMD OpenVX (main)
     if: github.event_name == 'pull_request'
@@ -115,24 +95,86 @@ jobs:
             amd_openvx/openvx/include/
           retention-days: 1
 
-  # ---------------------------------------------------------------------------
-  # Perf gate (PR AMD OpenVX vs main AMD OpenVX)
-  #
-  # Downloads the two AMD OpenVX build archives produced in parallel by
-  # `build` (PR) and `build-main` (merge target), builds openvx-mark
-  # against each, runs both benchmarks back-to-back on the same runner
-  # VM, and compares results with `.github/scripts/perf_gate.py`.
-  # Same-VM bench is the whole point — hardware variance between
-  # separate runs would swamp any real regression.
-  #
-  # Threshold rationale (see `.github/scripts/perf_gate.py`):
-  #   * --geomean-floor 0.95  -> aggregate move > 5% slower fails
-  #   * --kernel-floor  0.90  -> single-kernel hard fail > 10% regression
-  #   * --warn-floor    0.95  -> soft-warn band [0.90, 0.95)
-  #   * --max-cv        5.0   -> auto-skip noisy kernels
-  #
-  # Trigger: pull_request only.
-  # ---------------------------------------------------------------------------
+  # Debug build with LLVM code-coverage instrumentation — used by all tests
+  build-debug:
+    name: Build AMD OpenVX (Debug + Coverage)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake python3 clang llvm
+
+      - name: Build and install AMD OpenVX (Debug + Coverage)
+        env:
+          INSTALL_PREFIX: ${{ github.workspace }}/install
+        run: |
+          mkdir build && cd build
+          cmake .. \
+            -DGPU_SUPPORT=OFF \
+            -DCODE_COVERAGE=ON \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX"
+          make -j$(nproc)
+          make install
+
+      - name: Build API tests
+        env:
+          INSTALL_PREFIX: ${{ github.workspace }}/install
+        run: |
+          API_TESTS=(
+            canny channel_extract color_convert accumulate
+            graph graph_api tensor_api data_objects user_kernel
+            tensor_advanced threshold_query graph_import vxu_api
+            coverage_boost
+          )
+          for test_dir in "${API_TESTS[@]}"; do
+            echo "::group::Building ${test_dir}"
+            mkdir -p build/api_tests/${test_dir}
+            cmake -S tests/openvx_api_tests/${test_dir} \
+                  -B build/api_tests/${test_dir} \
+                  -DROCM_PATH="$INSTALL_PREFIX"
+            cmake --build build/api_tests/${test_dir} -j$(nproc)
+            echo "::endgroup::"
+          done
+
+      - name: Clone and build OpenVX CTS
+        env:
+          INSTALL_PREFIX: ${{ github.workspace }}/install
+        run: |
+          git clone --depth 1 -b openvx_1.3 https://github.com/KhronosGroup/OpenVX-cts.git
+          cd OpenVX-cts
+          mkdir -p build && cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENVX_INCLUDES="${{ github.workspace }}/amd_openvx/openvx/include" \
+            -DOPENVX_LIBRARIES="${INSTALL_PREFIX}/lib/libopenvx.so;${INSTALL_PREFIX}/lib/libvxu.so;pthread;dl;m;rt" \
+            -DOPENVX_CONFORMANCE_VISION=ON
+          make -j$(nproc)
+
+      - name: Upload debug build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-debug
+          path: |
+            install/
+            build/api_tests/
+            OpenVX-cts/build/bin/vx_test_conformance
+            OpenVX-cts/build/lib/
+            OpenVX-cts/test_data/
+          retention-days: 1
+
+  # ===========================================================================
+  # Performance Stage — release builds only (PR only)
+  # ===========================================================================
+
   perf-gate:
     name: Perf gate (PR vs main)
     if: github.event_name == 'pull_request'
@@ -286,199 +328,511 @@ jobs:
           path: ${{ github.workspace }}/openvx-mark/build-main/benchmark_results/
           if-no-files-found: ignore
 
+  # ===========================================================================
+  # Test Stage — all jobs run in parallel against the debug+coverage build.
+  # Each job uploads profraw files for the coverage-summary job.
+  # ===========================================================================
+
+  # --- CTS Tests ---
+
   baseline:
     runs-on: ubuntu-22.04
-    needs: build
+    needs: build-debug
     steps:
       - uses: actions/checkout@v4
-      - name: Download build artifacts
+      - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts
+          name: build-artifacts-debug
       - name: Run baseline tests
         run: |
+          mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/baseline_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="GraphBase.*:Logging.*:SmokeTestBase.*:SmokeTest.*:TargetBase.*:Target.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-baseline
+          path: profraw/
+          if-no-files-found: ignore
 
   graph:
     runs-on: ubuntu-22.04
-    needs: build
+    needs: build-debug
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: Download build artifacts
+      - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts
+          name: build-artifacts-debug
       - name: Run graph tests
         run: |
+          mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/graph_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="Graph.*:GraphCallback.*:GraphDelay.*:GraphROI.*:UserNode.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-graph
+          path: profraw/
+          if-no-files-found: ignore
 
   data-objects:
     runs-on: ubuntu-22.04
-    needs: build
+    needs: build-debug
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: Download build artifacts
+      - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts
+          name: build-artifacts-debug
       - name: Run data object tests
         run: |
+          mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/data_objects_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="Scalar.*:Array.*:ObjectArray.*:Matrix.*:Convolution.*:Distribution.*:LUT.*:Histogram.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-data-objects
+          path: profraw/
+          if-no-files-found: ignore
 
   image-ops:
     runs-on: ubuntu-22.04
-    needs: build
+    needs: build-debug
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: Download build artifacts
+      - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts
+          name: build-artifacts-debug
       - name: Run image operation tests
         run: |
+          mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/image_ops_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="Image.*:vxCopyImagePatch.*:vxMapImagePatch.*:vxCreateImageFromChannel.*:vxCopyRemapPatch.*:vxMapRemapPatch.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-image-ops
+          path: profraw/
+          if-no-files-found: ignore
 
   vision-color:
     runs-on: ubuntu-22.04
-    needs: build
+    needs: build-debug
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: Download build artifacts
+      - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts
+          name: build-artifacts-debug
       - name: Run color and channel tests
         run: |
+          mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_color_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="ColorConvert.*:ChannelExtract.*:ChannelCombine.*:vxConvertDepth.*:vxuConvertDepth.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-vision-color
+          path: profraw/
+          if-no-files-found: ignore
 
   vision-filters:
     runs-on: ubuntu-22.04
-    needs: build
+    needs: build-debug
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: Download build artifacts
+      - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts
+          name: build-artifacts-debug
       - name: Run filter and morphology tests
         run: |
+          mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_filters_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="Box3x3.*:Gaussian3x3.*:Median3x3.*:Dilate3x3.*:Erode3x3.*:Sobel3x3.*:Magnitude.*:Phase.*:NonLinearFilter.*:Convolve.*:EqualizeHistogram.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-vision-filters
+          path: profraw/
+          if-no-files-found: ignore
 
   vision-arithmetic:
     runs-on: ubuntu-22.04
-    needs: build
+    needs: build-debug
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: Download build artifacts
+      - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts
+          name: build-artifacts-debug
       - name: Run arithmetic and bitwise tests
         run: |
+          mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_arithmetic_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="vxAddSub.*:vxuAddSub.*:vxMultiply.*:vxuMultiply.*:vxBinOp8u.*:vxuBinOp8u.*:vxBinOp16s.*:vxuBinOp16s.*:vxBinOp1u.*:vxuBinOp1u.*:vxNot.*:vxuNot.*:WeightedAverage.*:Threshold.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-vision-arithmetic
+          path: profraw/
+          if-no-files-found: ignore
 
   vision-geometric:
     runs-on: ubuntu-22.04
-    needs: build
+    needs: build-debug
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: Download build artifacts
+      - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts
+          name: build-artifacts-debug
       - name: Run geometric transform tests
         run: |
+          mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_geometric_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="Scale.*:WarpAffine.*:WarpPerspective.*:Remap.*:HalfScaleGaussian.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-vision-geometric
+          path: profraw/
+          if-no-files-found: ignore
 
   vision-features:
     runs-on: ubuntu-22.04
-    needs: build
+    needs: build-debug
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: Download build artifacts
+      - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts
+          name: build-artifacts-debug
       - name: Run feature and edge detection tests
         run: |
+          mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_features_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="HarrisCorners.*:FastCorners.*:vxCanny.*:vxuCanny.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-vision-features
+          path: profraw/
+          if-no-files-found: ignore
 
   vision-statistics:
     runs-on: ubuntu-22.04
-    needs: build
+    needs: build-debug
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: Download build artifacts
+      - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts
+          name: build-artifacts-debug
       - name: Run statistics and analysis tests
         run: |
+          mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_statistics_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="MeanStdDev.*:MinMaxLoc.*:Integral.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-vision-statistics
+          path: profraw/
+          if-no-files-found: ignore
 
   vision-pyramid:
     runs-on: ubuntu-22.04
-    needs: build
+    needs: build-debug
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: Download build artifacts
+      - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts
+          name: build-artifacts-debug
       - name: Run pyramid and optical flow tests
         run: |
+          mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/build/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_pyramid_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="GaussianPyramid.*:LaplacianPyramid.*:LaplacianReconstruct.*:OptFlowPyrLK.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-vision-pyramid
+          path: profraw/
+          if-no-files-found: ignore
+
+  # --- Local Tests (API + GDF) ---
+
+  api-tests:
+    name: API tests
+    runs-on: ubuntu-22.04
+    needs: build-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run API tests
+        run: |
+          mkdir -p profraw
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib
+          export AGO_DEFAULT_TARGET=CPU
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/api_%p.profraw
+
+          API_EXECUTABLES=(
+            "canny:openvx_canny"
+            "channel_extract:openvx_channel_extract"
+            "color_convert:openvx_color_convert"
+            "accumulate:openvx_accum"
+            "graph:openvx_graph"
+            "graph_api:openvx_graph_api"
+            "tensor_api:openvx_tensor_api"
+            "data_objects:openvx_data_objects_api"
+            "user_kernel:openvx_user_kernel_api"
+            "tensor_advanced:openvx_tensor_advanced_api"
+            "threshold_query:openvx_threshold_query_api"
+            "graph_import:openvx_graph_import_api"
+            "vxu_api:openvx_vxu_api"
+            "coverage_boost:openvx_coverage_boost"
+          )
+          for entry in "${API_EXECUTABLES[@]}"; do
+            dir="${entry%%:*}"
+            exe="${entry##*:}"
+            echo "::group::Running ${exe}"
+            chmod +x build/api_tests/${dir}/${exe}
+            ./build/api_tests/${dir}/${exe} || echo "::warning::${exe} exited with non-zero status"
+            echo "::endgroup::"
+          done
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-api-tests
+          path: profraw/
+          if-no-files-found: ignore
+
+  gdf-tests:
+    name: GDF tests
+    runs-on: ubuntu-22.04
+    needs: build-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run GDF tests
+        run: |
+          mkdir -p profraw
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib
+          export AGO_DEFAULT_TARGET=CPU
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/gdf_%p.profraw
+          chmod +x install/bin/runvx
+          python3 tests/amd_openvx_gdfs/runOpenVX.py \
+            --runvx_directory ${{ github.workspace }}/install/bin \
+            --num_frames 10 \
+            --backend_type CPU \
+            --hidden no
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-gdf-tests
+          path: profraw/
+          if-no-files-found: ignore
+
+  # ===========================================================================
+  # Coverage Stage — merge all profraw and generate report
+  # ===========================================================================
+
+  coverage-summary:
+    name: Code coverage summary
+    runs-on: ubuntu-22.04
+    if: always() && needs.build-debug.result == 'success'
+    needs:
+      - build-debug
+      - baseline
+      - graph
+      - data-objects
+      - image-ops
+      - vision-color
+      - vision-filters
+      - vision-arithmetic
+      - vision-geometric
+      - vision-features
+      - vision-statistics
+      - vision-pyramid
+      - api-tests
+      - gdf-tests
+    steps:
+      - name: Install LLVM tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm
+
+      - name: Download debug build (for libopenvx.so)
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+
+      - name: Download all profraw artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: profraw-*
+          path: all-profraw
+          merge-multiple: true
+
+      - name: Merge profraw files
+        run: |
+          echo "Profraw files found:"
+          find all-profraw -name '*.profraw' -type f | head -50
+          PROFRAW_COUNT=$(find all-profraw -name '*.profraw' -type f | wc -l)
+          echo "Total profraw files: ${PROFRAW_COUNT}"
+          if [ "$PROFRAW_COUNT" -eq 0 ]; then
+            echo "::error::No profraw files found — no coverage data collected"
+            echo "## Code Coverage" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "No profraw files were collected from test jobs." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          find all-profraw -name '*.profraw' -type f -print0 \
+            | xargs -0 llvm-profdata merge -sparse -o coverage.profdata
+
+      - name: Generate coverage report
+        run: |
+          LIBOPENVX="${{ github.workspace }}/install/lib/libopenvx.so"
+          PROFDATA="${{ github.workspace }}/coverage.profdata"
+
+          # Generate summary report
+          llvm-cov report "${LIBOPENVX}" \
+            -instr-profile="${PROFDATA}" \
+            -ignore-filename-regex='(test|conformance)' \
+            | tee coverage_report.txt
+
+          # Generate LCOV export
+          llvm-cov export "${LIBOPENVX}" \
+            -instr-profile="${PROFDATA}" \
+            -format=lcov \
+            -ignore-filename-regex='(test|conformance)' \
+            > coverage.lcov
+
+          # Generate HTML report
+          llvm-cov show "${LIBOPENVX}" \
+            -instr-profile="${PROFDATA}" \
+            -format=html \
+            -output-dir=coverage_html \
+            -ignore-filename-regex='(test|conformance)'
+
+      - name: Post coverage summary
+        if: always()
+        run: |
+          if [ ! -f coverage_report.txt ]; then
+            echo "## Code Coverage" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Coverage report generation failed." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          echo "## AMD OpenVX Code Coverage Report" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          # Extract the totals line for a quick overview
+          TOTALS=$(tail -1 coverage_report.txt)
+          echo "**Overall:** ${TOTALS}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          # Full file-level breakdown
+          echo "<details>" >> "$GITHUB_STEP_SUMMARY"
+          echo "<summary>Full coverage report (click to expand)</summary>" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat coverage_report.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "</details>" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-report
+          path: |
+            coverage.profdata
+            coverage_report.txt
+            coverage.lcov
+            coverage_html/
+          retention-days: 30
+          if-no-files-found: ignore

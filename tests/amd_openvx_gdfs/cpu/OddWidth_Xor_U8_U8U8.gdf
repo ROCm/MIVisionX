@@ -1,0 +1,5 @@
+# Exercise postfix scalar loops in Xor
+data input_1 = uniform-image:1277,719,U008,0xAA
+data input_2 = uniform-image:1277,719,U008,0x55
+data output_1 = image:1277,719,U008
+node org.khronos.openvx.xor input_1 input_2 output_1

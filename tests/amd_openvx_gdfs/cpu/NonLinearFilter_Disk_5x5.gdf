@@ -1,0 +1,6 @@
+# Exercise NonLinearFilter with disk pattern
+data input = image:640,480,U008
+data output = image:640,480,U008
+data mask = matrix:UINT8,5,5
+data pattern = scalar:ENUM,VX_PATTERN_DISK
+node org.khronos.openvx.non_linear_filter pattern input mask output

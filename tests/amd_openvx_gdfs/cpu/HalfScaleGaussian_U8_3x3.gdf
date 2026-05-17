@@ -1,0 +1,5 @@
+# Exercise Half Scale Gaussian 3x3
+data input = uniform-image:640,480,U008,128
+data output = image:320,240,U008
+data kernel_size = scalar:INT32,3
+node org.khronos.openvx.halfscale_gaussian input output kernel_size

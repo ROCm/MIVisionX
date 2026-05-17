@@ -1,0 +1,5 @@
+# agoKernel_ThresholdNot_U1_U8_Binary
+data input = image:480,360,U008
+data output = image:480,360,U001
+data value = threshold:BINARY,U008,U008:INIT,127
+node com.amd.openvx.ThresholdNot_U1_U8_Binary output input value

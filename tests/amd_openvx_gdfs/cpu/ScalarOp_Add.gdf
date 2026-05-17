@@ -1,6 +1,0 @@
-# Exercise Scalar Operation Add
-data s1 = scalar:INT32,10
-data s2 = scalar:INT32,5
-data result = scalar:INT32,0
-data op = scalar:ENUM,VX_SCALAR_OP_ADD
-node org.khronos.openvx.scalar_operation op s1 s2 result

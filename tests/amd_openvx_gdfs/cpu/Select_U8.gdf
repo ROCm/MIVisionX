@@ -1,6 +1,0 @@
-# Exercise Select node - select between two images based on boolean scalar
-data input1 = image:640,480,U008
-data input2 = image:640,480,U008
-data output = image:640,480,U008
-data condition = scalar:BOOL,1
-node org.khronos.openvx.select condition input1 input2 output

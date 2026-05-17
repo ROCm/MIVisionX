@@ -740,6 +740,8 @@ jobs:
       - api-tests
       - gdf-tests
     steps:
+      - uses: actions/checkout@v4
+
       - name: Install LLVM tools
         run: |
           sudo apt-get update
@@ -778,11 +780,18 @@ jobs:
           LIBOPENVX="${{ github.workspace }}/install/lib/libopenvx.so"
           PROFDATA="${{ github.workspace }}/coverage.profdata"
 
-          # Generate summary report
+          # Generate text report
           llvm-cov report "${LIBOPENVX}" \
             -instr-profile="${PROFDATA}" \
             -ignore-filename-regex='(test|conformance)' \
             | tee coverage_report.txt
+
+          # Generate JSON export (for structured summary)
+          llvm-cov export "${LIBOPENVX}" \
+            -instr-profile="${PROFDATA}" \
+            -format=text \
+            -ignore-filename-regex='(test|conformance)' \
+            > coverage.json
 
           # Generate LCOV export
           llvm-cov export "${LIBOPENVX}" \
@@ -791,40 +800,158 @@ jobs:
             -ignore-filename-regex='(test|conformance)' \
             > coverage.lcov
 
-          # Generate HTML report
+          # Generate HTML report (source files available via checkout)
           llvm-cov show "${LIBOPENVX}" \
             -instr-profile="${PROFDATA}" \
             -format=html \
             -output-dir=coverage_html \
-            -ignore-filename-regex='(test|conformance)'
+            -ignore-filename-regex='(test|conformance)' \
+            2>/dev/null || echo "::warning::HTML report generation had errors (missing source files)"
 
       - name: Post coverage summary
         if: always()
         run: |
-          if [ ! -f coverage_report.txt ]; then
-            echo "## Code Coverage" >> "$GITHUB_STEP_SUMMARY"
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "Coverage report generation failed." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
+          python3 - "$GITHUB_STEP_SUMMARY" <<'PYEOF'
+          import json, sys, os
 
-          echo "## AMD OpenVX Code Coverage Report" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
+          summary_file = sys.argv[1]
 
-          # Extract the totals line for a quick overview
-          TOTALS=$(tail -1 coverage_report.txt)
-          echo "**Overall:** ${TOTALS}" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
+          # Try JSON export first (structured data), fall back to text report
+          json_path = "coverage.json"
+          text_path = "coverage_report.txt"
 
-          # Full file-level breakdown
-          echo "<details>" >> "$GITHUB_STEP_SUMMARY"
-          echo "<summary>Full coverage report (click to expand)</summary>" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          cat coverage_report.txt >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "</details>" >> "$GITHUB_STEP_SUMMARY"
+          if not os.path.exists(json_path) and not os.path.exists(text_path):
+              with open(summary_file, "a") as f:
+                  f.write("## AMD OpenVX Code Coverage\n\n")
+                  f.write("Coverage report generation failed.\n")
+              sys.exit(0)
+
+          # Parse JSON export for structured data
+          if os.path.exists(json_path):
+              with open(json_path) as f:
+                  data = json.load(f)
+
+              totals = data.get("data", [{}])[0].get("totals", {})
+              files = data.get("data", [{}])[0].get("files", [])
+
+              lines = totals.get("lines", {})
+              funcs = totals.get("functions", {})
+              branches = totals.get("branches", {})
+              regions = totals.get("regions", {})
+
+              line_pct = lines.get("percent", 0)
+              func_pct = funcs.get("percent", 0)
+              branch_pct = branches.get("percent", 0)
+              region_pct = regions.get("percent", 0)
+
+              line_covered = lines.get("covered", 0)
+              line_total = lines.get("count", 0)
+              func_covered = funcs.get("covered", 0)
+              func_total = funcs.get("count", 0)
+              branch_covered = branches.get("covered", 0)
+              branch_total = branches.get("count", 0)
+
+              out = []
+
+              # -- Header --
+              out.append("## AMD OpenVX Code Coverage Report")
+              out.append("")
+
+              # -- Overview metrics --
+              out.append("### Overall Summary")
+              out.append("")
+              out.append("| Metric | Covered | Total | Coverage |")
+              out.append("|:-------|--------:|------:|---------:|")
+              out.append(f"| Lines | {line_covered:,} | {line_total:,} | **{line_pct:.2f}%** |")
+              out.append(f"| Functions | {func_covered:,} | {func_total:,} | **{func_pct:.2f}%** |")
+              out.append(f"| Branches | {branch_covered:,} | {branch_total:,} | **{branch_pct:.2f}%** |")
+              out.append(f"| Regions | {regions.get('covered', 0):,} | {regions.get('count', 0):,} | **{region_pct:.2f}%** |")
+              out.append("")
+
+              # -- Per-file breakdown --
+              # Group files by directory (ago/, api/, etc.)
+              file_data = []
+              for fobj in files:
+                  fname = fobj.get("filename", "")
+                  # Strip workspace prefix to get relative path
+                  for prefix in ["/home/runner/work/MIVisionX/MIVisionX/amd_openvx/openvx/",
+                                 "amd_openvx/openvx/"]:
+                      if fname.startswith(prefix):
+                          fname = fname[len(prefix):]
+                          break
+
+                  fl = fobj.get("summary", {}).get("lines", {})
+                  ff = fobj.get("summary", {}).get("functions", {})
+                  fb = fobj.get("summary", {}).get("branches", {})
+
+                  # Skip header-only files with no executable lines
+                  if fl.get("count", 0) == 0 and ff.get("count", 0) == 0:
+                      continue
+
+                  file_data.append({
+                      "name": fname,
+                      "lines_covered": fl.get("covered", 0),
+                      "lines_total": fl.get("count", 0),
+                      "lines_pct": fl.get("percent", 0),
+                      "funcs_covered": ff.get("covered", 0),
+                      "funcs_total": ff.get("count", 0),
+                      "funcs_pct": ff.get("percent", 0),
+                      "branches_covered": fb.get("covered", 0),
+                      "branches_total": fb.get("count", 0),
+                      "branches_pct": fb.get("percent", 0),
+                  })
+
+              # Sort by file path
+              file_data.sort(key=lambda x: x["name"])
+
+              # Group by directory
+              groups = {}
+              for fd in file_data:
+                  parts = fd["name"].split("/")
+                  group = parts[0] + "/" if len(parts) > 1 else ""
+                  groups.setdefault(group, []).append(fd)
+
+              out.append("### File Coverage Details")
+              out.append("")
+              out.append("| File | Lines | Line % | Functions | Func % | Branches | Branch % |")
+              out.append("|:-----|------:|-------:|----------:|-------:|---------:|---------:|")
+
+              for group_name in sorted(groups.keys()):
+                  group_files = groups[group_name]
+                  if group_name:
+                      # Group subtotals
+                      g_lc = sum(f["lines_covered"] for f in group_files)
+                      g_lt = sum(f["lines_total"] for f in group_files)
+                      g_fc = sum(f["funcs_covered"] for f in group_files)
+                      g_ft = sum(f["funcs_total"] for f in group_files)
+                      g_bc = sum(f["branches_covered"] for f in group_files)
+                      g_bt = sum(f["branches_total"] for f in group_files)
+                      g_lp = (g_lc / g_lt * 100) if g_lt > 0 else 0
+                      g_fp = (g_fc / g_ft * 100) if g_ft > 0 else 0
+                      g_bp = (g_bc / g_bt * 100) if g_bt > 0 else 0
+                      out.append(f"| **{group_name}** | **{g_lc}/{g_lt}** | **{g_lp:.1f}%** | **{g_fc}/{g_ft}** | **{g_fp:.1f}%** | **{g_bc}/{g_bt}** | **{g_bp:.1f}%** |")
+
+                  for fd in group_files:
+                      name = fd["name"]
+                      lc, lt, lp = fd["lines_covered"], fd["lines_total"], fd["lines_pct"]
+                      fc, ft, fp = fd["funcs_covered"], fd["funcs_total"], fd["funcs_pct"]
+                      bc, bt, bp = fd["branches_covered"], fd["branches_total"], fd["branches_pct"]
+                      out.append(f"| {name} | {lc}/{lt} | {lp:.1f}% | {fc}/{ft} | {fp:.1f}% | {bc}/{bt} | {bp:.1f}% |")
+
+              out.append("")
+
+              with open(summary_file, "a") as f:
+                  f.write("\n".join(out) + "\n")
+          else:
+              # Fallback: use text report
+              with open(text_path) as f:
+                  report_text = f.read()
+              with open(summary_file, "a") as f:
+                  f.write("## AMD OpenVX Code Coverage Report\n\n")
+                  f.write("```\n")
+                  f.write(report_text)
+                  f.write("```\n")
+          PYEOF
 
       - name: Upload coverage artifacts
         if: always()
@@ -834,6 +961,7 @@ jobs:
           path: |
             coverage.profdata
             coverage_report.txt
+            coverage.json
             coverage.lcov
             coverage_html/
           retention-days: 30

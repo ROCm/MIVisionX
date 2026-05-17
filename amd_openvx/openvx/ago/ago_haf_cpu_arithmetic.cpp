@@ -3863,9 +3863,9 @@ int HafCpu_Threshold_U1_U8_Binary
 			pixels = _mm_cmpgt_epi8(pixels, thresh);
 
 			// Convert U8 to U1
-#ifdef _WIN64
-			result[0] = _pext_u64(pixels.m128i_u64[0], maskConv);
-			result[1] = _pext_u64(pixels.m128i_u64[1], maskConv);
+#if defined(_WIN64) || defined(__x86_64__)
+			result[0] = _pext_u64(M128I(pixels).m128i_u64[0], maskConv);
+			result[1] = _pext_u64(M128I(pixels).m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -3916,11 +3916,11 @@ It processes the pixels in a width which is the next highest multiple of 16 afte
 			temp = _mm_andnot_si128(temp, ones);				// This gives 255 if pixels <= threshU, a way to implement less than or equal to
 			pixels = _mm_cmplt_epi8(pixels, threshL);
 			pixels = _mm_andnot_si128(pixels, temp);			// 255 if pixels >= threshL and AND with temp
-			
+
 			// Convert U8 to U1
-#ifdef _WIN64
-			result[0] = _pext_u64(pixels.m128i_u64[0], maskConv);
-			result[1] = _pext_u64(pixels.m128i_u64[1], maskConv);
+#if defined(_WIN64) || defined(__x86_64__)
+			result[0] = _pext_u64(M128I(pixels).m128i_u64[0], maskConv);
+			result[1] = _pext_u64(M128I(pixels).m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -4470,9 +4470,9 @@ int HafCpu_ThresholdNot_U1_U8_Binary
 			pixels = _mm_andnot_si128(pixels, ones);			// NOT
 
 			// Convert U8 to U1
-#ifdef _WIN64
-			result[0] = _pext_u64(pixels.m128i_u64[0], maskConv);
-			result[1] = _pext_u64(pixels.m128i_u64[1], maskConv);
+#if defined(_WIN64) || defined(__x86_64__)
+			result[0] = _pext_u64(M128I(pixels).m128i_u64[0], maskConv);
+			result[1] = _pext_u64(M128I(pixels).m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -4526,9 +4526,9 @@ int HafCpu_ThresholdNot_U1_U8_Range
 			pixels = _mm_andnot_si128(pixels, ones);			// NOT
 
 			// Convert U8 to U1
-#ifdef _WIN64
-			result[0] = _pext_u64(pixels.m128i_u64[0], maskConv);
-			result[1] = _pext_u64(pixels.m128i_u64[1], maskConv);
+#if defined(_WIN64) || defined(__x86_64__)
+			result[0] = _pext_u64(M128I(pixels).m128i_u64[0], maskConv);
+			result[1] = _pext_u64(M128I(pixels).m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif

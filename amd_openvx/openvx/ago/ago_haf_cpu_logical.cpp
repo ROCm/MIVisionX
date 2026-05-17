@@ -252,7 +252,7 @@ int HafCpu_Not_U8_U1
 	__m128i zeromask = _mm_setzero_si128();
 
 	uint64_t maskConv = 0x0101010101010101;						// Getting LSB out of each byte
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 
 	for (unsigned int height = 0; height < dstHeight; height++)
 	{
@@ -262,7 +262,7 @@ int HafCpu_Not_U8_U1
 			pixels_u64[1] = (uint64_t)(*(pSrcImage + 8));
 
 			// Convert U1 to U8
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -297,7 +297,7 @@ int HafCpu_Not_U1_U8
 	__m128i pixels;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -308,9 +308,9 @@ int HafCpu_Not_U1_U8
 			pixels = _mm_andnot_si128(pixels, ones);
 
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -336,7 +336,7 @@ int HafCpu_Not_U1_U1
 	__m128i pixels;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -347,7 +347,7 @@ int HafCpu_Not_U1_U1
 			pixels_u64[1] = (uint64_t)(*(pSrcImage + 8));
 
 			// Convert U1 to U8
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -357,9 +357,9 @@ int HafCpu_Not_U1_U1
 			pixels = _mm_andnot_si128(pixels, ones);						// Only LSB of each byte counts, because of extract and deposit
 
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -620,7 +620,7 @@ int HafCpu_And_U8_U8U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -632,7 +632,7 @@ int HafCpu_And_U8_U8U1
 			// Read the U1 values
 			pixels_u64[0] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -668,7 +668,7 @@ int HafCpu_And_U8_U1U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[4];
+	__declspec(align(16)) uint64_t pixels_u64[4];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -678,7 +678,7 @@ int HafCpu_And_U8_U1U1
 			// Read the U1 values from src1
 			pixels_u64[0] = (uint64_t)(*(pSrcImage1 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage1 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -687,7 +687,7 @@ int HafCpu_And_U8_U1U1
 			// Read the U1 values from src2
 			pixels_u64[2] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[3] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[2] = _pdep_u64(pixels_u64[2], maskConv);
 			pixels_u64[3] = _pdep_u64(pixels_u64[3], maskConv);
 #else
@@ -725,7 +725,7 @@ int HafCpu_And_U1_U8U8
 	__m128i * src2 = (__m128i*)pSrcImage2;
 	__m128i pixels1, pixels2;
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -737,9 +737,9 @@ int HafCpu_And_U1_U8U8
 			pixels1 = _mm_and_si128(pixels1, pixels2);
 
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -771,7 +771,7 @@ int HafCpu_And_U1_U8U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -783,7 +783,7 @@ int HafCpu_And_U1_U8U1
 			// Read the U1 values
 			pixels_u64[0] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -793,9 +793,9 @@ int HafCpu_And_U1_U8U1
 			pixels1 = _mm_and_si128(pixels1, pixels2);
 			
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -823,7 +823,7 @@ int HafCpu_And_U1_U1U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[4];
+	__declspec(align(16)) uint64_t pixels_u64[4];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -833,7 +833,7 @@ int HafCpu_And_U1_U1U1
 			// Read the U1 values from src1
 			pixels_u64[0] = (uint64_t)(*(pSrcImage1 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage1 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -842,7 +842,7 @@ int HafCpu_And_U1_U1U1
 			// Read the U1 values from src2
 			pixels_u64[2] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[3] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[2] = _pdep_u64(pixels_u64[2], maskConv);
 			pixels_u64[3] = _pdep_u64(pixels_u64[3], maskConv);
 #else
@@ -854,9 +854,9 @@ int HafCpu_And_U1_U1U1
 			pixels1 = _mm_and_si128(pixels1, pixels2);							// Only the LSB here has the AND value
 			
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -1319,7 +1319,7 @@ int HafCpu_Or_U8_U8U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -1331,7 +1331,7 @@ int HafCpu_Or_U8_U8U1
 			// Read the U1 values
 			pixels_u64[0] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -1367,7 +1367,7 @@ int HafCpu_Or_U8_U1U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[4];
+	__declspec(align(16)) uint64_t pixels_u64[4];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -1377,7 +1377,7 @@ int HafCpu_Or_U8_U1U1
 			// Read the U1 values from src1
 			pixels_u64[0] = (uint64_t)(*(pSrcImage1 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage1 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -1386,7 +1386,7 @@ int HafCpu_Or_U8_U1U1
 			// Read the U1 values from src2
 			pixels_u64[2] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[3] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[2] = _pdep_u64(pixels_u64[2], maskConv);
 			pixels_u64[3] = _pdep_u64(pixels_u64[3], maskConv);
 #else
@@ -1424,7 +1424,7 @@ int HafCpu_Or_U1_U8U8
 	__m128i * src2 = (__m128i*)pSrcImage2;
 	__m128i pixels1, pixels2;
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -1436,9 +1436,9 @@ int HafCpu_Or_U1_U8U8
 			pixels1 = _mm_or_si128(pixels1, pixels2);
 
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -1470,7 +1470,7 @@ int HafCpu_Or_U1_U8U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -1482,7 +1482,7 @@ int HafCpu_Or_U1_U8U1
 			// Read the U1 values
 			pixels_u64[0] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -1492,9 +1492,9 @@ int HafCpu_Or_U1_U8U1
 			pixels1 = _mm_or_si128(pixels1, pixels2);
 
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -1522,7 +1522,7 @@ int HafCpu_Or_U1_U1U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[4];
+	__declspec(align(16)) uint64_t pixels_u64[4];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -1532,7 +1532,7 @@ int HafCpu_Or_U1_U1U1
 			// Read the U1 values from src1
 			pixels_u64[0] = (uint64_t)(*(pSrcImage1 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage1 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -1541,7 +1541,7 @@ int HafCpu_Or_U1_U1U1
 			// Read the U1 values from src2
 			pixels_u64[2] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[3] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[2] = _pdep_u64(pixels_u64[2], maskConv);
 			pixels_u64[3] = _pdep_u64(pixels_u64[3], maskConv);
 #else
@@ -1553,9 +1553,9 @@ int HafCpu_Or_U1_U1U1
 			pixels1 = _mm_or_si128(pixels1, pixels2);							// Only the LSB here has the AND value
 
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -2022,7 +2022,7 @@ int HafCpu_Xor_U8_U8U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -2034,7 +2034,7 @@ int HafCpu_Xor_U8_U8U1
 			// Read the U1 values
 			pixels_u64[0] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -2070,7 +2070,7 @@ int HafCpu_Xor_U8_U1U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[4];
+	__declspec(align(16)) uint64_t pixels_u64[4];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -2080,7 +2080,7 @@ int HafCpu_Xor_U8_U1U1
 			// Read the U1 values from src1
 			pixels_u64[0] = (uint64_t)(*(pSrcImage1 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage1 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -2089,7 +2089,7 @@ int HafCpu_Xor_U8_U1U1
 			// Read the U1 values from src2
 			pixels_u64[2] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[3] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[2] = _pdep_u64(pixels_u64[2], maskConv);
 			pixels_u64[3] = _pdep_u64(pixels_u64[3], maskConv);
 #else
@@ -2127,7 +2127,7 @@ int HafCpu_Xor_U1_U8U8
 	__m128i * src2 = (__m128i*)pSrcImage2;
 	__m128i pixels1, pixels2;
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -2139,9 +2139,9 @@ int HafCpu_Xor_U1_U8U8
 			pixels1 = _mm_xor_si128(pixels1, pixels2);
 
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -2173,7 +2173,7 @@ int HafCpu_Xor_U1_U8U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -2185,7 +2185,7 @@ int HafCpu_Xor_U1_U8U1
 			// Read the U1 values
 			pixels_u64[0] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -2196,9 +2196,9 @@ int HafCpu_Xor_U1_U8U1
 			pixels1 = _mm_xor_si128(pixels1, pixels2);
 
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -2226,7 +2226,7 @@ int HafCpu_Xor_U1_U1U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[4];
+	__declspec(align(16)) uint64_t pixels_u64[4];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -2236,7 +2236,7 @@ int HafCpu_Xor_U1_U1U1
 			// Read the U1 values from src1
 			pixels_u64[0] = (uint64_t)(*(pSrcImage1 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage1 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -2245,7 +2245,7 @@ int HafCpu_Xor_U1_U1U1
 			// Read the U1 values from src2
 			pixels_u64[2] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[3] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[2] = _pdep_u64(pixels_u64[2], maskConv);
 			pixels_u64[3] = _pdep_u64(pixels_u64[3], maskConv);
 #else
@@ -2257,9 +2257,9 @@ int HafCpu_Xor_U1_U1U1
 			pixels1 = _mm_xor_si128(pixels1, pixels2);							// Only the LSB here has the AND value
 
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -2732,7 +2732,7 @@ int HafCpu_Nand_U8_U8U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 
@@ -2745,7 +2745,7 @@ int HafCpu_Nand_U8_U8U1
 			// Read the U1 values
 			pixels_u64[0] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -2780,7 +2780,7 @@ int HafCpu_Nand_U8_U1U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[4];
+	__declspec(align(16)) uint64_t pixels_u64[4];
 	uint64_t maskConv = 0x0101010101010101;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 
@@ -2791,7 +2791,7 @@ int HafCpu_Nand_U8_U1U1
 			// Read the U1 values from src1
 			pixels_u64[0] = (uint64_t)(*(pSrcImage1 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage1 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -2800,7 +2800,7 @@ int HafCpu_Nand_U8_U1U1
 			// Read the U1 values from src2
 			pixels_u64[2] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[3] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[2] = _pdep_u64(pixels_u64[2], maskConv);
 			pixels_u64[3] = _pdep_u64(pixels_u64[3], maskConv);
 #else
@@ -2838,7 +2838,7 @@ int HafCpu_Nand_U1_U8U8
 	__m128i * src2 = (__m128i*)pSrcImage2;
 	__m128i pixels1, pixels2;
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 
@@ -2852,9 +2852,9 @@ int HafCpu_Nand_U1_U8U8
 			pixels1 = _mm_andnot_si128(pixels1, ones);
 
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -2884,7 +2884,7 @@ int HafCpu_Nand_U1_U8U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 
@@ -2897,7 +2897,7 @@ int HafCpu_Nand_U1_U8U1
 			// Read the U1 values
 			pixels_u64[0] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -2908,9 +2908,9 @@ int HafCpu_Nand_U1_U8U1
 			pixels1 = _mm_andnot_si128(pixels1, ones);
 
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -2938,7 +2938,7 @@ int HafCpu_Nand_U1_U1U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[4];
+	__declspec(align(16)) uint64_t pixels_u64[4];
 	uint64_t maskConv = 0x0101010101010101;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 
@@ -2949,7 +2949,7 @@ int HafCpu_Nand_U1_U1U1
 			// Read the U1 values from src1
 			pixels_u64[0] = (uint64_t)(*(pSrcImage1 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage1 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -2958,7 +2958,7 @@ int HafCpu_Nand_U1_U1U1
 			// Read the U1 values from src2
 			pixels_u64[2] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[3] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[2] = _pdep_u64(pixels_u64[2], maskConv);
 			pixels_u64[3] = _pdep_u64(pixels_u64[3], maskConv);
 #else
@@ -2971,9 +2971,9 @@ int HafCpu_Nand_U1_U1U1
 			pixels1 = _mm_andnot_si128(pixels1, ones);
 
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -3445,7 +3445,7 @@ int HafCpu_Nor_U8_U8U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 
@@ -3458,7 +3458,7 @@ int HafCpu_Nor_U8_U8U1
 			// Read the U1 values
 			pixels_u64[0] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -3493,7 +3493,7 @@ int HafCpu_Nor_U8_U1U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[4];
+	__declspec(align(16)) uint64_t pixels_u64[4];
 	uint64_t maskConv = 0x0101010101010101;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 
@@ -3504,7 +3504,7 @@ int HafCpu_Nor_U8_U1U1
 			// Read the U1 values from src1
 			pixels_u64[0] = (uint64_t)(*(pSrcImage1 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage1 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -3513,7 +3513,7 @@ int HafCpu_Nor_U8_U1U1
 			// Read the U1 values from src2
 			pixels_u64[2] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[3] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[2] = _pdep_u64(pixels_u64[2], maskConv);
 			pixels_u64[3] = _pdep_u64(pixels_u64[3], maskConv);
 #else
@@ -3550,7 +3550,7 @@ int HafCpu_Nor_U1_U8U8
 	__m128i * src2 = (__m128i*)pSrcImage2;
 	__m128i pixels1, pixels2;
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 
@@ -3564,9 +3564,9 @@ int HafCpu_Nor_U1_U8U8
 			pixels1 = _mm_andnot_si128(pixels1, ones);
 
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -3596,7 +3596,7 @@ int HafCpu_Nor_U1_U8U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 
@@ -3609,7 +3609,7 @@ int HafCpu_Nor_U1_U8U1
 			// Read the U1 values
 			pixels_u64[0] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -3620,9 +3620,9 @@ int HafCpu_Nor_U1_U8U1
 			pixels1 = _mm_andnot_si128(pixels1, ones);
 
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -3650,7 +3650,7 @@ int HafCpu_Nor_U1_U1U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[4];
+	__declspec(align(16)) uint64_t pixels_u64[4];
 	uint64_t maskConv = 0x0101010101010101;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 
@@ -3661,7 +3661,7 @@ int HafCpu_Nor_U1_U1U1
 			// Read the U1 values from src1
 			pixels_u64[0] = (uint64_t)(*(pSrcImage1 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage1 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -3670,7 +3670,7 @@ int HafCpu_Nor_U1_U1U1
 			// Read the U1 values from src2
 			pixels_u64[2] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[3] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[2] = _pdep_u64(pixels_u64[2], maskConv);
 			pixels_u64[3] = _pdep_u64(pixels_u64[3], maskConv);
 #else
@@ -3682,9 +3682,9 @@ int HafCpu_Nor_U1_U1U1
 			pixels1 = _mm_or_si128(pixels1, pixels2);							// Only the LSB here has the AND value
 			pixels1 = _mm_andnot_si128(pixels1, ones);
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -4156,7 +4156,7 @@ int HafCpu_Xnor_U8_U8U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 
@@ -4169,7 +4169,7 @@ int HafCpu_Xnor_U8_U8U1
 			// Read the U1 values
 			pixels_u64[0] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -4204,7 +4204,7 @@ int HafCpu_Xnor_U8_U1U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[4];
+	__declspec(align(16)) uint64_t pixels_u64[4];
 	uint64_t maskConv = 0x0101010101010101;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 
@@ -4215,7 +4215,7 @@ int HafCpu_Xnor_U8_U1U1
 			// Read the U1 values from src1
 			pixels_u64[0] = (uint64_t)(*(pSrcImage1 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage1 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -4224,7 +4224,7 @@ int HafCpu_Xnor_U8_U1U1
 			// Read the U1 values from src2
 			pixels_u64[2] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[3] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[2] = _pdep_u64(pixels_u64[2], maskConv);
 			pixels_u64[3] = _pdep_u64(pixels_u64[3], maskConv);
 #else
@@ -4261,7 +4261,7 @@ int HafCpu_Xnor_U1_U8U8
 	__m128i * src2 = (__m128i*)pSrcImage2;
 	__m128i pixels1, pixels2;
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 
@@ -4275,9 +4275,9 @@ int HafCpu_Xnor_U1_U8U8
 			pixels1 = _mm_andnot_si128(pixels1, ones);
 
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -4307,7 +4307,7 @@ int HafCpu_Xnor_U1_U8U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[2];
+	__declspec(align(16)) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 
@@ -4320,7 +4320,7 @@ int HafCpu_Xnor_U1_U8U1
 			// Read the U1 values
 			pixels_u64[0] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -4331,9 +4331,9 @@ int HafCpu_Xnor_U1_U8U1
 			pixels1 = _mm_andnot_si128(pixels1, ones);
 
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -4361,7 +4361,7 @@ int HafCpu_Xnor_U1_U1U1
 	__m128i pixels1, pixels2;
 	__m128i zeromask = _mm_setzero_si128();
 
-	alignas(16) uint64_t pixels_u64[4];
+	__declspec(align(16)) uint64_t pixels_u64[4];
 	uint64_t maskConv = 0x0101010101010101;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 
@@ -4372,7 +4372,7 @@ int HafCpu_Xnor_U1_U1U1
 			// Read the U1 values from src1
 			pixels_u64[0] = (uint64_t)(*(pSrcImage1 + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage1 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -4381,7 +4381,7 @@ int HafCpu_Xnor_U1_U1U1
 			// Read the U1 values from src2
 			pixels_u64[2] = (uint64_t)(*(pSrcImage2 + (width >> 3)));
 			pixels_u64[3] = (uint64_t)(*(pSrcImage2 + (width >> 3) + 1));
-#if defined(_WIN64) || defined(__x86_64__)
+#ifdef _WIN64
 			pixels_u64[2] = _pdep_u64(pixels_u64[2], maskConv);
 			pixels_u64[3] = _pdep_u64(pixels_u64[3], maskConv);
 #else
@@ -4394,9 +4394,9 @@ int HafCpu_Xnor_U1_U1U1
 			pixels1 = _mm_andnot_si128(pixels1, ones);
 
 			// Convert U8 to U1
-#if defined(_WIN64) || defined(__x86_64__)
-			pixels_u64[0] = _pext_u64(M128I(pixels1).m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(M128I(pixels1).m128i_u64[1], maskConv);
+#ifdef _WIN64
+			pixels_u64[0] = _pext_u64(pixels1.m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(pixels1.m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif

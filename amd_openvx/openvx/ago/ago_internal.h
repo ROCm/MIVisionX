@@ -47,14 +47,10 @@ THE SOFTWARE.
 #define AGO_OPENCL_WORKGROUP_SIZE_2           1 // workgroup_size[2]
 
 // Flag to enable BMI2 instructions in the primitives
-#ifndef USE_BMI2
-#define USE_BMI2 1
-#endif
+#define USE_BMI2 0
 
 // Flag to enable AVX instructions (256 bit operations) in primitives
-#ifndef USE_AVX
-#define USE_AVX 1
-#endif
+#define USE_AVX 0
 
 // AGO configuration
 #define USE_AGO_CANNY_SOBEL_SUPP_THRESHOLD    0 // 0:seperate-sobel-and-nonmaxsupression 1:combine-sobel-and-nonmaxsupression

@@ -60,7 +60,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
-          path: build/lib/
+          path: |
+            build/lib/
+            amd_openvx/openvx/include/
           retention-days: 1
 
   # Release build of the merge-target branch — used by perf-gate (PR only)
@@ -216,7 +218,7 @@ jobs:
           cd ${{ github.workspace }}/openvx-mark/build-pr
           cmake \
             -DCMAKE_BUILD_TYPE=Release \
-            -DOPENVX_INCLUDES=${{ github.workspace }}/amd_openvx/openvx/include \
+            -DOPENVX_INCLUDES=${{ github.workspace }}/pr-pkg/amd_openvx/openvx/include \
             -DOPENVX_LIB_DIR=${{ github.workspace }}/pr-pkg/build/lib \
             ..
           cmake --build . -j$(nproc)

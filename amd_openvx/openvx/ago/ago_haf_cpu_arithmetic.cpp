@@ -36,7 +36,7 @@ int HafCpu_Add_U8_U8U8_Wrap
 	)
 {
 #if USE_AVX
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0x1F) == 0) ? true : false;
+	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage | srcImage1StrideInBytes | srcImage2StrideInBytes | dstImageStrideInBytes) & 0x1F) == 0) ? true : false;
 
 	__m256i *pLocalSrc1_ymm, *pLocalSrc2_ymm, *pLocalDst_ymm;
 	vx_uint8 *pLocalSrc1, *pLocalSrc2, *pLocalDst;
@@ -196,7 +196,7 @@ int HafCpu_Add_U8_U8U8_Sat
 	)
 {
 #if USE_AVX
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0x1F) == 0) ? true : false;
+	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage | srcImage1StrideInBytes | srcImage2StrideInBytes | dstImageStrideInBytes) & 0x1F) == 0) ? true : false;
 
 	__m256i *pLocalSrc1_ymm, *pLocalSrc2_ymm, *pLocalDst_ymm;
 	vx_uint8 *pLocalSrc1, *pLocalSrc2, *pLocalDst;
@@ -362,7 +362,7 @@ int HafCpu_Sub_U8_U8U8_Wrap
 	)
 {
 #if USE_AVX
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0x1F) == 0) ? true : false;
+	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage | srcImage1StrideInBytes | srcImage2StrideInBytes | dstImageStrideInBytes) & 0x1F) == 0) ? true : false;
 
 	__m256i *pLocalSrc1_ymm, *pLocalSrc2_ymm, *pLocalDst_ymm;
 	vx_uint8 *pLocalSrc1, *pLocalSrc2, *pLocalDst;
@@ -522,7 +522,7 @@ int HafCpu_Sub_U8_U8U8_Sat
 	)
 {
 #if USE_AVX
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0x1F) == 0) ? true : false;
+	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage | srcImage1StrideInBytes | srcImage2StrideInBytes | dstImageStrideInBytes) & 0x1F) == 0) ? true : false;
 
 	__m256i *pLocalSrc1_ymm, *pLocalSrc2_ymm, *pLocalDst_ymm;
 	vx_uint8 *pLocalSrc1, *pLocalSrc2, *pLocalDst;
@@ -682,7 +682,7 @@ int HafCpu_Add_S16_U8U8
 	)
 {
 #if USE_AVX
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0x1F) == 0) ? true : false;
+	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage | srcImage1StrideInBytes | srcImage2StrideInBytes | dstImageStrideInBytes) & 0x1F) == 0) ? true : false;
 
 	__m256i *pLocalSrc1_ymm, *pLocalSrc2_ymm, *pLocalDst_ymm;
 	vx_uint8 *pLocalSrc1, *pLocalSrc2;
@@ -873,7 +873,7 @@ int HafCpu_Sub_S16_U8U8
 	)
 {
 #if USE_AVX
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0x1F) == 0) ? true : false;
+	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage | srcImage1StrideInBytes | srcImage2StrideInBytes | dstImageStrideInBytes) & 0x1F) == 0) ? true : false;
 
 	__m256i *pLocalSrc1_ymm, *pLocalSrc2_ymm, *pLocalDst_ymm;
 	vx_uint8 *pLocalSrc1, *pLocalSrc2;
@@ -1060,7 +1060,7 @@ int HafCpu_Add_S16_S16U8_Wrap
 	)
 {
 #if USE_AVX
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0x1F) == 0) ? true : false;
+	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage | srcImage1StrideInBytes | srcImage2StrideInBytes | dstImageStrideInBytes) & 0x1F) == 0) ? true : false;
 
 	__m256i *pLocalSrc16_ymm, *pLocalSrc8_ymm, *pLocalDst_ymm;
 	vx_uint8 *pLocalSrc8;
@@ -1242,7 +1242,7 @@ int HafCpu_Add_S16_S16U8_Sat
 	)
 {
 #if USE_AVX
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0x1F) == 0) ? true : false;
+	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage | srcImage1StrideInBytes | srcImage2StrideInBytes | dstImageStrideInBytes) & 0x1F) == 0) ? true : false;
 
 	__m256i *pLocalSrc16_ymm, *pLocalSrc8_ymm, *pLocalDst_ymm;
 	vx_uint8 *pLocalSrc8;
@@ -1428,7 +1428,7 @@ int HafCpu_Sub_S16_S16U8_Wrap
 	)
 {
 #if USE_AVX
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0x1F) == 0) ? true : false;
+	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage | srcImage1StrideInBytes | srcImage2StrideInBytes | dstImageStrideInBytes) & 0x1F) == 0) ? true : false;
 
 	__m256i *pLocalSrc16_ymm, *pLocalSrc8_ymm, *pLocalDst_ymm;
 	vx_uint8 *pLocalSrc8;
@@ -1614,7 +1614,7 @@ int HafCpu_Sub_S16_S16U8_Sat
 	)
 {
 #if USE_AVX
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0x1F) == 0) ? true : false;
+	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage | srcImage1StrideInBytes | srcImage2StrideInBytes | dstImageStrideInBytes) & 0x1F) == 0) ? true : false;
 
 	__m256i *pLocalSrc16_ymm, *pLocalSrc8_ymm, *pLocalDst_ymm;
 	vx_uint8 *pLocalSrc8;
@@ -1800,7 +1800,7 @@ int HafCpu_Sub_S16_U8S16_Wrap
 	)
 {
 #if USE_AVX
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0x1F) == 0) ? true : false;
+	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage | srcImage1StrideInBytes | srcImage2StrideInBytes | dstImageStrideInBytes) & 0x1F) == 0) ? true : false;
 
 	__m256i *pLocalSrc16_ymm, *pLocalSrc8_ymm, *pLocalDst_ymm;
 	vx_uint8 *pLocalSrc8;
@@ -1982,7 +1982,7 @@ int HafCpu_Sub_S16_U8S16_Sat
 	)
 {
 #if USE_AVX
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0x1F) == 0) ? true : false;
+	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage | srcImage1StrideInBytes | srcImage2StrideInBytes | dstImageStrideInBytes) & 0x1F) == 0) ? true : false;
 
 	__m256i *pLocalSrc16_ymm, *pLocalSrc8_ymm, *pLocalDst_ymm;
 	vx_uint8 *pLocalSrc8;
@@ -2168,7 +2168,7 @@ int HafCpu_Add_S16_S16S16_Wrap
 	)
 {
 #if USE_AVX
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0x1F) == 0) ? true : false;
+	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage | srcImage1StrideInBytes | srcImage2StrideInBytes | dstImageStrideInBytes) & 0x1F) == 0) ? true : false;
 
 	__m256i *pLocalSrc1_ymm, *pLocalSrc2_ymm, *pLocalDst_ymm;
 	vx_int16 *pLocalSrc1, *pLocalSrc2, *pLocalDst;
@@ -2356,7 +2356,7 @@ int HafCpu_Add_S16_S16S16_Sat
 	)
 {
 #if USE_AVX
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0x1F) == 0) ? true : false;
+	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage | srcImage1StrideInBytes | srcImage2StrideInBytes | dstImageStrideInBytes) & 0x1F) == 0) ? true : false;
 
 	__m256i *pLocalSrc1_ymm, *pLocalSrc2_ymm, *pLocalDst_ymm;
 	vx_int16 *pLocalSrc1, *pLocalSrc2, *pLocalDst;
@@ -2544,7 +2544,7 @@ int HafCpu_Sub_S16_S16S16_Wrap
 	)
 {
 #if USE_AVX
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0x1F) == 0) ? true : false;
+	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage | srcImage1StrideInBytes | srcImage2StrideInBytes | dstImageStrideInBytes) & 0x1F) == 0) ? true : false;
 
 	__m256i *pLocalSrc1_ymm, *pLocalSrc2_ymm, *pLocalDst_ymm;
 	vx_int16 *pLocalSrc1, *pLocalSrc2, *pLocalDst;
@@ -2732,7 +2732,7 @@ int HafCpu_Sub_S16_S16S16_Sat
 	)
 {
 #if USE_AVX
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0x1F) == 0) ? true : false;
+	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage | srcImage1StrideInBytes | srcImage2StrideInBytes | dstImageStrideInBytes) & 0x1F) == 0) ? true : false;
 
 	__m256i *pLocalSrc1_ymm, *pLocalSrc2_ymm, *pLocalDst_ymm;
 	vx_int16 *pLocalSrc1, *pLocalSrc2, *pLocalDst;
@@ -2920,13 +2920,12 @@ int HafCpu_AbsDiff_U8_U8U8
 	)
 {
 #if USE_AVX
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0x1F) == 0) ? true : false;
+	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage | srcImage1StrideInBytes | srcImage2StrideInBytes | dstImageStrideInBytes) & 0x1F) == 0) ? true : false;
 
 	__m256i *pLocalSrc1_ymm, *pLocalSrc2_ymm, *pLocalDst_ymm;
 	vx_uint8 *pLocalSrc1, *pLocalSrc2, *pLocalDst;
 
-	__m256i pixels1H, pixels1L, pixels2H, pixels2L;
-	__m256i zeromask = _mm256_setzero_si256();
+	__m256i pixels1, pixels2, result;
 
 	int alignedWidth = dstWidth & ~31;
 	int postfixWidth = dstWidth - alignedWidth;
@@ -2941,22 +2940,12 @@ int HafCpu_AbsDiff_U8_U8U8
 
 			for (int width = 0; width < alignedWidth; width += 32)
 			{
-				pixels1L = _mm256_load_si256(pLocalSrc1_ymm++);
-				pixels2L = _mm256_load_si256(pLocalSrc2_ymm++);
+				pixels1 = _mm256_load_si256(pLocalSrc1_ymm++);
+				pixels2 = _mm256_load_si256(pLocalSrc2_ymm++);
 
-				pixels1H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels1L, 1));
-				pixels2H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels2L, 1));
-				pixels1L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels1L));
-				pixels2L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels2L));
-
-				pixels1H = _mm256_sub_epi16(pixels1H, pixels2H);
-				pixels1L = _mm256_sub_epi16(pixels1L, pixels2L);
-				pixels1H = _mm256_abs_epi16(pixels1H);
-				pixels1L = _mm256_abs_epi16(pixels1L);
-
-				pixels1L = _mm256_packus_epi16(pixels1L, pixels1H);
-				pixels1L = _mm256_permute4x64_epi64(pixels1L, 0xD8);
-				_mm256_store_si256(pLocalDst_ymm++, pixels1L);
+				// Direct 8-bit AbsDiff: max(a,b) - min(a,b) = |a-b|
+				result = _mm256_sub_epi8(_mm256_max_epu8(pixels1, pixels2), _mm256_min_epu8(pixels1, pixels2));
+				_mm256_store_si256(pLocalDst_ymm++, result);
 			}
 
 			pLocalSrc1 = (vx_uint8 *)pLocalSrc1_ymm;
@@ -2983,22 +2972,12 @@ int HafCpu_AbsDiff_U8_U8U8
 
 			for (int width = 0; width < alignedWidth; width += 32)
 			{
-				pixels1L = _mm256_loadu_si256(pLocalSrc1_ymm++);
-				pixels2L = _mm256_loadu_si256(pLocalSrc2_ymm++);
+				pixels1 = _mm256_loadu_si256(pLocalSrc1_ymm++);
+				pixels2 = _mm256_loadu_si256(pLocalSrc2_ymm++);
 
-				pixels1H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels1L, 1));
-				pixels2H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels2L, 1));
-				pixels1L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels1L));
-				pixels2L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels2L));
-
-				pixels1H = _mm256_sub_epi16(pixels1H, pixels2H);
-				pixels1L = _mm256_sub_epi16(pixels1L, pixels2L);
-				pixels1H = _mm256_abs_epi16(pixels1H);
-				pixels1L = _mm256_abs_epi16(pixels1L);
-
-				pixels1L = _mm256_packus_epi16(pixels1L, pixels1H);
-				pixels1L = _mm256_permute4x64_epi64(pixels1L, 0xD8);
-				_mm256_storeu_si256(pLocalDst_ymm++, pixels1L);
+				// Direct 8-bit AbsDiff: max(a,b) - min(a,b) = |a-b|
+				result = _mm256_sub_epi8(_mm256_max_epu8(pixels1, pixels2), _mm256_min_epu8(pixels1, pixels2));
+				_mm256_storeu_si256(pLocalDst_ymm++, result);
 			}
 
 			pLocalSrc1 = (vx_uint8 *)pLocalSrc1_ymm;

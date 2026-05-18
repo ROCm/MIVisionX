@@ -39,7 +39,7 @@ jobs:
 
   # Release build of the PR (or push) branch — used by perf-gate
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -69,7 +69,7 @@ jobs:
   build-main:
     name: Build AMD OpenVX (main)
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout merge target ref
         uses: actions/checkout@v4
@@ -100,7 +100,7 @@ jobs:
   # Debug build with LLVM code-coverage instrumentation — used by all tests
   build-debug:
     name: Build AMD OpenVX (Debug + Coverage)
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -180,7 +180,7 @@ jobs:
   perf-gate:
     name: Perf gate (PR vs main)
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs:
       - build
       - build-main
@@ -338,7 +338,7 @@ jobs:
   # --- CTS Tests ---
 
   baseline:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build-debug
     steps:
       - uses: actions/checkout@v4
@@ -364,7 +364,7 @@ jobs:
           if-no-files-found: ignore
 
   graph:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build-debug
     continue-on-error: true
     steps:
@@ -391,7 +391,7 @@ jobs:
           if-no-files-found: ignore
 
   data-objects:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build-debug
     continue-on-error: true
     steps:
@@ -418,7 +418,7 @@ jobs:
           if-no-files-found: ignore
 
   image-ops:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build-debug
     continue-on-error: true
     steps:
@@ -445,7 +445,7 @@ jobs:
           if-no-files-found: ignore
 
   vision-color:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build-debug
     continue-on-error: true
     steps:
@@ -472,7 +472,7 @@ jobs:
           if-no-files-found: ignore
 
   vision-filters:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build-debug
     continue-on-error: true
     steps:
@@ -499,7 +499,7 @@ jobs:
           if-no-files-found: ignore
 
   vision-arithmetic:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build-debug
     continue-on-error: true
     steps:
@@ -526,7 +526,7 @@ jobs:
           if-no-files-found: ignore
 
   vision-geometric:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build-debug
     continue-on-error: true
     steps:
@@ -553,7 +553,7 @@ jobs:
           if-no-files-found: ignore
 
   vision-features:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build-debug
     continue-on-error: true
     steps:
@@ -580,7 +580,7 @@ jobs:
           if-no-files-found: ignore
 
   vision-statistics:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build-debug
     continue-on-error: true
     steps:
@@ -607,7 +607,7 @@ jobs:
           if-no-files-found: ignore
 
   vision-pyramid:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build-debug
     continue-on-error: true
     steps:
@@ -637,7 +637,7 @@ jobs:
 
   api-tests:
     name: API tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build-debug
     continue-on-error: true
     steps:
@@ -696,7 +696,7 @@ jobs:
 
   gdf-tests:
     name: GDF tests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build-debug
     continue-on-error: true
     steps:
@@ -731,7 +731,7 @@ jobs:
 
   coverage-summary:
     name: Code coverage summary
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     if: always() && needs.build-debug.result == 'success'
     needs:
       - build-debug
@@ -810,12 +810,18 @@ jobs:
             > coverage.lcov
 
           # Generate LCOV-style HTML report with genhtml
+          # --ignore-errors unmapped was added in lcov 2.x; build the arg list
+          # conditionally so the step works on Ubuntu 22.04 (lcov 1.x) too.
+          GENHTML_EXTRA_ARGS=()
+          if genhtml --version 2>&1 | grep -qE 'LCOV version ([2-9]|[1-9][0-9])'; then
+            GENHTML_EXTRA_ARGS+=(--ignore-errors unmapped)
+          fi
           genhtml coverage.lcov \
             --output-directory coverage_html \
             --branch-coverage \
             --title "AMD OpenVX Code Coverage" \
             --ignore-errors source \
-            --ignore-errors unmapped \
+            "${GENHTML_EXTRA_ARGS[@]}" \
             2>&1 || echo "::warning::genhtml had errors"
 
       - name: Post coverage summary

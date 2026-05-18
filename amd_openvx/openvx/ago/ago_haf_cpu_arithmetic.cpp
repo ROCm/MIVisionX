@@ -705,11 +705,11 @@ int HafCpu_Add_S16_U8U8
 			for (int width = 0; width < alignedWidth; width += 32)
 			{
 				pixels1L = _mm256_load_si256(pLocalSrc1_ymm++);
-				pixels1H = _mm256_unpackhi_epi8(pixels1L, zeromask);
-				pixels1L = _mm256_unpacklo_epi8(pixels1L, zeromask);
+				pixels1H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels1L, 1));
+				pixels1L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels1L));
 				pixels2L = _mm256_load_si256(pLocalSrc2_ymm++);
-				pixels2H = _mm256_unpackhi_epi8(pixels2L, zeromask);
-				pixels2L = _mm256_unpacklo_epi8(pixels2L, zeromask);
+				pixels2H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels2L, 1));
+				pixels2L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels2L));
 				pixels1L = _mm256_add_epi16(pixels1L, pixels2L);
 				pixels1H = _mm256_add_epi16(pixels1H, pixels2H);
 				_mm256_store_si256(pLocalDst_ymm++, pixels1L);
@@ -742,11 +742,11 @@ int HafCpu_Add_S16_U8U8
 				for (int width = 0; width < alignedWidth; width += 32)
 				{
 					pixels1L = _mm256_loadu_si256(pLocalSrc1_ymm++);
-					pixels1H = _mm256_unpackhi_epi8(pixels1L, zeromask);
-					pixels1L = _mm256_unpacklo_epi8(pixels1L, zeromask);
+					pixels1H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels1L, 1));
+					pixels1L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels1L));
 					pixels2L = _mm256_loadu_si256(pLocalSrc2_ymm++);
-					pixels2H = _mm256_unpackhi_epi8(pixels2L, zeromask);
-					pixels2L = _mm256_unpacklo_epi8(pixels2L, zeromask);
+					pixels2H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels2L, 1));
+					pixels2L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels2L));
 					pixels1L = _mm256_add_epi16(pixels1L, pixels2L);
 					pixels1H = _mm256_add_epi16(pixels1H, pixels2H);
 					_mm256_storeu_si256(pLocalDst_ymm++, pixels1L);
@@ -896,11 +896,11 @@ int HafCpu_Sub_S16_U8U8
 			for (int width = 0; width < alignedWidth; width += 32)
 			{
 				pixels1L = _mm256_load_si256(pLocalSrc1_ymm++);
-				pixels1H = _mm256_unpackhi_epi8(pixels1L, zeromask);
-				pixels1L = _mm256_unpacklo_epi8(pixels1L, zeromask);
+				pixels1H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels1L, 1));
+				pixels1L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels1L));
 				pixels2L = _mm256_load_si256(pLocalSrc2_ymm++);
-				pixels2H = _mm256_unpackhi_epi8(pixels2L, zeromask);
-				pixels2L = _mm256_unpacklo_epi8(pixels2L, zeromask);
+				pixels2H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels2L, 1));
+				pixels2L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels2L));
 				pixels1L = _mm256_sub_epi16(pixels1L, pixels2L);
 				pixels1H = _mm256_sub_epi16(pixels1H, pixels2H);
 				_mm256_store_si256(pLocalDst_ymm++, pixels1L);
@@ -932,11 +932,11 @@ int HafCpu_Sub_S16_U8U8
 			for (int width = 0; width < alignedWidth; width += 32)
 			{
 				pixels1L = _mm256_loadu_si256(pLocalSrc1_ymm++);
-				pixels1H = _mm256_unpackhi_epi8(pixels1L, zeromask);
-				pixels1L = _mm256_unpacklo_epi8(pixels1L, zeromask);
+				pixels1H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels1L, 1));
+				pixels1L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels1L));
 				pixels2L = _mm256_loadu_si256(pLocalSrc2_ymm++);
-				pixels2H = _mm256_unpackhi_epi8(pixels2L, zeromask);
-				pixels2L = _mm256_unpacklo_epi8(pixels2L, zeromask);
+				pixels2H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels2L, 1));
+				pixels2L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels2L));
 				pixels1L = _mm256_sub_epi16(pixels1L, pixels2L);
 				pixels1H = _mm256_sub_epi16(pixels1H, pixels2H);
 				_mm256_storeu_si256(pLocalDst_ymm++, pixels1L);
@@ -1072,7 +1072,7 @@ int HafCpu_Add_S16_S16U8_Wrap
 	int alignedWidth = dstWidth & ~31;
 	int postfixWidth = dstWidth - alignedWidth;
 
-	if (alignedWidth)
+	if (useAligned)
 	{
 		for (int height = 0; height < (int)dstHeight; height++)
 		{
@@ -1083,10 +1083,10 @@ int HafCpu_Add_S16_S16U8_Wrap
 			for (int width = 0; width < alignedWidth; width += 32)
 			{
 				pixels1L = _mm256_load_si256(pLocalSrc16_ymm++);
-				pixels1H = _mm256_load_si256(pLocalSrc16_ymm++);;
+				pixels1H = _mm256_load_si256(pLocalSrc16_ymm++);
 				pixels2L = _mm256_load_si256(pLocalSrc8_ymm++);
-				pixels2H = _mm256_unpackhi_epi8(pixels2L, zeromask);
-				pixels2L = _mm256_unpacklo_epi8(pixels2L, zeromask);
+				pixels2H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels2L, 1));
+				pixels2L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels2L));
 				pixels1L = _mm256_add_epi16(pixels1L, pixels2L);
 				pixels1H = _mm256_add_epi16(pixels1H, pixels2H);
 				_mm256_store_si256(pLocalDst_ymm++, pixels1L);
@@ -1120,8 +1120,8 @@ int HafCpu_Add_S16_S16U8_Wrap
 				pixels1L = _mm256_loadu_si256(pLocalSrc16_ymm++);
 				pixels1H = _mm256_loadu_si256(pLocalSrc16_ymm++);;
 				pixels2L = _mm256_loadu_si256(pLocalSrc8_ymm++);
-				pixels2H = _mm256_unpackhi_epi8(pixels2L, zeromask);
-				pixels2L = _mm256_unpacklo_epi8(pixels2L, zeromask);
+				pixels2H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels2L, 1));
+				pixels2L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels2L));
 				pixels1L = _mm256_add_epi16(pixels1L, pixels2L);
 				pixels1H = _mm256_add_epi16(pixels1H, pixels2H);
 				_mm256_storeu_si256(pLocalDst_ymm++, pixels1L);
@@ -1267,8 +1267,8 @@ int HafCpu_Add_S16_S16U8_Sat
 				pixels1L = _mm256_load_si256(pLocalSrc16_ymm++);
 				pixels1H = _mm256_load_si256(pLocalSrc16_ymm++);;
 				pixels2L = _mm256_load_si256(pLocalSrc8_ymm++);
-				pixels2H = _mm256_unpackhi_epi8(pixels2L, zeromask);
-				pixels2L = _mm256_unpacklo_epi8(pixels2L, zeromask);
+				pixels2H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels2L, 1));
+				pixels2L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels2L));
 				pixels1L = _mm256_adds_epi16(pixels1L, pixels2L);
 				pixels1H = _mm256_adds_epi16(pixels1H, pixels2H);
 				_mm256_store_si256(pLocalDst_ymm++, pixels1L);
@@ -1303,8 +1303,8 @@ int HafCpu_Add_S16_S16U8_Sat
 				pixels1L = _mm256_loadu_si256(pLocalSrc16_ymm++);
 				pixels1H = _mm256_loadu_si256(pLocalSrc16_ymm++);;
 				pixels2L = _mm256_loadu_si256(pLocalSrc8_ymm++);
-				pixels2H = _mm256_unpackhi_epi8(pixels2L, zeromask);
-				pixels2L = _mm256_unpacklo_epi8(pixels2L, zeromask);
+				pixels2H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels2L, 1));
+				pixels2L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels2L));
 				pixels1L = _mm256_adds_epi16(pixels1L, pixels2L);
 				pixels1H = _mm256_adds_epi16(pixels1H, pixels2H);
 				_mm256_storeu_si256(pLocalDst_ymm++, pixels1L);
@@ -1453,8 +1453,8 @@ int HafCpu_Sub_S16_S16U8_Wrap
 				pixels1L = _mm256_load_si256(pLocalSrc16_ymm++);
 				pixels1H = _mm256_load_si256(pLocalSrc16_ymm++);;
 				pixels2L = _mm256_load_si256(pLocalSrc8_ymm++);
-				pixels2H = _mm256_unpackhi_epi8(pixels2L, zeromask);
-				pixels2L = _mm256_unpacklo_epi8(pixels2L, zeromask);
+				pixels2H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels2L, 1));
+				pixels2L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels2L));
 				pixels1L = _mm256_sub_epi16(pixels1L, pixels2L);
 				pixels1H = _mm256_sub_epi16(pixels1H, pixels2H);
 				_mm256_store_si256(pLocalDst_ymm++, pixels1L);
@@ -1489,8 +1489,8 @@ int HafCpu_Sub_S16_S16U8_Wrap
 				pixels1L = _mm256_loadu_si256(pLocalSrc16_ymm++);
 				pixels1H = _mm256_loadu_si256(pLocalSrc16_ymm++);;
 				pixels2L = _mm256_loadu_si256(pLocalSrc8_ymm++);
-				pixels2H = _mm256_unpackhi_epi8(pixels2L, zeromask);
-				pixels2L = _mm256_unpacklo_epi8(pixels2L, zeromask);
+				pixels2H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels2L, 1));
+				pixels2L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels2L));
 				pixels1L = _mm256_sub_epi16(pixels1L, pixels2L);
 				pixels1H = _mm256_sub_epi16(pixels1H, pixels2H);
 				_mm256_storeu_si256(pLocalDst_ymm++, pixels1L);
@@ -1639,8 +1639,8 @@ int HafCpu_Sub_S16_S16U8_Sat
 				pixels1L = _mm256_load_si256(pLocalSrc16_ymm++);
 				pixels1H = _mm256_load_si256(pLocalSrc16_ymm++);;
 				pixels2L = _mm256_load_si256(pLocalSrc8_ymm++);
-				pixels2H = _mm256_unpackhi_epi8(pixels2L, zeromask);
-				pixels2L = _mm256_unpacklo_epi8(pixels2L, zeromask);
+				pixels2H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels2L, 1));
+				pixels2L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels2L));
 				pixels1L = _mm256_subs_epi16(pixels1L, pixels2L);
 				pixels1H = _mm256_subs_epi16(pixels1H, pixels2H);
 				_mm256_store_si256(pLocalDst_ymm++, pixels1L);
@@ -1675,8 +1675,8 @@ int HafCpu_Sub_S16_S16U8_Sat
 				pixels1L = _mm256_loadu_si256(pLocalSrc16_ymm++);
 				pixels1H = _mm256_loadu_si256(pLocalSrc16_ymm++);;
 				pixels2L = _mm256_loadu_si256(pLocalSrc8_ymm++);
-				pixels2H = _mm256_unpackhi_epi8(pixels2L, zeromask);
-				pixels2L = _mm256_unpacklo_epi8(pixels2L, zeromask);
+				pixels2H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels2L, 1));
+				pixels2L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels2L));
 				pixels1L = _mm256_subs_epi16(pixels1L, pixels2L);
 				pixels1H = _mm256_subs_epi16(pixels1H, pixels2H);
 				_mm256_storeu_si256(pLocalDst_ymm++, pixels1L);
@@ -1823,8 +1823,8 @@ int HafCpu_Sub_S16_U8S16_Wrap
 			for (int width = 0; width < alignedWidth; width += 32)
 			{
 				pixels1L = _mm256_load_si256(pLocalSrc8_ymm++);
-				pixels1H = _mm256_unpackhi_epi8(pixels1L, zeromask);
-				pixels1L = _mm256_unpacklo_epi8(pixels1L, zeromask);
+				pixels1H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels1L, 1));
+				pixels1L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels1L));
 				pixels2L = _mm256_load_si256(pLocalSrc16_ymm++);
 				pixels2H = _mm256_load_si256(pLocalSrc16_ymm++);;
 				pixels1L = _mm256_sub_epi16(pixels1L, pixels2L);
@@ -1858,8 +1858,8 @@ int HafCpu_Sub_S16_U8S16_Wrap
 			for (int width = 0; width < alignedWidth; width += 32)
 			{
 				pixels1L = _mm256_loadu_si256(pLocalSrc8_ymm++);
-				pixels1H = _mm256_unpackhi_epi8(pixels1L, zeromask);
-				pixels1L = _mm256_unpacklo_epi16(pixels1L, zeromask);
+				pixels1H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels1L, 1));
+				pixels1L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels1L));
 				pixels2L = _mm256_loadu_si256(pLocalSrc16_ymm++);
 				pixels2H = _mm256_loadu_si256(pLocalSrc16_ymm++);;
 				pixels1L = _mm256_sub_epi16(pixels1L, pixels2L);
@@ -2005,8 +2005,8 @@ int HafCpu_Sub_S16_U8S16_Sat
 			for (int width = 0; width < alignedWidth; width += 32)
 			{
 				pixels1L = _mm256_load_si256(pLocalSrc8_ymm++);
-				pixels1H = _mm256_unpackhi_epi8(pixels1L, zeromask);
-				pixels1L = _mm256_unpacklo_epi8(pixels1L, zeromask);
+				pixels1H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels1L, 1));
+				pixels1L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels1L));
 				pixels2L = _mm256_load_si256(pLocalSrc16_ymm++);
 				pixels2H = _mm256_load_si256(pLocalSrc16_ymm++);;
 				pixels1L = _mm256_subs_epi16(pixels1L, pixels2L);
@@ -2041,8 +2041,8 @@ int HafCpu_Sub_S16_U8S16_Sat
 			for (int width = 0; width < alignedWidth; width += 32)
 			{
 				pixels1L = _mm256_loadu_si256(pLocalSrc8_ymm++);
-				pixels1H = _mm256_unpackhi_epi8(pixels1L, zeromask);
-				pixels1L = _mm256_unpacklo_epi8(pixels1L, zeromask);
+				pixels1H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels1L, 1));
+				pixels1L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels1L));
 				pixels2L = _mm256_loadu_si256(pLocalSrc16_ymm++);
 				pixels2H = _mm256_loadu_si256(pLocalSrc16_ymm++);;
 				pixels1L = _mm256_subs_epi16(pixels1L, pixels2L);
@@ -2600,7 +2600,7 @@ int HafCpu_Sub_S16_S16S16_Wrap
 			pLocalSrc2_ymm = (__m256i*) pSrcImage2;
 			pLocalDst_ymm = (__m256i*) pDstImage;
 
-			for (int width = 0; width < alignedWidth; width += 16)
+			for (int width = 0; width < alignedWidth; width += 32)
 			{
 				pixels1 = _mm256_loadu_si256(pLocalSrc1_ymm++);
 				pixels2 = _mm256_loadu_si256(pLocalSrc1_ymm++);
@@ -2944,10 +2944,10 @@ int HafCpu_AbsDiff_U8_U8U8
 				pixels1L = _mm256_load_si256(pLocalSrc1_ymm++);
 				pixels2L = _mm256_load_si256(pLocalSrc2_ymm++);
 
-				pixels1H = _mm256_unpackhi_epi8(pixels1L, zeromask);
-				pixels2H = _mm256_unpackhi_epi8(pixels2L, zeromask);
-				pixels1L = _mm256_unpacklo_epi8(pixels1L, zeromask);
-				pixels2L = _mm256_unpacklo_epi8(pixels2L, zeromask);
+				pixels1H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels1L, 1));
+				pixels2H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels2L, 1));
+				pixels1L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels1L));
+				pixels2L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels2L));
 
 				pixels1H = _mm256_sub_epi16(pixels1H, pixels2H);
 				pixels1L = _mm256_sub_epi16(pixels1L, pixels2L);
@@ -2955,6 +2955,7 @@ int HafCpu_AbsDiff_U8_U8U8
 				pixels1L = _mm256_abs_epi16(pixels1L);
 
 				pixels1L = _mm256_packus_epi16(pixels1L, pixels1H);
+				pixels1L = _mm256_permute4x64_epi64(pixels1L, 0xD8);
 				_mm256_store_si256(pLocalDst_ymm++, pixels1L);
 			}
 
@@ -2985,10 +2986,10 @@ int HafCpu_AbsDiff_U8_U8U8
 				pixels1L = _mm256_loadu_si256(pLocalSrc1_ymm++);
 				pixels2L = _mm256_loadu_si256(pLocalSrc2_ymm++);
 
-				pixels1H = _mm256_unpackhi_epi8(pixels1L, zeromask);
-				pixels2H = _mm256_unpackhi_epi8(pixels2L, zeromask);
-				pixels1L = _mm256_unpacklo_epi8(pixels1L, zeromask);
-				pixels2L = _mm256_unpacklo_epi8(pixels2L, zeromask);
+				pixels1H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels1L, 1));
+				pixels2H = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(pixels2L, 1));
+				pixels1L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels1L));
+				pixels2L = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(pixels2L));
 
 				pixels1H = _mm256_sub_epi16(pixels1H, pixels2H);
 				pixels1L = _mm256_sub_epi16(pixels1L, pixels2L);
@@ -2996,6 +2997,7 @@ int HafCpu_AbsDiff_U8_U8U8
 				pixels1L = _mm256_abs_epi16(pixels1L);
 
 				pixels1L = _mm256_packus_epi16(pixels1L, pixels1H);
+				pixels1L = _mm256_permute4x64_epi64(pixels1L, 0xD8);
 				_mm256_storeu_si256(pLocalDst_ymm++, pixels1L);
 			}
 

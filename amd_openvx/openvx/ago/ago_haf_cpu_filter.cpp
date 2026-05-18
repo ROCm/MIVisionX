@@ -1646,8 +1646,9 @@ int HafCpu_Gaussian_U8_U8_3x3
 			resultL = _mm256_add_epi16(resultL, temp0);						// Prev row + 2*curr row + next row
 			resultL = _mm256_srli_epi16(resultL, 4);						// Div by 16 (normalization)
 			
-			resultL = _mm256_packus_epi16(resultL, resultL);				// Convert to 8 bit
-			row0 = _mm256_castsi256_si128(resultL);							// Lower 128 bits 
+			resultL = _mm256_packus_epi16(resultL, resultL);				// Convert to 8 bit (per-lane pack)
+			resultL = _mm256_permute4x64_epi64(resultL, 0x08);				// Fix lane-crossing: move qwords {0,2} to lower 128 bits
+			row0 = _mm256_castsi256_si128(resultL);							// Lower 128 bits
 			_mm_store_si128((__m128i*) pLocalDst, row0);
 
 			pLocalSrc += 16;

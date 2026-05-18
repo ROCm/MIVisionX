@@ -734,7 +734,11 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
     status |= vxQueryPyramid(laplacian, VX_PYRAMID_LEVELS, &levels, sizeof(levels));
 
     status |= vxQueryNode(node, VX_NODE_BORDER, &border, sizeof(border));
-    
+
+    // Save the context's immediate border mode before overriding it
+    vx_border_t saved_border;
+    vxQueryContext(context, VX_CONTEXT_IMMEDIATE_BORDER, &saved_border, sizeof(saved_border));
+
     border.mode = VX_BORDER_REPLICATE;
 
     vxSetContextAttribute(context, VX_CONTEXT_IMMEDIATE_BORDER, &border, sizeof(border));
@@ -786,6 +790,9 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
 
     status |= vxReleasePyramid(&gaussian);
     status |= vxReleaseConvolution(&conv);
+
+    // Restore the context's immediate border mode
+    vxSetContextAttribute(context, VX_CONTEXT_IMMEDIATE_BORDER, &saved_border, sizeof(saved_border));
 
     return status;
 }

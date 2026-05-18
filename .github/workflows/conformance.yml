@@ -651,8 +651,10 @@ jobs:
           mkdir -p profraw
           export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib
           export AGO_DEFAULT_TARGET=CPU
+          export ROCM_PATH=${{ github.workspace }}/install
           export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/api_%p.profraw
 
+          FAILED_TESTS=()
           API_EXECUTABLES=(
             "canny:openvx_canny"
             "channel_extract:openvx_channel_extract"
@@ -674,9 +676,16 @@ jobs:
             exe="${entry##*:}"
             echo "::group::Running ${exe}"
             chmod +x build/api_tests/${dir}/${exe}
-            ./build/api_tests/${dir}/${exe} || echo "::warning::${exe} exited with non-zero status"
+            if ! ./build/api_tests/${dir}/${exe}; then
+              echo "::error::${exe} FAILED"
+              FAILED_TESTS+=("${exe}")
+            fi
             echo "::endgroup::"
           done
+          if [ ${#FAILED_TESTS[@]} -ne 0 ]; then
+            echo "::error::The following API tests failed: ${FAILED_TESTS[*]}"
+            exit 1
+          fi
       - name: Upload profraw
         if: always()
         uses: actions/upload-artifact@v4

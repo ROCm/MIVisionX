@@ -372,7 +372,7 @@ int HafCpu_Erode_U8_U8_3x3
 	return AGO_SUCCESS;
 }
 
-#if USE_BMI2
+#if 0 // USE_BMI2 -- disabled: BMI2 U1 filter implementations have bugs (missing pSrcImage update per row/width)
 /* The function assumes that the source image pointer is 16 byte aligned, and the source stride as well
 It processes the pixels in a width which is the next highest multiple of 16 after dstWidth.
 The function assumes at least one pixel padding on the top, left, right and bottom */

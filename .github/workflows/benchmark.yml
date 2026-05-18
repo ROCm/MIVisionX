@@ -39,7 +39,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake git python3
+          sudo apt-get install -y build-essential cmake git python3 libopencv-dev
 
       - name: Download build artifacts from conformance run
         uses: actions/download-artifact@v4
@@ -135,5 +135,51 @@ jobs:
         with:
           name: benchmark-results
           path: ${{ github.workspace }}/openvx-mark/build/benchmark_results/
+          if-no-files-found: ignore
+          retention-days: 90
+
+      - name: Build opencv-mark
+        run: |
+          mkdir -p ${{ github.workspace }}/tests/opencv_benchmark/build
+          cd ${{ github.workspace }}/tests/opencv_benchmark/build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+          cmake --build . -j$(nproc)
+
+      - name: Run OpenCV benchmark (warmup + measurement)
+        run: |
+          cd ${{ github.workspace }}/tests/opencv_benchmark/build
+          # Warmup: prime caches
+          ./opencv-mark --resolution FHD --iterations 5 --warmup 0 \
+            --output-dir /tmp/warmup-opencv-throwaway >/dev/null 2>&1 || true
+          # Real measurement
+          ./opencv-mark --resolution FHD --iterations 20 --warmup 5
+
+      - name: Compare OpenVX vs OpenCV benchmarks
+        if: always()
+        run: |
+          OPENVX=${{ github.workspace }}/openvx-mark/build/benchmark_results/benchmark_results.json
+          OPENCV=${{ github.workspace }}/tests/opencv_benchmark/build/benchmark_results/benchmark_results.json
+          if [ ! -f "$OPENVX" ] || [ ! -f "$OPENCV" ]; then
+            echo "_Missing benchmark results for comparison._" >> "$GITHUB_STEP_SUMMARY"
+            echo "OpenVX results: $([ -f "$OPENVX" ] && echo 'found' || echo 'missing')"
+            echo "OpenCV results: $([ -f "$OPENCV" ] && echo 'found' || echo 'missing')"
+            exit 0
+          fi
+          python3 ${{ github.workspace }}/openvx-mark/scripts/compare_reports.py \
+            "$OPENVX" "$OPENCV" \
+            --output ${{ github.workspace }}/comparison
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "---" >> "$GITHUB_STEP_SUMMARY"
+          cat ${{ github.workspace }}/comparison.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload comparison artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-comparison
+          path: |
+            ${{ github.workspace }}/comparison.md
+            ${{ github.workspace }}/comparison.csv
+            ${{ github.workspace }}/tests/opencv_benchmark/build/benchmark_results/
           if-no-files-found: ignore
           retention-days: 90

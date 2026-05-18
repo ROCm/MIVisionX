@@ -1,0 +1,5 @@
+# Exercise Laplacian Pyramid
+data input = uniform-image:640,480,U008,128
+data laplacian = pyramid:4,HALF,640,480,S016
+data output = image:40,30,U008
+node org.khronos.openvx.laplacian_pyramid input laplacian output

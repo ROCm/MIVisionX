@@ -1,0 +1,4 @@
+# Exercise postfix in Sobel GX only
+data input = image:1277,719,U008
+data output = image:1277,719,S016
+node com.amd.openvx.Sobel_S16_U8_3x3_GX output input

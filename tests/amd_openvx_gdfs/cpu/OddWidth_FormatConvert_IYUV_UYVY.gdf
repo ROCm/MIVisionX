@@ -1,0 +1,4 @@
+# Exercise postfix in FormatConvert_IYUV_UYVY
+data input_1 = uniform-image:1278,720,UYVY,0x80108010
+data output_1 = image:1278,720,IYUV
+node org.khronos.openvx.color_convert input_1 output_1

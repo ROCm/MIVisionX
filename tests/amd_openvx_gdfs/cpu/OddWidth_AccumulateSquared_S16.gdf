@@ -1,0 +1,5 @@
+# Exercise postfix in AccumulateSquared_S16_S16U8_Sat
+data input_1 = uniform-image:1277,719,U008,50
+data shift = scalar:UINT32,4
+data output_1 = image:1277,719,S016
+node org.khronos.openvx.accumulate_square input_1 shift output_1

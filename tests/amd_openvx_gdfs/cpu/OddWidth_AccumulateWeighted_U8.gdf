@@ -1,0 +1,5 @@
+# Exercise postfix in AccumulateWeighted_U8_U8U8
+data input_1 = uniform-image:1277,719,U008,200
+data alpha = scalar:FLOAT32,0.5
+data output_1 = image:1277,719,U008
+node org.khronos.openvx.accumulate_weighted input_1 alpha output_1

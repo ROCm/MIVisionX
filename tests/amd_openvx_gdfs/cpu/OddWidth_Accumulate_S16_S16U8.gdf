@@ -1,0 +1,4 @@
+# Exercise postfix in accumulate
+data input_1 = uniform-image:1277,719,U008,125
+data output_1 = image:1277,719,S016
+node org.khronos.openvx.accumulate input_1 output_1

@@ -1,0 +1,4 @@
+# Exercise postfix in ColorConvert_RGBX_NV21
+data input_1 = uniform-image:1278,720,NV21,128
+data output_1 = image:1278,720,RGBA
+node org.khronos.openvx.color_convert input_1 output_1

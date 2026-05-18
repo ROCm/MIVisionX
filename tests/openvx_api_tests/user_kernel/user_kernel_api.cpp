@@ -238,7 +238,7 @@ static int test_context_api(vx_context context) {
     CHECK_STATUS(vxQueryContext(context, VX_CONTEXT_REFERENCES, &num_refs, sizeof(num_refs)));
     printf("STATUS: vxQueryContext REFERENCES=%u\n", num_refs);
 
-    char impl_name[256] = {0};
+    char impl_name[VX_MAX_IMPLEMENTATION_NAME] = {0};
     CHECK_STATUS(vxQueryContext(context, VX_CONTEXT_IMPLEMENTATION, impl_name, sizeof(impl_name)));
     printf("STATUS: vxQueryContext IMPLEMENTATION=%s\n", impl_name);
 

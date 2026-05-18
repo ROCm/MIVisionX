@@ -584,7 +584,7 @@ static int test_vxuConvolve(vx_context context) {
     // Simple averaging kernel
     vx_int16 kernel_data[9] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
     CHECK_STATUS(vxCopyConvolutionCoefficients(conv, kernel_data, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
-    vx_uint32 conv_scale = 9;
+    vx_uint32 conv_scale = 8;  // Scale must be a power of 2
     CHECK_STATUS(vxSetConvolutionAttribute(conv, VX_CONVOLUTION_SCALE, &conv_scale, sizeof(vx_uint32)));
 
     CHECK_STATUS(vxuConvolve(context, src, conv, dst));
@@ -709,8 +709,8 @@ static int test_vxuMinMaxLoc(vx_context context) {
     vx_scalar maxVal = vxCreateScalar(context, VX_TYPE_UINT8, NULL);
     vx_array  minLoc = vxCreateArray(context, VX_TYPE_COORDINATES2D, 1);
     vx_array  maxLoc = vxCreateArray(context, VX_TYPE_COORDINATES2D, 1);
-    vx_scalar minCount = vxCreateScalar(context, VX_TYPE_SIZE, NULL);
-    vx_scalar maxCount = vxCreateScalar(context, VX_TYPE_SIZE, NULL);
+    vx_scalar minCount = vxCreateScalar(context, VX_TYPE_UINT32, NULL);
+    vx_scalar maxCount = vxCreateScalar(context, VX_TYPE_UINT32, NULL);
     CHECK_NULL(src, "src");
 
     CHECK_STATUS(vxuMinMaxLoc(context, src, minVal, maxVal, minLoc, maxLoc, minCount, maxCount));
@@ -1339,6 +1339,11 @@ int main() {
         return 1;
     }
     printf("PASS: vxCreateContext\n");
+
+    // Set the immediate border mode to VX_BORDER_UNDEFINED (required for warp/remap operations)
+    vx_border_t border = {};
+    border.mode = VX_BORDER_UNDEFINED;
+    vxSetContextAttribute(context, VX_CONTEXT_ATTRIBUTE_IMMEDIATE_BORDER_MODE, &border, sizeof(border));
 
     // Core vision operations
     total_errors += test_vxuColorConvert(context);

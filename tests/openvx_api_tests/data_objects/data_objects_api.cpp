@@ -152,8 +152,12 @@ static int test_image_api(vx_context context) {
     if (uniform_img) {
         printf("STATUS: vxCreateUniformImage - OK\n");
         vx_bool is_uniform = vx_false_e;
-        CHECK_STATUS(vxQueryImage(uniform_img, VX_IMAGE_IS_UNIFORM, &is_uniform, sizeof(is_uniform)));
-        printf("STATUS: vxQueryImage IS_UNIFORM=%d\n", is_uniform);
+        vx_status us = vxQueryImage(uniform_img, VX_IMAGE_IS_UNIFORM, &is_uniform, sizeof(is_uniform));
+        if (us == VX_SUCCESS) {
+            printf("STATUS: vxQueryImage IS_UNIFORM=%d\n", is_uniform);
+        } else {
+            printf("STATUS: vxQueryImage IS_UNIFORM not supported (status=%d)\n", us);
+        }
         CHECK_STATUS(vxReleaseImage(&uniform_img));
     }
 
@@ -428,9 +432,9 @@ static int test_distribution_api(vx_context context) {
     CHECK_STATUS(vxQueryDistribution(dist, VX_DISTRIBUTION_RANGE, &dist_range, sizeof(dist_range)));
     printf("STATUS: vxQueryDistribution RANGE=%u\n", dist_range);
 
-    vx_size window = 0;
+    vx_uint32 window = 0;
     CHECK_STATUS(vxQueryDistribution(dist, VX_DISTRIBUTION_WINDOW, &window, sizeof(window)));
-    printf("STATUS: vxQueryDistribution WINDOW=%zu\n", window);
+    printf("STATUS: vxQueryDistribution WINDOW=%u\n", window);
 
     vx_size dist_size = 0;
     CHECK_STATUS(vxQueryDistribution(dist, VX_DISTRIBUTION_SIZE, &dist_size, sizeof(dist_size)));
@@ -609,23 +613,23 @@ static int test_remap_api(vx_context context) {
 
     // Copy remap patch (write then read)
     vx_size dst_patch_w = 4, dst_patch_h = 4;
-    vx_float32 coords[4 * 4 * 2]; // x,y pairs
+    vx_coordinates2df_t coords[4 * 4];
     for (vx_size j = 0; j < dst_patch_h; j++) {
         for (vx_size i = 0; i < dst_patch_w; i++) {
-            coords[(j * dst_patch_w + i) * 2 + 0] = (float)i * 2.0f; // src_x
-            coords[(j * dst_patch_w + i) * 2 + 1] = (float)j * 2.0f; // src_y
+            coords[j * dst_patch_w + i].x = (float)i * 2.0f; // src_x
+            coords[j * dst_patch_w + i].y = (float)j * 2.0f; // src_y
         }
     }
     vx_rectangle_t patch_rect = {0, 0, (vx_uint32)dst_patch_w, (vx_uint32)dst_patch_h};
-    vx_size coord_stride = dst_patch_w * 2 * sizeof(vx_float32);
+    vx_size coord_stride = dst_patch_w * sizeof(vx_coordinates2df_t);
     CHECK_STATUS(vxCopyRemapPatch(remap, &patch_rect, coord_stride, coords,
-                                   VX_TYPE_FLOAT32, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+                                   VX_TYPE_COORDINATES2DF, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
     printf("STATUS: vxCopyRemapPatch WRITE - OK\n");
 
-    vx_float32 rcoords[4 * 4 * 2] = {0};
+    vx_coordinates2df_t rcoords[4 * 4] = {};
     CHECK_STATUS(vxCopyRemapPatch(remap, &patch_rect, coord_stride, rcoords,
-                                   VX_TYPE_FLOAT32, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    printf("STATUS: vxCopyRemapPatch READ - OK (pt[0]=(%f,%f))\n", rcoords[0], rcoords[1]);
+                                   VX_TYPE_COORDINATES2DF, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    printf("STATUS: vxCopyRemapPatch READ - OK (pt[0]=(%f,%f))\n", rcoords[0].x, rcoords[0].y);
 
     CHECK_STATUS(vxReleaseRemap(&remap));
     printf("STATUS: Remap API complete (%d errors)\n", errors);

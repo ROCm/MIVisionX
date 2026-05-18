@@ -321,9 +321,9 @@ static int test_graph_api(vx_context context) {
         CHECK_STATUS(vxQueryReference((vx_reference)graph, VX_REFERENCE_COUNT, &ref_count, sizeof(ref_count)));
         printf("STATUS: vxQueryReference COUNT=%u\n", ref_count);
 
-        char ref_name[256] = {0};
-        CHECK_STATUS(vxQueryReference((vx_reference)graph, VX_REFERENCE_NAME, ref_name, sizeof(ref_name)));
-        printf("STATUS: vxQueryReference NAME=%s\n", ref_name);
+        vx_char *ref_name = NULL;
+        CHECK_STATUS(vxQueryReference((vx_reference)graph, VX_REFERENCE_NAME, &ref_name, sizeof(ref_name)));
+        printf("STATUS: vxQueryReference NAME=%s\n", ref_name ? ref_name : "(null)");
 
         vxReleaseGraph(&graph);
     }

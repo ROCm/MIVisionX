@@ -34,12 +34,7 @@ THE SOFTWARE.
 #include <VX/vxu.h>
 #include <vx_ext_amd.h>
 
-// Declare vxu accumulate functions (defined in vxu.cpp but missing from vxu.h)
-extern "C" {
-VX_API_ENTRY vx_status VX_API_CALL vxuAccumulateImage(vx_context context, vx_image input, vx_image accum);
-VX_API_ENTRY vx_status VX_API_CALL vxuAccumulateWeightedImage(vx_context context, vx_image input, vx_scalar scale, vx_image accum);
-VX_API_ENTRY vx_status VX_API_CALL vxuAccumulateSquareImage(vx_context context, vx_image input, vx_scalar scale, vx_image accum);
-}
+// vxuAccumulate* functions are declared in VX/vx_compatibility.h (included above)
 
 // ---------------------------------------------------------------------------
 // Macros

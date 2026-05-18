@@ -63,9 +63,9 @@ static int test_image_api(vx_context context) {
     CHECK_STATUS(vxQueryImage(img, VX_IMAGE_FORMAT, &format, sizeof(format)));
     printf("STATUS: vxQueryImage FORMAT=0x%08x\n", format);
 
-    vx_uint32 planes = 0;
+    vx_size planes = 0;
     CHECK_STATUS(vxQueryImage(img, VX_IMAGE_PLANES, &planes, sizeof(planes)));
-    printf("STATUS: vxQueryImage PLANES=%u\n", planes);
+    printf("STATUS: vxQueryImage PLANES=%zu\n", planes);
 
     vx_enum space = 0;
     CHECK_STATUS(vxQueryImage(img, VX_IMAGE_SPACE, &space, sizeof(space)));

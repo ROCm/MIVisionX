@@ -1354,7 +1354,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryImage(vx_image image_, vx_enum attribu
                 break;
 #endif
             case VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER:
-                if (size == sizeof(vx_uint8)) {
+                if (size == sizeof(vx_uint8 *)) {
                     if (image->buffer) {
                         vx_uint8** temp  = static_cast< vx_uint8 **>(ptr);
                         *temp = image->buffer;

@@ -1,0 +1,5 @@
+# Exercise postfix in ColorDepth_S16_U8
+data input_1 = uniform-image:1277,719,U008,128
+data shift = scalar:INT32,0
+data output_1 = image:1277,719,S016
+node org.khronos.openvx.convertdepth input_1 output_1 !WRAP shift

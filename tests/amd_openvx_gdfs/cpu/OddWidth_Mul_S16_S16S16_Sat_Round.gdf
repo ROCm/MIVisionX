@@ -1,0 +1,6 @@
+# Exercise postfix in Mul_S16_S16S16_Sat_Round
+data input_1 = uniform-image:1277,719,S016,100
+data input_2 = uniform-image:1277,719,S016,3
+data scale = scalar:FLOAT32,0.00390625
+data output_1 = image:1277,719,S016
+node org.khronos.openvx.multiply input_1 input_2 scale !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN output_1

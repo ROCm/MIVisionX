@@ -1,0 +1,5 @@
+# Exercise S16 AbsDiff variant + postfix
+data input_1 = uniform-image:1277,719,S016,200
+data input_2 = uniform-image:1277,719,S016,132
+data output_1 = image:1277,719,S016
+node org.khronos.openvx.absdiff input_1 input_2 output_1

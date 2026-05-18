@@ -211,6 +211,110 @@ add_test(
 )
 set_property(TEST openvx_graph_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
 
+# 11_c - tensor_api - tensor API test
+add_test(
+  NAME
+    openvx_tensor_api
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/tensor_api"
+                              "${CMAKE_CURRENT_BINARY_DIR}/tensor_api"
+            --build-generator "${CMAKE_GENERATOR}"
+            --test-command "openvx_tensor_api"
+)
+set_property(TEST openvx_tensor_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+
+# 11_d - data_objects - data objects API test
+add_test(
+  NAME
+    openvx_data_objects_api
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/data_objects"
+                              "${CMAKE_CURRENT_BINARY_DIR}/data_objects"
+            --build-generator "${CMAKE_GENERATOR}"
+            --test-command "openvx_data_objects_api"
+)
+set_property(TEST openvx_data_objects_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+
+# 11_e - user_kernel - user kernel API test
+add_test(
+  NAME
+    openvx_user_kernel_api
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/user_kernel"
+                              "${CMAKE_CURRENT_BINARY_DIR}/user_kernel"
+            --build-generator "${CMAKE_GENERATOR}"
+            --test-command "openvx_user_kernel_api"
+)
+set_property(TEST openvx_user_kernel_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+
+# 11_f - tensor_advanced - tensor advanced API test
+add_test(
+  NAME
+    openvx_tensor_advanced_api
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/tensor_advanced"
+                              "${CMAKE_CURRENT_BINARY_DIR}/tensor_advanced"
+            --build-generator "${CMAKE_GENERATOR}"
+            --test-command "openvx_tensor_advanced_api"
+)
+set_property(TEST openvx_tensor_advanced_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+
+# 11_g - threshold_query - threshold query API test
+add_test(
+  NAME
+    openvx_threshold_query_api
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/threshold_query"
+                              "${CMAKE_CURRENT_BINARY_DIR}/threshold_query"
+            --build-generator "${CMAKE_GENERATOR}"
+            --test-command "openvx_threshold_query_api"
+)
+set_property(TEST openvx_threshold_query_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+
+# 11_h - graph_import - graph import API test
+add_test(
+  NAME
+    openvx_graph_import_api
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/graph_import"
+                              "${CMAKE_CURRENT_BINARY_DIR}/graph_import"
+            --build-generator "${CMAKE_GENERATOR}"
+            --test-command "openvx_graph_import_api"
+)
+set_property(TEST openvx_graph_import_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+
+# 11_i - vxu_api - VXU API test
+add_test(
+  NAME
+    openvx_vxu_api
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/vxu_api"
+                              "${CMAKE_CURRENT_BINARY_DIR}/vxu_api"
+            --build-generator "${CMAKE_GENERATOR}"
+            --test-command "openvx_vxu_api"
+)
+set_property(TEST openvx_vxu_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+
+# 11_j - coverage_boost - coverage boost API test
+add_test(
+  NAME
+    openvx_coverage_boost
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/coverage_boost"
+                              "${CMAKE_CURRENT_BINARY_DIR}/coverage_boost"
+            --build-generator "${CMAKE_GENERATOR}"
+            --test-command "openvx_coverage_boost"
+)
+set_property(TEST openvx_coverage_boost PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+
 # 12 - canny - vision graph force to CPU
 add_test(NAME openvx_canny_CPU 
               COMMAND openvx_canny 

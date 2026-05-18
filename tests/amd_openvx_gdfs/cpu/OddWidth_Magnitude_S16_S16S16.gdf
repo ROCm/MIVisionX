@@ -1,0 +1,5 @@
+# Exercise postfix in magnitude
+data input_1 = image:1277,719,S016
+data input_2 = image:1277,719,S016
+data output_1 = image:1277,719,S016
+node org.khronos.openvx.magnitude input_1 input_2 output_1

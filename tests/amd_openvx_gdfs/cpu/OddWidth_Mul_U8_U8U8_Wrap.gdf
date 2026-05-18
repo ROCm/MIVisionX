@@ -1,0 +1,6 @@
+# Exercise postfix scalar loops in Multiply
+data input_1 = uniform-image:1277,719,U008,50
+data input_2 = uniform-image:1277,719,U008,3
+data scale = scalar:FLOAT32,0.00390625
+data output_1 = image:1277,719,U008
+node org.khronos.openvx.multiply input_1 input_2 scale !WRAP !ROUND_POLICY_TO_ZERO output_1

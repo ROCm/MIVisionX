@@ -1,0 +1,4 @@
+# Exercise postfix in channel extract from RGB Pos1
+data input = image:1278,720,RGB2
+data output = image:1278,720,U008
+node com.amd.openvx.ChannelExtract_U8_U24_Pos1 output input

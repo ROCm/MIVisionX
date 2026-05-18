@@ -1,0 +1,4 @@
+# agoKernel_Histogram_DATA_U8
+data input_1 = uniform-image:1920,1080,U008,125
+data output_dist = distribution:256,0,256
+node org.khronos.openvx.histogram input_1 output_dist

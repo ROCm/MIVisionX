@@ -1,0 +1,4 @@
+# Exercise postfix in median filter
+data input_1 = image:1277,719,U008
+data output_1 = image:1277,719,U008
+node org.khronos.openvx.median_3x3 input_1 output_1

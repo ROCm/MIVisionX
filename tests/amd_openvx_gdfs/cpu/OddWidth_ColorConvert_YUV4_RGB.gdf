@@ -1,0 +1,4 @@
+# Exercise postfix in ColorConvert_YUV4_RGB
+data input_1 = uniform-image:1278,720,RGB2,0x808080
+data output_1 = image:1278,720,YUV4
+node org.khronos.openvx.color_convert input_1 output_1

@@ -1,0 +1,5 @@
+# Exercise MeanStdDev_DATA_U8 + MeanStdDevMerge_DATA_DATA
+data input_1 = uniform-image:1920,1080,U008,125
+data mean = scalar:FLOAT32,0.0
+data stddev = scalar:FLOAT32,0.0
+node org.khronos.openvx.mean_stddev input_1 mean stddev

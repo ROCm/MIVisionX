@@ -1,0 +1,4 @@
+# Exercise postfix in channel extract from RGBA Pos2
+data input = image:1277,719,RGBA
+data output = image:1277,719,U008
+node com.amd.openvx.ChannelExtract_U8_U32_Pos2 output input

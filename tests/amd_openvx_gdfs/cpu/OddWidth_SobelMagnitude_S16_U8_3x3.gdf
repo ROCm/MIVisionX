@@ -1,0 +1,4 @@
+# Exercise postfix in Sobel magnitude
+data input = image:1277,719,U008
+data output = image:1277,719,S016
+node com.amd.openvx.SobelMagnitude_S16_U8_3x3 output input

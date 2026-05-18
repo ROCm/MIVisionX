@@ -870,6 +870,7 @@ jobs:
                   "openvx_verified": vx["verified"],
                   "opencv_verified": cv["verified"],
               })
+          rows.sort(key=lambda row: row["speedup"])
 
           md_path = output_prefix + ".md"
           csv_path = output_prefix + ".csv"

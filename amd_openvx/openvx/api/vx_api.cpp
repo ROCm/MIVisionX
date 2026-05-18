@@ -9540,11 +9540,15 @@ VX_API_ENTRY vx_status VX_API_CALL vxGetModuleInternalData(vx_context context, c
 {
     vx_status status = VX_ERROR_INVALID_REFERENCE;
     if (agoIsValidContext(context)) {
-        for (auto it = context->modules.begin(); it != context->modules.end(); it++) {
-            if (it->hmodule && !strcmp(it->module_name, module)) {
-                *ptr = it->module_internal_data_ptr;
-                *size = it->module_internal_data_size;
-                status = VX_SUCCESS;
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (module && ptr && size) {
+            for (auto it = context->modules.begin(); it != context->modules.end(); it++) {
+                if (!strcmp(it->module_name, module)) {
+                    *ptr = it->module_internal_data_ptr;
+                    *size = it->module_internal_data_size;
+                    status = VX_SUCCESS;
+                    break;
+                }
             }
         }
     }
@@ -9555,11 +9559,15 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetModuleInternalData(vx_context context, c
 {
     vx_status status = VX_ERROR_INVALID_REFERENCE;
     if (agoIsValidContext(context)) {
-        for (auto it = context->modules.begin(); it != context->modules.end(); it++) {
-            if (it->hmodule && !strcmp(it->module_name, module)) {
-                it->module_internal_data_ptr = (vx_uint8 *)ptr;
-                it->module_internal_data_size = size;
-                status = VX_SUCCESS;
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (module) {
+            for (auto it = context->modules.begin(); it != context->modules.end(); it++) {
+                if (!strcmp(it->module_name, module)) {
+                    it->module_internal_data_ptr = (vx_uint8 *)ptr;
+                    it->module_internal_data_size = size;
+                    status = VX_SUCCESS;
+                    break;
+                }
             }
         }
     }

@@ -80,7 +80,12 @@ int main(int argc, char **argv)
     ERROR_CHECK_OBJECT(context);
     vxRegisterLogCallback(context, log_callback, vx_false_e);
 
-    ERROR_CHECK_STATUS(vxRegisterKernelLibrary(context, nullptr, nullptr, nullptr));
+    vx_status failure_register = vxRegisterKernelLibrary(context, nullptr, nullptr, nullptr);
+    if (failure_register != VX_ERROR_INVALID_PARAMETERS)
+    {
+        printf("ERROR: vxRegisterKernelLibrary should fail with VX_ERROR_INVALID_PARAMETERS for null arguments, got (%d)\n", failure_register);
+        exit(1);
+    }
 
     // register image formats
 	AgoImageFormatDescription desc = { 3, 1, 32, VX_COLOR_SPACE_DEFAULT, VX_CHANNEL_RANGE_FULL };

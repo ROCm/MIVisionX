@@ -22,11 +22,12 @@ name: AMD OpenVX Benchmark
 
 on:
   workflow_run:
-    workflows: ["AMD OpenVX Conformance Tests"]
+    workflows: ["AMD OpenVX CI"]
     types: [completed]
 
 jobs:
   benchmark:
+    name: Release OpenVX vs OpenCV benchmark
     if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     steps:
@@ -41,7 +42,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential cmake git python3 libopencv-dev
 
-      - name: Download build artifacts from conformance run
+      - name: Download AMD OpenVX Release artifacts from CI
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts
@@ -65,7 +66,7 @@ jobs:
             ..
           cmake --build . -j$(nproc)
 
-      - name: Run benchmark (warmup + measurement)
+      - name: Run AMD OpenVX benchmark on this runner
         run: |
           cd ${{ github.workspace }}/openvx-mark/build
           export LD_LIBRARY_PATH=${{ github.workspace }}/artifacts/build/lib
@@ -145,7 +146,7 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=Release ..
           cmake --build . -j$(nproc)
 
-      - name: Run OpenCV benchmark (warmup + measurement)
+      - name: Run OpenCV benchmark on this runner
         run: |
           cd ${{ github.workspace }}/tests/opencv_benchmark/build
           # Warmup: prime caches
@@ -154,7 +155,7 @@ jobs:
           # Real measurement
           ./opencv-mark --resolution FHD --iterations 20 --warmup 5
 
-      - name: Compare OpenVX vs OpenCV benchmarks
+      - name: Compare same-runner OpenVX vs OpenCV benchmarks
         if: always()
         run: |
           OPENVX=${{ github.workspace }}/openvx-mark/build/benchmark_results/benchmark_results.json
@@ -165,9 +166,90 @@ jobs:
             echo "OpenCV results: $([ -f "$OPENCV" ] && echo 'found' || echo 'missing')"
             exit 0
           fi
-          python3 ${{ github.workspace }}/openvx-mark/scripts/compare_reports.py \
-            "$OPENVX" "$OPENCV" \
-            --output ${{ github.workspace }}/comparison
+          python3 - "$OPENVX" "$OPENCV" "${{ github.workspace }}/comparison" <<'PY'
+          import csv
+          import json
+          import sys
+
+          openvx_path, opencv_path, output_prefix = sys.argv[1:4]
+
+          def load_results(path):
+              with open(path) as f:
+                  report = json.load(f)
+              results = {}
+              for item in report.get("results", []):
+                  name = item.get("name")
+                  resolution = item.get("resolution")
+                  wall_clock = item.get("wall_clock", {}) or {}
+                  median_ms = wall_clock.get("median_ms")
+                  mps = item.get("megapixels_per_sec")
+                  if name and resolution and median_ms and median_ms > 0:
+                      results[(name, resolution)] = {
+                          "name": name,
+                          "category": item.get("category", ""),
+                          "resolution": resolution,
+                          "median_ms": float(median_ms),
+                          "mps": float(mps or 0),
+                          "verified": bool(item.get("verified", False)),
+                      }
+              return results
+
+          openvx = load_results(openvx_path)
+          opencv = load_results(opencv_path)
+          rows = []
+          for key in sorted(openvx.keys() & opencv.keys()):
+              vx = openvx[key]
+              cv = opencv[key]
+              speedup = cv["median_ms"] / vx["median_ms"]
+              rows.append({
+                  "name": vx["name"],
+                  "category": vx["category"],
+                  "resolution": vx["resolution"],
+                  "openvx_median_ms": vx["median_ms"],
+                  "opencv_median_ms": cv["median_ms"],
+                  "openvx_mps": vx["mps"],
+                  "opencv_mps": cv["mps"],
+                  "speedup": speedup,
+                  "openvx_verified": vx["verified"],
+                  "opencv_verified": cv["verified"],
+              })
+
+          md_path = output_prefix + ".md"
+          csv_path = output_prefix + ".csv"
+
+          with open(csv_path, "w", newline="") as f:
+              writer = csv.DictWriter(f, fieldnames=[
+                  "name", "category", "resolution",
+                  "openvx_median_ms", "opencv_median_ms",
+                  "openvx_mps", "opencv_mps", "speedup",
+                  "openvx_verified", "opencv_verified",
+              ])
+              writer.writeheader()
+              writer.writerows(rows)
+
+          with open(md_path, "w") as f:
+              f.write("## OpenVX vs OpenCV Benchmark Comparison\n\n")
+              f.write("Both benchmark suites are measured in this job on the same GitHub runner. ")
+              f.write("The OpenVX benchmark links against the Release MIVisionX build.\n\n")
+              if not rows:
+                  f.write("_No matching benchmark results found._\n")
+              else:
+                  avg = sum(row["speedup"] for row in rows) / len(rows)
+                  wins = sum(1 for row in rows if row["speedup"] > 1.0)
+                  f.write(f"**Average OpenVX speedup:** {avg:.2f}x across {len(rows)} matched kernels.  \n")
+                  f.write(f"**OpenVX faster:** {wins}/{len(rows)} kernels.\n\n")
+                  f.write("| Kernel | Category | Res | OpenVX Median (ms) | OpenCV Median (ms) | Speedup | OpenVX MP/s | OpenCV MP/s |\n")
+                  f.write("|:---|:---|:---|---:|---:|---:|---:|---:|\n")
+                  for row in rows:
+                      f.write(
+                          f"| `{row['name']}` | {row['category']} | {row['resolution']} "
+                          f"| {row['openvx_median_ms']:.3f} "
+                          f"| {row['opencv_median_ms']:.3f} "
+                          f"| {row['speedup']:.2f}x "
+                          f"| {row['openvx_mps']:.2f} "
+                          f"| {row['opencv_mps']:.2f} |\n"
+                      )
+          PY
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "---" >> "$GITHUB_STEP_SUMMARY"
           cat ${{ github.workspace }}/comparison.md >> "$GITHUB_STEP_SUMMARY"

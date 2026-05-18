@@ -32,6 +32,9 @@ on:
       - '**/*.md'
       - 'docs/**'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # ===========================================================================
   # Build Stage — three builds run in parallel
@@ -724,6 +727,200 @@ jobs:
           name: profraw-gdf-tests
           path: profraw/
           if-no-files-found: ignore
+
+  # ===========================================================================
+  # Benchmark Stage — uses the release build artifact and compares OpenVX vs OpenCV
+  # ===========================================================================
+
+  benchmark:
+    name: Release OpenVX vs OpenCV benchmark
+    runs-on: ubuntu-24.04
+    needs:
+      - build
+      - baseline
+      - graph
+      - data-objects
+      - image-ops
+      - vision-color
+      - vision-filters
+      - vision-arithmetic
+      - vision-geometric
+      - vision-features
+      - vision-statistics
+      - vision-pyramid
+      - api-tests
+      - gdf-tests
+    if: always() && needs.build.result == 'success' && needs.baseline.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install benchmark dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake git python3 libopencv-dev
+
+      - name: Download AMD OpenVX Release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: ${{ github.workspace }}/artifacts
+
+      - name: Clone openvx-mark
+        run: |
+          git clone --depth 1 https://github.com/kiritigowda/openvx-mark.git \
+            ${{ github.workspace }}/openvx-mark
+
+      - name: Build openvx-mark
+        run: |
+          mkdir -p ${{ github.workspace }}/openvx-mark/build
+          cd ${{ github.workspace }}/openvx-mark/build
+          cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DOPENVX_INCLUDES=${{ github.workspace }}/amd_openvx/openvx/include \
+            -DOPENVX_LIB_DIR=${{ github.workspace }}/artifacts/build/lib \
+            ..
+          cmake --build . -j$(nproc)
+
+      - name: Run AMD OpenVX benchmark on this runner
+        run: |
+          cd ${{ github.workspace }}/openvx-mark/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/artifacts/build/lib
+          ./openvx-mark --resolution FHD --iterations 5 --warmup 0 \
+            --output /tmp/warmup-openvx-throwaway >/dev/null 2>&1 || true
+          ./openvx-mark --resolution FHD --iterations 20 --warmup 5
+
+      - name: Upload OpenVX benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: ${{ github.workspace }}/openvx-mark/build/benchmark_results/
+          if-no-files-found: ignore
+          retention-days: 90
+
+      - name: Build opencv-mark
+        run: |
+          mkdir -p ${{ github.workspace }}/tests/opencv_benchmark/build
+          cd ${{ github.workspace }}/tests/opencv_benchmark/build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+          cmake --build . -j$(nproc)
+
+      - name: Run OpenCV benchmark on this runner
+        run: |
+          cd ${{ github.workspace }}/tests/opencv_benchmark/build
+          ./opencv-mark --resolution FHD --iterations 5 --warmup 0 \
+            --output-dir /tmp/warmup-opencv-throwaway >/dev/null 2>&1 || true
+          ./opencv-mark --resolution FHD --iterations 20 --warmup 5
+
+      - name: Compare same-runner OpenVX vs OpenCV benchmarks
+        if: always()
+        run: |
+          OPENVX=${{ github.workspace }}/openvx-mark/build/benchmark_results/benchmark_results.json
+          OPENCV=${{ github.workspace }}/tests/opencv_benchmark/build/benchmark_results/benchmark_results.json
+          if [ ! -f "$OPENVX" ] || [ ! -f "$OPENCV" ]; then
+            echo "_Missing benchmark results for comparison._" >> "$GITHUB_STEP_SUMMARY"
+            echo "OpenVX results: $([ -f "$OPENVX" ] && echo 'found' || echo 'missing')"
+            echo "OpenCV results: $([ -f "$OPENCV" ] && echo 'found' || echo 'missing')"
+            exit 0
+          fi
+          python3 - "$OPENVX" "$OPENCV" "${{ github.workspace }}/comparison" <<'PY'
+          import csv
+          import json
+          import sys
+
+          openvx_path, opencv_path, output_prefix = sys.argv[1:4]
+
+          def load_results(path):
+              with open(path) as f:
+                  report = json.load(f)
+              results = {}
+              for item in report.get("results", []):
+                  name = item.get("name")
+                  resolution = item.get("resolution")
+                  wall_clock = item.get("wall_clock", {}) or {}
+                  median_ms = wall_clock.get("median_ms")
+                  mps = item.get("megapixels_per_sec")
+                  if name and resolution and median_ms and median_ms > 0:
+                      results[(name, resolution)] = {
+                          "name": name,
+                          "category": item.get("category", ""),
+                          "resolution": resolution,
+                          "median_ms": float(median_ms),
+                          "mps": float(mps or 0),
+                          "verified": bool(item.get("verified", False)),
+                      }
+              return results
+
+          openvx = load_results(openvx_path)
+          opencv = load_results(opencv_path)
+          rows = []
+          for key in sorted(openvx.keys() & opencv.keys()):
+              vx = openvx[key]
+              cv = opencv[key]
+              speedup = cv["median_ms"] / vx["median_ms"]
+              rows.append({
+                  "name": vx["name"],
+                  "category": vx["category"],
+                  "resolution": vx["resolution"],
+                  "openvx_median_ms": vx["median_ms"],
+                  "opencv_median_ms": cv["median_ms"],
+                  "openvx_mps": vx["mps"],
+                  "opencv_mps": cv["mps"],
+                  "speedup": speedup,
+                  "openvx_verified": vx["verified"],
+                  "opencv_verified": cv["verified"],
+              })
+          rows.sort(key=lambda row: row["speedup"])
+
+          md_path = output_prefix + ".md"
+          csv_path = output_prefix + ".csv"
+
+          with open(csv_path, "w", newline="") as f:
+              writer = csv.DictWriter(f, fieldnames=[
+                  "name", "category", "resolution",
+                  "openvx_median_ms", "opencv_median_ms",
+                  "openvx_mps", "opencv_mps", "speedup",
+                  "openvx_verified", "opencv_verified",
+              ])
+              writer.writeheader()
+              writer.writerows(rows)
+
+          with open(md_path, "w") as f:
+              f.write("## OpenVX vs OpenCV Benchmark Comparison\n\n")
+              f.write("Both benchmark suites are measured in this job on the same GitHub runner. ")
+              f.write("The OpenVX benchmark links against the Release MIVisionX build artifact from this CI run.\n\n")
+              if not rows:
+                  f.write("_No matching benchmark results found._\n")
+              else:
+                  avg = sum(row["speedup"] for row in rows) / len(rows)
+                  wins = sum(1 for row in rows if row["speedup"] > 1.0)
+                  f.write(f"**Average OpenVX speedup:** {avg:.2f}x across {len(rows)} matched kernels.  \n")
+                  f.write(f"**OpenVX faster:** {wins}/{len(rows)} kernels.\n\n")
+                  f.write("| Kernel | Category | Res | OpenVX Median (ms) | OpenCV Median (ms) | Speedup | OpenVX MP/s | OpenCV MP/s |\n")
+                  f.write("|:---|:---|:---|---:|---:|---:|---:|---:|\n")
+                  for row in rows:
+                      f.write(
+                          f"| `{row['name']}` | {row['category']} | {row['resolution']} "
+                          f"| {row['openvx_median_ms']:.3f} "
+                          f"| {row['opencv_median_ms']:.3f} "
+                          f"| {row['speedup']:.2f}x "
+                          f"| {row['openvx_mps']:.2f} "
+                          f"| {row['opencv_mps']:.2f} |\n"
+                      )
+          PY
+          cat ${{ github.workspace }}/comparison.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload benchmark comparison artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-comparison
+          path: |
+            ${{ github.workspace }}/comparison.md
+            ${{ github.workspace }}/comparison.csv
+            ${{ github.workspace }}/tests/opencv_benchmark/build/benchmark_results/
+          if-no-files-found: ignore
+          retention-days: 90
 
   # ===========================================================================
   # Coverage Stage — merge all profraw and generate report

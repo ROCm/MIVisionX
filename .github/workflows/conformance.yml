@@ -742,10 +742,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install LLVM tools
+      - name: Install LLVM tools and lcov
         run: |
           sudo apt-get update
-          sudo apt-get install -y llvm
+          sudo apt-get install -y llvm lcov
 
       - name: Download debug build (for libopenvx.so)
         uses: actions/download-artifact@v4
@@ -800,13 +800,14 @@ jobs:
             -ignore-filename-regex='(test|conformance)' \
             > coverage.lcov
 
-          # Generate HTML report (source files available via checkout)
-          llvm-cov show "${LIBOPENVX}" \
-            -instr-profile="${PROFDATA}" \
-            -format=html \
-            -output-dir=coverage_html \
-            -ignore-filename-regex='(test|conformance)' \
-            2>/dev/null || echo "::warning::HTML report generation had errors (missing source files)"
+          # Generate LCOV-style HTML report with genhtml
+          genhtml coverage.lcov \
+            --output-directory coverage_html \
+            --branch-coverage \
+            --title "AMD OpenVX Code Coverage" \
+            --ignore-errors source \
+            --ignore-errors unmapped \
+            2>&1 || echo "::warning::genhtml had errors"
 
       - name: Post coverage summary
         if: always()

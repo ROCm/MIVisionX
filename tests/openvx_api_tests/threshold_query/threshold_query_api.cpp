@@ -667,9 +667,9 @@ static int test_vxQueryImage_size_multiplane(vx_context context) {
             printf("  PASS: VX_IMAGE_SIZE (IYUV 320x240) = %zu bytes\n", img_size);
 
             // Also query number of planes to verify multi-plane nature
-            vx_uint32 planes = 0;
+            vx_size planes = 0;
             CHECK_STATUS(vxQueryImage(img_iyuv, VX_IMAGE_PLANES, &planes, sizeof(planes)));
-            printf("  PASS: VX_IMAGE_PLANES (IYUV) = %u\n", planes);
+            printf("  PASS: VX_IMAGE_PLANES (IYUV) = %zu\n", planes);
 
             CHECK_STATUS(vxReleaseImage(&img_iyuv));
         }

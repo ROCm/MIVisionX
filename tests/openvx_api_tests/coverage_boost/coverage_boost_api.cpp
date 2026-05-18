@@ -338,8 +338,7 @@ static int test_image_amd_attributes(vx_context ctx)
     if (img_u8) {
         vx_uint8 *host_buf = NULL;
         printf("  vxQueryImage(VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER) on U8...\n");
-        // Note: size check in implementation is sizeof(vx_uint8) which is 1
-        CHECK_STATUS_LENIENT(vxQueryImage(img_u8, VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &host_buf, sizeof(vx_uint8)));
+        CHECK_STATUS_LENIENT(vxQueryImage(img_u8, VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &host_buf, sizeof(vx_uint8 *)));
         printf("  Host buffer pointer: %p\n", (void *)host_buf);
         vxReleaseImage(&img_u8);
     }

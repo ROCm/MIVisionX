@@ -102,11 +102,13 @@ int main(int argc, char **argv)
     const char * searchEnvName = "ROCM_PATH";
     char rocmLocation[1024];
     int isEnvSet = getEnvironmentVariable(searchEnvName, rocmLocation, sizeof(rocmLocation));
-    if(isEnvSet)
+    if(isEnvSet > 0)
         printf("\nROCM PATH:%s\n", rocmLocation);
     else{
-        printf("\nROCM PATH: NOT SET\n");
-        return -1;
+        printf("\nROCM PATH: NOT SET -- skipping GDF import test\n");
+        vxReleaseGraph(&graph);
+        vxReleaseContext(&context);
+        return 0;
     }
     char gdfFile[2048];
     char gdfLocation[1024] = "/share/mivisionx/samples/gdf/read-gdf-sample.gdf";

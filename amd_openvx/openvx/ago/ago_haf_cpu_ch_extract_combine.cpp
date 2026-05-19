@@ -380,7 +380,7 @@ int HafCpu_ChannelCopy_U8_U1
 	__m128i r0, r1;
 	__m128i zeromask = _mm_setzero_si128();
 
-	__declspec(align(16)) uint64_t pixels_u64[4];
+	alignas(16) uint64_t pixels_u64[4];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -390,7 +390,7 @@ int HafCpu_ChannelCopy_U8_U1
 			// Read the U1 values from src1
 			pixels_u64[0] = (uint64_t)(*(pSrcImage + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage + (width >> 3) + 1));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -399,7 +399,7 @@ int HafCpu_ChannelCopy_U8_U1
 			// Read the U1 values from src2
 			pixels_u64[2] = (uint64_t)(*(pSrcImage + (width >> 3) + 2));
 			pixels_u64[3] = (uint64_t)(*(pSrcImage + (width >> 3) + 3));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels_u64[2] = _pdep_u64(pixels_u64[2], maskConv);
 			pixels_u64[3] = _pdep_u64(pixels_u64[3], maskConv);
 #else
@@ -437,7 +437,7 @@ int HafCpu_ChannelCopy_U1_U8
 	__m128i * src = (__m128i*) pSrcImage;
 	__m128i r0;
 
-	__declspec(align(16)) uint64_t pixels_u64[2];
+	alignas(16) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -445,11 +445,11 @@ int HafCpu_ChannelCopy_U1_U8
 		for (unsigned int width = 0; width < dstWidth; width += 16)
 		{
 			r0 = _mm_load_si128(&src[width >> 4]);
-			
+
 			// Convert U8 to U1	- Extract LSB
-#ifdef _WIN64
-			pixels_u64[0] = _pext_u64(r0.m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(r0.m128i_u64[1], maskConv);
+#if defined(_WIN64) || defined(__x86_64__)
+			pixels_u64[0] = _pext_u64(M128I(r0).m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(M128I(r0).m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif

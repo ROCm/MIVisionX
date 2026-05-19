@@ -372,7 +372,7 @@ int HafCpu_Erode_U8_U8_3x3
 	return AGO_SUCCESS;
 }
 
-#if USE_BMI2
+#if 0 // USE_BMI2 -- disabled: BMI2 U1 filter implementations have bugs (missing pSrcImage update per row/width)
 /* The function assumes that the source image pointer is 16 byte aligned, and the source stride as well
 It processes the pixels in a width which is the next highest multiple of 16 after dstWidth.
 The function assumes at least one pixel padding on the top, left, right and bottom */
@@ -444,13 +444,13 @@ int HafCpu_Dilate_U1_U8_3x3
 			row0 = _mm_or_si128(row0, row2);
 
 			// Convert U8 to U1
-#ifdef _WIN64
-			result[0] = _pext_u64(row0.m128i_u64[0], maskConv);
-			result[1] = _pext_u64(row0.m128i_u64[1], maskConv);
+#if defined(_WIN64) || defined(__x86_64__)
+			result[0] = _pext_u64(M128I(row0).m128i_u64[0], maskConv);
+			result[1] = _pext_u64(M128I(row0).m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
-			
+
 			*((unsigned char*)pDstImage + (width >> 4))= (unsigned char)(result[0]);
 			*((unsigned char*)pDstImage + (width >> 4) + 1) = (unsigned char)(result[1]);
 		}
@@ -531,9 +531,9 @@ int HafCpu_Erode_U1_U8_3x3
 			row0 = _mm_and_si128(row0, row2);
 
 			// Convert U8 to U1
-#ifdef _WIN64
-			result[0] = _pext_u64(row0.m128i_u64[0], maskConv);
-			result[1] = _pext_u64(row0.m128i_u64[1], maskConv);
+#if defined(_WIN64) || defined(__x86_64__)
+			result[0] = _pext_u64(M128I(row0).m128i_u64[0], maskConv);
+			result[1] = _pext_u64(M128I(row0).m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -565,7 +565,7 @@ int HafCpu_Dilate_U8_U1_3x3
 	__m128i maskL = _mm_set_epi8((char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0xFF);
 	__m128i maskR = _mm_set_epi8((char)0xFF, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0);
 	
-	__declspec(align(16)) uint64_t pixels[2];
+	alignas(16) uint64_t pixels[2];
 	uint64_t maskConv = 0x0101010101010101;
 	char lpixel, rpixel;
 
@@ -576,7 +576,7 @@ int HafCpu_Dilate_U8_U1_3x3
 			// Read the row above
 			pixels[0] = (uint64_t)(*(pSrcImage - srcImageStrideInBytes));
 			pixels[1] = (uint64_t)(*(pSrcImage - srcImageStrideInBytes + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -587,7 +587,7 @@ int HafCpu_Dilate_U8_U1_3x3
 			// Read the current row
 			pixels[0] = (uint64_t)(*pSrcImage);
 			pixels[1] = (uint64_t)(*(pSrcImage + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -598,7 +598,7 @@ int HafCpu_Dilate_U8_U1_3x3
 			// Read the row below
 			pixels[0] = (uint64_t)(*(pSrcImage + srcImageStrideInBytes));
 			pixels[1] = (uint64_t)(*(pSrcImage + srcImageStrideInBytes + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -644,7 +644,7 @@ int HafCpu_Dilate_U8_U1_3x3
 
 			row0 = _mm_or_si128(row0, row1);
 			row0 = _mm_or_si128(row0, row2);
-			
+
 			// Convert the bytes from 0x01 -> 0xFF and 0x0 -> 0x0
 			temp = _mm_setzero_si128();
 			row0 = _mm_cmpgt_epi8(row0, temp);
@@ -676,7 +676,7 @@ int HafCpu_Erode_U8_U1_3x3
 	__m128i maskL = _mm_set_epi8((char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0xFF);
 	__m128i maskR = _mm_set_epi8((char)0xFF, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0);
 
-	__declspec(align(16)) uint64_t pixels[2];
+	alignas(16) uint64_t pixels[2];
 	uint64_t maskConv = 0x0101010101010101;
 	char lpixel, rpixel;
 
@@ -687,7 +687,7 @@ int HafCpu_Erode_U8_U1_3x3
 			// Read the row above
 			pixels[0] = (uint64_t)(*(pSrcImage - srcImageStrideInBytes));
 			pixels[1] = (uint64_t)(*(pSrcImage - srcImageStrideInBytes + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -698,7 +698,7 @@ int HafCpu_Erode_U8_U1_3x3
 			// Read the current row
 			pixels[0] = (uint64_t)(*pSrcImage);
 			pixels[1] = (uint64_t)(*(pSrcImage + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -709,7 +709,7 @@ int HafCpu_Erode_U8_U1_3x3
 			// Read the row below
 			pixels[0] = (uint64_t)(*(pSrcImage + srcImageStrideInBytes));
 			pixels[1] = (uint64_t)(*(pSrcImage + srcImageStrideInBytes + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -784,7 +784,7 @@ int HafCpu_Dilate_U1_U1_3x3
 	__m128i maskL = _mm_set_epi8((char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0xFF);
 	__m128i maskR = _mm_set_epi8((char)0xFF, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0);
 
-	__declspec(align(16)) uint64_t pixels[2];
+	alignas(16) uint64_t pixels[2];
 	uint64_t maskConv = 0x0101010101010101;
 	char lpixel, rpixel;
 
@@ -795,7 +795,7 @@ int HafCpu_Dilate_U1_U1_3x3
 			// Read the row above
 			pixels[0] = (uint64_t)(*(pSrcImage - srcImageStrideInBytes));
 			pixels[1] = (uint64_t)(*(pSrcImage - srcImageStrideInBytes + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -806,7 +806,7 @@ int HafCpu_Dilate_U1_U1_3x3
 			// Read the current row
 			pixels[0] = (uint64_t)(*pSrcImage);
 			pixels[1] = (uint64_t)(*(pSrcImage + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -817,7 +817,7 @@ int HafCpu_Dilate_U1_U1_3x3
 			// Read the row below
 			pixels[0] = (uint64_t)(*(pSrcImage + srcImageStrideInBytes));
 			pixels[1] = (uint64_t)(*(pSrcImage + srcImageStrideInBytes + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -865,9 +865,9 @@ int HafCpu_Dilate_U1_U1_3x3
 			row0 = _mm_or_si128(row0, row2);
 
 			// Convert U8 to U1
-#ifdef _WIN64
-			pixels[0] = _pext_u64(row0.m128i_u64[0], maskConv);
-			pixels[1] = _pext_u64(row0.m128i_u64[1], maskConv);
+#if defined(_WIN64) || defined(__x86_64__)
+			pixels[0] = _pext_u64(M128I(row0).m128i_u64[0], maskConv);
+			pixels[1] = _pext_u64(M128I(row0).m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -895,7 +895,7 @@ int HafCpu_Erode_U1_U1_3x3
 	__m128i maskL = _mm_set_epi8((char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0xFF);
 	__m128i maskR = _mm_set_epi8((char)0xFF, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0);
 
-	__declspec(align(16)) uint64_t pixels[2];
+	alignas(16) uint64_t pixels[2];
 	uint64_t maskConv = 0x0101010101010101;
 	char lpixel, rpixel;
 
@@ -906,7 +906,7 @@ int HafCpu_Erode_U1_U1_3x3
 			// Read the row above
 			pixels[0] = (uint64_t)(*(pSrcImage - srcImageStrideInBytes));
 			pixels[1] = (uint64_t)(*(pSrcImage - srcImageStrideInBytes + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -917,7 +917,7 @@ int HafCpu_Erode_U1_U1_3x3
 			// Read the current row
 			pixels[0] = (uint64_t)(*pSrcImage);
 			pixels[1] = (uint64_t)(*(pSrcImage + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -928,7 +928,7 @@ int HafCpu_Erode_U1_U1_3x3
 			// Read the row below
 			pixels[0] = (uint64_t)(*(pSrcImage + srcImageStrideInBytes));
 			pixels[1] = (uint64_t)(*(pSrcImage + srcImageStrideInBytes + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -976,9 +976,9 @@ int HafCpu_Erode_U1_U1_3x3
 			row0 = _mm_and_si128(row0, row2);
 
 			// Convert U8 to U1
-#ifdef _WIN64
-			pixels[0] = _pext_u64(row0.m128i_u64[0], maskConv);
-			pixels[1] = _pext_u64(row0.m128i_u64[1], maskConv);
+#if defined(_WIN64) || defined(__x86_64__)
+			pixels[0] = _pext_u64(M128I(row0).m128i_u64[0], maskConv);
+			pixels[1] = _pext_u64(M128I(row0).m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -1646,8 +1646,9 @@ int HafCpu_Gaussian_U8_U8_3x3
 			resultL = _mm256_add_epi16(resultL, temp0);						// Prev row + 2*curr row + next row
 			resultL = _mm256_srli_epi16(resultL, 4);						// Div by 16 (normalization)
 			
-			resultL = _mm256_packus_epi16(resultL, resultL);				// Convert to 8 bit
-			row0 = _mm256_castsi256_si128(resultL);							// Lower 128 bits 
+			resultL = _mm256_packus_epi16(resultL, resultL);				// Convert to 8 bit (per-lane pack)
+			resultL = _mm256_permute4x64_epi64(resultL, 0x08);				// Fix lane-crossing: move qwords {0,2} to lower 128 bits
+			row0 = _mm256_castsi256_si128(resultL);							// Lower 128 bits
 			_mm_store_si128((__m128i*) pLocalDst, row0);
 
 			pLocalSrc += 16;

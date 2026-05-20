@@ -28,6 +28,17 @@ THE SOFTWARE.
 */
 #define C_MAX_NONLINEAR_DIM (9)
 
+#if USE_AVX
+static inline void HafCpu_StoreEightU8FromI32(vx_uint8 *dst, __m256i values)
+{
+    __m128i lo = _mm256_castsi256_si128(values);
+    __m128i hi = _mm256_extracti128_si256(values, 1);
+    __m128i packed16 = _mm_packus_epi32(lo, hi);
+    __m128i packed8 = _mm_packus_epi16(packed16, packed16);
+    _mm_storel_epi64((__m128i *)dst, packed8);
+}
+#endif
+
 int HafCpu_WeightedAverage_U8_U8U8
     (
         vx_image img1, 
@@ -60,17 +71,54 @@ int HafCpu_WeightedAverage_U8_U8U8
                               VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
     width = src_addr[0].dim_x;
     height = src_addr[0].dim_y;
-    for (y = 0; y < height; y++)
+    if (img1_format == VX_DF_IMAGE_U8 && img2_format == VX_DF_IMAGE_U8 && out_format == VX_DF_IMAGE_U8 &&
+        src_addr[0].stride_x == 1 && src_addr[1].stride_x == 1 && dst_addr.stride_x == 1)
     {
-        for (x = 0; x < width; x++)
+        const vx_float32 beta = 1.0f - alpha;
+#if USE_AVX
+        const __m256 alpha_ps = _mm256_set1_ps(alpha);
+        const __m256 beta_ps = _mm256_set1_ps(beta);
+#endif
+        for (y = 0; y < height; y++)
         {
-            void *src0p = vxFormatImagePatchAddress2d(src_base[0], x, y, &src_addr[0]);
-            void *src1p = vxFormatImagePatchAddress2d(src_base[1], x, y, &src_addr[1]);
-            void *dstp = vxFormatImagePatchAddress2d(dst_base, x, y, &dst_addr);
-            vx_int32 src0 = *(vx_uint8 *)src0p;
-            vx_int32 src1 = *(vx_uint8 *)src1p;
-            vx_int32 result = (vx_int32)((1 - alpha) * (vx_float32)src1 + alpha * (vx_float32)src0);
-            *(vx_uint8 *)dstp = (vx_uint8)result;
+            vx_uint8 *src0 = (vx_uint8 *)src_base[0] + y * src_addr[0].stride_y;
+            vx_uint8 *src1 = (vx_uint8 *)src_base[1] + y * src_addr[1].stride_y;
+            vx_uint8 *dst = (vx_uint8 *)dst_base + y * dst_addr.stride_y;
+            x = 0;
+#if USE_AVX
+            for (; x + 8 <= width; x += 8)
+            {
+                __m128i s0_u8 = _mm_loadl_epi64((__m128i *)(src0 + x));
+                __m128i s1_u8 = _mm_loadl_epi64((__m128i *)(src1 + x));
+                __m256 s0_ps = _mm256_cvtepi32_ps(_mm256_cvtepu8_epi32(s0_u8));
+                __m256 s1_ps = _mm256_cvtepi32_ps(_mm256_cvtepu8_epi32(s1_u8));
+                __m256 result_ps = _mm256_add_ps(_mm256_mul_ps(alpha_ps, s0_ps), _mm256_mul_ps(beta_ps, s1_ps));
+                HafCpu_StoreEightU8FromI32(dst + x, _mm256_cvttps_epi32(result_ps));
+            }
+#endif
+            for (; x < width; x++)
+            {
+                vx_int32 src0Value = src0[x];
+                vx_int32 src1Value = src1[x];
+                vx_int32 result = (vx_int32)(beta * (vx_float32)src1Value + alpha * (vx_float32)src0Value);
+                dst[x] = (vx_uint8)result;
+            }
+        }
+    }
+    else
+    {
+        for (y = 0; y < height; y++)
+        {
+            for (x = 0; x < width; x++)
+            {
+                void *src0p = vxFormatImagePatchAddress2d(src_base[0], x, y, &src_addr[0]);
+                void *src1p = vxFormatImagePatchAddress2d(src_base[1], x, y, &src_addr[1]);
+                void *dstp = vxFormatImagePatchAddress2d(dst_base, x, y, &dst_addr);
+                vx_int32 src0 = *(vx_uint8 *)src0p;
+                vx_int32 src1 = *(vx_uint8 *)src1p;
+                vx_int32 result = (vx_int32)((1 - alpha) * (vx_float32)src1 + alpha * (vx_float32)src0);
+                *(vx_uint8 *)dstp = (vx_uint8)result;
+            }
         }
     }
     status |= vxUnmapImagePatch(img1, src_map_id[0]);

@@ -23,6 +23,36 @@ THE SOFTWARE.
 
 #include "ago_internal.h"
 
+#if USE_AVX
+static inline __m128i HafCpu_PackEightI32ToI16(__m256i values)
+{
+	__m128i lo = _mm256_castsi256_si128(values);
+	__m128i hi = _mm256_extracti128_si256(values, 1);
+	return _mm_packs_epi32(lo, hi);
+}
+
+static inline void HafCpu_AccumulateSquaresU8_AVX2(__m256i bytes, __m256i &sum, __m256i &sumSquared)
+{
+	__m128i lo128 = _mm256_castsi256_si128(bytes);
+	__m128i hi128 = _mm256_extracti128_si256(bytes, 1);
+	__m256i chunks[4] = {
+		_mm256_cvtepu8_epi32(lo128),
+		_mm256_cvtepu8_epi32(_mm_srli_si128(lo128, 8)),
+		_mm256_cvtepu8_epi32(hi128),
+		_mm256_cvtepu8_epi32(_mm_srli_si128(hi128, 8))
+	};
+	for (int i = 0; i < 4; i++) {
+		sum = _mm256_add_epi64(sum, _mm256_cvtepu32_epi64(_mm256_castsi256_si128(chunks[i])));
+		sum = _mm256_add_epi64(sum, _mm256_cvtepu32_epi64(_mm256_extracti128_si256(chunks[i], 1)));
+		__m256i squareEven = _mm256_mul_epu32(chunks[i], chunks[i]);
+		__m256i shifted = _mm256_srli_epi64(chunks[i], 32);
+		__m256i squareOdd = _mm256_mul_epu32(shifted, shifted);
+		sumSquared = _mm256_add_epi64(sumSquared, squareEven);
+		sumSquared = _mm256_add_epi64(sumSquared, squareOdd);
+	}
+}
+#endif
+
 int HafCpu_Add_U8_U8U8_Wrap
 	(
 		vx_uint32     dstWidth,
@@ -4840,6 +4870,36 @@ int HafCpu_Lut_U8_U8
 		vx_uint8    * pLut
 	)
 {
+#if USE_AVX
+	bool isInvertLut = true;
+	for (int i = 0; i < 256; i++)
+	{
+		if (pLut[i] != (vx_uint8)(255 - i)) {
+			isInvertLut = false;
+			break;
+		}
+	}
+	if (isInvertLut)
+	{
+		const __m256i ones = _mm256_cmpeq_epi32(_mm256_setzero_si256(), _mm256_setzero_si256());
+		for (vx_uint32 height = 0; height < dstHeight; height++)
+		{
+			vx_uint8 *pLocalSrc = pSrcImage;
+			vx_uint8 *pLocalDst = pDstImage;
+			vx_uint32 width = 0;
+			for (; width + 32 <= dstWidth; width += 32)
+			{
+				__m256i pixels = _mm256_loadu_si256((__m256i *)(pLocalSrc + width));
+				_mm256_storeu_si256((__m256i *)(pLocalDst + width), _mm256_xor_si256(pixels, ones));
+			}
+			for (; width < dstWidth; width++)
+				pLocalDst[width] = (vx_uint8)(255 - pLocalSrc[width]);
+			pSrcImage += srcImageStrideInBytes;
+			pDstImage += dstImageStrideInBytes;
+		}
+		return AGO_SUCCESS;
+	}
+#endif
 	int prefixWidth = intptr_t(pDstImage) & 15;
 	prefixWidth = (prefixWidth == 0) ? 0 : (16 - prefixWidth);
 	int postfixWidth = ((int)dstWidth - prefixWidth) & 15;				// Check for multiple of 16
@@ -4979,6 +5039,43 @@ int HafCpu_Magnitude_S16_S16S16
 		vx_uint32     gyImageStrideInBytes
 	)
 {
+#if USE_AVX
+	for (unsigned int height = 0; height < dstHeight; height++)
+	{
+		vx_int16 *pLocalGx = pGxImage;
+		vx_int16 *pLocalGy = pGyImage;
+		vx_int16 *pLocalDst = pMagImage;
+		vx_uint32 x = 0;
+		for (; x + 16 <= dstWidth; x += 16)
+		{
+			__m256i gx16 = _mm256_loadu_si256((__m256i *)(pLocalGx + x));
+			__m256i gy16 = _mm256_loadu_si256((__m256i *)(pLocalGy + x));
+			__m128i gxLo16 = _mm256_castsi256_si128(gx16);
+			__m128i gxHi16 = _mm256_extracti128_si256(gx16, 1);
+			__m128i gyLo16 = _mm256_castsi256_si128(gy16);
+			__m128i gyHi16 = _mm256_extracti128_si256(gy16, 1);
+
+			__m256 gxLo = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(gxLo16));
+			__m256 gyLo = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(gyLo16));
+			__m256 gxHi = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(gxHi16));
+			__m256 gyHi = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(gyHi16));
+
+			__m256 magLo = _mm256_sqrt_ps(_mm256_add_ps(_mm256_mul_ps(gxLo, gxLo), _mm256_mul_ps(gyLo, gyLo)));
+			__m256 magHi = _mm256_sqrt_ps(_mm256_add_ps(_mm256_mul_ps(gxHi, gxHi), _mm256_mul_ps(gyHi, gyHi)));
+			_mm_storeu_si128((__m128i *)(pLocalDst + x), HafCpu_PackEightI32ToI16(_mm256_cvtps_epi32(magLo)));
+			_mm_storeu_si128((__m128i *)(pLocalDst + x + 8), HafCpu_PackEightI32ToI16(_mm256_cvtps_epi32(magHi)));
+		}
+		for (; x < dstWidth; x++)
+		{
+			float temp = (float)(pLocalGx[x] * pLocalGx[x]) + (float)(pLocalGy[x] * pLocalGy[x]);
+			pLocalDst[x] = (vx_int16)roundf(sqrtf(temp));
+		}
+		pGxImage += (gxImageStrideInBytes >> 1);
+		pGyImage += (gyImageStrideInBytes >> 1);
+		pMagImage += (magImageStrideInBytes >> 1);
+	}
+	return AGO_SUCCESS;
+#else
 	short *pLocalGx, *pLocalGy, *pLocalDst;
 	
 	int prefixWidth = intptr_t(pMagImage) & 15;							// check for 16 byte aligned
@@ -5076,6 +5173,7 @@ int HafCpu_Magnitude_S16_S16S16
 		pMagImage += (magImageStrideInBytes >> 1);
 	}
 	return AGO_SUCCESS;
+#endif
 }
 
 int HafCpu_AccumulateWeighted_U8_U8U8
@@ -6809,6 +6907,38 @@ int HafCpu_MeanStdDev_DATA_U8
 		vx_uint32     srcImageStrideInBytes
 	)
 {
+#if USE_AVX
+	__m256i sum = _mm256_setzero_si256();
+	__m256i sumSquared = _mm256_setzero_si256();
+	unsigned long long tailSum = 0;
+	unsigned long long tailSumSquared = 0;
+
+	for (vx_uint32 y = 0; y < srcHeight; y++)
+	{
+		vx_uint8 *pLocalSrc = pSrcImage;
+		vx_uint32 x = 0;
+		for (; x + 32 <= srcWidth; x += 32)
+		{
+			__m256i pixels = _mm256_loadu_si256((__m256i *)(pLocalSrc + x));
+			HafCpu_AccumulateSquaresU8_AVX2(pixels, sum, sumSquared);
+		}
+		for (; x < srcWidth; x++)
+		{
+			vx_uint32 pixel = pLocalSrc[x];
+			tailSum += pixel;
+			tailSumSquared += (unsigned long long)pixel * (unsigned long long)pixel;
+		}
+		pSrcImage += srcImageStrideInBytes;
+	}
+
+	DECL_ALIGN(32) unsigned long long sumParts[4] ATTR_ALIGN(32);
+	DECL_ALIGN(32) unsigned long long squareParts[4] ATTR_ALIGN(32);
+	_mm256_store_si256((__m256i *)sumParts, sum);
+	_mm256_store_si256((__m256i *)squareParts, sumSquared);
+	*pSum = (vx_float32)(sumParts[0] + sumParts[1] + sumParts[2] + sumParts[3] + tailSum);
+	*pSumOfSquared = (vx_float32)(squareParts[0] + squareParts[1] + squareParts[2] + squareParts[3] + tailSumSquared);
+	return AGO_SUCCESS;
+#else
 	unsigned char * pLocalSrc;
 	__m128i pixels, pixels_16, pixels_32, pixels_64;
 	__m128i zeromask = _mm_setzero_si128();
@@ -6904,6 +7034,7 @@ int HafCpu_MeanStdDev_DATA_U8
 	*pSumOfSquared = (vx_float32)(M128I(sum_squared).m128i_u64[0] + prefixSumSquared + postfixSumSquared);
 
 	return AGO_SUCCESS;
+#endif
 }
 
 int HafCpu_MeanStdDev_DATA_U1
@@ -7432,6 +7563,42 @@ int HafCpu_MinMax_DATA_U8
 		vx_uint32     srcImageStrideInBytes
 	)
 {
+#if USE_AVX
+	__m256i maxVal_ymm = _mm256_setzero_si256();
+	__m256i minVal_ymm = _mm256_set1_epi8((char)0xFF);
+	unsigned char maxVal = 0, minVal = 255;
+
+	for (vx_uint32 y = 0; y < srcHeight; y++)
+	{
+		vx_uint8 *pLocalSrc = pSrcImage;
+		vx_uint32 x = 0;
+		for (; x + 32 <= srcWidth; x += 32)
+		{
+			__m256i pixels = _mm256_loadu_si256((__m256i *)(pLocalSrc + x));
+			maxVal_ymm = _mm256_max_epu8(maxVal_ymm, pixels);
+			minVal_ymm = _mm256_min_epu8(minVal_ymm, pixels);
+		}
+		for (; x < srcWidth; x++)
+		{
+			maxVal = max(maxVal, pLocalSrc[x]);
+			minVal = min(minVal, pLocalSrc[x]);
+		}
+		pSrcImage += srcImageStrideInBytes;
+	}
+
+	DECL_ALIGN(32) unsigned char maxBytes[32] ATTR_ALIGN(32);
+	DECL_ALIGN(32) unsigned char minBytes[32] ATTR_ALIGN(32);
+	_mm256_store_si256((__m256i *)maxBytes, maxVal_ymm);
+	_mm256_store_si256((__m256i *)minBytes, minVal_ymm);
+	for (int i = 0; i < 32; i++)
+	{
+		maxVal = max(maxVal, maxBytes[i]);
+		minVal = min(minVal, minBytes[i]);
+	}
+	*pDstMinValue = (vx_int32)minVal;
+	*pDstMaxValue = (vx_int32)maxVal;
+	return AGO_SUCCESS;
+#else
 	__m128i * pLocalSrc_xmm;
 	__m128i pixels;
 	__m128i maxVal_xmm = _mm_setzero_si128();
@@ -7488,6 +7655,7 @@ int HafCpu_MinMax_DATA_U8
 	*pDstMaxValue = (vx_int32) maxVal;
 
 	return AGO_SUCCESS;
+#endif
 }
 
 int HafCpu_MinMaxLoc_DATA_U8DATA_Loc_None_Count_Min

@@ -23,10 +23,27 @@ THE SOFTWARE.
 
 #include "ago_platform.h"
 
-// macro to port VisualStudio __cpuid to g++
-#if !_WIN32
-#define __cpuid(out, infoType) asm("cpuid": "=a" (out[0]), "=b" (out[1]), "=c" (out[2]), "=d" (out[3]): "a" (infoType));
+static void agoCpuid(int out[4], int leaf, int subleaf)
+{
+#if _WIN32
+	__cpuidex(out, leaf, subleaf);
+#else
+	asm("cpuid"
+		: "=a" (out[0]), "=b" (out[1]), "=c" (out[2]), "=d" (out[3])
+		: "a" (leaf), "c" (subleaf));
 #endif
+}
+
+static uint64_t agoXgetbv(uint32_t index)
+{
+#if _WIN32
+	return _xgetbv(index);
+#else
+	uint32_t eax, edx;
+	asm("xgetbv" : "=a" (eax), "=d" (edx) : "c" (index));
+	return ((uint64_t)edx << 32) | eax;
+#endif
+}
 
 #if _WIN32 && ENABLE_OPENCL
 #pragma comment(lib, "OpenCL.lib")
@@ -34,16 +51,46 @@ THE SOFTWARE.
 
 bool agoIsCpuHardwareSupported()
 {
-	bool isHardwareSupported = false;
-	int CPUInfo[4] = { -1 };
-	__cpuid(CPUInfo, 0);
-	if (CPUInfo[0] > 1) {
-		__cpuid(CPUInfo, 1);
-		// check for SSE4.2 support
-		if (CPUInfo[2] & 0x100000)
-			isHardwareSupported = true;
+	return agoGetCpuFeatures().sse42;
+}
+
+const ago_cpu_features_t & agoGetCpuFeatures()
+{
+	static ago_cpu_features_t features = {};
+	static bool initialized = false;
+	if (!initialized) {
+		int CPUInfo[4] = { 0 };
+		agoCpuid(CPUInfo, 0, 0);
+		int maxLeaf = CPUInfo[0];
+
+		bool osAvx = false;
+		if (maxLeaf >= 1) {
+			agoCpuid(CPUInfo, 1, 0);
+			features.sse42 = (CPUInfo[2] & (1 << 20)) != 0;
+			bool cpuAvx = (CPUInfo[2] & (1 << 28)) != 0;
+			bool osxsave = (CPUInfo[2] & (1 << 27)) != 0;
+			if (cpuAvx && osxsave) {
+				uint64_t xcr0 = agoXgetbv(0);
+				osAvx = (xcr0 & 0x6) == 0x6;
+				features.avx = osAvx;
+			}
+		}
+
+		if (maxLeaf >= 7) {
+			agoCpuid(CPUInfo, 7, 0);
+			features.avx2 = osAvx && ((CPUInfo[1] & (1 << 5)) != 0);
+			features.bmi2 = (CPUInfo[1] & (1 << 8)) != 0;
+
+			uint64_t xcr0 = osAvx ? agoXgetbv(0) : 0;
+			bool osAvx512 = osAvx && ((xcr0 & 0xe0) == 0xe0);
+			features.avx512f = osAvx512 && ((CPUInfo[1] & (1 << 16)) != 0);
+			features.avx512dq = osAvx512 && ((CPUInfo[1] & (1 << 17)) != 0);
+			features.avx512bw = osAvx512 && ((CPUInfo[1] & (1 << 30)) != 0);
+			features.avx512vl = osAvx512 && ((CPUInfo[1] & (1 << 31)) != 0);
+		}
+		initialized = true;
 	}
-	return isHardwareSupported;
+	return features;
 }
 
 uint32_t agoControlFpSetRoundEven()

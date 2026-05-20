@@ -38,6 +38,25 @@ int HafCpu_Not_U8_U8
 		vx_uint32     srcImageStrideInBytes
 	)
 {
+#if USE_AVX
+	const __m256i ones = _mm256_cmpeq_epi32(_mm256_setzero_si256(), _mm256_setzero_si256());
+	for (vx_uint32 height = 0; height < dstHeight; height++)
+	{
+		vx_uint8 *pLocalSrc = pSrcImage;
+		vx_uint8 *pLocalDst = pDstImage;
+		vx_uint32 width = 0;
+		for (; width + 32 <= dstWidth; width += 32)
+		{
+			__m256i pixels = _mm256_loadu_si256((__m256i *)(pLocalSrc + width));
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width), _mm256_andnot_si256(pixels, ones));
+		}
+		for (; width < dstWidth; width++)
+			pLocalDst[width] = ~pLocalSrc[width];
+		pSrcImage += srcImageStrideInBytes;
+		pDstImage += dstImageStrideInBytes;
+	}
+	return AGO_SUCCESS;
+#else
 	bool useAligned = ((((intptr_t)pSrcImage | (intptr_t)pDstImage) & 0xF) == 0) ? true : false;			// Check if src and dst buffers are 16 byte aligned
 
 	__m128i *pLocalSrc_xmm, *pLocalDst_xmm;
@@ -229,6 +248,7 @@ int HafCpu_Not_U8_U8
 			dec			ebx
 			jnz			OUTERLOOP
 	}
+#endif
 #endif
 	return AGO_SUCCESS;
 }
@@ -527,6 +547,27 @@ int HafCpu_And_U8_U8U8
 		vx_uint32     srcImage2StrideInBytes
 	)
 {
+#if USE_AVX
+	for (vx_uint32 height = 0; height < dstHeight; height++)
+	{
+		vx_uint8 *pLocalSrc1 = pSrcImage1;
+		vx_uint8 *pLocalSrc2 = pSrcImage2;
+		vx_uint8 *pLocalDst = pDstImage;
+		vx_uint32 width = 0;
+		for (; width + 32 <= dstWidth; width += 32)
+		{
+			__m256i pixels1 = _mm256_loadu_si256((__m256i *)(pLocalSrc1 + width));
+			__m256i pixels2 = _mm256_loadu_si256((__m256i *)(pLocalSrc2 + width));
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width), _mm256_and_si256(pixels1, pixels2));
+		}
+		for (; width < dstWidth; width++)
+			pLocalDst[width] = pLocalSrc1[width] & pLocalSrc2[width];
+		pSrcImage1 += srcImage1StrideInBytes;
+		pSrcImage2 += srcImage2StrideInBytes;
+		pDstImage += dstImageStrideInBytes;
+	}
+	return AGO_SUCCESS;
+#else
 	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0xF) == 0) ? true : false;
 
 	__m128i *pLocalSrc1_xmm, *pLocalSrc2_xmm, *pLocalDst_xmm;
@@ -598,6 +639,7 @@ int HafCpu_And_U8_U8U8
 	}
 	
 	return AGO_SUCCESS;
+#endif
 }
 
 #if USE_BMI2
@@ -1230,6 +1272,27 @@ int HafCpu_Or_U8_U8U8
 		vx_uint32     srcImage2StrideInBytes
 	)
 {
+#if USE_AVX
+	for (vx_uint32 height = 0; height < dstHeight; height++)
+	{
+		vx_uint8 *pLocalSrc1 = pSrcImage1;
+		vx_uint8 *pLocalSrc2 = pSrcImage2;
+		vx_uint8 *pLocalDst = pDstImage;
+		vx_uint32 width = 0;
+		for (; width + 32 <= dstWidth; width += 32)
+		{
+			__m256i pixels1 = _mm256_loadu_si256((__m256i *)(pLocalSrc1 + width));
+			__m256i pixels2 = _mm256_loadu_si256((__m256i *)(pLocalSrc2 + width));
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width), _mm256_or_si256(pixels1, pixels2));
+		}
+		for (; width < dstWidth; width++)
+			pLocalDst[width] = pLocalSrc1[width] | pLocalSrc2[width];
+		pSrcImage1 += srcImage1StrideInBytes;
+		pSrcImage2 += srcImage2StrideInBytes;
+		pDstImage += dstImageStrideInBytes;
+	}
+	return AGO_SUCCESS;
+#else
 	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0xF) == 0) ? true : false;
 
 	__m128i *pLocalSrc1_xmm, *pLocalSrc2_xmm, *pLocalDst_xmm;
@@ -1297,6 +1360,7 @@ int HafCpu_Or_U8_U8U8
 	}
 
 	return AGO_SUCCESS;
+#endif
 }
 
 #if USE_BMI2
@@ -1929,6 +1993,27 @@ int HafCpu_Xor_U8_U8U8
 		vx_uint32     srcImage2StrideInBytes
 )
 {
+#if USE_AVX
+	for (vx_uint32 height = 0; height < dstHeight; height++)
+	{
+		vx_uint8 *pLocalSrc1 = pSrcImage1;
+		vx_uint8 *pLocalSrc2 = pSrcImage2;
+		vx_uint8 *pLocalDst = pDstImage;
+		vx_uint32 width = 0;
+		for (; width + 32 <= dstWidth; width += 32)
+		{
+			__m256i pixels1 = _mm256_loadu_si256((__m256i *)(pLocalSrc1 + width));
+			__m256i pixels2 = _mm256_loadu_si256((__m256i *)(pLocalSrc2 + width));
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width), _mm256_xor_si256(pixels1, pixels2));
+		}
+		for (; width < dstWidth; width++)
+			pLocalDst[width] = pLocalSrc1[width] ^ pLocalSrc2[width];
+		pSrcImage1 += srcImage1StrideInBytes;
+		pSrcImage2 += srcImage2StrideInBytes;
+		pDstImage += dstImageStrideInBytes;
+	}
+	return AGO_SUCCESS;
+#else
 	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0xF) == 0) ? true : false;
 
 	__m128i *pLocalSrc1_xmm, *pLocalSrc2_xmm, *pLocalDst_xmm;
@@ -2000,6 +2085,7 @@ int HafCpu_Xor_U8_U8U8
 	}
 
 	return AGO_SUCCESS;
+#endif
 }
 
 #if USE_BMI2

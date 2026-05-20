@@ -2427,6 +2427,28 @@ vx_uint8    * pSrcImage,
 vx_uint32     srcImageStrideInBytes
 )
 {
+#if USE_AVX
+	if ((dstWidth & 31) == 0)
+	{
+		const __m256i duplicateBytes = _mm256_set1_epi16(0x0101);
+		for (vx_uint32 y = 0; y < dstHeight; y += 2)
+		{
+			vx_uint8 *src = pSrcImage;
+			vx_uint8 *dst = pDstImage;
+			vx_uint8 *dstNext = pDstImage + dstImageStrideInBytes;
+			for (vx_uint32 x = 0; x < dstWidth; x += 32, src += 16)
+			{
+				__m128i pixels = _mm_loadu_si128((__m128i *)src);
+				__m256i expanded = _mm256_mullo_epi16(_mm256_cvtepu8_epi16(pixels), duplicateBytes);
+				_mm256_storeu_si256((__m256i *)(dst + x), expanded);
+				_mm256_storeu_si256((__m256i *)(dstNext + x), expanded);
+			}
+			pDstImage += (dstImageStrideInBytes * 2);
+			pSrcImage += srcImageStrideInBytes;
+		}
+		return AGO_SUCCESS;
+	}
+#endif
 
 	__m128i pixels1, pixels2;
 

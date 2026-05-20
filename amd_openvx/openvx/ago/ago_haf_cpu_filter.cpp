@@ -228,6 +228,50 @@ int HafCpu_Dilate_U8_U8_3x3
 		vx_uint32     srcImageStrideInBytes
 	)
 {
+#if USE_AVX
+	for (int height = 0; height < (int)dstHeight; height++)
+	{
+		unsigned char *pLocalSrc = (unsigned char *)pSrcImage;
+		unsigned char *pLocalDst = (unsigned char *)pDstImage;
+		int x = 0;
+		for (; x + 32 <= (int)dstWidth; x += 32, pLocalSrc += 32, pLocalDst += 32)
+		{
+			__m256i row0 = _mm256_loadu_si256((__m256i *)(pLocalSrc - srcImageStrideInBytes));
+			__m256i shiftedL = _mm256_loadu_si256((__m256i *)(pLocalSrc - srcImageStrideInBytes - 1));
+			__m256i shiftedR = _mm256_loadu_si256((__m256i *)(pLocalSrc - srcImageStrideInBytes + 1));
+			row0 = _mm256_max_epu8(row0, shiftedL);
+			row0 = _mm256_max_epu8(row0, shiftedR);
+
+			__m256i row1 = _mm256_loadu_si256((__m256i *)pLocalSrc);
+			shiftedL = _mm256_loadu_si256((__m256i *)(pLocalSrc - 1));
+			shiftedR = _mm256_loadu_si256((__m256i *)(pLocalSrc + 1));
+			row1 = _mm256_max_epu8(row1, shiftedL);
+			row1 = _mm256_max_epu8(row1, shiftedR);
+
+			__m256i row2 = _mm256_loadu_si256((__m256i *)(pLocalSrc + srcImageStrideInBytes));
+			shiftedL = _mm256_loadu_si256((__m256i *)(pLocalSrc + srcImageStrideInBytes - 1));
+			shiftedR = _mm256_loadu_si256((__m256i *)(pLocalSrc + srcImageStrideInBytes + 1));
+			row2 = _mm256_max_epu8(row2, shiftedL);
+			row2 = _mm256_max_epu8(row2, shiftedR);
+
+			row0 = _mm256_max_epu8(row0, row1);
+			row0 = _mm256_max_epu8(row0, row2);
+			_mm256_storeu_si256((__m256i *)pLocalDst, row0);
+		}
+		for (; x < (int)dstWidth; x++, pLocalSrc++)
+		{
+			unsigned char temp1, temp2;
+			temp1 = max(max(pLocalSrc[-(int)srcImageStrideInBytes - 1], pLocalSrc[-(int)srcImageStrideInBytes]), pLocalSrc[-(int)srcImageStrideInBytes + 1]);
+			temp2 = max(max(pLocalSrc[-1], pLocalSrc[0]), pLocalSrc[1]);
+			temp1 = max(temp1, temp2);
+			temp2 = max(max(pLocalSrc[(int)srcImageStrideInBytes - 1], pLocalSrc[(int)srcImageStrideInBytes]), pLocalSrc[(int)srcImageStrideInBytes + 1]);
+			*pLocalDst++ = max(temp1, temp2);
+		}
+		pSrcImage += srcImageStrideInBytes;
+		pDstImage += dstImageStrideInBytes;
+	}
+	return AGO_SUCCESS;
+#else
 	unsigned char *pLocalSrc, *pLocalDst;
 	__m128i row0, row1, row2, shiftedR, shiftedL;
 
@@ -293,6 +337,7 @@ int HafCpu_Dilate_U8_U8_3x3
 		pDstImage += dstImageStrideInBytes;
 	}
 	return AGO_SUCCESS;
+#endif
 }
 
 int HafCpu_Erode_U8_U8_3x3
@@ -305,6 +350,50 @@ int HafCpu_Erode_U8_U8_3x3
 		vx_uint32     srcImageStrideInBytes
 	)
 {
+#if USE_AVX
+	for (int height = 0; height < (int)dstHeight; height++)
+	{
+		unsigned char *pLocalSrc = (unsigned char *)pSrcImage;
+		unsigned char *pLocalDst = (unsigned char *)pDstImage;
+		int x = 0;
+		for (; x + 32 <= (int)dstWidth; x += 32, pLocalSrc += 32, pLocalDst += 32)
+		{
+			__m256i row0 = _mm256_loadu_si256((__m256i *)(pLocalSrc - srcImageStrideInBytes));
+			__m256i shiftedL = _mm256_loadu_si256((__m256i *)(pLocalSrc - srcImageStrideInBytes - 1));
+			__m256i shiftedR = _mm256_loadu_si256((__m256i *)(pLocalSrc - srcImageStrideInBytes + 1));
+			row0 = _mm256_min_epu8(row0, shiftedL);
+			row0 = _mm256_min_epu8(row0, shiftedR);
+
+			__m256i row1 = _mm256_loadu_si256((__m256i *)pLocalSrc);
+			shiftedL = _mm256_loadu_si256((__m256i *)(pLocalSrc - 1));
+			shiftedR = _mm256_loadu_si256((__m256i *)(pLocalSrc + 1));
+			row1 = _mm256_min_epu8(row1, shiftedL);
+			row1 = _mm256_min_epu8(row1, shiftedR);
+
+			__m256i row2 = _mm256_loadu_si256((__m256i *)(pLocalSrc + srcImageStrideInBytes));
+			shiftedL = _mm256_loadu_si256((__m256i *)(pLocalSrc + srcImageStrideInBytes - 1));
+			shiftedR = _mm256_loadu_si256((__m256i *)(pLocalSrc + srcImageStrideInBytes + 1));
+			row2 = _mm256_min_epu8(row2, shiftedL);
+			row2 = _mm256_min_epu8(row2, shiftedR);
+
+			row0 = _mm256_min_epu8(row0, row1);
+			row0 = _mm256_min_epu8(row0, row2);
+			_mm256_storeu_si256((__m256i *)pLocalDst, row0);
+		}
+		for (; x < (int)dstWidth; x++, pLocalSrc++)
+		{
+			unsigned char temp1, temp2;
+			temp1 = min(min(pLocalSrc[-(int)srcImageStrideInBytes - 1], pLocalSrc[-(int)srcImageStrideInBytes]), pLocalSrc[-(int)srcImageStrideInBytes + 1]);
+			temp2 = min(min(pLocalSrc[-1], pLocalSrc[0]), pLocalSrc[1]);
+			temp1 = min(temp1, temp2);
+			temp2 = min(min(pLocalSrc[(int)srcImageStrideInBytes - 1], pLocalSrc[(int)srcImageStrideInBytes]), pLocalSrc[(int)srcImageStrideInBytes + 1]);
+			*pLocalDst++ = min(temp1, temp2);
+		}
+		pSrcImage += srcImageStrideInBytes;
+		pDstImage += dstImageStrideInBytes;
+	}
+	return AGO_SUCCESS;
+#else
 	unsigned char *pLocalSrc, *pLocalDst;
 	__m128i row0, row1, row2, shiftedR, shiftedL;
 
@@ -370,6 +459,7 @@ int HafCpu_Erode_U8_U8_3x3
 		pDstImage += dstImageStrideInBytes;
 	}
 	return AGO_SUCCESS;
+#endif
 }
 
 #if 0 // USE_BMI2 -- disabled: BMI2 U1 filter implementations have bugs (missing pSrcImage update per row/width)

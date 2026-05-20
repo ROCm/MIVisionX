@@ -5061,56 +5061,54 @@ int HafCpu_Magnitude_S16_S16S16
 	)
 {
 #if USE_AVX
+	// AVX2 single-precision path: process 16 int16 magnitudes per iteration.
+	// Convert int16 -> int32 -> float before squaring so that the worst-case
+	// (-32768,-32768) input does not overflow int32 in _mm256_madd_epi16.
+	// CTS tolerance for vxMagnitude is +/-1, which absorbs single-precision
+	// sqrt and rounding error well below worst-case magnitudes (~46340).
 	for (unsigned int height = 0; height < dstHeight; height++)
 	{
 		vx_int16 *pLocalGx = pGxImage;
 		vx_int16 *pLocalGy = pGyImage;
 		vx_int16 *pLocalDst = pMagImage;
-		int prefixWidth = intptr_t(pLocalDst) & 15;
-		prefixWidth = (prefixWidth == 0) ? 0 : (16 - prefixWidth);
-		prefixWidth >>= 1;
-		int postfixWidth = ((int)dstWidth - prefixWidth) & 7;
-		int alignedWidth = (int)dstWidth - prefixWidth - postfixWidth;
+		vx_uint32 x = 0;
 
-		for (int x = 0; x < prefixWidth; x++, pLocalGx++, pLocalGy++)
+		for (; x + 16 <= dstWidth; x += 16)
 		{
-			float temp = (float)(*pLocalGx * *pLocalGx) + (float)(*pLocalGy * *pLocalGy);
-			temp = sqrtf(temp);
-			*pLocalDst++ = (vx_int16)temp;
+			__m256i gx = _mm256_loadu_si256((const __m256i *)(pLocalGx + x));
+			__m256i gy = _mm256_loadu_si256((const __m256i *)(pLocalGy + x));
+			__m256 gxLoF = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(_mm256_castsi256_si128(gx)));
+			__m256 gxHiF = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(_mm256_extracti128_si256(gx, 1)));
+			__m256 gyLoF = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(_mm256_castsi256_si128(gy)));
+			__m256 gyHiF = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(_mm256_extracti128_si256(gy, 1)));
+			__m256 sumLo = _mm256_add_ps(_mm256_mul_ps(gxLoF, gxLoF), _mm256_mul_ps(gyLoF, gyLoF));
+			__m256 sumHi = _mm256_add_ps(_mm256_mul_ps(gxHiF, gxHiF), _mm256_mul_ps(gyHiF, gyHiF));
+			__m256i iLo = _mm256_cvtps_epi32(_mm256_sqrt_ps(sumLo));
+			__m256i iHi = _mm256_cvtps_epi32(_mm256_sqrt_ps(sumHi));
+			__m256i packed = _mm256_packs_epi32(iLo, iHi);
+			_mm256_storeu_si256((__m256i *)(pLocalDst + x), _mm256_permute4x64_epi64(packed, 0xd8));
 		}
 
-		for (int width = 0; width < (alignedWidth >> 3); width++)
+		for (; x + 8 <= dstWidth; x += 8)
 		{
-			__m128i pixelsGx = _mm_loadu_si128((__m128i *)pLocalGx);
-			__m128i pixelsGy = _mm_loadu_si128((__m128i *)pLocalGy);
-
-			__m128i pixelsGxL = _mm_cvtepi16_epi32(pixelsGx);
-			__m128i pixelsGyL = _mm_cvtepi16_epi32(pixelsGy);
-			__m128i pixelsGxH = _mm_cvtepi16_epi32(_mm_srli_si128(pixelsGx, 8));
-			__m128i pixelsGyH = _mm_cvtepi16_epi32(_mm_srli_si128(pixelsGy, 8));
-
-			pixelsGxL = _mm_mullo_epi32(pixelsGxL, pixelsGxL);
-			pixelsGyL = _mm_mullo_epi32(pixelsGyL, pixelsGyL);
-			pixelsGxH = _mm_mullo_epi32(pixelsGxH, pixelsGxH);
-			pixelsGyH = _mm_mullo_epi32(pixelsGyH, pixelsGyH);
-
-			__m256d magL = _mm256_add_pd(_mm256_cvtepi32_pd(pixelsGxL), _mm256_cvtepi32_pd(pixelsGyL));
-			__m256d magH = _mm256_add_pd(_mm256_cvtepi32_pd(pixelsGxH), _mm256_cvtepi32_pd(pixelsGyH));
-			__m128i magL_i32 = _mm256_cvtpd_epi32(_mm256_sqrt_pd(magL));
-			__m128i magH_i32 = _mm256_cvtpd_epi32(_mm256_sqrt_pd(magH));
-			_mm_store_si128((__m128i *)pLocalDst, _mm_packs_epi32(magL_i32, magH_i32));
-
-			pLocalGx += 8;
-			pLocalGy += 8;
-			pLocalDst += 8;
+			__m128i gx = _mm_loadu_si128((const __m128i *)(pLocalGx + x));
+			__m128i gy = _mm_loadu_si128((const __m128i *)(pLocalGy + x));
+			__m256 gxF = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(gx));
+			__m256 gyF = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(gy));
+			__m256 sum = _mm256_add_ps(_mm256_mul_ps(gxF, gxF), _mm256_mul_ps(gyF, gyF));
+			__m256i pixels = _mm256_cvtps_epi32(_mm256_sqrt_ps(sum));
+			__m128i mag = _mm_packs_epi32(_mm256_castsi256_si128(pixels), _mm256_extracti128_si256(pixels, 1));
+			_mm_storeu_si128((__m128i *)(pLocalDst + x), mag);
 		}
 
-		for (int x = 0; x < postfixWidth; x++, pLocalGx++, pLocalGy++)
+		for (; x < dstWidth; x++)
 		{
-			float temp = (float)(*pLocalGx * *pLocalGx) + (float)(*pLocalGy * *pLocalGy);
-			temp = sqrtf(temp);
-			*pLocalDst++ = (vx_int16)(round(temp));
+			int gx = pLocalGx[x];
+			int gy = pLocalGy[x];
+			int v = (int)lrintf(sqrtf((float)(gx * gx + gy * gy)));
+			pLocalDst[x] = (vx_int16)(v > 32767 ? 32767 : v);
 		}
+
 		pGxImage += (gxImageStrideInBytes >> 1);
 		pGyImage += (gyImageStrideInBytes >> 1);
 		pMagImage += (magImageStrideInBytes >> 1);
@@ -5589,6 +5587,40 @@ int HafCpu_Mul_U8_U8U8_Sat_Trunc
 	vx_float32    scale
 )
 {
+	// Fast path: scale == 1.0 lets us stay entirely in integer arithmetic.
+	// Maximum u8*u8 = 65025 fits in uint16, so mullo_epi16 + epu16 saturation
+	// to 255 + packus_epi16 produces the correct U8 result without any FP work.
+	if (scale == 1.0f)
+	{
+		const __m256i u8max256 = _mm256_set1_epi16(255);
+		const __m256i zero256 = _mm256_setzero_si256();
+		for (vx_uint32 y = 0; y < dstHeight; y++)
+		{
+			vx_uint8 *pSrc1 = pSrcImage1 + (size_t)y * srcImage1StrideInBytes;
+			vx_uint8 *pSrc2 = pSrcImage2 + (size_t)y * srcImage2StrideInBytes;
+			vx_uint8 *pDst = pDstImage + (size_t)y * dstImageStrideInBytes;
+			vx_uint32 x = 0;
+			for (; x + 32 <= dstWidth; x += 32)
+			{
+				__m256i a = _mm256_loadu_si256((const __m256i *)(pSrc1 + x));
+				__m256i b = _mm256_loadu_si256((const __m256i *)(pSrc2 + x));
+				__m256i aLo = _mm256_unpacklo_epi8(a, zero256);
+				__m256i aHi = _mm256_unpackhi_epi8(a, zero256);
+				__m256i bLo = _mm256_unpacklo_epi8(b, zero256);
+				__m256i bHi = _mm256_unpackhi_epi8(b, zero256);
+				__m256i pLo = _mm256_min_epu16(_mm256_mullo_epi16(aLo, bLo), u8max256);
+				__m256i pHi = _mm256_min_epu16(_mm256_mullo_epi16(aHi, bHi), u8max256);
+				_mm256_storeu_si256((__m256i *)(pDst + x), _mm256_packus_epi16(pLo, pHi));
+			}
+			for (; x < dstWidth; x++)
+			{
+				int prod = (int)pSrc1[x] * (int)pSrc2[x];
+				pDst[x] = (vx_uint8)(prod > 255 ? 255 : prod);
+			}
+		}
+		return AGO_SUCCESS;
+	}
+
 	// do generic floating point calculation
 	__m128i pixels1, pixels2, pixels3, pixels4, mask;
 	__m128  fpels1, fpels2, fpels3, fpels4;
@@ -5673,6 +5705,39 @@ int HafCpu_Mul_U8_U8U8_Sat_Round
 	vx_float32    scale
 )
 {
+	// Same scale==1.0 integer fast path as Sat_Trunc; with integer inputs
+	// the product is already exact so rounding is irrelevant.
+	if (scale == 1.0f)
+	{
+		const __m256i u8max256 = _mm256_set1_epi16(255);
+		const __m256i zero256 = _mm256_setzero_si256();
+		for (vx_uint32 y = 0; y < dstHeight; y++)
+		{
+			vx_uint8 *pSrc1 = pSrcImage1 + (size_t)y * srcImage1StrideInBytes;
+			vx_uint8 *pSrc2 = pSrcImage2 + (size_t)y * srcImage2StrideInBytes;
+			vx_uint8 *pDst = pDstImage + (size_t)y * dstImageStrideInBytes;
+			vx_uint32 x = 0;
+			for (; x + 32 <= dstWidth; x += 32)
+			{
+				__m256i a = _mm256_loadu_si256((const __m256i *)(pSrc1 + x));
+				__m256i b = _mm256_loadu_si256((const __m256i *)(pSrc2 + x));
+				__m256i aLo = _mm256_unpacklo_epi8(a, zero256);
+				__m256i aHi = _mm256_unpackhi_epi8(a, zero256);
+				__m256i bLo = _mm256_unpacklo_epi8(b, zero256);
+				__m256i bHi = _mm256_unpackhi_epi8(b, zero256);
+				__m256i pLo = _mm256_min_epu16(_mm256_mullo_epi16(aLo, bLo), u8max256);
+				__m256i pHi = _mm256_min_epu16(_mm256_mullo_epi16(aHi, bHi), u8max256);
+				_mm256_storeu_si256((__m256i *)(pDst + x), _mm256_packus_epi16(pLo, pHi));
+			}
+			for (; x < dstWidth; x++)
+			{
+				int prod = (int)pSrc1[x] * (int)pSrc2[x];
+				pDst[x] = (vx_uint8)(prod > 255 ? 255 : prod);
+			}
+		}
+		return AGO_SUCCESS;
+	}
+
 	// do generic floating point calculation
 	__m128i pixels1, pixels2, pixels3, pixels4, mask;
 	__m128  fpels1, fpels2, fpels3, fpels4;
@@ -7219,6 +7284,10 @@ int HafCpu_IntegralImage_U32_U8
 	vx_uint32     srcImageStrideInBytes
 )
 {
+	// IntegralImage is computed as a two-step process per row, fused into the
+	// same loop: a 16-byte SIMD in-row prefix sum followed by a column add of
+	// the previous row's accumulated values. The row carry is the cumulative
+	// sum of all earlier source bytes in the row, broadcast as int32.
 	const __m128i zeromask = _mm_setzero_si128();
 
 	for (vx_uint32 y = 0; y < dstHeight; y++)
@@ -7229,6 +7298,72 @@ int HafCpu_IntegralImage_U32_U8
 		__m128i carry = _mm_setzero_si128();
 		vx_uint32 rowSum = 0;
 		vx_uint32 x = 0;
+
+		// Process two 16-byte chunks per iteration so the loop is wider while
+		// each chunk still uses 128-bit intra-lane shifts for prefix sums.
+		for (; x + 32 <= dstWidth; x += 32)
+		{
+			__m128i bytesA = _mm_loadu_si128((__m128i *)(pSrc + x));
+			__m128i bytesB = _mm_loadu_si128((__m128i *)(pSrc + x + 16));
+
+			__m128i lo0 = _mm_cvtepu8_epi16(bytesA);
+			__m128i hi0 = _mm_unpackhi_epi8(bytesA, zeromask);
+			__m128i lo1 = _mm_cvtepu8_epi16(bytesB);
+			__m128i hi1 = _mm_unpackhi_epi8(bytesB, zeromask);
+
+			lo0 = _mm_add_epi16(lo0, _mm_slli_si128(lo0, 2));
+			lo0 = _mm_add_epi16(lo0, _mm_slli_si128(lo0, 4));
+			lo0 = _mm_add_epi16(lo0, _mm_slli_si128(lo0, 8));
+			hi0 = _mm_add_epi16(hi0, _mm_slli_si128(hi0, 2));
+			hi0 = _mm_add_epi16(hi0, _mm_slli_si128(hi0, 4));
+			hi0 = _mm_add_epi16(hi0, _mm_slli_si128(hi0, 8));
+			hi0 = _mm_add_epi16(hi0, _mm_shuffle_epi32(_mm_shufflehi_epi16(lo0, 0xff), 0xff));
+
+			lo1 = _mm_add_epi16(lo1, _mm_slli_si128(lo1, 2));
+			lo1 = _mm_add_epi16(lo1, _mm_slli_si128(lo1, 4));
+			lo1 = _mm_add_epi16(lo1, _mm_slli_si128(lo1, 8));
+			hi1 = _mm_add_epi16(hi1, _mm_slli_si128(hi1, 2));
+			hi1 = _mm_add_epi16(hi1, _mm_slli_si128(hi1, 4));
+			hi1 = _mm_add_epi16(hi1, _mm_slli_si128(hi1, 8));
+			hi1 = _mm_add_epi16(hi1, _mm_shuffle_epi32(_mm_shufflehi_epi16(lo1, 0xff), 0xff));
+
+			__m128i out0 = _mm_add_epi32(_mm_cvtepu16_epi32(lo0), carry);
+			__m128i out1 = _mm_add_epi32(_mm_unpackhi_epi16(lo0, zeromask), carry);
+			__m128i out2 = _mm_add_epi32(_mm_cvtepu16_epi32(hi0), carry);
+			__m128i out3 = _mm_add_epi32(_mm_unpackhi_epi16(hi0, zeromask), carry);
+
+			vx_uint32 firstChunkSum = (vx_uint32)_mm_extract_epi16(hi0, 7);
+			__m128i carry1 = _mm_add_epi32(carry, _mm_set1_epi32((int)firstChunkSum));
+
+			__m128i out4 = _mm_add_epi32(_mm_cvtepu16_epi32(lo1), carry1);
+			__m128i out5 = _mm_add_epi32(_mm_unpackhi_epi16(lo1, zeromask), carry1);
+			__m128i out6 = _mm_add_epi32(_mm_cvtepu16_epi32(hi1), carry1);
+			__m128i out7 = _mm_add_epi32(_mm_unpackhi_epi16(hi1, zeromask), carry1);
+
+			if (pPrev)
+			{
+				out0 = _mm_add_epi32(out0, _mm_loadu_si128((__m128i *)(pPrev + x)));
+				out1 = _mm_add_epi32(out1, _mm_loadu_si128((__m128i *)(pPrev + x + 4)));
+				out2 = _mm_add_epi32(out2, _mm_loadu_si128((__m128i *)(pPrev + x + 8)));
+				out3 = _mm_add_epi32(out3, _mm_loadu_si128((__m128i *)(pPrev + x + 12)));
+				out4 = _mm_add_epi32(out4, _mm_loadu_si128((__m128i *)(pPrev + x + 16)));
+				out5 = _mm_add_epi32(out5, _mm_loadu_si128((__m128i *)(pPrev + x + 20)));
+				out6 = _mm_add_epi32(out6, _mm_loadu_si128((__m128i *)(pPrev + x + 24)));
+				out7 = _mm_add_epi32(out7, _mm_loadu_si128((__m128i *)(pPrev + x + 28)));
+			}
+			_mm_storeu_si128((__m128i *)(pDst + x), out0);
+			_mm_storeu_si128((__m128i *)(pDst + x + 4), out1);
+			_mm_storeu_si128((__m128i *)(pDst + x + 8), out2);
+			_mm_storeu_si128((__m128i *)(pDst + x + 12), out3);
+			_mm_storeu_si128((__m128i *)(pDst + x + 16), out4);
+			_mm_storeu_si128((__m128i *)(pDst + x + 20), out5);
+			_mm_storeu_si128((__m128i *)(pDst + x + 24), out6);
+			_mm_storeu_si128((__m128i *)(pDst + x + 28), out7);
+
+			vx_uint32 secondChunkSum = (vx_uint32)_mm_extract_epi16(hi1, 7);
+			rowSum += firstChunkSum + secondChunkSum;
+			carry = _mm_set1_epi32((int)rowSum);
+		}
 
 		for (; x + 16 <= dstWidth; x += 16)
 		{
@@ -7355,40 +7490,58 @@ int HafCpu_Histogram_DATA_U8
 	vx_uint32     srcImageStrideInBytes
 )
 {
-	unsigned int *pdst = dstHist;
-	memset(pdst, 0x0, NUM_BINS * sizeof(unsigned int));
-	for (unsigned int y = 0; y < srcHeight; y++)
+	// Four sub-histograms break the per-pixel read-modify-write dependency
+	// chain on dstHist[index]++. Each channel of a 32-bit word increments a
+	// different table, so 4 increments can issue in parallel. The merge
+	// adds 256*3 extra adds, which is negligible vs the FHD pixel count.
+	alignas(64) vx_uint32 h0[NUM_BINS] = {0};
+	alignas(64) vx_uint32 h1[NUM_BINS] = {0};
+	alignas(64) vx_uint32 h2[NUM_BINS] = {0};
+	alignas(64) vx_uint32 h3[NUM_BINS] = {0};
+
+	for (vx_uint32 y = 0; y < srcHeight; y++)
 	{
-		unsigned int * src = (unsigned int *)(pSrcImage + y*srcImageStrideInBytes);
-		unsigned int * srclast = src + (srcWidth >> 2);
-		while (src < srclast)
+		const vx_uint8 *pRow = pSrcImage + (size_t)y * srcImageStrideInBytes;
+		vx_uint32 x = 0;
+		for (; x + 16 <= srcWidth; x += 16)
 		{
-			// do for 16 pixels..
-			unsigned int pixel4;
-			pixel4 = *src++;
-			pdst[(pixel4 & 0xFF)]++;
-			pdst[(pixel4 >> 8) & 0xFF]++;
-			pdst[(pixel4 >> 16) & 0xFF]++;
-			pdst[(pixel4 >> 24) & 0xFF]++;
+			vx_uint32 p0 = *(const vx_uint32 *)(pRow + x);
+			vx_uint32 p1 = *(const vx_uint32 *)(pRow + x + 4);
+			vx_uint32 p2 = *(const vx_uint32 *)(pRow + x + 8);
+			vx_uint32 p3 = *(const vx_uint32 *)(pRow + x + 12);
 
-			pixel4 = *src++;
-			pdst[(pixel4 & 0xFF)]++;
-			pdst[(pixel4 >> 8) & 0xFF]++;
-			pdst[(pixel4 >> 16) & 0xFF]++;
-			pdst[(pixel4 >> 24) & 0xFF]++;
+			h0[(p0 >> 0) & 0xFF]++;
+			h1[(p0 >> 8) & 0xFF]++;
+			h2[(p0 >> 16) & 0xFF]++;
+			h3[(p0 >> 24) & 0xFF]++;
 
-			pixel4 = *src++;
-			pdst[(pixel4 & 0xFF)]++;
-			pdst[(pixel4 >> 8) & 0xFF]++;
-			pdst[(pixel4 >> 16) & 0xFF]++;
-			pdst[(pixel4 >> 24) & 0xFF]++;
+			h0[(p1 >> 0) & 0xFF]++;
+			h1[(p1 >> 8) & 0xFF]++;
+			h2[(p1 >> 16) & 0xFF]++;
+			h3[(p1 >> 24) & 0xFF]++;
 
-			pixel4 = *src++;
-			pdst[(pixel4 & 0xFF)]++;
-			pdst[(pixel4 >> 8) & 0xFF]++;
-			pdst[(pixel4 >> 16) & 0xFF]++;
-			pdst[(pixel4 >> 24) & 0xFF]++;
+			h0[(p2 >> 0) & 0xFF]++;
+			h1[(p2 >> 8) & 0xFF]++;
+			h2[(p2 >> 16) & 0xFF]++;
+			h3[(p2 >> 24) & 0xFF]++;
+
+			h0[(p3 >> 0) & 0xFF]++;
+			h1[(p3 >> 8) & 0xFF]++;
+			h2[(p3 >> 16) & 0xFF]++;
+			h3[(p3 >> 24) & 0xFF]++;
 		}
+		for (; x < srcWidth; x++)
+			h0[pRow[x]]++;
+	}
+
+	for (vx_uint32 i = 0; i + 8 <= NUM_BINS; i += 8)
+	{
+		__m256i s0 = _mm256_loadu_si256((const __m256i *)(h0 + i));
+		__m256i s1 = _mm256_loadu_si256((const __m256i *)(h1 + i));
+		__m256i s2 = _mm256_loadu_si256((const __m256i *)(h2 + i));
+		__m256i s3 = _mm256_loadu_si256((const __m256i *)(h3 + i));
+		__m256i sum = _mm256_add_epi32(_mm256_add_epi32(s0, s1), _mm256_add_epi32(s2, s3));
+		_mm256_storeu_si256((__m256i *)(dstHist + i), sum);
 	}
 	return AGO_SUCCESS;
 }
@@ -9789,23 +9942,70 @@ int HafCpu_Phase_U8_S16S16
 
 		unsigned int x = 0;
 #if USE_AVX
+		const __m256i zero32 = _mm256_setzero_si256();
+		for (; x + 16 <= dstWidth; x += 16)
+		{
+			__m256i gxLo32 = _mm256_cvtepi16_epi32(_mm_loadu_si128((__m128i *)(pGx + x)));
+			__m256i gxHi32 = _mm256_cvtepi16_epi32(_mm_loadu_si128((__m128i *)(pGx + x + 8)));
+			__m256i gyLo32 = _mm256_cvtepi16_epi32(_mm_loadu_si128((__m128i *)(pGy + x)));
+			__m256i gyHi32 = _mm256_cvtepi16_epi32(_mm_loadu_si128((__m128i *)(pGy + x + 8)));
+			__m256 axLo = _mm256_cvtepi32_ps(_mm256_abs_epi32(gxLo32));
+			__m256 axHi = _mm256_cvtepi32_ps(_mm256_abs_epi32(gxHi32));
+			__m256 ayLo = _mm256_cvtepi32_ps(_mm256_abs_epi32(gyLo32));
+			__m256 ayHi = _mm256_cvtepi32_ps(_mm256_abs_epi32(gyHi32));
+
+			__m256 useXLo = _mm256_cmp_ps(ayLo, axLo, _CMP_LE_OQ);
+			__m256 useXHi = _mm256_cmp_ps(ayHi, axHi, _CMP_LE_OQ);
+
+			__m256 mnLo = _mm256_min_ps(axLo, ayLo);
+			__m256 mxLo = _mm256_max_ps(axLo, ayLo);
+			__m256 mnHi = _mm256_min_ps(axHi, ayHi);
+			__m256 mxHi = _mm256_max_ps(axHi, ayHi);
+
+			__m256 cLo = _mm256_div_ps(mnLo, _mm256_add_ps(mxLo, eps));
+			__m256 cHi = _mm256_div_ps(mnHi, _mm256_add_ps(mxHi, eps));
+			__m256 c2Lo = _mm256_mul_ps(cLo, cLo);
+			__m256 c2Hi = _mm256_mul_ps(cHi, cHi);
+
+			__m256 polyLo = _mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(p7, c2Lo), p5), c2Lo), p3), c2Lo), p1), cLo);
+			__m256 polyHi = _mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(p7, c2Hi), p5), c2Hi), p3), c2Hi), p1), cHi);
+
+			__m256 angleLo = _mm256_blendv_ps(_mm256_sub_ps(ninety, polyLo), polyLo, useXLo);
+			__m256 angleHi = _mm256_blendv_ps(_mm256_sub_ps(ninety, polyHi), polyHi, useXHi);
+
+			__m256 gxNegLo = _mm256_castsi256_ps(_mm256_cmpgt_epi32(zero32, gxLo32));
+			__m256 gxNegHi = _mm256_castsi256_ps(_mm256_cmpgt_epi32(zero32, gxHi32));
+			__m256 gyNegLo = _mm256_castsi256_ps(_mm256_cmpgt_epi32(zero32, gyLo32));
+			__m256 gyNegHi = _mm256_castsi256_ps(_mm256_cmpgt_epi32(zero32, gyHi32));
+			angleLo = _mm256_blendv_ps(angleLo, _mm256_sub_ps(oneEighty, angleLo), gxNegLo);
+			angleHi = _mm256_blendv_ps(angleHi, _mm256_sub_ps(oneEighty, angleHi), gxNegHi);
+			angleLo = _mm256_blendv_ps(angleLo, _mm256_sub_ps(threeSixty, angleLo), gyNegLo);
+			angleHi = _mm256_blendv_ps(angleHi, _mm256_sub_ps(threeSixty, angleHi), gyNegHi);
+
+			__m256i pLo = _mm256_cvttps_epi32(_mm256_add_ps(_mm256_mul_ps(angleLo, scale), half));
+			__m256i pHi = _mm256_cvttps_epi32(_mm256_add_ps(_mm256_mul_ps(angleHi, scale), half));
+			__m256i packed = _mm256_packs_epi32(pLo, pHi);
+			packed = _mm256_permute4x64_epi64(packed, 0xd8);
+			__m128i lo16 = _mm256_castsi256_si128(packed);
+			__m128i hi16 = _mm256_extracti128_si256(packed, 1);
+			_mm_storeu_si128((__m128i *)(pdst + x), _mm_packus_epi16(lo16, hi16));
+		}
 		for (; x + 8 <= dstWidth; x += 8)
 		{
 			__m256i gx32 = _mm256_cvtepi16_epi32(_mm_loadu_si128((__m128i *)(pGx + x)));
 			__m256i gy32 = _mm256_cvtepi16_epi32(_mm_loadu_si128((__m128i *)(pGy + x)));
 			__m256 ax = _mm256_cvtepi32_ps(_mm256_abs_epi32(gx32));
 			__m256 ay = _mm256_cvtepi32_ps(_mm256_abs_epi32(gy32));
-			__m256 useX = _mm256_castsi256_ps(_mm256_or_si256(_mm256_cmpgt_epi32(_mm256_abs_epi32(gx32), _mm256_abs_epi32(gy32)), _mm256_cmpeq_epi32(_mm256_abs_epi32(gx32), _mm256_abs_epi32(gy32))));
-
-			__m256 cX = _mm256_div_ps(ay, _mm256_add_ps(ax, eps));
-			__m256 cY = _mm256_div_ps(ax, _mm256_add_ps(ay, eps));
-			__m256 c = _mm256_blendv_ps(cY, cX, useX);
+			__m256 useX = _mm256_cmp_ps(ay, ax, _CMP_LE_OQ);
+			__m256 mn = _mm256_min_ps(ax, ay);
+			__m256 mx = _mm256_max_ps(ax, ay);
+			__m256 c = _mm256_div_ps(mn, _mm256_add_ps(mx, eps));
 			__m256 c2 = _mm256_mul_ps(c, c);
 			__m256 poly = _mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(p7, c2), p5), c2), p3), c2), p1), c);
 			__m256 angle = _mm256_blendv_ps(_mm256_sub_ps(ninety, poly), poly, useX);
 
-			__m256 gxNeg = _mm256_castsi256_ps(_mm256_cmpgt_epi32(_mm256_setzero_si256(), gx32));
-			__m256 gyNeg = _mm256_castsi256_ps(_mm256_cmpgt_epi32(_mm256_setzero_si256(), gy32));
+			__m256 gxNeg = _mm256_castsi256_ps(_mm256_cmpgt_epi32(zero32, gx32));
+			__m256 gyNeg = _mm256_castsi256_ps(_mm256_cmpgt_epi32(zero32, gy32));
 			angle = _mm256_blendv_ps(angle, _mm256_sub_ps(oneEighty, angle), gxNeg);
 			angle = _mm256_blendv_ps(angle, _mm256_sub_ps(threeSixty, angle), gyNeg);
 			__m256i phase32 = _mm256_cvttps_epi32(_mm256_add_ps(_mm256_mul_ps(angle, scale), half));

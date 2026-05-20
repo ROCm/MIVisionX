@@ -33,6 +33,81 @@ DECL_ALIGN(16) unsigned char dataFastCornersPixelMask[7 * 16] ATTR_ALIGN(16) = {
 	255, 255, 255, 255, 255, 255, 255,   2,   1,   0, 255, 255, 255, 255, 255, 255
 };
 
+// Position-dependent FAST boundary shuffle masks. The original layout above is
+// applied via _mm_shuffle_epi8 to seven contiguous row loads; the SSE inner loop
+// then increments the candidate column by shifting each row right by one byte
+// each iteration (7 srli_si128 ops × 8 candidates = 56 unconditional shifts per
+// outer iteration). Instead, we precompute an entire 7-mask set for each of the
+// 8 candidate offsets (each non-255 byte index in the template is incremented
+// by i), letting the per-candidate path read directly from the original row
+// loads without any shifts.
+DECL_ALIGN(16) unsigned char dataFastCornersPixelMaskAll[8 * 7 * 16] ATTR_ALIGN(16) = {
+	// offset 0
+	  1,   2, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,   0,
+	255, 255,   4, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,   0, 255,
+	255, 255, 255,   6, 255, 255, 255, 255, 255, 255, 255, 255, 255,   0, 255, 255,
+	255, 255, 255, 255,   6, 255, 255, 255, 255, 255, 255, 255,   0, 255, 255, 255,
+	255, 255, 255, 255, 255,   6, 255, 255, 255, 255, 255,   0, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255,   4, 255, 255, 255,   0, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255,   2,   1,   0, 255, 255, 255, 255, 255, 255,
+	// offset 1
+	  2,   3, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,   1,
+	255, 255,   5, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,   1, 255,
+	255, 255, 255,   7, 255, 255, 255, 255, 255, 255, 255, 255, 255,   1, 255, 255,
+	255, 255, 255, 255,   7, 255, 255, 255, 255, 255, 255, 255,   1, 255, 255, 255,
+	255, 255, 255, 255, 255,   7, 255, 255, 255, 255, 255,   1, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255,   5, 255, 255, 255,   1, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255,   3,   2,   1, 255, 255, 255, 255, 255, 255,
+	// offset 2
+	  3,   4, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,   2,
+	255, 255,   6, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,   2, 255,
+	255, 255, 255,   8, 255, 255, 255, 255, 255, 255, 255, 255, 255,   2, 255, 255,
+	255, 255, 255, 255,   8, 255, 255, 255, 255, 255, 255, 255,   2, 255, 255, 255,
+	255, 255, 255, 255, 255,   8, 255, 255, 255, 255, 255,   2, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255,   6, 255, 255, 255,   2, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255,   4,   3,   2, 255, 255, 255, 255, 255, 255,
+	// offset 3
+	  4,   5, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,   3,
+	255, 255,   7, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,   3, 255,
+	255, 255, 255,   9, 255, 255, 255, 255, 255, 255, 255, 255, 255,   3, 255, 255,
+	255, 255, 255, 255,   9, 255, 255, 255, 255, 255, 255, 255,   3, 255, 255, 255,
+	255, 255, 255, 255, 255,   9, 255, 255, 255, 255, 255,   3, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255,   7, 255, 255, 255,   3, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255,   5,   4,   3, 255, 255, 255, 255, 255, 255,
+	// offset 4
+	  5,   6, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,   4,
+	255, 255,   8, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,   4, 255,
+	255, 255, 255,  10, 255, 255, 255, 255, 255, 255, 255, 255, 255,   4, 255, 255,
+	255, 255, 255, 255,  10, 255, 255, 255, 255, 255, 255, 255,   4, 255, 255, 255,
+	255, 255, 255, 255, 255,  10, 255, 255, 255, 255, 255,   4, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255,   8, 255, 255, 255,   4, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255,   6,   5,   4, 255, 255, 255, 255, 255, 255,
+	// offset 5
+	  6,   7, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,   5,
+	255, 255,   9, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,   5, 255,
+	255, 255, 255,  11, 255, 255, 255, 255, 255, 255, 255, 255, 255,   5, 255, 255,
+	255, 255, 255, 255,  11, 255, 255, 255, 255, 255, 255, 255,   5, 255, 255, 255,
+	255, 255, 255, 255, 255,  11, 255, 255, 255, 255, 255,   5, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255,   9, 255, 255, 255,   5, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255,   7,   6,   5, 255, 255, 255, 255, 255, 255,
+	// offset 6
+	  7,   8, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,   6,
+	255, 255,  10, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,   6, 255,
+	255, 255, 255,  12, 255, 255, 255, 255, 255, 255, 255, 255, 255,   6, 255, 255,
+	255, 255, 255, 255,  12, 255, 255, 255, 255, 255, 255, 255,   6, 255, 255, 255,
+	255, 255, 255, 255, 255,  12, 255, 255, 255, 255, 255,   6, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255,  10, 255, 255, 255,   6, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255,   8,   7,   6, 255, 255, 255, 255, 255, 255,
+	// offset 7
+	  8,   9, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,   7,
+	255, 255,  11, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,   7, 255,
+	255, 255, 255,  13, 255, 255, 255, 255, 255, 255, 255, 255, 255,   7, 255, 255,
+	255, 255, 255, 255,  13, 255, 255, 255, 255, 255, 255, 255,   7, 255, 255, 255,
+	255, 255, 255, 255, 255,  13, 255, 255, 255, 255, 255,   7, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255,  11, 255, 255, 255,   7, 255, 255, 255, 255, 255,
+	255, 255, 255, 255, 255, 255, 255,   9,   8,   7, 255, 255, 255, 255, 255, 255
+};
+
 static inline void generateOffset(int srcStride, int * offsets)
 {
 	offsets[0] = -3 * srcStride;
@@ -451,67 +526,38 @@ int HafCpu_FastCorners_XY_U8_NoSupression
 
 			maskSkip |= maskSkip1;
 
-			// Check for corners in the eight pixels
+			// Check for corners in the eight pixels.
+			// Use precomputed position-dependent masks to avoid per-iteration row shifts.
 			if (maskSkip != 0xFFFF)
 			{
-				for (int i = 0; i < 8; i++)
+				for (int i = 0; i < 8; i++, maskSkip >>= 2)
 				{
-					__m128i * tbl = (__m128i *) dataFastCornersPixelMask;
+					if (maskSkip & 1) continue;
 
-					if (!(maskSkip & 1))
+					__m128i * tbl = (__m128i *) (dataFastCornersPixelMaskAll + i * 7 * 16);
+					__m128i boundary = _mm_shuffle_epi8(rowMinus3, _mm_load_si128(tbl + 0));
+					boundary = _mm_or_si128(boundary, _mm_shuffle_epi8(rowMinus2, _mm_load_si128(tbl + 1)));
+					boundary = _mm_or_si128(boundary, _mm_shuffle_epi8(rowMinus1, _mm_load_si128(tbl + 2)));
+					boundary = _mm_or_si128(boundary, _mm_shuffle_epi8(row,       _mm_load_si128(tbl + 3)));
+					boundary = _mm_or_si128(boundary, _mm_shuffle_epi8(rowPlus1,  _mm_load_si128(tbl + 4)));
+					boundary = _mm_or_si128(boundary, _mm_shuffle_epi8(rowPlus2,  _mm_load_si128(tbl + 5)));
+					boundary = _mm_or_si128(boundary, _mm_shuffle_epi8(rowPlus3,  _mm_load_si128(tbl + 6)));
+
+					if (isCorner_SSE(pLocalSrc[i], boundary, thresh))
 					{
-						// Get the boundary pixels in an XMM register
-						__m128i mask = _mm_load_si128(tbl++);
-						__m128i boundary = _mm_shuffle_epi8(rowMinus3, mask);
-
-						mask = _mm_load_si128(tbl++);
-						mask = _mm_shuffle_epi8(rowMinus2, mask);
-						boundary = _mm_or_si128(boundary, mask);
-
-						mask = _mm_load_si128(tbl++);
-						mask = _mm_shuffle_epi8(rowMinus1, mask);
-						boundary = _mm_or_si128(boundary, mask);
-
-						mask = _mm_load_si128(tbl++);
-						mask = _mm_shuffle_epi8(row, mask);
-						boundary = _mm_or_si128(boundary, mask);
-
-						mask = _mm_load_si128(tbl++);
-						mask = _mm_shuffle_epi8(rowPlus1, mask);
-						boundary = _mm_or_si128(boundary, mask);
-
-						mask = _mm_load_si128(tbl++);
-						mask = _mm_shuffle_epi8(rowPlus2, mask);
-						boundary = _mm_or_si128(boundary, mask);
-
-						mask = _mm_load_si128(tbl++);
-						mask = _mm_shuffle_epi8(rowPlus3, mask);
-						boundary = _mm_or_si128(boundary, mask);
-
-						if (isCorner_SSE(M128I(row).m128i_u8[3], boundary, thresh))
+						if (cornerCount < capacityOfDstCorner)
 						{
-							if (cornerCount < capacityOfDstCorner)
-							{
-								dstCorner[cornerCount].y = height + 3;
-								dstCorner[cornerCount].x = width + i;
-								dstCorner[cornerCount].strength = strength_threshold;			// Undefined as per the 1.0.1 spec
-								dstCorner[cornerCount].scale = 0;
-								dstCorner[cornerCount].orientation = 0;
-								dstCorner[cornerCount].error = 0;
-								dstCorner[cornerCount++].tracking_status = 1;
-							}
-							else
-								cornerCount++;
+							dstCorner[cornerCount].y = height + 3;
+							dstCorner[cornerCount].x = width + i;
+							dstCorner[cornerCount].strength = strength_threshold;			// Undefined as per the 1.0.1 spec
+							dstCorner[cornerCount].scale = 0;
+							dstCorner[cornerCount].orientation = 0;
+							dstCorner[cornerCount].error = 0;
+							dstCorner[cornerCount++].tracking_status = 1;
 						}
+						else
+							cornerCount++;
 					}
-					maskSkip >>= 2;
-					rowMinus3 = _mm_srli_si128(rowMinus3, 1);
-					rowMinus2 = _mm_srli_si128(rowMinus2, 1);
-					rowMinus1 = _mm_srli_si128(rowMinus1, 1);
-					row = _mm_srli_si128(row, 1);
-					rowPlus1 = _mm_srli_si128(rowPlus1, 1);
-					rowPlus2 = _mm_srli_si128(rowPlus2, 1);
-					rowPlus3 = _mm_srli_si128(rowPlus3, 1);
 				}
 			}
 
@@ -640,55 +686,27 @@ int HafCpu_FastCorners_XY_U8_Supression
 			int passMask = _mm_movemask_epi8(pass);
 			int maskSkip = (~passMask) & 0xFFFF;
 
-			// Check for corners in the eight pixels
+			// Check for corners in the eight pixels.
+			// Use precomputed position-dependent masks to avoid the per-iteration
+			// row shifts that previously cost 7 srli_si128 ops × 8 candidates.
 			if (maskSkip != 0xFFFF)
 			{
-				for (int i = 0; i < 8; i++)
+				for (int i = 0; i < 8; i++, maskSkip >>= 2)
 				{
-					__m128i * tbl = (__m128i *) dataFastCornersPixelMask;
+					if (maskSkip & 1) continue;
 
-					if (!(maskSkip & 1))
-					{
-						// Get the boundary pixels in an XMM register
-						__m128i mask = _mm_load_si128(tbl++);
-						__m128i boundary = _mm_shuffle_epi8(rowMinus3, mask);
+					__m128i * tbl = (__m128i *) (dataFastCornersPixelMaskAll + i * 7 * 16);
+					__m128i boundary = _mm_shuffle_epi8(rowMinus3, _mm_load_si128(tbl + 0));
+					boundary = _mm_or_si128(boundary, _mm_shuffle_epi8(rowMinus2, _mm_load_si128(tbl + 1)));
+					boundary = _mm_or_si128(boundary, _mm_shuffle_epi8(rowMinus1, _mm_load_si128(tbl + 2)));
+					boundary = _mm_or_si128(boundary, _mm_shuffle_epi8(row,       _mm_load_si128(tbl + 3)));
+					boundary = _mm_or_si128(boundary, _mm_shuffle_epi8(rowPlus1,  _mm_load_si128(tbl + 4)));
+					boundary = _mm_or_si128(boundary, _mm_shuffle_epi8(rowPlus2,  _mm_load_si128(tbl + 5)));
+					boundary = _mm_or_si128(boundary, _mm_shuffle_epi8(rowPlus3,  _mm_load_si128(tbl + 6)));
 
-						mask = _mm_load_si128(tbl++);
-						mask = _mm_shuffle_epi8(rowMinus2, mask);
-						boundary = _mm_or_si128(boundary, mask);
-
-						mask = _mm_load_si128(tbl++);
-						mask = _mm_shuffle_epi8(rowMinus1, mask);
-						boundary = _mm_or_si128(boundary, mask);
-
-						mask = _mm_load_si128(tbl++);
-						mask = _mm_shuffle_epi8(row, mask);
-						boundary = _mm_or_si128(boundary, mask);
-
-						mask = _mm_load_si128(tbl++);
-						mask = _mm_shuffle_epi8(rowPlus1, mask);
-						boundary = _mm_or_si128(boundary, mask);
-
-						mask = _mm_load_si128(tbl++);
-						mask = _mm_shuffle_epi8(rowPlus2, mask);
-						boundary = _mm_or_si128(boundary, mask);
-
-						mask = _mm_load_si128(tbl++);
-						mask = _mm_shuffle_epi8(rowPlus3, mask);
-						boundary = _mm_or_si128(boundary, mask);
-
-						short strength = 0;
-						if (checkForCornerAndGetStrength_SSE(M128I(row).m128i_u8[3], boundary, t, &strength))
-							pScratch[(height + 3) * srcWidth + width + i] = (vx_uint8)strength;
-					}
-					maskSkip >>= 2;
-					rowMinus3 = _mm_srli_si128(rowMinus3, 1);
-					rowMinus2 = _mm_srli_si128(rowMinus2, 1);
-					rowMinus1 = _mm_srli_si128(rowMinus1, 1);
-					row = _mm_srli_si128(row, 1);
-					rowPlus1 = _mm_srli_si128(rowPlus1, 1);
-					rowPlus2 = _mm_srli_si128(rowPlus2, 1);
-					rowPlus3 = _mm_srli_si128(rowPlus3, 1);
+					short strength = 0;
+					if (checkForCornerAndGetStrength_SSE(pLocalSrc[i], boundary, t, &strength))
+						pScratch[(height + 3) * srcWidth + width + i] = (vx_uint8)strength;
 				}
 			}
 

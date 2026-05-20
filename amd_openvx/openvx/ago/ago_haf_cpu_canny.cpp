@@ -629,6 +629,16 @@ int HafCpu_CannySuppThreshold_U8XY_U16_3x3
 	const __m128i hyst_lower_v = _mm_set1_epi16((short)hyst_lower);
 	const __m128i k255 = _mm_set1_epi16(255);
 	const __m128i k127 = _mm_set1_epi16(127);
+#if USE_AVX
+	const __m256i ang_mask256 = _mm256_set1_epi16(3);
+	const __m256i one256 = _mm256_set1_epi16(1);
+	const __m256i two256 = _mm256_set1_epi16(2);
+	const __m256i three256 = _mm256_set1_epi16(3);
+	const __m256i hyst_upper256 = _mm256_set1_epi16((short)hyst_upper);
+	const __m256i hyst_lower256 = _mm256_set1_epi16((short)hyst_lower);
+	const __m256i k255_256 = _mm256_set1_epi16(255);
+	const __m256i k127_256 = _mm256_set1_epi16(127);
+#endif
 
 	for (unsigned int y = 1; y < dstHeight - 1; y++)
 	{
@@ -636,6 +646,71 @@ int HafCpu_CannySuppThreshold_U8XY_U16_3x3
 		vx_uint16 *pLocSrc = pSrc + y * sstride;	// row pointer
 
 		unsigned int x = 1;
+#if USE_AVX
+		// AVX2: 16 pixels per iteration.
+		for (; x + 16 <= dstWidth - 1; x += 16)
+		{
+			__m256i pix = _mm256_loadu_si256((const __m256i *)(pLocSrc + x));
+			__m256i mag = _mm256_srli_epi16(pix, 2);
+			__m256i ang = _mm256_and_si256(pix, ang_mask256);
+
+			__m256i n0_a0 = _mm256_loadu_si256((const __m256i *)(pLocSrc + x - 1));
+			__m256i n1_a0 = _mm256_loadu_si256((const __m256i *)(pLocSrc + x + 1));
+			__m256i n0_a1 = _mm256_loadu_si256((const __m256i *)(pLocSrc + x + 1 - sstride));
+			__m256i n1_a1 = _mm256_loadu_si256((const __m256i *)(pLocSrc + x - 1 + sstride));
+			__m256i n0_a2 = _mm256_loadu_si256((const __m256i *)(pLocSrc + x     - sstride));
+			__m256i n1_a2 = _mm256_loadu_si256((const __m256i *)(pLocSrc + x     + sstride));
+			__m256i n0_a3 = _mm256_loadu_si256((const __m256i *)(pLocSrc + x - 1 - sstride));
+			__m256i n1_a3 = _mm256_loadu_si256((const __m256i *)(pLocSrc + x + 1 + sstride));
+
+			__m256i m0 = _mm256_cmpeq_epi16(ang, _mm256_setzero_si256());
+			__m256i m1 = _mm256_cmpeq_epi16(ang, one256);
+			__m256i m2 = _mm256_cmpeq_epi16(ang, two256);
+			__m256i m3 = _mm256_cmpeq_epi16(ang, three256);
+
+			__m256i n0 = _mm256_or_si256(
+				_mm256_or_si256(_mm256_and_si256(m0, n0_a0), _mm256_and_si256(m1, n0_a1)),
+				_mm256_or_si256(_mm256_and_si256(m2, n0_a2), _mm256_and_si256(m3, n0_a3)));
+			__m256i n1 = _mm256_or_si256(
+				_mm256_or_si256(_mm256_and_si256(m0, n1_a0), _mm256_and_si256(m1, n1_a1)),
+				_mm256_or_si256(_mm256_and_si256(m2, n1_a2), _mm256_and_si256(m3, n1_a3)));
+
+			__m256i n0m = _mm256_srli_epi16(n0, 2);
+			__m256i n1m = _mm256_srli_epi16(n1, 2);
+
+			__m256i is_max = _mm256_and_si256(_mm256_cmpgt_epi16(mag, n0m), _mm256_cmpgt_epi16(mag, n1m));
+			__m256i edge = _mm256_and_si256(is_max, mag);
+
+			__m256i gt_upper = _mm256_cmpgt_epi16(edge, hyst_upper256);
+			__m256i gt_lower = _mm256_cmpgt_epi16(edge, hyst_lower256);
+			__m256i out_u16 = _mm256_or_si256(
+				_mm256_and_si256(gt_upper, k255_256),
+				_mm256_and_si256(_mm256_andnot_si256(gt_upper, gt_lower), k127_256));
+			// packus on AVX2 is lane-wise: 16 i16 -> 32 u8 with [lane0 lo, lane1 lo, lane0 hi, lane1 hi]
+			// Use unpacked store via permute to get sequential 16 bytes.
+			__m128i lo = _mm256_castsi256_si128(out_u16);
+			__m128i hi = _mm256_extracti128_si256(out_u16, 1);
+			__m128i packed = _mm_packus_epi16(lo, hi);
+			_mm_storeu_si128((__m128i *)(pOut + x), packed);
+
+			// Stack push: gt_upper has 16 i16 lanes -> need 16-bit mask
+			__m128i upper_lo = _mm256_castsi256_si128(gt_upper);
+			__m128i upper_hi = _mm256_extracti128_si256(gt_upper, 1);
+			__m128i upper_pack = _mm_packs_epi16(upper_lo, upper_hi);
+			int upper_mask = _mm_movemask_epi8(upper_pack);
+			while (upper_mask)
+			{
+				int b = __builtin_ctz(upper_mask);
+				upper_mask &= upper_mask - 1;
+				if (pxyStack < pxyStackEnd)
+				{
+					pxyStack->x = (vx_uint16)(x + b);
+					pxyStack->y = (vx_uint16)y;
+					pxyStack++;
+				}
+			}
+		}
+#endif
 		for (; x + 8 <= dstWidth - 1; x += 8)
 		{
 			__m128i pix    = _mm_loadu_si128((const __m128i *)(pLocSrc + x));

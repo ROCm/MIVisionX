@@ -23,6 +23,8 @@ THE SOFTWARE.
 
 #include "ago_internal.h"
 
+#include <vector>
+
 typedef struct {
 	vx_float32 GxGx;
 	vx_float32 GxGy;
@@ -733,6 +735,15 @@ int HafCpu_HarrisScore_HVC_HG3_3x3
 	memset(pDstVc, 0, dstVcStrideInBytes);											// Zero the thresholds of first row
 	pDstVc += dstStride;
 
+	// Column-sum scratch: per source column, holds (gx2_sum, gxy2_sum, gy2_sum, 0)
+	// summed vertically over the current 3-row window. Single contiguous SSE-friendly buffer.
+	std::vector<float> colSumBuf((size_t)dstWidth * 4 + 16);
+	__m128 *colSum = reinterpret_cast<__m128 *>(colSumBuf.data());
+
+	const __m128 invNorm = _mm_set1_ps(1.0f / normalization_factor);
+	const __m128 sens    = _mm_set1_ps(sensitivity);
+	const __m128 Tc_vec  = _mm_set1_ps(Tc);
+
 	for (int y = 1; y < (int)dstHeight - 1; y++)
 	{
 		vx_float32 * pLocalDst = pDstVc;
@@ -740,42 +751,69 @@ int HafCpu_HarrisScore_HVC_HG3_3x3
 		ago_harris_Gxy_t * pRow1 = pRow0 + srcStride;
 		ago_harris_Gxy_t * pRow2 = pRow1 + srcStride;
 
-		*pLocalDst = 0;															// First column Vc = 0;
-		pLocalDst++;
-
-		vx_float32 gx2 = 0;
-		vx_float32 gy2 = 0;
-		vx_float32 gxy2 = 0;
-		for (int i = 0; i < 3; i++)
+		// Build vertical column sums for this row triplet. Each Gxy_t is 3 floats; the
+		// 4-float load picks up the next pixel's GxGx in lane 3 which we discard (only
+		// lanes 0..2 are summed into the window). Last column uses a scalar gather to
+		// avoid reading past the row buffer.
+		int x = 0;
+		for (; x < (int)dstWidth - 1; x++)
 		{
-			gx2 += pRow0[i].GxGx + pRow1[i].GxGx + pRow2[i].GxGx;
-			gxy2 += pRow0[i].GxGy + pRow1[i].GxGy + pRow2[i].GxGy;
-			gy2 += pRow0[i].GyGy + pRow1[i].GyGy + pRow2[i].GyGy;
+			__m128 a = _mm_loadu_ps(&pRow0[x].GxGx);
+			__m128 b = _mm_loadu_ps(&pRow1[x].GxGx);
+			__m128 c = _mm_loadu_ps(&pRow2[x].GxGx);
+			colSum[x] = _mm_add_ps(_mm_add_ps(a, b), c);
+		}
+		{
+			int xl = (int)dstWidth - 1;
+			vx_float32 v0 = pRow0[xl].GxGx + pRow1[xl].GxGx + pRow2[xl].GxGx;
+			vx_float32 v1 = pRow0[xl].GxGy + pRow1[xl].GxGy + pRow2[xl].GxGy;
+			vx_float32 v2 = pRow0[xl].GyGy + pRow1[xl].GyGy + pRow2[xl].GyGy;
+			colSum[xl] = _mm_setr_ps(v0, v1, v2, 0.0f);
 		}
 
-		for (int x = 1; x < (int)dstWidth - 1; x++)
-		{
-			vx_float32 traceA = gx2 + gy2;
-			vx_float32 detA = (gx2 * gy2) - (gxy2 * gxy2);
-			vx_float32 Mc = detA - (sensitivity * traceA * traceA);
-			Mc /= normalization_factor;
-			*pLocalDst = (Mc > Tc) ? Mc : 0;
+		*pLocalDst++ = 0.0f;													// First column Vc = 0;
 
-			pLocalDst++;
-			if (x < (int)dstWidth - 2)
-			{
-				int removeCol = x - 1;
-				int addCol = x + 2;
-				gx2 += pRow0[addCol].GxGx + pRow1[addCol].GxGx + pRow2[addCol].GxGx
-					- pRow0[removeCol].GxGx - pRow1[removeCol].GxGx - pRow2[removeCol].GxGx;
-				gxy2 += pRow0[addCol].GxGy + pRow1[addCol].GxGy + pRow2[addCol].GxGy
-					- pRow0[removeCol].GxGy - pRow1[removeCol].GxGy - pRow2[removeCol].GxGy;
-				gy2 += pRow0[addCol].GyGy + pRow1[addCol].GyGy + pRow2[addCol].GyGy
-					- pRow0[removeCol].GyGy - pRow1[removeCol].GyGy - pRow2[removeCol].GyGy;
-			}
+		// Process 4 output pixels at a time. Each iteration reads 6 column sums,
+		// builds 4 windows, transposes them into SoA (gx2/gxy2/gy2/junk vectors)
+		// and computes the Harris score vector-wide.
+		x = 1;
+		for (; x + 4 <= (int)dstWidth - 1; x += 4)
+		{
+			__m128 c0 = colSum[x - 1];
+			__m128 c1 = colSum[x];
+			__m128 c2 = colSum[x + 1];
+			__m128 c3 = colSum[x + 2];
+			__m128 c4 = colSum[x + 3];
+			__m128 c5 = colSum[x + 4];
+
+			__m128 w0 = _mm_add_ps(_mm_add_ps(c0, c1), c2);
+			__m128 w1 = _mm_add_ps(_mm_add_ps(c1, c2), c3);
+			__m128 w2 = _mm_add_ps(_mm_add_ps(c2, c3), c4);
+			__m128 w3 = _mm_add_ps(_mm_add_ps(c3, c4), c5);
+
+			_MM_TRANSPOSE4_PS(w0, w1, w2, w3);
+			// w0 = gx2 for 4 pixels, w1 = gxy2 for 4 pixels, w2 = gy2 for 4 pixels.
+			__m128 trace = _mm_add_ps(w0, w2);
+			__m128 det   = _mm_sub_ps(_mm_mul_ps(w0, w2), _mm_mul_ps(w1, w1));
+			__m128 Mc    = _mm_sub_ps(det, _mm_mul_ps(_mm_mul_ps(sens, trace), trace));
+			Mc = _mm_mul_ps(Mc, invNorm);
+			__m128 keep = _mm_cmpgt_ps(Mc, Tc_vec);
+			Mc = _mm_and_ps(Mc, keep);
+			_mm_storeu_ps(pLocalDst, Mc);
+			pLocalDst += 4;
+		}
+		for (; x < (int)dstWidth - 1; x++)
+		{
+			__m128 win = _mm_add_ps(_mm_add_ps(colSum[x - 1], colSum[x]), colSum[x + 1]);
+			alignas(16) float w[4];
+			_mm_store_ps(w, win);
+			vx_float32 traceA = w[0] + w[2];
+			vx_float32 detA   = w[0] * w[2] - w[1] * w[1];
+			vx_float32 Mc     = (detA - sensitivity * traceA * traceA) / normalization_factor;
+			*pLocalDst++ = (Mc > Tc) ? Mc : 0.0f;
 		}
 
-		*pLocalDst = 0;															// Last column Vc = 0;
+		*pLocalDst = 0.0f;														// Last column Vc = 0;
 		pDstVc += dstStride;
 	}
 	memset(pDstVc, 0, dstVcStrideInBytes);											// Zero the thresholds of last row

@@ -2981,6 +2981,9 @@ int HafCpu_AbsDiff_U8_U8U8
 	int alignedWidth = dstWidth & ~31;
 	int postfixWidth = dstWidth - alignedWidth;
 
+	// Unroll x4 so 128 bytes are processed per inner-loop iteration. This lets
+	// the CPU front-end keep multiple independent load + max/min/sub + store
+	// chains in flight, hiding latencies that the single-vector loop exposed.
 	if (useAligned)
 	{
 		for (int height = 0; height < (int)dstHeight; height++)
@@ -2989,13 +2992,30 @@ int HafCpu_AbsDiff_U8_U8U8
 			pLocalSrc2_ymm = (__m256i*) pSrcImage2;
 			pLocalDst_ymm = (__m256i*) pDstImage;
 
-			for (int width = 0; width < alignedWidth; width += 32)
+			int width = 0;
+			for (; width + 128 <= alignedWidth; width += 128)
+			{
+				__m256i a0 = _mm256_load_si256(pLocalSrc1_ymm + 0);
+				__m256i a1 = _mm256_load_si256(pLocalSrc1_ymm + 1);
+				__m256i a2 = _mm256_load_si256(pLocalSrc1_ymm + 2);
+				__m256i a3 = _mm256_load_si256(pLocalSrc1_ymm + 3);
+				__m256i b0 = _mm256_load_si256(pLocalSrc2_ymm + 0);
+				__m256i b1 = _mm256_load_si256(pLocalSrc2_ymm + 1);
+				__m256i b2 = _mm256_load_si256(pLocalSrc2_ymm + 2);
+				__m256i b3 = _mm256_load_si256(pLocalSrc2_ymm + 3);
+				_mm256_store_si256(pLocalDst_ymm + 0, _mm256_sub_epi8(_mm256_max_epu8(a0, b0), _mm256_min_epu8(a0, b0)));
+				_mm256_store_si256(pLocalDst_ymm + 1, _mm256_sub_epi8(_mm256_max_epu8(a1, b1), _mm256_min_epu8(a1, b1)));
+				_mm256_store_si256(pLocalDst_ymm + 2, _mm256_sub_epi8(_mm256_max_epu8(a2, b2), _mm256_min_epu8(a2, b2)));
+				_mm256_store_si256(pLocalDst_ymm + 3, _mm256_sub_epi8(_mm256_max_epu8(a3, b3), _mm256_min_epu8(a3, b3)));
+				pLocalSrc1_ymm += 4;
+				pLocalSrc2_ymm += 4;
+				pLocalDst_ymm  += 4;
+			}
+			for (; width < alignedWidth; width += 32)
 			{
 				pixels1 = _mm256_load_si256(pLocalSrc1_ymm++);
 				pixels2 = _mm256_load_si256(pLocalSrc2_ymm++);
-
-				// Direct 8-bit AbsDiff: max(a,b) - min(a,b) = |a-b|
-				result = _mm256_sub_epi8(_mm256_max_epu8(pixels1, pixels2), _mm256_min_epu8(pixels1, pixels2));
+				result  = _mm256_sub_epi8(_mm256_max_epu8(pixels1, pixels2), _mm256_min_epu8(pixels1, pixels2));
 				_mm256_store_si256(pLocalDst_ymm++, result);
 			}
 
@@ -3003,7 +3023,7 @@ int HafCpu_AbsDiff_U8_U8U8
 			pLocalSrc2 = (vx_uint8 *)pLocalSrc2_ymm;
 			pLocalDst = (vx_uint8 *)pLocalDst_ymm;
 
-			for (int width = 0; width < postfixWidth; width++)
+			for (int w = 0; w < postfixWidth; w++)
 			{
 				*pLocalDst++ = (vx_uint8)abs((vx_int16)(*pLocalSrc1++) - (vx_int16)(*pLocalSrc2++));
 			}
@@ -3021,13 +3041,30 @@ int HafCpu_AbsDiff_U8_U8U8
 			pLocalSrc2_ymm = (__m256i*) pSrcImage2;
 			pLocalDst_ymm = (__m256i*) pDstImage;
 
-			for (int width = 0; width < alignedWidth; width += 32)
+			int width = 0;
+			for (; width + 128 <= alignedWidth; width += 128)
+			{
+				__m256i a0 = _mm256_loadu_si256(pLocalSrc1_ymm + 0);
+				__m256i a1 = _mm256_loadu_si256(pLocalSrc1_ymm + 1);
+				__m256i a2 = _mm256_loadu_si256(pLocalSrc1_ymm + 2);
+				__m256i a3 = _mm256_loadu_si256(pLocalSrc1_ymm + 3);
+				__m256i b0 = _mm256_loadu_si256(pLocalSrc2_ymm + 0);
+				__m256i b1 = _mm256_loadu_si256(pLocalSrc2_ymm + 1);
+				__m256i b2 = _mm256_loadu_si256(pLocalSrc2_ymm + 2);
+				__m256i b3 = _mm256_loadu_si256(pLocalSrc2_ymm + 3);
+				_mm256_storeu_si256(pLocalDst_ymm + 0, _mm256_sub_epi8(_mm256_max_epu8(a0, b0), _mm256_min_epu8(a0, b0)));
+				_mm256_storeu_si256(pLocalDst_ymm + 1, _mm256_sub_epi8(_mm256_max_epu8(a1, b1), _mm256_min_epu8(a1, b1)));
+				_mm256_storeu_si256(pLocalDst_ymm + 2, _mm256_sub_epi8(_mm256_max_epu8(a2, b2), _mm256_min_epu8(a2, b2)));
+				_mm256_storeu_si256(pLocalDst_ymm + 3, _mm256_sub_epi8(_mm256_max_epu8(a3, b3), _mm256_min_epu8(a3, b3)));
+				pLocalSrc1_ymm += 4;
+				pLocalSrc2_ymm += 4;
+				pLocalDst_ymm  += 4;
+			}
+			for (; width < alignedWidth; width += 32)
 			{
 				pixels1 = _mm256_loadu_si256(pLocalSrc1_ymm++);
 				pixels2 = _mm256_loadu_si256(pLocalSrc2_ymm++);
-
-				// Direct 8-bit AbsDiff: max(a,b) - min(a,b) = |a-b|
-				result = _mm256_sub_epi8(_mm256_max_epu8(pixels1, pixels2), _mm256_min_epu8(pixels1, pixels2));
+				result  = _mm256_sub_epi8(_mm256_max_epu8(pixels1, pixels2), _mm256_min_epu8(pixels1, pixels2));
 				_mm256_storeu_si256(pLocalDst_ymm++, result);
 			}
 
@@ -3035,7 +3072,7 @@ int HafCpu_AbsDiff_U8_U8U8
 			pLocalSrc2 = (vx_uint8 *)pLocalSrc2_ymm;
 			pLocalDst = (vx_uint8 *)pLocalDst_ymm;
 
-			for (int width = 0; width < postfixWidth; width++)
+			for (int w = 0; w < postfixWidth; w++)
 			{
 				*pLocalDst++ = (vx_uint8)abs((vx_int16)(*pLocalSrc1++) - (vx_int16)(*pLocalSrc2++));
 			}

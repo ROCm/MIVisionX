@@ -1995,6 +1995,35 @@ ago_scale_matrix_t * matrix
 	yoffs = (int)(FP_MUL * matrix->yoffset);		// to convert to fixed point
 	xoffs = (int)(FP_MUL * matrix->xoffset);
 
+	if (xinc == (2 * FP_MUL) && yinc == (2 * FP_MUL) && xoffs == (FP_MUL >> 1) && yoffs == (FP_MUL >> 1))
+	{
+		const __m128i ones = _mm_set1_epi8(1);
+		const __m128i round = _mm_set1_epi16(2);
+		for (vx_uint32 y = 0; y < dstHeight; y++)
+		{
+			vx_uint8 *pSrc0 = pSrcImage + (y << 1) * srcImageStrideInBytes;
+			vx_uint8 *pSrc1 = pSrc0 + srcImageStrideInBytes;
+			vx_uint32 x = 0;
+			for (; x + 16 <= dstWidth; x += 16)
+			{
+				__m128i row0Lo = _mm_maddubs_epi16(_mm_loadu_si128((__m128i *)(pSrc0 + (x << 1))), ones);
+				__m128i row0Hi = _mm_maddubs_epi16(_mm_loadu_si128((__m128i *)(pSrc0 + (x << 1) + 16)), ones);
+				__m128i row1Lo = _mm_maddubs_epi16(_mm_loadu_si128((__m128i *)(pSrc1 + (x << 1))), ones);
+				__m128i row1Hi = _mm_maddubs_epi16(_mm_loadu_si128((__m128i *)(pSrc1 + (x << 1) + 16)), ones);
+				row0Lo = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(row0Lo, row1Lo), round), 2);
+				row0Hi = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(row0Hi, row1Hi), round), 2);
+				_mm_storeu_si128((__m128i *)(pDstImage + x), _mm_packus_epi16(row0Lo, row0Hi));
+			}
+			for (; x < dstWidth; x++)
+			{
+				vx_uint8 *pSrc = pSrc0 + (x << 1);
+				pDstImage[x] = (vx_uint8)((pSrc[0] + pSrc[1] + pSrc[srcImageStrideInBytes] + pSrc[srcImageStrideInBytes + 1] + 2) >> 2);
+			}
+			pDstImage += dstImageStrideInBytes;
+		}
+		return AGO_SUCCESS;
+	}
+
 	// SSE4  version
 	int alignW = (dstWidth + 15)&~15;
 	unsigned short *Xmap = (unsigned short *)((vx_uint8*)matrix + sizeof(AgoConfigScaleMatrix));

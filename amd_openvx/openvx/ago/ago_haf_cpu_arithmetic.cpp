@@ -7219,161 +7219,56 @@ int HafCpu_IntegralImage_U32_U8
 	vx_uint32     srcImageStrideInBytes
 )
 {
-	__m128i pixels1, pixels2, pixels3, pixels4;
-	__m128i zeromask = _mm_setzero_si128();
-	// process 16 at a time (shift and add for cur and previous)
-	unsigned char *pSrcImage1 = pSrcImage;
-	unsigned char *pchDst = (unsigned char*)pDstImage;
-	unsigned char *pchDstlast = (unsigned char*)pDstImage + dstHeight*dstImageStrideInBytes;
-	
-	while (pchDst < pchDstlast)
+	const __m128i zeromask = _mm_setzero_si128();
+
+	for (vx_uint32 y = 0; y < dstHeight; y++)
 	{
-		__m128i * src = (__m128i*)pSrcImage1;
-		__m128i * dst = (__m128i*)pchDst;
-		__m128i * dstlast = dst + (dstWidth >> 2);
-		__m128i prevsum = _mm_setzero_si128();
-		if (pSrcImage1 == pSrcImage){
-			while (dst < dstlast)
-			{
-				pixels1 = _mm_loadu_si128(src++);		// src (0-15)
-				pixels2 = _mm_unpackhi_epi8(pixels1, zeromask);
-				pixels1 = _mm_cvtepu8_epi16(pixels1);
-				// shift and add
-				pixels3 = pixels1;
-				pixels4 = pixels2;
-				for (int i = 0; i < 7; i++)
-				{
-					pixels3 = _mm_slli_si128(pixels3, 2);
-					pixels4 = _mm_slli_si128(pixels4, 2);
-					pixels1 = _mm_add_epi16(pixels1, pixels3);
-					pixels2 = _mm_add_epi16(pixels2, pixels4);
-				}
-				// for the second 8 sum, add to the first 8
-				pixels3 = _mm_shufflehi_epi16(pixels1, 0xff);
-				pixels3 = _mm_shuffle_epi32(pixels3, 0xff);
-				pixels2 = _mm_add_epi16(pixels2, pixels3);
-				// unpack to dwords and add with prevsum
-				pixels3 = _mm_unpackhi_epi16(pixels1, zeromask);
-				pixels4 = _mm_unpackhi_epi16(pixels2, zeromask);
-				pixels1 = _mm_cvtepu16_epi32(pixels1);
-				pixels2 = _mm_cvtepu16_epi32(pixels2);
-				pixels1 = _mm_add_epi32(pixels1, prevsum);
-				pixels2 = _mm_add_epi32(pixels2, prevsum);
-				pixels3 = _mm_add_epi32(pixels3, prevsum);
-				pixels4 = _mm_add_epi32(pixels4, prevsum);
+		vx_uint8 *pSrc = pSrcImage + y * srcImageStrideInBytes;
+		vx_uint32 *pDst = (vx_uint32 *)((vx_uint8 *)pDstImage + y * dstImageStrideInBytes);
+		vx_uint32 *pPrev = y ? (vx_uint32 *)((vx_uint8 *)pDstImage + (y - 1) * dstImageStrideInBytes) : nullptr;
+		__m128i carry = _mm_setzero_si128();
+		vx_uint32 rowSum = 0;
+		vx_uint32 x = 0;
 
-				// copy to dst (sum in words)
-				_mm_store_si128(dst++, pixels1);
-				_mm_store_si128(dst++, pixels3);
-				_mm_store_si128(dst++, pixels2);
-				_mm_store_si128(dst++, pixels4);
-				prevsum = _mm_shuffle_epi32(pixels4, 0xff);
-
-			}
-		}
-		else
+		for (; x + 16 <= dstWidth; x += 16)
 		{
-			unsigned int prev_dword = 0;
-			__m128i prevdword = _mm_setzero_si128();
-			__m128i prevsum1 = _mm_setzero_si128();
-			__m128i * prevdst = (__m128i*)(pchDst - dstImageStrideInBytes);
-			while (dst < dstlast)
+			__m128i bytes = _mm_loadu_si128((__m128i *)(pSrc + x));
+			__m128i lo = _mm_cvtepu8_epi16(bytes);
+			__m128i hi = _mm_unpackhi_epi8(bytes, zeromask);
+
+			lo = _mm_add_epi16(lo, _mm_slli_si128(lo, 2));
+			lo = _mm_add_epi16(lo, _mm_slli_si128(lo, 4));
+			lo = _mm_add_epi16(lo, _mm_slli_si128(lo, 8));
+			hi = _mm_add_epi16(hi, _mm_slli_si128(hi, 2));
+			hi = _mm_add_epi16(hi, _mm_slli_si128(hi, 4));
+			hi = _mm_add_epi16(hi, _mm_slli_si128(hi, 8));
+			hi = _mm_add_epi16(hi, _mm_shuffle_epi32(_mm_shufflehi_epi16(lo, 0xff), 0xff));
+
+			__m128i out0 = _mm_add_epi32(_mm_cvtepu16_epi32(lo), carry);
+			__m128i out1 = _mm_add_epi32(_mm_unpackhi_epi16(lo, zeromask), carry);
+			__m128i out2 = _mm_add_epi32(_mm_cvtepu16_epi32(hi), carry);
+			__m128i out3 = _mm_add_epi32(_mm_unpackhi_epi16(hi, zeromask), carry);
+			if (pPrev)
 			{
-				__m128i prev1, prev2, prev3, prev4, temp, temp1, temp2, temp3;
-				pixels1 = _mm_loadu_si128(src++);		// src (0-15)
-				pixels2 = _mm_unpackhi_epi8(pixels1, zeromask);
-				pixels1 = _mm_cvtepu8_epi16(pixels1);
-				// shift and add
-				pixels3 = pixels1;
-				pixels4 = pixels2;
-				for (int i = 0; i < 7; i++)
-				{
-					pixels3 = _mm_slli_si128(pixels3, 2);
-					pixels4 = _mm_slli_si128(pixels4, 2);
-					pixels1 = _mm_add_epi16(pixels1, pixels3);
-					pixels2 = _mm_add_epi16(pixels2, pixels4);
-				}
-				// for the second 8 sum, add to the first 8
-				pixels3 = _mm_shufflehi_epi16(pixels1, 0xff);
-				pixels3 = _mm_shuffle_epi32(pixels3, 0xff);
-				pixels2 = _mm_add_epi16(pixels2, pixels3);
-				// unpack to dwords and add with prevsum
-				pixels3 = _mm_unpackhi_epi16(pixels1, zeromask);
-				pixels4 = _mm_unpackhi_epi16(pixels2, zeromask);
-				pixels1 = _mm_cvtepu16_epi32(pixels1);
-				pixels2 = _mm_cvtepu16_epi32(pixels2);
-
-				// calculate with prevsum(x) - prevsum(x-1)
-				prev1 = _mm_load_si128(prevdst++);
-
-				// subtract sum(x-1, y-1)
-				temp = _mm_srli_si128(prev1, 12);
-				temp1 = _mm_slli_si128(prev1, 4);
-				prev2 = _mm_load_si128(prevdst++);
-				temp1 = _mm_or_si128(temp1, prevdword);
-				prev1 = _mm_sub_epi32(prev1, temp1);
-
-				prevdword = _mm_srli_si128(prev2, 12);
-				temp1 = _mm_slli_si128(prev2, 4);
-				prev3 = _mm_load_si128(prevdst++);
-				temp1 = _mm_or_si128(temp1, temp);
-				prev2 = _mm_sub_epi32(prev2, temp1);
-
-				temp = _mm_srli_si128(prev3, 12);
-				temp1 = _mm_slli_si128(prev3, 4);
-				prev4 = _mm_load_si128(prevdst++);
-				temp1 = _mm_or_si128(temp1, prevdword);
-				prev3 = _mm_sub_epi32(prev3, temp1);
-
-				prevdword = _mm_srli_si128(prev4, 12);
-				temp1 = _mm_slli_si128(prev4, 4);
-				temp1 = _mm_or_si128(temp1, temp);
-				prev4 = _mm_sub_epi32(prev4, temp1);
-				temp = prev1;
-				temp1 = prev2;
-				temp2 = prev3;
-				temp3 = prev4;
-
-				for (int i = 0; i < 3; i++)
-				{
-					temp = _mm_slli_si128(temp, 4);
-					temp1 = _mm_slli_si128(temp1, 4);
-					temp2 = _mm_slli_si128(temp2, 4);
-					temp3 = _mm_slli_si128(temp3, 4);
-					prev1 = _mm_add_epi32(prev1, temp);
-					prev2 = _mm_add_epi32(prev2, temp1);
-					prev3 = _mm_add_epi32(prev3, temp2);
-					prev4 = _mm_add_epi32(prev4, temp3);
-				}
-				// for the second 4 sum, add to the first 4
-				temp = _mm_shuffle_epi32(prev1, 0xff);
-				prev2 = _mm_add_epi32(prev2, temp);
-				temp1 = _mm_shuffle_epi32(prev2, 0xff);
-				prev3 = _mm_add_epi32(prev3, temp1);
-				temp = _mm_shuffle_epi32(prev3, 0xff);
-				prev4 = _mm_add_epi32(prev4, temp);
-
-				// add to pixels1 to pixels4
-				pixels1 = _mm_add_epi32(pixels1, prev1);
-				pixels3 = _mm_add_epi32(pixels3, prev2);
-				pixels2 = _mm_add_epi32(pixels2, prev3);
-				pixels4 = _mm_add_epi32(pixels4, prev4);
-				prevsum1 = _mm_shuffle_epi32(prev4, 0xff);
-
-				pixels1 = _mm_add_epi32(pixels1, prevsum);
-				pixels3 = _mm_add_epi32(pixels3, prevsum);
-				pixels2 = _mm_add_epi32(pixels2, prevsum);
-				pixels4 = _mm_add_epi32(pixels4, prevsum);
-				// copy to dst (sum in words)
-				_mm_store_si128(dst++, pixels1);
-				_mm_store_si128(dst++, pixels3);
-				_mm_store_si128(dst++, pixels2);
-				_mm_store_si128(dst++, pixels4);
-				prevsum = _mm_shuffle_epi32(pixels4, 0xff);
+				out0 = _mm_add_epi32(out0, _mm_loadu_si128((__m128i *)(pPrev + x)));
+				out1 = _mm_add_epi32(out1, _mm_loadu_si128((__m128i *)(pPrev + x + 4)));
+				out2 = _mm_add_epi32(out2, _mm_loadu_si128((__m128i *)(pPrev + x + 8)));
+				out3 = _mm_add_epi32(out3, _mm_loadu_si128((__m128i *)(pPrev + x + 12)));
 			}
+			_mm_storeu_si128((__m128i *)(pDst + x), out0);
+			_mm_storeu_si128((__m128i *)(pDst + x + 4), out1);
+			_mm_storeu_si128((__m128i *)(pDst + x + 8), out2);
+			_mm_storeu_si128((__m128i *)(pDst + x + 12), out3);
+
+			rowSum += (vx_uint32)_mm_extract_epi16(hi, 7);
+			carry = _mm_set1_epi32((int)rowSum);
 		}
-		pSrcImage1 += srcImageStrideInBytes;
-		pchDst += dstImageStrideInBytes;
+
+		for (; x < dstWidth; x++)
+		{
+			rowSum += pSrc[x];
+			pDst[x] = rowSum + (pPrev ? pPrev[x] : 0);
+		}
 	}
 	return AGO_SUCCESS;
 }

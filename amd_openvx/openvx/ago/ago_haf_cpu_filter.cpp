@@ -3984,6 +3984,16 @@ static inline void CompareAndSwap(__m128i& p1, __m128i& p2)
 	p2 = Sec;
 }
 
+#if USE_AVX
+static inline void CompareAndSwap256(__m256i& p1, __m256i& p2)
+{
+	__m256i First = _mm256_min_epu8(p1, p2);
+	__m256i Sec = _mm256_max_epu8(p1, p2);
+	p1 = First;
+	p2 = Sec;
+}
+#endif
+
 int compareTwo(const void * a, const void * b)
 {
 	return(*(unsigned char *)a > *(unsigned char *)b ? 1 : -1);
@@ -4030,7 +4040,48 @@ int HafCpu_Median_U8_U8_3x3
 			*pLocalDst = pixelArr[4];
 		}
 		
-		for (int width = 0; width < (alignedWidth >> 4); width++)
+		int width = 0;
+#if USE_AVX
+		for (; width + 32 <= alignedWidth; width += 32)
+		{
+			__m256i a0 = _mm256_loadu_si256((__m256i *)(pPrevSrc - 1));
+			__m256i a1 = _mm256_loadu_si256((__m256i *)(pPrevSrc));
+			__m256i a2 = _mm256_loadu_si256((__m256i *)(pPrevSrc + 1));
+			__m256i a3 = _mm256_loadu_si256((__m256i *)(pLocalSrc - 1));
+			__m256i a4 = _mm256_loadu_si256((__m256i *)(pLocalSrc));
+			__m256i a5 = _mm256_loadu_si256((__m256i *)(pLocalSrc + 1));
+			__m256i a6 = _mm256_loadu_si256((__m256i *)(pNextSrc - 1));
+			__m256i a7 = _mm256_loadu_si256((__m256i *)(pNextSrc));
+			__m256i a8 = _mm256_loadu_si256((__m256i *)(pNextSrc + 1));
+
+			CompareAndSwap256(a1, a2);
+			CompareAndSwap256(a4, a5);
+			CompareAndSwap256(a7, a8);
+			CompareAndSwap256(a0, a1);
+			CompareAndSwap256(a3, a4);
+			CompareAndSwap256(a6, a7);
+			CompareAndSwap256(a1, a2);
+			CompareAndSwap256(a4, a5);
+			CompareAndSwap256(a7, a8);
+			CompareAndSwap256(a0, a3);
+			CompareAndSwap256(a5, a8);
+			CompareAndSwap256(a4, a7);
+			CompareAndSwap256(a3, a6);
+			CompareAndSwap256(a1, a4);
+			CompareAndSwap256(a2, a5);
+			CompareAndSwap256(a4, a7);
+			CompareAndSwap256(a4, a2);
+			CompareAndSwap256(a6, a4);
+			CompareAndSwap256(a4, a2);
+
+			_mm256_storeu_si256((__m256i *)pLocalDst, a4);
+			pPrevSrc += 32;
+			pLocalSrc += 32;
+			pNextSrc += 32;
+			pLocalDst += 32;
+		}
+#endif
+		for (; width + 16 <= alignedWidth; width += 16)
 		{
 			pixels0 = _mm_loadu_si128((__m128i *)(pPrevSrc - 1));
 			pixels1 = _mm_loadu_si128((__m128i *)(pPrevSrc));
@@ -4042,7 +4093,6 @@ int HafCpu_Median_U8_U8_3x3
 			pixels7 = _mm_loadu_si128((__m128i *)(pNextSrc));
 			pixels8 = _mm_loadu_si128((__m128i *)(pNextSrc + 1));
 
-			// sort by compare and swap : no branching required
 			CompareAndSwap(pixels1, pixels2);
 			CompareAndSwap(pixels4, pixels5);
 			CompareAndSwap(pixels7, pixels8);
@@ -4063,7 +4113,6 @@ int HafCpu_Median_U8_U8_3x3
 			CompareAndSwap(pixels6, pixels4);
 			CompareAndSwap(pixels4, pixels2);
 
-			// store median value
 			_mm_store_si128((__m128i *)pLocalDst, pixels4);
 
 			pPrevSrc += 16;

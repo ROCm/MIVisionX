@@ -222,73 +222,40 @@ static inline bool checkForCornerAndGetStrength(unsigned char * src, int* offset
 		return false;
 
 	// Get boundary
-	short boundary[16];
+	unsigned char boundary[16];
 	for (int i = 0; i < 16; i++)
-		boundary[i] = (short)src[offsets[i]];
+		boundary[i] = src[offsets[i]];
 
-	// Check for I_p + t
-	short cand = (short)(*src) + t;
-	int maskP = 0;
-	int iterMask = 1;
-	for (int i = 0; i < 16; i++)
+	// Direct strength computation by 9-element sliding-window min/max over cyclic
+	// 16-element boundary (matches SIMD path above; avoids per-pixel binary search).
+	int p = (int)src[0];
+	int brighter_max = 0;
+	int darker_min   = 255;
+	for (int s = 0; s < 16; s++)
 	{
-		if (boundary[i] > cand)
-			maskP |= iterMask;
-		iterMask <<= 1;
-	}
-
-	// If it is a corner, then compute the threshold
-	short strength_pos = 0;
-	cand = src[0];
-	if (isCorner(maskP))
-	{
-		short thresh_upper = 255;
-		short thresh_lower = t;
-		
-		while (thresh_upper - thresh_lower > 1)						// Binary search
+		int m = 255;
+		int M = 0;
+		for (int k = 0; k < 9; k++)
 		{
-			strength_pos = (thresh_upper + thresh_lower) >> 1;
-			if (isCornerPlus(cand, boundary, strength_pos))
-				thresh_lower = strength_pos;
-			else
-				thresh_upper = strength_pos;
+			int v = boundary[(s + k) & 15];
+			if (v < m) m = v;
+			if (v > M) M = v;
 		}
-		strength_pos = thresh_lower;
+		if (m > brighter_max) brighter_max = m;
+		if (M < darker_min)   darker_min   = M;
 	}
 
-	// Check for I_p - t
-	cand = (short)(*src) - t;
-	int maskN = 0;
-	iterMask = 1;
-	for (int i = 0; i < 16; i++)
-	{
-		if (boundary[i] < cand)
-			maskN |= iterMask;
-		iterMask <<= 1;
-	}
+	int strength_pos = (brighter_max > p) ? (brighter_max - p - 1) : 0;
+	int strength_neg = (darker_min  < p) ? (p - darker_min  - 1) : 0;
 
-	// If it is a corner, then compute the threshold
-	short strength_neg = 0;
-	cand = src[0];
-	if (isCorner(maskN))
-	{
-		short thresh_upper = 255;
-		short thresh_lower = t;
-		
-		while (thresh_upper - thresh_lower > 1)						// Binary search
-		{
-			strength_neg = (thresh_upper + thresh_lower) >> 1;
-			if (isCornerMinus(cand, boundary, strength_neg))
-				thresh_lower = strength_neg;
-			else
-				thresh_upper = strength_neg;
-		}
-		strength_neg = thresh_lower;
-	}
+	bool is_brighter = (strength_pos >= (int)t);
+	bool is_darker   = (strength_neg >= (int)t);
 
-	if (maskP || maskN)
+	if (is_brighter || is_darker)
 	{
-		*strength = max(strength_pos, strength_neg);
+		int s_pos = is_brighter ? strength_pos : 0;
+		int s_neg = is_darker   ? strength_neg : 0;
+		*strength = (short)((s_pos > s_neg) ? s_pos : s_neg);
 		return true;
 	}
 	return false;
@@ -340,72 +307,57 @@ bool isCorner_SSE(unsigned char pixel, __m128i boundary, __m128i t)
 
 static inline bool checkForCornerAndGetStrength_SSE(unsigned char pixel, __m128i boundary, short threshold, short * strength)
 {
-	__m128i t = _mm_set1_epi16(threshold);
+	// Direct strength computation: for each of the 16 candidate 9-contiguous-pixel windows
+	// of the FAST boundary, compute the min (for brighter corners) and max (for darker
+	// corners). The corner exists at the largest threshold such that some window is
+	// uniformly > pixel + threshold (brighter) or < pixel - threshold (darker). Using
+	// _mm_alignr_epi8 to produce cyclically-shifted copies of the boundary gives 16
+	// window mins/maxes with a handful of SIMD min/max ops, removing the ~8-iteration
+	// binary search and per-iteration isCornerPlus_SSE / isCornerMinus_SSE that used to
+	// dominate the inner loop.
+	__m128i b = boundary;
+	__m128i sh1 = _mm_alignr_epi8(b, b, 1);
+	__m128i sh2 = _mm_alignr_epi8(b, b, 2);
+	__m128i sh3 = _mm_alignr_epi8(b, b, 3);
+	__m128i sh4 = _mm_alignr_epi8(b, b, 4);
+	__m128i sh5 = _mm_alignr_epi8(b, b, 5);
+	__m128i sh6 = _mm_alignr_epi8(b, b, 6);
+	__m128i sh7 = _mm_alignr_epi8(b, b, 7);
+	__m128i sh8 = _mm_alignr_epi8(b, b, 8);
 
-	// Check for boundary > pixel + t
-	__m128i cand = _mm_set1_epi16((short)pixel);									// The candidate pixel
-	cand = _mm_add_epi16(cand, t);													// Pixel + t
+	__m128i min_w = _mm_min_epu8(_mm_min_epu8(_mm_min_epu8(b, sh1), _mm_min_epu8(sh2, sh3)),
+	                              _mm_min_epu8(_mm_min_epu8(sh4, sh5), _mm_min_epu8(_mm_min_epu8(sh6, sh7), sh8)));
+	__m128i max_w = _mm_max_epu8(_mm_max_epu8(_mm_max_epu8(b, sh1), _mm_max_epu8(sh2, sh3)),
+	                              _mm_max_epu8(_mm_max_epu8(sh4, sh5), _mm_max_epu8(_mm_max_epu8(sh6, sh7), sh8)));
 
-	__m128i temp0 = _mm_unpackhi_epi8(boundary, _mm_setzero_si128());				// Boundary 8..15 (words)
-	__m128i temp1 = _mm_cvtepu8_epi16(boundary);									// Boundary 0..7 (words)
+	// Horizontal max of min_w (= brightest minimum across all 16 windows)
+	__m128i a = min_w;
+	a = _mm_max_epu8(a, _mm_srli_si128(a, 8));
+	a = _mm_max_epu8(a, _mm_srli_si128(a, 4));
+	a = _mm_max_epu8(a, _mm_srli_si128(a, 2));
+	a = _mm_max_epu8(a, _mm_srli_si128(a, 1));
+	int brighter_max = _mm_extract_epi8(a, 0) & 0xFF;
 
-	temp0 = _mm_cmpgt_epi16(temp0, cand);
-	temp1 = _mm_cmpgt_epi16(temp1, cand);
-	temp1 = _mm_packs_epi16(temp1, temp0);											// 255 at ith byte if boundary[i] > pixel + t
-	int plusMask = _mm_movemask_epi8(temp1);
+	// Horizontal min of max_w (= darkest maximum across all 16 windows)
+	a = max_w;
+	a = _mm_min_epu8(a, _mm_srli_si128(a, 8));
+	a = _mm_min_epu8(a, _mm_srli_si128(a, 4));
+	a = _mm_min_epu8(a, _mm_srli_si128(a, 2));
+	a = _mm_min_epu8(a, _mm_srli_si128(a, 1));
+	int darker_min = _mm_extract_epi8(a, 0) & 0xFF;
 
-	// If it is a corner, then compute the threshold
-	short strength_pos = 0;
-	cand = _mm_sub_epi16(cand, t);
-	if (isCorner(plusMask))
+	int p = (int)pixel;
+	int strength_pos = (brighter_max > p) ? (brighter_max - p - 1) : 0;
+	int strength_neg = (darker_min  < p) ? (p - darker_min  - 1) : 0;
+
+	bool is_brighter = (strength_pos >= (int)threshold);
+	bool is_darker   = (strength_neg >= (int)threshold);
+
+	if (is_brighter || is_darker)
 	{
-		short thresh_upper = 255;
-		short thresh_lower = threshold;
-
-		while (thresh_upper - thresh_lower > 1)										// Binary search
-		{
-			strength_pos = (thresh_upper + thresh_lower) >> 1;
-			if (isCornerPlus_SSE(cand, boundary, strength_pos))
-				thresh_lower = strength_pos;
-			else
-				thresh_upper = strength_pos;
-		}
-		strength_pos = thresh_lower;
-	}
-
-	// Check for boundary > pixel - t
-	cand = _mm_sub_epi16(cand, t);													// pixel - t
-
-	temp0 = _mm_unpackhi_epi8(boundary, _mm_setzero_si128());						// Boundary 8..15 (words)
-	temp1 = _mm_cvtepu8_epi16(boundary);											// Boundary 0..7 (words)
-
-	temp0 = _mm_cmplt_epi16(temp0, cand);
-	temp1 = _mm_cmplt_epi16(temp1, cand);
-	temp1 = _mm_packs_epi16(temp1, temp0);											// 255 at ith byte if boundary[i] > pixel + t
-	int minusMask = _mm_movemask_epi8(temp1);
-
-	// If it is a corner, then compute the threshold
-	short strength_neg = 0;
-	cand = _mm_add_epi16(cand, t);
-	if (isCorner(minusMask))
-	{
-		short thresh_upper = 255;
-		short thresh_lower = threshold;
-
-		while (thresh_upper - thresh_lower > 1)										// Binary search
-		{
-			strength_neg = (thresh_upper + thresh_lower) >> 1;
-			if (isCornerMinus_SSE(cand, boundary, strength_neg))
-				thresh_lower = strength_neg;
-			else
-				thresh_upper = strength_neg;
-		}
-		strength_neg = thresh_lower;
-	}
-
-	if (plusMask || minusMask)
-	{
-		*strength = max(strength_pos, strength_neg);
+		int s_pos = is_brighter ? strength_pos : 0;
+		int s_neg = is_darker   ? strength_neg : 0;
+		*strength = (short)((s_pos > s_neg) ? s_pos : s_neg);
 		return true;
 	}
 	return false;
@@ -756,9 +708,75 @@ int HafCpu_FastCorners_XY_U8_Supression
 	// Non-max supression
 	pScratch += (3 * srcWidth + 3);
 	cornerCount = 0;
+	const int nmsW = (int)srcWidth - 6;
 	for (int height = 0; height < int(srcHeight - 6); height++)
 	{
-		for (int width = 0; width < int(srcWidth - 6); width++)
+		int width = 0;
+#if USE_AVX
+		// SIMD prefilter: scratch is mostly 0 in FAST output, so reject blocks of
+		// 16 columns at once when no candidate could be a local max.
+		const __m128i zero128 = _mm_setzero_si128();
+		for (; width + 16 <= nmsW; width += 16)
+		{
+			__m128i cand = _mm_loadu_si128((const __m128i *)pScratch);
+			__m128i any_nz = _mm_cmpgt_epi8(cand, zero128); // unsigned compare via signed >0 for 0..127 works generally; refine below
+			// For unsigned bytes, _mm_cmpgt_epi8 treats sign bit as MSB, but FAST strength is in 0..127 typically.
+			// To be safe, use _mm_max_epu8 to keep semantics: any_nz mask: cand != 0
+			__m128i is_nz = _mm_cmpeq_epi8(_mm_max_epu8(cand, zero128), zero128); // 0xFF if cand==0
+			int zero_mask = _mm_movemask_epi8(is_nz);
+			if (zero_mask == 0xFFFF) { pScratch += 16; continue; }
+			// Compare against the 8 neighbors with the correct >=/> rules.
+			__m128i ul = _mm_loadu_si128((const __m128i *)(pScratch - srcWidth - 1));
+			__m128i uc = _mm_loadu_si128((const __m128i *)(pScratch - srcWidth));
+			__m128i ur = _mm_loadu_si128((const __m128i *)(pScratch - srcWidth + 1));
+			__m128i ll = _mm_loadu_si128((const __m128i *)(pScratch - 1));
+			__m128i rr = _mm_loadu_si128((const __m128i *)(pScratch + 1));
+			__m128i dl = _mm_loadu_si128((const __m128i *)(pScratch + srcWidth - 1));
+			__m128i dc = _mm_loadu_si128((const __m128i *)(pScratch + srcWidth));
+			__m128i dr = _mm_loadu_si128((const __m128i *)(pScratch + srcWidth + 1));
+			// cand >= n iff cand == max(cand, n).
+			__m128i geq_ul = _mm_cmpeq_epi8(cand, _mm_max_epu8(cand, ul));
+			__m128i geq_uc = _mm_cmpeq_epi8(cand, _mm_max_epu8(cand, uc));
+			__m128i geq_ur = _mm_cmpeq_epi8(cand, _mm_max_epu8(cand, ur));
+			__m128i geq_ll = _mm_cmpeq_epi8(cand, _mm_max_epu8(cand, ll));
+			// cand > n iff cand != n AND cand >= n.
+			__m128i gt_rr = _mm_andnot_si128(_mm_cmpeq_epi8(cand, rr), _mm_cmpeq_epi8(cand, _mm_max_epu8(cand, rr)));
+			__m128i gt_dl = _mm_andnot_si128(_mm_cmpeq_epi8(cand, dl), _mm_cmpeq_epi8(cand, _mm_max_epu8(cand, dl)));
+			__m128i gt_dc = _mm_andnot_si128(_mm_cmpeq_epi8(cand, dc), _mm_cmpeq_epi8(cand, _mm_max_epu8(cand, dc)));
+			__m128i gt_dr = _mm_andnot_si128(_mm_cmpeq_epi8(cand, dr), _mm_cmpeq_epi8(cand, _mm_max_epu8(cand, dr)));
+			__m128i m = _mm_and_si128(geq_ul, geq_uc);
+			m = _mm_and_si128(m, geq_ur);
+			m = _mm_and_si128(m, geq_ll);
+			m = _mm_and_si128(m, gt_rr);
+			m = _mm_and_si128(m, gt_dl);
+			m = _mm_and_si128(m, gt_dc);
+			m = _mm_and_si128(m, gt_dr);
+			m = _mm_andnot_si128(is_nz, m); // cand must also be != 0
+			int ok_mask = _mm_movemask_epi8(m);
+			alignas(16) vx_uint8 cand_arr[16];
+			if (ok_mask)
+				_mm_store_si128((__m128i *)cand_arr, cand);
+			while (ok_mask)
+			{
+				int lane = __builtin_ctz(ok_mask);
+				ok_mask &= ok_mask - 1;
+				if (cornerCount < capacityOfDstCorner)
+				{
+					dstCorner[cornerCount].x = (vx_int32)(width + lane + 3);
+					dstCorner[cornerCount].y = (vx_int32)(height + 3);
+					dstCorner[cornerCount].strength = (vx_float32)cand_arr[lane];
+					dstCorner[cornerCount].scale = 0;
+					dstCorner[cornerCount].orientation = 0;
+					dstCorner[cornerCount].error = 0;
+					dstCorner[cornerCount++].tracking_status = 1;
+				}
+				else
+					cornerCount++;
+			}
+			pScratch += 16;
+		}
+#endif
+		for (; width < nmsW; width++)
 		{
 			vx_uint8 * prev = pScratch - srcWidth;
 			vx_uint8 * nxt = pScratch + srcWidth;

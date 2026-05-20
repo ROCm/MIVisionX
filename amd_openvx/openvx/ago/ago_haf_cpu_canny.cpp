@@ -485,6 +485,9 @@ int HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM
 	HafCpu_Sobel_S16S16_U8_3x3_GXY(dstWidth, dstHeight - 2, Gx + dstride, dstride * 2, Gy + dstride, dstride * 2, pSrcImage + srcImageStrideInBytes, srcImageStrideInBytes, pTemp);
 	
 	// compute L1 norm and phase
+	// Vectorize the scalar HafCpu_FastAtan2_deg loop using HafCpu_FastAtan2_Canny_8 which
+	// produces the same 0..3 angle bucket directly from (Gx, Gy) vectors. The 8-wide path
+	// packs (mag << 2) | orientation into u16 lanes and stores them as a __m128i.
 	unsigned int y = 1;
 	vx_int16 *pGx = Gx + dstride;
 	vx_int16 *pGy = Gy + dstride;
@@ -493,7 +496,19 @@ int HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM
 	{
 		vx_uint16 *pdst = (vx_uint16*)pMag;		// to store the result
 
-		for (unsigned int x = 1; x < dstWidth; x++)
+		unsigned int x = 1;
+		for (; x + 8 <= dstWidth; x += 8)
+		{
+			__m128i gxv = _mm_loadu_si128((const __m128i *)(pGx + x));
+			__m128i gyv = _mm_loadu_si128((const __m128i *)(pGy + x));
+			__m128i orn = HafCpu_FastAtan2_Canny_8(gxv, gyv);
+			__m128i ax = _mm_abs_epi16(gxv);
+			__m128i ay = _mm_abs_epi16(gyv);
+			__m128i mag = _mm_add_epi16(ax, ay);
+			__m128i out = _mm_or_si128(_mm_slli_epi16(mag, 2), orn);
+			_mm_storeu_si128((__m128i *)(pdst + x), out);
+		}
+		for (; x < dstWidth; x++)
 		{
 			vx_uint8 orn;	// orientation
 
@@ -595,34 +610,111 @@ int HafCpu_CannySuppThreshold_U8XY_U16_3x3
 		vx_uint16               hyst_upper
 	)
 {
-	// do minmax suppression: from Gx
+	// Non-max suppression + hysteresis classification, vectorized 8 pixels at a time.
+	// The original scalar loop indexed neighbors via a small table (n_offset[ang][...])
+	// which forced a per-pixel data-dependent address. The SIMD path instead loads all
+	// four candidate neighbor offsets unconditionally and then selects the right pair
+	// via 16-bit masks derived from the angle bucket. The hysteresis classification
+	// (255/127/0) is computed branchlessly; only the rare stack push for "strong" edges
+	// falls back to a per-lane scalar loop using a movemask of the upper-threshold mask.
 	vx_uint32 sstride = srcStrideInBytes>>1;
 	ago_coord2d_ushort_t *pxyStack = xyStack;
+	ago_coord2d_ushort_t *pxyStackEnd = xyStack + capacityOfXY;
+
+	const __m128i ang_mask = _mm_set1_epi16(3);
+	const __m128i one_v = _mm_set1_epi16(1);
+	const __m128i two_v = _mm_set1_epi16(2);
+	const __m128i three_v = _mm_set1_epi16(3);
+	const __m128i hyst_upper_v = _mm_set1_epi16((short)hyst_upper);
+	const __m128i hyst_lower_v = _mm_set1_epi16((short)hyst_lower);
+	const __m128i k255 = _mm_set1_epi16(255);
+	const __m128i k127 = _mm_set1_epi16(127);
+
 	for (unsigned int y = 1; y < dstHeight - 1; y++)
 	{
 		vx_uint8* pOut = pDst + y*dstStrideInBytes;
-		vx_uint16 *pLocSrc = pSrc + y * sstride + 1;	// we are processing from 2nd row
-		for (unsigned int x = 1; x < dstWidth - 1; x++, pLocSrc++)
+		vx_uint16 *pLocSrc = pSrc + y * sstride;	// row pointer
+
+		unsigned int x = 1;
+		for (; x + 8 <= dstWidth - 1; x += 8)
+		{
+			__m128i pix    = _mm_loadu_si128((const __m128i *)(pLocSrc + x));
+			__m128i mag    = _mm_srli_epi16(pix, 2);
+			__m128i ang    = _mm_and_si128(pix, ang_mask);
+
+			// Pre-load all four possible (n0, n1) neighbor pair candidates.
+			__m128i n0_a0 = _mm_loadu_si128((const __m128i *)(pLocSrc + x - 1));
+			__m128i n1_a0 = _mm_loadu_si128((const __m128i *)(pLocSrc + x + 1));
+			__m128i n0_a1 = _mm_loadu_si128((const __m128i *)(pLocSrc + x + 1 - sstride));
+			__m128i n1_a1 = _mm_loadu_si128((const __m128i *)(pLocSrc + x - 1 + sstride));
+			__m128i n0_a2 = _mm_loadu_si128((const __m128i *)(pLocSrc + x     - sstride));
+			__m128i n1_a2 = _mm_loadu_si128((const __m128i *)(pLocSrc + x     + sstride));
+			__m128i n0_a3 = _mm_loadu_si128((const __m128i *)(pLocSrc + x - 1 - sstride));
+			__m128i n1_a3 = _mm_loadu_si128((const __m128i *)(pLocSrc + x + 1 + sstride));
+
+			__m128i m0 = _mm_cmpeq_epi16(ang, _mm_setzero_si128());
+			__m128i m1 = _mm_cmpeq_epi16(ang, one_v);
+			__m128i m2 = _mm_cmpeq_epi16(ang, two_v);
+			__m128i m3 = _mm_cmpeq_epi16(ang, three_v);
+
+			__m128i n0 = _mm_or_si128(_mm_or_si128(_mm_and_si128(m0, n0_a0), _mm_and_si128(m1, n0_a1)),
+			                          _mm_or_si128(_mm_and_si128(m2, n0_a2), _mm_and_si128(m3, n0_a3)));
+			__m128i n1 = _mm_or_si128(_mm_or_si128(_mm_and_si128(m0, n1_a0), _mm_and_si128(m1, n1_a1)),
+			                          _mm_or_si128(_mm_and_si128(m2, n1_a2), _mm_and_si128(m3, n1_a3)));
+
+			__m128i n0m = _mm_srli_epi16(n0, 2);
+			__m128i n1m = _mm_srli_epi16(n1, 2);
+
+			__m128i is_max = _mm_and_si128(_mm_cmpgt_epi16(mag, n0m), _mm_cmpgt_epi16(mag, n1m));
+			__m128i edge = _mm_and_si128(is_max, mag);
+
+			__m128i gt_upper = _mm_cmpgt_epi16(edge, hyst_upper_v);
+			__m128i gt_lower = _mm_cmpgt_epi16(edge, hyst_lower_v);
+
+			__m128i out_u16 = _mm_or_si128(_mm_and_si128(gt_upper, k255),
+			                                _mm_and_si128(_mm_andnot_si128(gt_upper, gt_lower), k127));
+			__m128i out_u8  = _mm_packus_epi16(out_u16, out_u16);
+			_mm_storel_epi64((__m128i *)(pOut + x), out_u8);
+
+			// Stack push for lanes where edge > hyst_upper. movemask of an 8-lane
+			// i16 packed compare gives one byte per lane.
+			__m128i upper_pack = _mm_packs_epi16(gt_upper, gt_upper);
+			int upper_mask = _mm_movemask_epi8(upper_pack) & 0xFF;
+			while (upper_mask)
+			{
+				int b = __builtin_ctz(upper_mask);
+				upper_mask &= upper_mask - 1;
+				if (pxyStack < pxyStackEnd)
+				{
+					pxyStack->x = (vx_uint16)(x + b);
+					pxyStack->y = (vx_uint16)y;
+					pxyStack++;
+				}
+			}
+		}
+
+		// Scalar tail (final 1-7 pixels plus the original loop boundary at dstWidth-1).
+		vx_uint16 *pLocSrcS = pSrc + y * sstride + x;
+		for (; x < dstWidth - 1; x++, pLocSrcS++)
 		{
 			vx_int32 edge;
-			// get the Mag and angle
-			int mag = (pLocSrc[0] >> 2);
-			int ang = pLocSrc[0] & 3;
-			int offset0 = n_offset[ang][0][1] * sstride + n_offset[ang][0][0];
-			int offset1 = n_offset[ang][1][1] * sstride + n_offset[ang][1][0];
-			edge = ((mag >(pLocSrc[offset0] >> 2)) && (mag >(pLocSrc[offset1] >> 2))) ? mag : 0;
-			if (edge > hyst_upper){
-				pOut[x] = (vx_int8)255;
-				// add the cordinates to stacktop
-				pxyStack->x = x;	// store x and y co-ordinates
-				pxyStack->y = y;	// store x and y co-ordinates
-				pxyStack++;
-
-			}
-			else if (edge <= hyst_lower){
+			int mag = (pLocSrcS[0] >> 2);
+			int ang = pLocSrcS[0] & 3;
+			int offset0 = n_offset[ang][0][1] * (int)sstride + n_offset[ang][0][0];
+			int offset1 = n_offset[ang][1][1] * (int)sstride + n_offset[ang][1][0];
+			edge = ((mag >(pLocSrcS[offset0] >> 2)) && (mag >(pLocSrcS[offset1] >> 2))) ? mag : 0;
+			if (edge > hyst_upper) {
+				pOut[x] = (vx_uint8)255;
+				if (pxyStack < pxyStackEnd) {
+					pxyStack->x = (vx_uint16)x;
+					pxyStack->y = (vx_uint16)y;
+					pxyStack++;
+				}
+			} else if (edge <= hyst_lower) {
 				pOut[x] = 0;
+			} else {
+				pOut[x] = 127;
 			}
-			else pOut[x] = 127;
 		}
 	}
 	*pxyStackTop = (vx_uint32)(pxyStack - xyStack);

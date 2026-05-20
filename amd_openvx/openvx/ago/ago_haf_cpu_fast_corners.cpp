@@ -588,54 +588,57 @@ int HafCpu_FastCorners_XY_U8_Supression
 			__m128i rowMinus3, rowMinus2, rowMinus1, row, rowPlus1, rowPlus2, rowPlus3;
 			__m128i thresh = _mm_set1_epi16(t);
 
-			// Check for early escape based on pixels 1 and 9 around the candidate
+			// Load all 7 rows in their final form for boundary shuffles.
 			rowMinus3 = _mm_loadu_si128((__m128i *)(pLocalSrc - 3 * srcStride - 1));
-			rowMinus2 = _mm_srli_si128(rowMinus3, 1);									// row - 3: Pixels 0..7 in lower 7 bytes
-			rowMinus2 = _mm_cvtepu8_epi16(rowMinus2);
-
-			row = _mm_loadu_si128((__m128i *)(pLocalSrc - 3));
-			rowMinus1 = _mm_srli_si128(row, 3);											// row: Pixels 0..7 in lower 7 bytes
-			rowMinus1 = _mm_cvtepu8_epi16(rowMinus1);
-
-			rowPlus3 = _mm_loadu_si128((__m128i *)(pLocalSrc + 3 * srcStride - 1));
-			rowPlus2 = _mm_srli_si128(rowPlus3, 1);										// row + 3: Pixels 0..7 in lower 7 bytes
-			rowPlus2 = _mm_cvtepu8_epi16(rowPlus2);
-
-			rowPlus1 = _mm_loadu_si128((__m128i *)(pLocalSrc + srcStride - 3));
-
-			rowMinus2 = _mm_sub_epi16(rowMinus2, rowMinus1);
-			rowMinus2 = _mm_abs_epi16(rowMinus2);
-			rowPlus2 = _mm_sub_epi16(rowPlus2, rowMinus1);
-			rowPlus2 = _mm_abs_epi16(rowPlus2);
-
-			rowMinus2 = _mm_cmplt_epi16(rowMinus2, thresh);								// Check if pixel 0 is less than 't' different from the candidate
-			rowPlus2 = _mm_cmplt_epi16(rowPlus2, thresh);								// Check if pixel 0 is less than 't' different from the candidate
-
-			int maskSkip = _mm_movemask_epi8(rowMinus2);
-			maskSkip &= _mm_movemask_epi8(rowPlus2);									// 1 if both 0 and 8 are within 't' of the candidate pixel
-
-			// Check for early escape based on pixels 12 and 4 around the candidate
-			rowMinus2 = _mm_cvtepu8_epi16(row);
-			rowPlus2 = _mm_srli_si128(row, 6);
-			rowPlus2 = _mm_cvtepu8_epi16(rowPlus2);
-
-			rowMinus2 = _mm_sub_epi16(rowMinus2, rowMinus1);
-			rowMinus2 = _mm_abs_epi16(rowMinus2);
-			rowPlus2 = _mm_sub_epi16(rowPlus2, rowMinus1);
-			rowPlus2 = _mm_abs_epi16(rowPlus2);
-
-			rowMinus1 = _mm_loadu_si128((__m128i *)(pLocalSrc - srcStride - 3));
-
-			rowMinus2 = _mm_cmplt_epi16(rowMinus2, thresh);								// Check if pixel 0 is less than 't' different from the candidate
-			rowPlus2 = _mm_cmplt_epi16(rowPlus2, thresh);								// Check if pixel 0 is less than 't' different from the candidate
-
-			int maskSkip1 = _mm_movemask_epi8(rowMinus2);
 			rowMinus2 = _mm_loadu_si128((__m128i *)(pLocalSrc - (srcStride + srcStride) - 2));
+			rowMinus1 = _mm_loadu_si128((__m128i *)(pLocalSrc - srcStride - 3));
+			row       = _mm_loadu_si128((__m128i *)(pLocalSrc - 3));
+			rowPlus1  = _mm_loadu_si128((__m128i *)(pLocalSrc + srcStride - 3));
+			rowPlus2  = _mm_loadu_si128((__m128i *)(pLocalSrc + (srcStride + srcStride) - 2));
+			rowPlus3  = _mm_loadu_si128((__m128i *)(pLocalSrc + 3 * srcStride - 1));
 
-			maskSkip1 &= _mm_movemask_epi8(rowPlus2);									// 1 if both 0 and 8 are within 't' of the candidate pixel
-			rowPlus2 = _mm_loadu_si128((__m128i *)(pLocalSrc + (srcStride + srcStride) - 2));
-
-			maskSkip |= maskSkip1;
+			// FAST-9 adjacent-cardinal-pair pre-filter. A 9-pixel contiguous arc
+			// of brighter (or darker) pixels around the 16-pixel boundary must
+			// always contain at least one pair of adjacent cardinal points
+			// {(p1,p5),(p5,p9),(p9,p13),(p13,p1)} that are all brighter (or all
+			// darker). Conversely, if no adjacent cardinal pair satisfies the
+			// polarity-aware test, the candidate cannot be a FAST-9 corner. This
+			// is strictly tighter than the original 2-of-2 axial-pair check
+			// (it also rejects cases where a single bright/dark and an opposing
+			// dark/bright neighbour would have slipped through).
+			__m128i cand   = _mm_cvtepu8_epi16(_mm_loadl_epi64((const __m128i *)(pLocalSrc)));
+			__m128i cand_p = _mm_add_epi16(cand, thresh);
+			__m128i cand_m = _mm_sub_epi16(cand, thresh);
+			// Boundary pixel candidates for 8 candidates at columns [x..x+7]. The
+			// rows were loaded with a -1 byte offset for rowMinus3/rowPlus3 and a
+			// -3 byte offset for `row`, so the candidate column is at byte 1
+			// (rowMinus3/rowPlus3) / byte 3 (row). Byte 0 of `row` is left-3,
+			// byte 6 of `row` is right+3.
+			__m128i p1  = _mm_cvtepu8_epi16(_mm_srli_si128(rowMinus3, 1));  // top:    (x, y-3)
+			__m128i p9  = _mm_cvtepu8_epi16(_mm_srli_si128(rowPlus3, 1));   // bottom: (x, y+3)
+			__m128i p5  = _mm_cvtepu8_epi16(_mm_srli_si128(row, 6));        // right:  (x+3, y)
+			__m128i p13 = _mm_cvtepu8_epi16(row);                            // left:   (x-3, y)
+			__m128i b1  = _mm_cmpgt_epi16(p1,  cand_p);
+			__m128i b5  = _mm_cmpgt_epi16(p5,  cand_p);
+			__m128i b9  = _mm_cmpgt_epi16(p9,  cand_p);
+			__m128i b13 = _mm_cmpgt_epi16(p13, cand_p);
+			__m128i d1  = _mm_cmpgt_epi16(cand_m, p1);
+			__m128i d5  = _mm_cmpgt_epi16(cand_m, p5);
+			__m128i d9  = _mm_cmpgt_epi16(cand_m, p9);
+			__m128i d13 = _mm_cmpgt_epi16(cand_m, p13);
+			__m128i pair_b = _mm_or_si128(
+				_mm_or_si128(_mm_and_si128(b1,  b5),  _mm_and_si128(b5,  b9)),
+				_mm_or_si128(_mm_and_si128(b9,  b13), _mm_and_si128(b13, b1)));
+			__m128i pair_d = _mm_or_si128(
+				_mm_or_si128(_mm_and_si128(d1,  d5),  _mm_and_si128(d5,  d9)),
+				_mm_or_si128(_mm_and_si128(d9,  d13), _mm_and_si128(d13, d1)));
+			__m128i pass = _mm_or_si128(pair_b, pair_d);
+			// `pass` lanes are 0xFFFF if the candidate may be a corner, else 0x0000.
+			// `_mm_movemask_epi8` yields a 16-bit mask with two bits per lane,
+			// matching the original `maskSkip` packing (bit pair set => keep), so
+			// invert to obtain the skip mask consumed by the per-pixel loop below.
+			int passMask = _mm_movemask_epi8(pass);
+			int maskSkip = (~passMask) & 0xFFFF;
 
 			// Check for corners in the eight pixels
 			if (maskSkip != 0xFFFF)

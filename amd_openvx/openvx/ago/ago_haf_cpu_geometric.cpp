@@ -1871,31 +1871,31 @@ vx_uint8				 * pLocalData
 }
 
 
+// 3:1 and 1:3 byte-blends used by the exact 2x bilinear up-sampler.
+// Identity:  pavgb(pavgb(a, b), a) == (3a + b + 2) >> 2  (and symmetrically for 1:3),
+// which is the OpenVX-conformant rounded weighted average. This collapses the
+// previous 6-instruction unpack/multiply/pack into a 2-instruction pavg chain.
 static inline __m128i HafCpu_BlendU8_3_1(__m128i a, __m128i b)
 {
-	const __m128i zero = _mm_setzero_si128();
-	const __m128i round = _mm_set1_epi16(2);
-	__m128i aLo = _mm_unpacklo_epi8(a, zero);
-	__m128i aHi = _mm_unpackhi_epi8(a, zero);
-	__m128i bLo = _mm_unpacklo_epi8(b, zero);
-	__m128i bHi = _mm_unpackhi_epi8(b, zero);
-	aLo = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(_mm_add_epi16(aLo, _mm_slli_epi16(aLo, 1)), bLo), round), 2);
-	aHi = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(_mm_add_epi16(aHi, _mm_slli_epi16(aHi, 1)), bHi), round), 2);
-	return _mm_packus_epi16(aLo, aHi);
+	return _mm_avg_epu8(_mm_avg_epu8(a, b), a);
 }
 
 static inline __m128i HafCpu_BlendU8_1_3(__m128i a, __m128i b)
 {
-	const __m128i zero = _mm_setzero_si128();
-	const __m128i round = _mm_set1_epi16(2);
-	__m128i aLo = _mm_unpacklo_epi8(a, zero);
-	__m128i aHi = _mm_unpackhi_epi8(a, zero);
-	__m128i bLo = _mm_unpacklo_epi8(b, zero);
-	__m128i bHi = _mm_unpackhi_epi8(b, zero);
-	bLo = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(aLo, _mm_add_epi16(bLo, _mm_slli_epi16(bLo, 1))), round), 2);
-	bHi = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(aHi, _mm_add_epi16(bHi, _mm_slli_epi16(bHi, 1))), round), 2);
-	return _mm_packus_epi16(bLo, bHi);
+	return _mm_avg_epu8(_mm_avg_epu8(a, b), b);
 }
+
+#if USE_AVX
+static inline __m256i HafCpu_BlendU8_3_1_256(__m256i a, __m256i b)
+{
+	return _mm256_avg_epu8(_mm256_avg_epu8(a, b), a);
+}
+
+static inline __m256i HafCpu_BlendU8_1_3_256(__m256i a, __m256i b)
+{
+	return _mm256_avg_epu8(_mm256_avg_epu8(a, b), b);
+}
+#endif
 
 int HafCpu_ScaleImage_U8_U8_Nearest
 (

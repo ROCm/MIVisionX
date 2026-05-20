@@ -3528,6 +3528,48 @@ int HafCpu_ColorDepth_U8_S16_Wrap
 		vx_int32      shift
 	)
 {
+#if USE_AVX
+	// AVX2 path: process 32 pixels per iteration. Shift the two halves with
+	// _mm256_srai_epi16, mask the low byte (wrap semantics keep only the low
+	// byte of each S16), and pack-with-saturate. The 0xFF mask guarantees the
+	// values are in [0,255], so packus does no actual saturation — it just
+	// merges the two halves into 32 contiguous bytes. The final permute4x64
+	// reorders 128-bit lanes from packus-interleaved back to linear order.
+	const int alignedWidth = (int)dstWidth & ~31;
+	const int postfixWidth = (int)dstWidth - alignedWidth;
+	const __m256i maskLow = _mm256_set1_epi16(0x00FF);
+
+	for (int height = 0; height < (int)dstHeight; height++)
+	{
+		vx_int16 * pLocalSrc = pSrcImage;
+		vx_uint8 * pLocalDst = pDstImage;
+
+		for (int width = 0; width < alignedWidth; width += 32)
+		{
+			__m256i pixels1 = _mm256_loadu_si256((const __m256i *)pLocalSrc);
+			__m256i pixels2 = _mm256_loadu_si256((const __m256i *)(pLocalSrc + 16));
+			pixels1 = _mm256_srai_epi16(pixels1, (int)shift);
+			pixels2 = _mm256_srai_epi16(pixels2, (int)shift);
+			pixels1 = _mm256_and_si256(pixels1, maskLow);
+			pixels2 = _mm256_and_si256(pixels2, maskLow);
+			__m256i packed = _mm256_packus_epi16(pixels1, pixels2);
+			packed = _mm256_permute4x64_epi64(packed, 0xD8);
+			_mm256_storeu_si256((__m256i *)pLocalDst, packed);
+
+			pLocalSrc += 32;
+			pLocalDst += 32;
+		}
+
+		for (int width = 0; width < postfixWidth; width++)
+		{
+			int pix = (int)(*pLocalSrc++);
+			*pLocalDst++ = (vx_uint8)((pix >> shift) & 0xFF);
+		}
+
+		pSrcImage += (srcImageStrideInBytes >> 1);
+		pDstImage += dstImageStrideInBytes;
+	}
+#else
 	int prefixWidth = intptr_t(pDstImage) & 15;
 	prefixWidth = (prefixWidth == 0) ? 0 : (16 - prefixWidth);
 	int postfixWidth = ((int)dstWidth - prefixWidth) & 15;
@@ -3572,6 +3614,7 @@ int HafCpu_ColorDepth_U8_S16_Wrap
 		pSrcImage += (srcImageStrideInBytes >> 1);
 		pDstImage += dstImageStrideInBytes;
 	}
+#endif
 	return AGO_SUCCESS;
 }
 
@@ -3586,6 +3629,41 @@ int HafCpu_ColorDepth_U8_S16_Sat
 		vx_int32      shift
 	)
 {
+#if USE_AVX
+	const int alignedWidth = (int)dstWidth & ~31;
+	const int postfixWidth = (int)dstWidth - alignedWidth;
+
+	for (int height = 0; height < (int)dstHeight; height++)
+	{
+		vx_int16 * pLocalSrc = pSrcImage;
+		vx_uint8 * pLocalDst = pDstImage;
+
+		for (int width = 0; width < alignedWidth; width += 32)
+		{
+			__m256i pixels1 = _mm256_loadu_si256((const __m256i *)pLocalSrc);
+			__m256i pixels2 = _mm256_loadu_si256((const __m256i *)(pLocalSrc + 16));
+			pixels1 = _mm256_srai_epi16(pixels1, (int)shift);
+			pixels2 = _mm256_srai_epi16(pixels2, (int)shift);
+			__m256i packed = _mm256_packus_epi16(pixels1, pixels2);
+			packed = _mm256_permute4x64_epi64(packed, 0xD8);
+			_mm256_storeu_si256((__m256i *)pLocalDst, packed);
+
+			pLocalSrc += 32;
+			pLocalDst += 32;
+		}
+
+		for (int width = 0; width < postfixWidth; width++)
+		{
+			int pix = (int)(*pLocalSrc++);
+			pix >>= shift;
+			pix = min(max(pix, 0), 255);
+			*pLocalDst++ = (vx_uint8)(pix);
+		}
+
+		pSrcImage += (srcImageStrideInBytes >> 1);
+		pDstImage += dstImageStrideInBytes;
+	}
+#else
 	int prefixWidth = intptr_t(pDstImage) & 15;
 	prefixWidth = (prefixWidth == 0) ? 0 : (16 - prefixWidth);
 	int postfixWidth = ((int)dstWidth - prefixWidth) & 15;
@@ -3630,6 +3708,7 @@ int HafCpu_ColorDepth_U8_S16_Sat
 		pSrcImage += (srcImageStrideInBytes >> 1);
 		pDstImage += dstImageStrideInBytes;
 	}
+#endif
 	return AGO_SUCCESS;
 }
 
@@ -3644,6 +3723,41 @@ int HafCpu_ColorDepth_S16_U8
 		vx_int32      shift
 	)
 {
+#if USE_AVX
+	// AVX2 path: load 32 U8 bytes, widen to two ymm registers of 16 S16 each,
+	// shift left by `shift`, and store. This doubles SIMD throughput vs SSE.
+	const int alignedWidth = (int)dstWidth & ~31;
+	const int postfixWidth = (int)dstWidth - alignedWidth;
+
+	for (int height = 0; height < (int)dstHeight; height++)
+	{
+		vx_uint8 * pLocalSrc = pSrcImage;
+		vx_int16 * pLocalDst = pDstImage;
+
+		for (int width = 0; width < alignedWidth; width += 32)
+		{
+			__m256i bytes = _mm256_loadu_si256((const __m256i *)pLocalSrc);
+			__m256i pixelsL = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(bytes));
+			__m256i pixelsH = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(bytes, 1));
+			pixelsL = _mm256_slli_epi16(pixelsL, (int)shift);
+			pixelsH = _mm256_slli_epi16(pixelsH, (int)shift);
+			_mm256_storeu_si256((__m256i *)pLocalDst, pixelsL);
+			_mm256_storeu_si256((__m256i *)(pLocalDst + 16), pixelsH);
+
+			pLocalSrc += 32;
+			pLocalDst += 32;
+		}
+
+		for (int width = 0; width < postfixWidth; width++)
+		{
+			int pix = (int)(*pLocalSrc++);
+			*pLocalDst++ = (vx_int16)(pix << shift);
+		}
+
+		pSrcImage += srcImageStrideInBytes;
+		pDstImage += (dstImageStrideInBytes >> 1);
+	}
+#else
 	int prefixWidth = intptr_t(pDstImage) & 7;			// Two bytes in output = 1 pixel
 	prefixWidth = (prefixWidth == 0) ? 0 : (8 - prefixWidth);
 	int postfixWidth = ((int)dstWidth - prefixWidth) & 15;
@@ -3686,6 +3800,7 @@ int HafCpu_ColorDepth_S16_U8
 		pSrcImage += srcImageStrideInBytes;
 		pDstImage += (dstImageStrideInBytes >> 1);
 	}
+#endif
 	return AGO_SUCCESS;
 }
 

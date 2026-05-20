@@ -5045,30 +5045,50 @@ int HafCpu_Magnitude_S16_S16S16
 		vx_int16 *pLocalGx = pGxImage;
 		vx_int16 *pLocalGy = pGyImage;
 		vx_int16 *pLocalDst = pMagImage;
-		vx_uint32 x = 0;
-		for (; x + 16 <= dstWidth; x += 16)
+		int prefixWidth = intptr_t(pLocalDst) & 15;
+		prefixWidth = (prefixWidth == 0) ? 0 : (16 - prefixWidth);
+		prefixWidth >>= 1;
+		int postfixWidth = ((int)dstWidth - prefixWidth) & 7;
+		int alignedWidth = (int)dstWidth - prefixWidth - postfixWidth;
+
+		for (int x = 0; x < prefixWidth; x++, pLocalGx++, pLocalGy++)
 		{
-			__m256i gx16 = _mm256_loadu_si256((__m256i *)(pLocalGx + x));
-			__m256i gy16 = _mm256_loadu_si256((__m256i *)(pLocalGy + x));
-			__m128i gxLo16 = _mm256_castsi256_si128(gx16);
-			__m128i gxHi16 = _mm256_extracti128_si256(gx16, 1);
-			__m128i gyLo16 = _mm256_castsi256_si128(gy16);
-			__m128i gyHi16 = _mm256_extracti128_si256(gy16, 1);
-
-			__m256 gxLo = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(gxLo16));
-			__m256 gyLo = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(gyLo16));
-			__m256 gxHi = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(gxHi16));
-			__m256 gyHi = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(gyHi16));
-
-			__m256 magLo = _mm256_sqrt_ps(_mm256_add_ps(_mm256_mul_ps(gxLo, gxLo), _mm256_mul_ps(gyLo, gyLo)));
-			__m256 magHi = _mm256_sqrt_ps(_mm256_add_ps(_mm256_mul_ps(gxHi, gxHi), _mm256_mul_ps(gyHi, gyHi)));
-			_mm_storeu_si128((__m128i *)(pLocalDst + x), HafCpu_PackEightI32ToI16(_mm256_cvtps_epi32(magLo)));
-			_mm_storeu_si128((__m128i *)(pLocalDst + x + 8), HafCpu_PackEightI32ToI16(_mm256_cvtps_epi32(magHi)));
+			float temp = (float)(*pLocalGx * *pLocalGx) + (float)(*pLocalGy * *pLocalGy);
+			temp = sqrtf(temp);
+			*pLocalDst++ = (vx_int16)temp;
 		}
-		for (; x < dstWidth; x++)
+
+		for (int width = 0; width < (alignedWidth >> 3); width++)
 		{
-			float temp = (float)(pLocalGx[x] * pLocalGx[x]) + (float)(pLocalGy[x] * pLocalGy[x]);
-			pLocalDst[x] = (vx_int16)roundf(sqrtf(temp));
+			__m128i pixelsGx = _mm_loadu_si128((__m128i *)pLocalGx);
+			__m128i pixelsGy = _mm_loadu_si128((__m128i *)pLocalGy);
+
+			__m128i pixelsGxL = _mm_cvtepi16_epi32(pixelsGx);
+			__m128i pixelsGyL = _mm_cvtepi16_epi32(pixelsGy);
+			__m128i pixelsGxH = _mm_cvtepi16_epi32(_mm_srli_si128(pixelsGx, 8));
+			__m128i pixelsGyH = _mm_cvtepi16_epi32(_mm_srli_si128(pixelsGy, 8));
+
+			pixelsGxL = _mm_mullo_epi32(pixelsGxL, pixelsGxL);
+			pixelsGyL = _mm_mullo_epi32(pixelsGyL, pixelsGyL);
+			pixelsGxH = _mm_mullo_epi32(pixelsGxH, pixelsGxH);
+			pixelsGyH = _mm_mullo_epi32(pixelsGyH, pixelsGyH);
+
+			__m256d magL = _mm256_add_pd(_mm256_cvtepi32_pd(pixelsGxL), _mm256_cvtepi32_pd(pixelsGyL));
+			__m256d magH = _mm256_add_pd(_mm256_cvtepi32_pd(pixelsGxH), _mm256_cvtepi32_pd(pixelsGyH));
+			__m128i magL_i32 = _mm256_cvtpd_epi32(_mm256_sqrt_pd(magL));
+			__m128i magH_i32 = _mm256_cvtpd_epi32(_mm256_sqrt_pd(magH));
+			_mm_store_si128((__m128i *)pLocalDst, _mm_packs_epi32(magL_i32, magH_i32));
+
+			pLocalGx += 8;
+			pLocalGy += 8;
+			pLocalDst += 8;
+		}
+
+		for (int x = 0; x < postfixWidth; x++, pLocalGx++, pLocalGy++)
+		{
+			float temp = (float)(*pLocalGx * *pLocalGx) + (float)(*pLocalGy * *pLocalGy);
+			temp = sqrtf(temp);
+			*pLocalDst++ = (vx_int16)(round(temp));
 		}
 		pGxImage += (gxImageStrideInBytes >> 1);
 		pGyImage += (gyImageStrideInBytes >> 1);

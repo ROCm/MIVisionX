@@ -896,11 +896,15 @@ static void HafCpu_PyramidUp_Gaussian5x5_U8(
         vx_int32 fy_top = fy - 1;
         vx_int32 fy_mid = fy;
         vx_int32 fy_bot = fy + 1;
-        if (fy_top < 0) fy_top = 0;  // top replicate
+        // Source-level replicate at both ends (matches CTS reference convolve on
+        // the zero-stuffed image, including INSERT_ZERO_Y/INSERT_VALUES_Y).
+        if (fy_top < 0) fy_top = 0;
+        if (fy_mid >= srcH) fy_mid = srcH - 1;
+        if (fy_bot >= srcH) fy_bot = srcH - 1;
 
-        const vx_uint8 *rm = (y_even && fy_top < srcH) ? (src + (size_t)fy_top * srcStride) : nullptr;
-        const vx_uint8 *r0 = (fy_mid < srcH) ? (src + (size_t)fy_mid * srcStride) : nullptr;
-        const vx_uint8 *rp = (fy_bot < srcH) ? (src + (size_t)fy_bot * srcStride) : nullptr;
+        const vx_uint8 *rm = y_even ? (src + (size_t)fy_top * srcStride) : nullptr;
+        const vx_uint8 *r0 = (src + (size_t)fy_mid * srcStride);
+        const vx_uint8 *rp = (src + (size_t)fy_bot * srcStride);
 
         // Vertical pass: V[fx] in [0, srcW) stored to V[fx + 1].
         vx_int32 fx = 0;
@@ -990,11 +994,14 @@ static void HafCpu_PyramidUp_Gaussian5x5_U8(
                 V[1 + fx] = (vx_int16)(4 * (bv + cv));
             }
         }
-        V[0] = V[1];                // left replicate
-        V[srcW + 1] = 0;             // right zero
-        V[srcW + 2] = 0;             // safety
-        // zero out the AVX2 over-read pad
-        for (int i = 3; i < 18; i++) V[srcW + i] = 0;
+        V[0] = V[1];                       // left replicate
+        // Right replicate: matches CTS reference convolve at the right edge
+        // (INSERT_VALUES_X copies V[srcW] outward for x >= dstW - 2*kernelHalf).
+        V[srcW + 1] = V[srcW];
+        V[srcW + 2] = V[srcW];
+        // pad the AVX2 over-read range with the same replicate so wide SIMD loads at
+        // fx = srcW - 15 still see well-defined values
+        for (int i = 3; i < 18; i++) V[srcW + i] = V[srcW];
 
         // Horizontal pass.
         if (!dst_is_s16)
@@ -1011,8 +1018,10 @@ static void HafCpu_PyramidUp_Gaussian5x5_U8(
                 __m256i v_right  = _mm256_loadu_si256((const __m256i *)(V + fx + 2));
                 __m256i h_even = _mm256_add_epi16(_mm256_add_epi16(v_left, v_right), _mm256_mullo_epi16(v_center, mul6_256));
                 __m256i h_odd  = _mm256_slli_epi16(_mm256_add_epi16(v_center, v_right), 2);
-                __m256i out_even = _mm256_srai_epi16(h_even, 6);
-                __m256i out_odd  = _mm256_srai_epi16(h_odd, 6);
+                // Spec computes (sum / 256) * 4, NOT sum / 64. The integer division
+                // before the multiply discards the lower 8 bits, so use (h >> 8) << 2.
+                __m256i out_even = _mm256_slli_epi16(_mm256_srai_epi16(h_even, 8), 2);
+                __m256i out_odd  = _mm256_slli_epi16(_mm256_srai_epi16(h_odd, 8), 2);
                 __m256i out_lo = _mm256_unpacklo_epi16(out_even, out_odd);  // 128-bit lanes interleave separately
                 __m256i out_hi = _mm256_unpackhi_epi16(out_even, out_odd);
                 __m256i packed = _mm256_packus_epi16(out_lo, out_hi);       // also lane-wise
@@ -1039,8 +1048,8 @@ static void HafCpu_PyramidUp_Gaussian5x5_U8(
                 __m128i v_right  = _mm_loadu_si128((const __m128i *)(V + fx + 2));
                 __m128i h_even = _mm_add_epi16(_mm_add_epi16(v_left, v_right), _mm_mullo_epi16(v_center, mul6_128));
                 __m128i h_odd  = _mm_slli_epi16(_mm_add_epi16(v_center, v_right), 2);
-                __m128i out_even = _mm_srai_epi16(h_even, 6);
-                __m128i out_odd  = _mm_srai_epi16(h_odd, 6);
+                __m128i out_even = _mm_slli_epi16(_mm_srai_epi16(h_even, 8), 2);
+                __m128i out_odd  = _mm_slli_epi16(_mm_srai_epi16(h_odd, 8), 2);
                 __m128i out_lo = _mm_unpacklo_epi16(out_even, out_odd);
                 __m128i out_hi = _mm_unpackhi_epi16(out_even, out_odd);
                 __m128i packed = _mm_packus_epi16(out_lo, out_hi);
@@ -1052,7 +1061,7 @@ static void HafCpu_PyramidUp_Gaussian5x5_U8(
                 vx_int32 H = ((x & 1) == 0)
                     ? (V[fxx] + 6 * V[fxx + 1] + V[fxx + 2])
                     : (4 * (V[fxx + 1] + V[fxx + 2]));
-                vx_int32 dv = H >> 6;
+                vx_int32 dv = (H >> 8) << 2;
                 if (dv > 255) dv = 255;
                 else if (dv < 0) dv = 0;
                 drow[x] = (vx_uint8)dv;
@@ -1071,8 +1080,9 @@ static void HafCpu_PyramidUp_Gaussian5x5_U8(
                 __m256i v_right  = _mm256_loadu_si256((const __m256i *)(V + fx + 2));
                 __m256i h_even = _mm256_add_epi16(_mm256_add_epi16(v_left, v_right), _mm256_mullo_epi16(v_center, mul6_256));
                 __m256i h_odd  = _mm256_slli_epi16(_mm256_add_epi16(v_center, v_right), 2);
-                __m256i out_even = _mm256_srai_epi16(h_even, 6);
-                __m256i out_odd  = _mm256_srai_epi16(h_odd, 6);
+                // Spec computes (sum / 256) * 4, NOT sum / 64.
+                __m256i out_even = _mm256_slli_epi16(_mm256_srai_epi16(h_even, 8), 2);
+                __m256i out_odd  = _mm256_slli_epi16(_mm256_srai_epi16(h_odd, 8), 2);
                 __m256i interlo = _mm256_unpacklo_epi16(out_even, out_odd); // lane-wise
                 __m256i interhi = _mm256_unpackhi_epi16(out_even, out_odd);
                 // Each lane has 8 sequential 16-bit values. Need to write in correct order:
@@ -1095,8 +1105,8 @@ static void HafCpu_PyramidUp_Gaussian5x5_U8(
                 __m128i v_right  = _mm_loadu_si128((const __m128i *)(V + fx + 2));
                 __m128i h_even = _mm_add_epi16(_mm_add_epi16(v_left, v_right), _mm_mullo_epi16(v_center, mul6_128));
                 __m128i h_odd  = _mm_slli_epi16(_mm_add_epi16(v_center, v_right), 2);
-                __m128i out_even = _mm_srai_epi16(h_even, 6);
-                __m128i out_odd  = _mm_srai_epi16(h_odd, 6);
+                __m128i out_even = _mm_slli_epi16(_mm_srai_epi16(h_even, 8), 2);
+                __m128i out_odd  = _mm_slli_epi16(_mm_srai_epi16(h_odd, 8), 2);
                 __m128i out_lo = _mm_unpacklo_epi16(out_even, out_odd);
                 __m128i out_hi = _mm_unpackhi_epi16(out_even, out_odd);
                 _mm_storeu_si128((__m128i *)(drow + 2*fx), out_lo);
@@ -1108,7 +1118,7 @@ static void HafCpu_PyramidUp_Gaussian5x5_U8(
                 vx_int32 H = ((x & 1) == 0)
                     ? (V[fxx] + 6 * V[fxx + 1] + V[fxx + 2])
                     : (4 * (V[fxx + 1] + V[fxx + 2]));
-                vx_int32 dv = H >> 6;
+                vx_int32 dv = (H >> 8) << 2;
                 if (dv > INT16_MAX) dv = INT16_MAX;
                 else if (dv < INT16_MIN) dv = INT16_MIN;
                 drow[x] = (vx_int16)dv;
@@ -1145,10 +1155,13 @@ static void HafCpu_PyramidUp_Gaussian5x5_Subtract_U8(
         vx_int32 fy_top = fy - 1;
         vx_int32 fy_mid = fy;
         vx_int32 fy_bot = fy + 1;
+        // Source-level replicate at both ends (matches CTS reference).
         if (fy_top < 0) fy_top = 0;
-        const vx_uint8 *rm = (y_even && fy_top < srcH) ? (fill + (size_t)fy_top * fillStride) : nullptr;
-        const vx_uint8 *r0 = (fy_mid < srcH) ? (fill + (size_t)fy_mid * fillStride) : nullptr;
-        const vx_uint8 *rp = (fy_bot < srcH) ? (fill + (size_t)fy_bot * fillStride) : nullptr;
+        if (fy_mid >= srcH) fy_mid = srcH - 1;
+        if (fy_bot >= srcH) fy_bot = srcH - 1;
+        const vx_uint8 *rm = y_even ? (fill + (size_t)fy_top * fillStride) : nullptr;
+        const vx_uint8 *r0 = (fill + (size_t)fy_mid * fillStride);
+        const vx_uint8 *rp = (fill + (size_t)fy_bot * fillStride);
 
         vx_int32 fx = 0;
         if (y_even)
@@ -1236,10 +1249,10 @@ static void HafCpu_PyramidUp_Gaussian5x5_Subtract_U8(
                 V[1 + fx] = (vx_int16)(4 * (bv + cv));
             }
         }
-        V[0] = V[1];
-        V[srcW + 1] = 0;
-        V[srcW + 2] = 0;
-        for (int i = 3; i < 18; i++) V[srcW + i] = 0;
+        V[0] = V[1];                       // left replicate
+        V[srcW + 1] = V[srcW];             // right replicate (CTS reference INSERT_VALUES_X)
+        V[srcW + 2] = V[srcW];
+        for (int i = 3; i < 18; i++) V[srcW + i] = V[srcW];
 
         // Horizontal pass + subtract: produces 16 dst S16 values from 8 source cols at a time.
         const vx_uint8 *srow = src + (size_t)y * srcStride;
@@ -1254,8 +1267,9 @@ static void HafCpu_PyramidUp_Gaussian5x5_Subtract_U8(
             __m256i v_right  = _mm256_loadu_si256((const __m256i *)(V + fx + 2));
             __m256i h_even = _mm256_add_epi16(_mm256_add_epi16(v_left, v_right), _mm256_mullo_epi16(v_center, mul6_256));
             __m256i h_odd  = _mm256_slli_epi16(_mm256_add_epi16(v_center, v_right), 2);
-            __m256i out_even = _mm256_srai_epi16(h_even, 6);
-            __m256i out_odd  = _mm256_srai_epi16(h_odd, 6);
+            // Spec computes (sum / 256) * 4, NOT sum / 64.
+            __m256i out_even = _mm256_slli_epi16(_mm256_srai_epi16(h_even, 8), 2);
+            __m256i out_odd  = _mm256_slli_epi16(_mm256_srai_epi16(h_odd, 8), 2);
             __m256i interlo = _mm256_unpacklo_epi16(out_even, out_odd);
             __m256i interhi = _mm256_unpackhi_epi16(out_even, out_odd);
             // Load 32 U8 source pixels and widen to two __m256i s16 vectors in the correct order.
@@ -1293,8 +1307,8 @@ static void HafCpu_PyramidUp_Gaussian5x5_Subtract_U8(
             __m128i v_right  = _mm_loadu_si128((const __m128i *)(V + fx + 2));
             __m128i h_even = _mm_add_epi16(_mm_add_epi16(v_left, v_right), _mm_mullo_epi16(v_center, mul6_128));
             __m128i h_odd  = _mm_slli_epi16(_mm_add_epi16(v_center, v_right), 2);
-            __m128i out_even = _mm_srai_epi16(h_even, 6);
-            __m128i out_odd  = _mm_srai_epi16(h_odd, 6);
+            __m128i out_even = _mm_slli_epi16(_mm_srai_epi16(h_even, 8), 2);
+            __m128i out_odd  = _mm_slli_epi16(_mm_srai_epi16(h_odd, 8), 2);
             __m128i up_lo = _mm_unpacklo_epi16(out_even, out_odd);
             __m128i up_hi = _mm_unpackhi_epi16(out_even, out_odd);
             __m128i src16 = _mm_loadu_si128((const __m128i *)(srow + 2*fx));
@@ -1311,7 +1325,7 @@ static void HafCpu_PyramidUp_Gaussian5x5_Subtract_U8(
             vx_int32 H = ((x & 1) == 0)
                 ? (V[fxx] + 6 * V[fxx + 1] + V[fxx + 2])
                 : (4 * (V[fxx + 1] + V[fxx + 2]));
-            vx_int32 dv = H >> 6;
+            vx_int32 dv = (H >> 8) << 2;
             // Saturating subtract to s16
             vx_int32 sub = (vx_int32)srow[x] - dv;
             if (sub > INT16_MAX) sub = INT16_MAX;

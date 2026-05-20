@@ -2384,6 +2384,62 @@ int HafCpu_Sobel_S16_U8_3x3_GY
    Gx = 2						Gy = 0
 		1							-1
 */
+#if USE_AVX
+// AVX2 helper: horizontally Sobel-filter one row of `width` source bytes into
+// the separable Gx_h (= src[x+1] - src[x-1]) and Gy_h (= src[x-1] + 2*src[x]
+// + src[x+1]) buffers. The caller guarantees one byte of padding to the left
+// and right of pSrc.
+static inline void HafCpu_Sobel_HFilter_AVX2(
+    const vx_uint8 *pSrc, int width,
+    vx_int16 *pGxH, vx_int16 *pGyH)
+{
+    int x = 0;
+    for (; x + 32 <= width; x += 32)
+    {
+        __m256i sL = _mm256_loadu_si256((const __m256i *)(pSrc + x - 1));
+        __m256i sC = _mm256_loadu_si256((const __m256i *)(pSrc + x));
+        __m256i sR = _mm256_loadu_si256((const __m256i *)(pSrc + x + 1));
+        __m256i sL_lo = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(sL));
+        __m256i sL_hi = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(sL, 1));
+        __m256i sC_lo = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(sC));
+        __m256i sC_hi = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(sC, 1));
+        __m256i sR_lo = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(sR));
+        __m256i sR_hi = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(sR, 1));
+        _mm256_storeu_si256((__m256i *)(pGxH + x),      _mm256_sub_epi16(sR_lo, sL_lo));
+        _mm256_storeu_si256((__m256i *)(pGxH + x + 16), _mm256_sub_epi16(sR_hi, sL_hi));
+        __m256i gy_lo = _mm256_add_epi16(_mm256_add_epi16(sL_lo, sR_lo), _mm256_slli_epi16(sC_lo, 1));
+        __m256i gy_hi = _mm256_add_epi16(_mm256_add_epi16(sL_hi, sR_hi), _mm256_slli_epi16(sC_hi, 1));
+        _mm256_storeu_si256((__m256i *)(pGyH + x),      gy_lo);
+        _mm256_storeu_si256((__m256i *)(pGyH + x + 16), gy_hi);
+    }
+    for (; x + 16 <= width; x += 16)
+    {
+        __m128i sL = _mm_loadu_si128((const __m128i *)(pSrc + x - 1));
+        __m128i sC = _mm_loadu_si128((const __m128i *)(pSrc + x));
+        __m128i sR = _mm_loadu_si128((const __m128i *)(pSrc + x + 1));
+        __m128i sL_lo = _mm_cvtepu8_epi16(sL);
+        __m128i sL_hi = _mm_unpackhi_epi8(sL, _mm_setzero_si128());
+        __m128i sC_lo = _mm_cvtepu8_epi16(sC);
+        __m128i sC_hi = _mm_unpackhi_epi8(sC, _mm_setzero_si128());
+        __m128i sR_lo = _mm_cvtepu8_epi16(sR);
+        __m128i sR_hi = _mm_unpackhi_epi8(sR, _mm_setzero_si128());
+        _mm_storeu_si128((__m128i *)(pGxH + x    ), _mm_sub_epi16(sR_lo, sL_lo));
+        _mm_storeu_si128((__m128i *)(pGxH + x + 8), _mm_sub_epi16(sR_hi, sL_hi));
+        _mm_storeu_si128((__m128i *)(pGyH + x    ),
+            _mm_add_epi16(_mm_add_epi16(sL_lo, sR_lo), _mm_slli_epi16(sC_lo, 1)));
+        _mm_storeu_si128((__m128i *)(pGyH + x + 8),
+            _mm_add_epi16(_mm_add_epi16(sL_hi, sR_hi), _mm_slli_epi16(sC_hi, 1)));
+    }
+    for (; x < width; x++)
+    {
+        pGxH[x] = (vx_int16)pSrc[x + 1] - (vx_int16)pSrc[x - 1];
+        pGyH[x] = (vx_int16)pSrc[x - 1]
+                + (vx_int16)((vx_int16)pSrc[x] << 1)
+                + (vx_int16)pSrc[x + 1];
+    }
+}
+#endif
+
 int HafCpu_Sobel_S16S16_U8_3x3_GXY
 	(
 		vx_uint32     dstWidth,
@@ -2396,7 +2452,69 @@ int HafCpu_Sobel_S16S16_U8_3x3_GXY
 		vx_uint32     srcImageStrideInBytes,
 		vx_uint8	* pScratch
 	)
-{	
+{
+#if USE_AVX
+	// AVX2 separable Sobel. The scratch is split into 3 ring-buffer rows of
+	// Gx_h and 3 ring-buffer rows of Gy_h (matching the original scratch
+	// budget of 6 * alignedWidth * sizeof(vx_int16)). Per output row we
+	// horizontally filter the new source row into the third slot, then
+	// vertically combine: Gx = Gxh_prev + 2*Gxh_curr + Gxh_next,
+	//                     Gy = Gyh_next - Gyh_prev.
+	const int width = (int)dstWidth;
+	const int alignedWidth = (width + 15) & ~15;
+	vx_int16 *Gxh[3], *Gyh[3];
+	Gxh[0] = (vx_int16 *)pScratch;
+	Gyh[0] = Gxh[0] + alignedWidth;
+	Gxh[1] = Gyh[0] + alignedWidth;
+	Gyh[1] = Gxh[1] + alignedWidth;
+	Gxh[2] = Gyh[1] + alignedWidth;
+	Gyh[2] = Gxh[2] + alignedWidth;
+
+	HafCpu_Sobel_HFilter_AVX2(pSrcImage - srcImageStrideInBytes, width, Gxh[0], Gyh[0]);
+	HafCpu_Sobel_HFilter_AVX2(pSrcImage,                          width, Gxh[1], Gyh[1]);
+
+	for (int y = 0; y < (int)dstHeight; y++)
+	{
+		HafCpu_Sobel_HFilter_AVX2(pSrcImage + srcImageStrideInBytes, width, Gxh[2], Gyh[2]);
+
+		int x = 0;
+		for (; x + 16 <= width; x += 16)
+		{
+			__m256i gx0 = _mm256_loadu_si256((const __m256i *)(Gxh[0] + x));
+			__m256i gx1 = _mm256_loadu_si256((const __m256i *)(Gxh[1] + x));
+			__m256i gx2 = _mm256_loadu_si256((const __m256i *)(Gxh[2] + x));
+			__m256i gx  = _mm256_add_epi16(_mm256_add_epi16(gx0, gx2), _mm256_slli_epi16(gx1, 1));
+			_mm256_storeu_si256((__m256i *)(pDstGxImage + x), gx);
+			__m256i gy0 = _mm256_loadu_si256((const __m256i *)(Gyh[0] + x));
+			__m256i gy2 = _mm256_loadu_si256((const __m256i *)(Gyh[2] + x));
+			_mm256_storeu_si256((__m256i *)(pDstGyImage + x), _mm256_sub_epi16(gy2, gy0));
+		}
+		for (; x + 8 <= width; x += 8)
+		{
+			__m128i gx0 = _mm_loadu_si128((const __m128i *)(Gxh[0] + x));
+			__m128i gx1 = _mm_loadu_si128((const __m128i *)(Gxh[1] + x));
+			__m128i gx2 = _mm_loadu_si128((const __m128i *)(Gxh[2] + x));
+			__m128i gx  = _mm_add_epi16(_mm_add_epi16(gx0, gx2), _mm_slli_epi16(gx1, 1));
+			_mm_storeu_si128((__m128i *)(pDstGxImage + x), gx);
+			__m128i gy0 = _mm_loadu_si128((const __m128i *)(Gyh[0] + x));
+			__m128i gy2 = _mm_loadu_si128((const __m128i *)(Gyh[2] + x));
+			_mm_storeu_si128((__m128i *)(pDstGyImage + x), _mm_sub_epi16(gy2, gy0));
+		}
+		for (; x < width; x++)
+		{
+			pDstGxImage[x] = (vx_int16)(Gxh[0][x] + (Gxh[1][x] << 1) + Gxh[2][x]);
+			pDstGyImage[x] = (vx_int16)(Gyh[2][x] - Gyh[0][x]);
+		}
+
+		vx_int16 *t = Gxh[0]; Gxh[0] = Gxh[1]; Gxh[1] = Gxh[2]; Gxh[2] = t;
+		t = Gyh[0]; Gyh[0] = Gyh[1]; Gyh[1] = Gyh[2]; Gyh[2] = t;
+
+		pSrcImage    += srcImageStrideInBytes;
+		pDstGxImage  += (dstGxImageStrideInBytes >> 1);
+		pDstGyImage  += (dstGyImageStrideInBytes >> 1);
+	}
+	return AGO_SUCCESS;
+#else
 	unsigned char *pLocalSrc = (unsigned char *)pSrcImage;
 	short *pLocalDstGx, *pLocalDstGy;
 
@@ -2612,6 +2730,7 @@ int HafCpu_Sobel_S16S16_U8_3x3_GXY
 		height--;
 	}
 	return AGO_SUCCESS;
+#endif
 }
 
 /* The function assumes at least one pixel padding on the top, left, right and bottom */

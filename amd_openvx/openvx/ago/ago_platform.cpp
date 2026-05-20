@@ -56,9 +56,10 @@ bool agoIsCpuHardwareSupported()
 
 const ago_cpu_features_t & agoGetCpuFeatures()
 {
-	static ago_cpu_features_t features = {};
-	static bool initialized = false;
-	if (!initialized) {
+	// C++17 guarantees thread-safe initialization of function-local statics,
+	// so the cpuid probe runs exactly once even under concurrent first calls.
+	static const ago_cpu_features_t features = []() {
+		ago_cpu_features_t f = {};
 		int CPUInfo[4] = { 0 };
 		agoCpuid(CPUInfo, 0, 0);
 		int maxLeaf = CPUInfo[0];
@@ -66,30 +67,30 @@ const ago_cpu_features_t & agoGetCpuFeatures()
 		bool osAvx = false;
 		if (maxLeaf >= 1) {
 			agoCpuid(CPUInfo, 1, 0);
-			features.sse42 = (CPUInfo[2] & (1 << 20)) != 0;
+			f.sse42 = (CPUInfo[2] & (1 << 20)) != 0;
 			bool cpuAvx = (CPUInfo[2] & (1 << 28)) != 0;
 			bool osxsave = (CPUInfo[2] & (1 << 27)) != 0;
 			if (cpuAvx && osxsave) {
 				uint64_t xcr0 = agoXgetbv(0);
 				osAvx = (xcr0 & 0x6) == 0x6;
-				features.avx = osAvx;
+				f.avx = osAvx;
 			}
 		}
 
 		if (maxLeaf >= 7) {
 			agoCpuid(CPUInfo, 7, 0);
-			features.avx2 = osAvx && ((CPUInfo[1] & (1 << 5)) != 0);
-			features.bmi2 = (CPUInfo[1] & (1 << 8)) != 0;
+			f.avx2 = osAvx && ((CPUInfo[1] & (1 << 5)) != 0);
+			f.bmi2 = (CPUInfo[1] & (1 << 8)) != 0;
 
 			uint64_t xcr0 = osAvx ? agoXgetbv(0) : 0;
 			bool osAvx512 = osAvx && ((xcr0 & 0xe0) == 0xe0);
-			features.avx512f = osAvx512 && ((CPUInfo[1] & (1 << 16)) != 0);
-			features.avx512dq = osAvx512 && ((CPUInfo[1] & (1 << 17)) != 0);
-			features.avx512bw = osAvx512 && ((CPUInfo[1] & (1 << 30)) != 0);
-			features.avx512vl = osAvx512 && ((CPUInfo[1] & (1 << 31)) != 0);
+			f.avx512f = osAvx512 && ((CPUInfo[1] & (1 << 16)) != 0);
+			f.avx512dq = osAvx512 && ((CPUInfo[1] & (1 << 17)) != 0);
+			f.avx512bw = osAvx512 && ((CPUInfo[1] & (1 << 30)) != 0);
+			f.avx512vl = osAvx512 && ((CPUInfo[1] & (1 << 31)) != 0);
 		}
-		initialized = true;
-	}
+		return f;
+	}();
 	return features;
 }
 

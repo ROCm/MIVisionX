@@ -51,7 +51,7 @@ static inline __m128i HafCpu_PackEightI32ToI16(__m256i values)
 	return _mm_packs_epi32(lo, hi);
 }
 
-static inline void HafCpu_AccumulateSquaresU8_AVX2(__m256i bytes, __m256i &sum, __m256i &rowSumSquared)
+static inline void HafCpu_AccumulateSquaresU8_AVX2(__m256i bytes, __m256i &sum, __m256i &sumSquared)
 {
 	const __m256i zero = _mm256_setzero_si256();
 	sum = _mm256_add_epi64(sum, _mm256_sad_epu8(bytes, zero));
@@ -60,17 +60,16 @@ static inline void HafCpu_AccumulateSquaresU8_AVX2(__m256i bytes, __m256i &sum, 
 	__m128i hi128 = _mm256_extracti128_si256(bytes, 1);
 	__m256i lo16 = _mm256_cvtepu8_epi16(lo128);
 	__m256i hi16 = _mm256_cvtepu8_epi16(hi128);
-	__m256i loSquares = _mm256_madd_epi16(lo16, lo16);
-	__m256i hiSquares = _mm256_madd_epi16(hi16, hi16);
+	__m256i loSquares = _mm256_madd_epi16(lo16, lo16); // 8 x i32 partials
+	__m256i hiSquares = _mm256_madd_epi16(hi16, hi16); // 8 x i32 partials
 
-	rowSumSquared = _mm256_add_epi32(rowSumSquared, loSquares);
-	rowSumSquared = _mm256_add_epi32(rowSumSquared, hiSquares);
-}
-
-static inline void HafCpu_AddU32ToU64_AVX2(__m256i values, __m256i &sum)
-{
-	sum = _mm256_add_epi64(sum, _mm256_cvtepu32_epi64(_mm256_castsi256_si128(values)));
-	sum = _mm256_add_epi64(sum, _mm256_cvtepu32_epi64(_mm256_extracti128_si256(values, 1)));
+	// Widen each i32 squared partial to i64 and accumulate directly into the
+	// 64-bit running sum. This matches the SSE path's precision and avoids any
+	// chance of 32-bit overflow on sufficiently wide images.
+	sumSquared = _mm256_add_epi64(sumSquared, _mm256_cvtepu32_epi64(_mm256_castsi256_si128(loSquares)));
+	sumSquared = _mm256_add_epi64(sumSquared, _mm256_cvtepu32_epi64(_mm256_extracti128_si256(loSquares, 1)));
+	sumSquared = _mm256_add_epi64(sumSquared, _mm256_cvtepu32_epi64(_mm256_castsi256_si128(hiSquares)));
+	sumSquared = _mm256_add_epi64(sumSquared, _mm256_cvtepu32_epi64(_mm256_extracti128_si256(hiSquares, 1)));
 }
 #endif
 
@@ -7174,14 +7173,12 @@ int HafCpu_MeanStdDev_DATA_U8
 	for (vx_uint32 y = 0; y < srcHeight; y++)
 	{
 		vx_uint8 *pLocalSrc = pSrcImage;
-		__m256i rowSumSquared = _mm256_setzero_si256();
 		vx_uint32 x = 0;
 		for (; x + 32 <= srcWidth; x += 32)
 		{
 			__m256i pixels = _mm256_loadu_si256((__m256i *)(pLocalSrc + x));
-			HafCpu_AccumulateSquaresU8_AVX2(pixels, sum, rowSumSquared);
+			HafCpu_AccumulateSquaresU8_AVX2(pixels, sum, sumSquared);
 		}
-		HafCpu_AddU32ToU64_AVX2(rowSumSquared, sumSquared);
 		for (; x < srcWidth; x++)
 		{
 			vx_uint32 pixel = pLocalSrc[x];
@@ -8702,33 +8699,36 @@ int HafCpu_MinMaxLoc_DATA_U8DATA_Loc_MinMax_Count_MinMax
 		for (; width + 32 <= (int)srcWidth; width += 32, pLocalSrc += 32)
 		{
 			__m256i pixels = _mm256_loadu_si256((__m256i *)pLocalSrc);
-			int minMask = _mm256_movemask_epi8(_mm256_cmpeq_epi8(pixels, minVal_ymm));
-			int maxMask = _mm256_movemask_epi8(_mm256_cmpeq_epi8(pixels, maxVal_ymm));
-			int minHits = HafCpu_PopCount32((unsigned int)minMask);
-			int maxHits = HafCpu_PopCount32((unsigned int)maxMask);
+			// _mm256_movemask_epi8 returns 32 bits in an int; treat as unsigned to
+			// avoid signed overflow UB in the (mask - 1) clear-lowest-bit trick below
+			// when bit 31 is set.
+			uint32_t minMask = (uint32_t)_mm256_movemask_epi8(_mm256_cmpeq_epi8(pixels, minVal_ymm));
+			uint32_t maxMask = (uint32_t)_mm256_movemask_epi8(_mm256_cmpeq_epi8(pixels, maxVal_ymm));
+			int minHits = HafCpu_PopCount32(minMask);
+			int maxHits = HafCpu_PopCount32(maxMask);
 			int oldMinCount = minCount;
 			while (minMask && minListNotFull)
 			{
-				int bit = HafCpu_Ctz32((unsigned int)minMask);
+				int bit = HafCpu_Ctz32(minMask);
 				loc.x = width + bit;
 				loc.y = height;
 				minLocList[minCount] = loc;
 				minCount++;
 				minListNotFull = (minCount < (int)capacityOfMinLocList);
-				minMask &= (minMask - 1);
+				minMask &= (minMask - 1u);
 			}
 			minCount = oldMinCount + minHits;
 			minListNotFull = (minCount < (int)capacityOfMinLocList);
 			int oldMaxCount = maxCount;
 			while (maxMask && maxListNotFull)
 			{
-				int bit = HafCpu_Ctz32((unsigned int)maxMask);
+				int bit = HafCpu_Ctz32(maxMask);
 				loc.x = width + bit;
 				loc.y = height;
 				maxLocList[maxCount] = loc;
 				maxCount++;
 				maxListNotFull = (maxCount < (int)capacityOfMaxLocList);
-				maxMask &= (maxMask - 1);
+				maxMask &= (maxMask - 1u);
 			}
 			maxCount = oldMaxCount + maxHits;
 			maxListNotFull = (maxCount < (int)capacityOfMaxLocList);

@@ -301,13 +301,37 @@ int HafCpu_NonLinearFilter_DATA_DATADATA
                 vx_uint8 *dst_ptr = (vx_uint8*)vxFormatImagePatchAddress2d(dst_base, xShftd, y, &dst_addr);
                 vx_int32 count = (vx_int32)readMaskedRectangle(src_base, &src_addr, border, format, xShftd, y, (vx_uint32)rx0, (vx_uint32)ry0, (vx_uint32)rx1, (vx_uint32)ry1, m, v, shift_x_u1);
 
-                qsort(v, count, sizeof(vx_uint8), vx_uint8_compare);
-
+                // Avoid the qsort per pixel: linear scan for min/max, or a 256-bucket
+                // histogram for median (count <= mrows*mcols <= 81).
                 switch (func)
                 {
-                case VX_NONLINEAR_FILTER_MIN:    res_val = v[0];         break; /* minimal value */
-                case VX_NONLINEAR_FILTER_MAX:    res_val = v[count - 1]; break; /* maximum value */
-                case VX_NONLINEAR_FILTER_MEDIAN: res_val = v[count / 2]; break; /* pick the middle value */
+                case VX_NONLINEAR_FILTER_MIN:
+                {
+                    vx_uint8 mn = v[0];
+                    for (vx_int32 i = 1; i < count; i++) if (v[i] < mn) mn = v[i];
+                    res_val = mn;
+                    break;
+                }
+                case VX_NONLINEAR_FILTER_MAX:
+                {
+                    vx_uint8 mx = v[0];
+                    for (vx_int32 i = 1; i < count; i++) if (v[i] > mx) mx = v[i];
+                    res_val = mx;
+                    break;
+                }
+                case VX_NONLINEAR_FILTER_MEDIAN:
+                {
+                    // Insertion sort is fastest for the small counts we see (<= 81).
+                    for (vx_int32 i = 1; i < count; i++)
+                    {
+                        vx_uint8 key = v[i];
+                        vx_int32 j = i - 1;
+                        while (j >= 0 && v[j] > key) { v[j+1] = v[j]; j--; }
+                        v[j+1] = key;
+                    }
+                    res_val = v[count >> 1];
+                    break;
+                }
                 }
                 if (format == VX_DF_IMAGE_U1)
                 {
@@ -664,42 +688,75 @@ static vx_status upsampleImage(vx_context context, vx_uint32 width, vx_uint32 he
     status = vxGetValidRegionImage(filling, &filling_rect);
     status |= vxMapImagePatch(filling, &filling_rect, 0, &filling_map_id, &filling_addr, (void **)&filling_base, VX_READ_AND_WRITE, VX_MEMORY_TYPE_HOST, 0);
 
-    for (int ix = 0; ix < (int)width; ix++)
+    // Zero-stuff upsample: write tmp[ix, iy] = (ix even && iy even) ? saturate(filling[ix/2, iy/2]) : 0
+    // tmp is U8; filling is U8 or S16. Use row-major SIMD for high throughput
+    // (the original column-major scalar loop was a major bottleneck).
     {
-        for (int iy = 0; iy < (int)height; iy++)
+        const vx_int32 tmpStride = tmp_addr.stride_y;
+        const vx_int32 fillStride = filling_addr.stride_y;
+        const int wInt = (int)width;
+        const int hInt = (int)height;
+
+        for (int iy = 0; iy < hInt; iy++)
         {
-
-            void* tmp_datap = vxFormatImagePatchAddress2d(tmp_base, ix, iy, &tmp_addr);
-
-            if (iy % 2 != 0 || ix % 2 != 0)
+            vx_uint8 *tmpRow = (vx_uint8 *)tmp_base + (size_t)iy * tmpStride;
+            if ((iy & 1) != 0)
             {
-                if (format == VX_DF_IMAGE_U8)
-                    *(vx_uint8 *)tmp_datap = (vx_uint8)0;
-                else
-                    *(vx_int16 *)tmp_datap = (vx_int16)0;
+                memset(tmpRow, 0, (size_t)wInt);
+                continue;
             }
-            else
+            // Even row: even-indexed pixels are saturated copies; odd indexed are 0.
+            int hf = iy >> 1;
+            if (filling_format == VX_DF_IMAGE_U8)
             {
-                void* filling_tmp = vxFormatImagePatchAddress2d(filling_base, ix / 2, iy / 2, &filling_addr);
-                vx_int32 filling_data = filling_format == VX_DF_IMAGE_U8 ? *(vx_uint8 *)filling_tmp : *(vx_int16 *)filling_tmp;
-                if (format == VX_DF_IMAGE_U8)
+                const vx_uint8 *fillRow = (const vx_uint8 *)filling_base + (size_t)hf * fillStride;
+                int ix = 0;
+#if USE_AVX
+                __m256i zero256 = _mm256_setzero_si256();
+                for (; ix + 32 <= wInt; ix += 32)
                 {
-                    if (filling_data > UINT8_MAX)
-                        filling_data = UINT8_MAX;
-                    else if (filling_data < 0)
-                        filling_data = 0;
-                    *(vx_uint8 *)tmp_datap = (vx_uint8)filling_data;
+                    __m128i src = _mm_loadu_si128((const __m128i *)(fillRow + (ix >> 1)));
+                    // Interleave src bytes with zero bytes via unpack to get 32 bytes
+                    __m128i lo = _mm_unpacklo_epi8(src, _mm_setzero_si128());
+                    __m128i hi = _mm_unpackhi_epi8(src, _mm_setzero_si128());
+                    __m256i out = _mm256_setr_m128i(lo, hi);
+                    (void)zero256;
+                    _mm256_storeu_si256((__m256i *)(tmpRow + ix), out);
                 }
-                else
+#endif
+                for (; ix + 16 <= wInt; ix += 16)
                 {
-                    if (filling_data > INT16_MAX)
-                        filling_data = INT16_MAX;
-                    else if (filling_data < INT16_MIN)
-                        filling_data = INT16_MIN;
-                    *(vx_int16 *)tmp_datap = (vx_int16)filling_data;
+                    __m128i src = _mm_loadl_epi64((const __m128i *)(fillRow + (ix >> 1)));
+                    __m128i out = _mm_unpacklo_epi8(src, _mm_setzero_si128());
+                    _mm_storeu_si128((__m128i *)(tmpRow + ix), out);
+                }
+                for (; ix < wInt; ix++)
+                {
+                    tmpRow[ix] = ((ix & 1) == 0) ? fillRow[ix >> 1] : (vx_uint8)0;
+                }
+            }
+            else // filling is S16; saturate to U8 (0..255)
+            {
+                const vx_int16 *fillRow = (const vx_int16 *)((const vx_uint8 *)filling_base + (size_t)hf * fillStride);
+                int ix = 0;
+                for (; ix + 16 <= wInt; ix += 16)
+                {
+                    __m128i lo = _mm_loadu_si128((const __m128i *)(fillRow + (ix >> 1)));     // 8 int16
+                    __m128i hi = _mm_setzero_si128();
+                    __m128i packed = _mm_packus_epi16(lo, hi);                                // 8 saturated U8 in lower 8
+                    __m128i out = _mm_unpacklo_epi8(packed, _mm_setzero_si128());             // 16 U8 with zeros between
+                    _mm_storeu_si128((__m128i *)(tmpRow + ix), out);
+                }
+                for (; ix < wInt; ix++)
+                {
+                    if ((ix & 1) != 0) { tmpRow[ix] = 0; continue; }
+                    vx_int32 v = fillRow[ix >> 1];
+                    v = v < 0 ? 0 : (v > 255 ? 255 : v);
+                    tmpRow[ix] = (vx_uint8)v;
                 }
             }
         }
+        (void)format;
     }
 
     status |= vxUnmapImagePatch(tmp, tmp_map_id);
@@ -717,28 +774,60 @@ static vx_status upsampleImage(vx_context context, vx_uint32 width, vx_uint32 he
     status = vxGetValidRegionImage(upsample, &upsample_rect);
     status |= vxMapImagePatch(upsample, &upsample_rect, 0, &upsample_map_id, &upsample_addr, (void **)&upsample_base, VX_READ_AND_WRITE, VX_MEMORY_TYPE_HOST, 0);
 
-    for (int ix = 0; ix < (int)width; ix++)
+    // Multiply by 4 with saturation, row-major SIMD (was column-major scalar bottleneck).
     {
-        for (int iy = 0; iy < (int)height; iy++)
+        const vx_int32 upStride = upsample_addr.stride_y;
+        const int wInt = (int)width;
+        const int hInt = (int)height;
+
+        if (upsample_format == VX_DF_IMAGE_U8)
         {
-            void* upsample_p = vxFormatImagePatchAddress2d(upsample_base, ix, iy, &upsample_addr);
-            vx_int32 upsample_data = upsample_format == VX_DF_IMAGE_U8 ? *(vx_uint8 *)upsample_p : *(vx_int16 *)upsample_p;
-            upsample_data *= 4;
-            if (upsample_format == VX_DF_IMAGE_U8)
+            for (int iy = 0; iy < hInt; iy++)
             {
-                if (upsample_data > UINT8_MAX)
-                    upsample_data = UINT8_MAX;
-                else if (upsample_data < 0)
-                    upsample_data = 0;
-                *(vx_uint8 *)upsample_p = (vx_uint8)upsample_data;
+                vx_uint8 *row = (vx_uint8 *)upsample_base + (size_t)iy * upStride;
+                int ix = 0;
+                for (; ix + 16 <= wInt; ix += 16)
+                {
+                    __m128i v = _mm_loadu_si128((const __m128i *)(row + ix));
+                    __m128i lo = _mm_unpacklo_epi8(v, _mm_setzero_si128());
+                    __m128i hi = _mm_unpackhi_epi8(v, _mm_setzero_si128());
+                    lo = _mm_slli_epi16(lo, 2);
+                    hi = _mm_slli_epi16(hi, 2);
+                    __m128i out = _mm_packus_epi16(lo, hi);
+                    _mm_storeu_si128((__m128i *)(row + ix), out);
+                }
+                for (; ix < wInt; ix++)
+                {
+                    vx_int32 v = row[ix] * 4;
+                    if (v > 255) v = 255;
+                    row[ix] = (vx_uint8)v;
+                }
             }
-            else
+        }
+        else // S16 with saturation to [INT16_MIN, INT16_MAX]
+        {
+            for (int iy = 0; iy < hInt; iy++)
             {
-                if (upsample_data > INT16_MAX)
-                    upsample_data = INT16_MAX;
-                else if (upsample_data < INT16_MIN)
-                    upsample_data = INT16_MIN;
-                *(vx_int16 *)upsample_p = (vx_int16)upsample_data;
+                vx_int16 *row = (vx_int16 *)((vx_uint8 *)upsample_base + (size_t)iy * upStride);
+                int ix = 0;
+                for (; ix + 8 <= wInt; ix += 8)
+                {
+                    __m128i v = _mm_loadu_si128((const __m128i *)(row + ix));
+                    // Sign-extend to 32-bit, shift, then signed-saturate-pack
+                    __m128i lo = _mm_cvtepi16_epi32(v);
+                    __m128i hi = _mm_cvtepi16_epi32(_mm_srli_si128(v, 8));
+                    lo = _mm_slli_epi32(lo, 2);
+                    hi = _mm_slli_epi32(hi, 2);
+                    __m128i out = _mm_packs_epi32(lo, hi);
+                    _mm_storeu_si128((__m128i *)(row + ix), out);
+                }
+                for (; ix < wInt; ix++)
+                {
+                    vx_int32 v = row[ix] * 4;
+                    if (v > INT16_MAX) v = INT16_MAX;
+                    else if (v < INT16_MIN) v = INT16_MIN;
+                    row[ix] = (vx_int16)v;
+                }
             }
         }
     }

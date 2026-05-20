@@ -2070,55 +2070,121 @@ ago_scale_matrix_t * matrix
 		xinc == (FP_MUL >> 1) && yinc == (FP_MUL >> 1) &&
 		xoffs == -(FP_MUL >> 2) && yoffs == -(FP_MUL >> 2))
 	{
-		for (vx_uint32 y = 0; y < dstHeight; y++)
+		// Exact 2x bilinear upscale. Destination rows 2k+1 and 2k+2 share the
+		// same source row pair {srcRow k, srcRow k+1}, so the horizontal blends
+		// topOdd/topEven/botOdd/botEven are computed once per src-pair and
+		// reused for the two destination rows below.
+		auto interleaveStore = [](vx_uint8 *dst, __m128i odd, __m128i even) {
+			_mm_storeu_si128((__m128i *)(dst), _mm_unpacklo_epi8(odd, even));
+			_mm_storeu_si128((__m128i *)(dst + 16), _mm_unpackhi_epi8(odd, even));
+		};
+
+		auto firstColScalar = [&](vx_uint8 *pSrc0, vx_uint8 *pSrc1, bool useTop3, bool useBottom3) -> vx_uint8 {
+			vx_uint32 sx1 = min((vx_uint32)1, srcWidth - 1);
+			vx_uint16 h0 = (pSrc0[0] + 3 * pSrc0[sx1] + 2) >> 2;
+			vx_uint16 h1 = (pSrc1[0] + 3 * pSrc1[sx1] + 2) >> 2;
+			if (useBottom3) return (vx_uint8)((h0 + 3 * h1 + 2) >> 2);
+			if (useTop3) return (vx_uint8)((3 * h0 + h1 + 2) >> 2);
+			return (vx_uint8)h0;
+		};
+
+		auto tailScalar = [&](vx_uint8 *pSrc0, vx_uint8 *pSrc1, vx_uint32 x, bool useTop3, bool useBottom3) -> vx_uint8 {
+			vx_uint32 sx0 = (x - 1) >> 1;
+			vx_uint32 sx1 = min(sx0 + 1, srcWidth - 1);
+			vx_uint16 h0 = (x & 1) ? ((3 * pSrc0[sx0] + pSrc0[sx1] + 2) >> 2) : ((pSrc0[sx0] + 3 * pSrc0[sx1] + 2) >> 2);
+			vx_uint16 h1 = (x & 1) ? ((3 * pSrc1[sx0] + pSrc1[sx1] + 2) >> 2) : ((pSrc1[sx0] + 3 * pSrc1[sx1] + 2) >> 2);
+			if (useBottom3) return (vx_uint8)((h0 + 3 * h1 + 2) >> 2);
+			if (useTop3) return (vx_uint8)((3 * h0 + h1 + 2) >> 2);
+			return (vx_uint8)h0;
+		};
+
+		// y=0: degenerate src pair = first source row only. No vertical blending.
 		{
-			bool useTop3 = (y & 1) != 0;
-			bool useBottom3 = y != 0 && !useTop3;
-			vx_uint32 sy0 = (y == 0) ? 0 : ((y - 1) >> 1);
+			vx_uint8 *pSrc = pSrcImage;
+			vx_uint8 *pDst = pDstImage;
+			pDst[0] = firstColScalar(pSrc, pSrc, false, false);
+			vx_uint32 x = 1;
+			for (; x + 31 < dstWidth; x += 32)
+			{
+				vx_uint32 sx = (x - 1) >> 1;
+				__m128i A = _mm_loadu_si128((__m128i *)(pSrc + sx));
+				__m128i B = _mm_loadu_si128((__m128i *)(pSrc + sx + 1));
+				__m128i Odd = HafCpu_BlendU8_3_1(A, B);
+				__m128i Even = HafCpu_BlendU8_1_3(A, B);
+				interleaveStore(pDst + x, Odd, Even);
+			}
+			for (; x < dstWidth; x++) pDst[x] = tailScalar(pSrc, pSrc, x, false, false);
+		}
+
+		// Middle rows: emit pairs y = 2k+1, y = 2k+2 from the same source pair.
+		const vx_uint32 dstRows = dstHeight;
+		vx_uint32 y = 1;
+		for (; y + 1 < dstRows; y += 2)
+		{
+			vx_uint32 sy0 = y >> 1;          // (y - 1) >> 1
 			vx_uint32 sy1 = min(sy0 + 1, srcHeight - 1);
 			vx_uint8 *pSrc0 = pSrcImage + sy0 * srcImageStrideInBytes;
 			vx_uint8 *pSrc1 = pSrcImage + sy1 * srcImageStrideInBytes;
-			vx_uint8 *pDst = pDstImage + y * dstImageStrideInBytes;
+			vx_uint8 *pDst0 = pDstImage + y * dstImageStrideInBytes;       // useTop3 = true
+			vx_uint8 *pDst1 = pDst0 + dstImageStrideInBytes;                // useBottom3 = true
 
-			vx_uint32 x = 0;
-			for (; x < 1; x++)
-			{
-				vx_uint32 sx0 = 0;
-				vx_uint32 sx1 = min((vx_uint32)1, srcWidth - 1);
-				vx_uint16 h0 = (pSrc0[sx0] + 3 * pSrc0[sx1] + 2) >> 2;
-				vx_uint16 h1 = (pSrc1[sx0] + 3 * pSrc1[sx1] + 2) >> 2;
-				pDst[x] = useBottom3 ? (vx_uint8)((h0 + 3 * h1 + 2) >> 2) : (useTop3 ? (vx_uint8)((3 * h0 + h1 + 2) >> 2) : (vx_uint8)h0);
-			}
+			pDst0[0] = firstColScalar(pSrc0, pSrc1, true, false);
+			pDst1[0] = firstColScalar(pSrc0, pSrc1, false, true);
+
+			vx_uint32 x = 1;
 			for (; x + 31 < dstWidth; x += 32)
 			{
 				vx_uint32 sx = (x - 1) >> 1;
 				__m128i topA = _mm_loadu_si128((__m128i *)(pSrc0 + sx));
 				__m128i topB = _mm_loadu_si128((__m128i *)(pSrc0 + sx + 1));
+				__m128i botA = _mm_loadu_si128((__m128i *)(pSrc1 + sx));
+				__m128i botB = _mm_loadu_si128((__m128i *)(pSrc1 + sx + 1));
 				__m128i topOdd = HafCpu_BlendU8_3_1(topA, topB);
 				__m128i topEven = HafCpu_BlendU8_1_3(topA, topB);
-				__m128i outOdd = topOdd;
-				__m128i outEven = topEven;
-				if (useTop3 || useBottom3)
-				{
-					__m128i botA = _mm_loadu_si128((__m128i *)(pSrc1 + sx));
-					__m128i botB = _mm_loadu_si128((__m128i *)(pSrc1 + sx + 1));
-					__m128i botOdd = HafCpu_BlendU8_3_1(botA, botB);
-					__m128i botEven = HafCpu_BlendU8_1_3(botA, botB);
-					outOdd = useTop3 ? HafCpu_BlendU8_3_1(topOdd, botOdd) : HafCpu_BlendU8_1_3(topOdd, botOdd);
-					outEven = useTop3 ? HafCpu_BlendU8_3_1(topEven, botEven) : HafCpu_BlendU8_1_3(topEven, botEven);
-				}
-				_mm_storeu_si128((__m128i *)(pDst + x), _mm_unpacklo_epi8(outOdd, outEven));
-				_mm_storeu_si128((__m128i *)(pDst + x + 16), _mm_unpackhi_epi8(outOdd, outEven));
+				__m128i botOdd = HafCpu_BlendU8_3_1(botA, botB);
+				__m128i botEven = HafCpu_BlendU8_1_3(botA, botB);
+				interleaveStore(pDst0 + x,
+					HafCpu_BlendU8_3_1(topOdd, botOdd),
+					HafCpu_BlendU8_3_1(topEven, botEven));
+				interleaveStore(pDst1 + x,
+					HafCpu_BlendU8_1_3(topOdd, botOdd),
+					HafCpu_BlendU8_1_3(topEven, botEven));
 			}
 			for (; x < dstWidth; x++)
 			{
-				vx_uint32 sx0 = (x == 0) ? 0 : ((x - 1) >> 1);
-				vx_uint32 sx1 = min(sx0 + 1, srcWidth - 1);
-				vx_uint16 h0 = (x & 1) ? ((3 * pSrc0[sx0] + pSrc0[sx1] + 2) >> 2) : ((pSrc0[sx0] + 3 * pSrc0[sx1] + 2) >> 2);
-				vx_uint16 h1 = (x & 1) ? ((3 * pSrc1[sx0] + pSrc1[sx1] + 2) >> 2) : ((pSrc1[sx0] + 3 * pSrc1[sx1] + 2) >> 2);
-				pDst[x] = useBottom3 ? (vx_uint8)((h0 + 3 * h1 + 2) >> 2) : (useTop3 ? (vx_uint8)((3 * h0 + h1 + 2) >> 2) : (vx_uint8)h0);
+				pDst0[x] = tailScalar(pSrc0, pSrc1, x, true, false);
+				pDst1[x] = tailScalar(pSrc0, pSrc1, x, false, true);
 			}
 		}
+		for (; y < dstRows; y++)
+		{
+			bool useTop3 = (y & 1) != 0;
+			bool useBottom3 = !useTop3;
+			vx_uint32 sy0 = (y - 1) >> 1;
+			vx_uint32 sy1 = min(sy0 + 1, srcHeight - 1);
+			vx_uint8 *pSrc0 = pSrcImage + sy0 * srcImageStrideInBytes;
+			vx_uint8 *pSrc1 = pSrcImage + sy1 * srcImageStrideInBytes;
+			vx_uint8 *pDst = pDstImage + y * dstImageStrideInBytes;
+			pDst[0] = firstColScalar(pSrc0, pSrc1, useTop3, useBottom3);
+			vx_uint32 x = 1;
+			for (; x + 31 < dstWidth; x += 32)
+			{
+				vx_uint32 sx = (x - 1) >> 1;
+				__m128i topA = _mm_loadu_si128((__m128i *)(pSrc0 + sx));
+				__m128i topB = _mm_loadu_si128((__m128i *)(pSrc0 + sx + 1));
+				__m128i botA = _mm_loadu_si128((__m128i *)(pSrc1 + sx));
+				__m128i botB = _mm_loadu_si128((__m128i *)(pSrc1 + sx + 1));
+				__m128i topOdd = HafCpu_BlendU8_3_1(topA, topB);
+				__m128i topEven = HafCpu_BlendU8_1_3(topA, topB);
+				__m128i botOdd = HafCpu_BlendU8_3_1(botA, botB);
+				__m128i botEven = HafCpu_BlendU8_1_3(botA, botB);
+				__m128i outOdd = useTop3 ? HafCpu_BlendU8_3_1(topOdd, botOdd) : HafCpu_BlendU8_1_3(topOdd, botOdd);
+				__m128i outEven = useTop3 ? HafCpu_BlendU8_3_1(topEven, botEven) : HafCpu_BlendU8_1_3(topEven, botEven);
+				interleaveStore(pDst + x, outOdd, outEven);
+			}
+			for (; x < dstWidth; x++) pDst[x] = tailScalar(pSrc0, pSrc1, x, useTop3, useBottom3);
+		}
+
 		return AGO_SUCCESS;
 	}
 

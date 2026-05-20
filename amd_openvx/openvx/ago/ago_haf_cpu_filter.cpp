@@ -22,8 +22,67 @@ THE SOFTWARE.
 
 
 #include "ago_internal.h"
+#include <float.h>
 
 extern vx_uint32 dataConvertU1ToU8_4bytes[16];
+
+#if USE_AVX
+// Vectorized FastAtan2-to-phase-byte for 8 int16 (Gx, Gy) lanes packed into an
+// __m128i. Returns 8 phase bytes (0..255) packed into the lower 64 bits of an
+// __m128i (upper 64 bits zero). Matches the scalar HafCpu_FastAtan2_deg path
+// used in SobelMagnitudePhase.
+static inline __m128i HafCpu_FastAtan2_PhaseByte_8(__m128i gx16, __m128i gy16)
+{
+	const __m256 eps = _mm256_set1_ps((float)DBL_EPSILON);
+	const __m256 ninety = _mm256_set1_ps(90.0f);
+	const __m256 oneEighty = _mm256_set1_ps(180.0f);
+	const __m256 threeSixty = _mm256_set1_ps(360.0f);
+	const __m256 scale = _mm256_set1_ps((float)128 / 180.0f);
+	const __m256 half = _mm256_set1_ps(0.5f);
+	const __m256 p1 = _mm256_set1_ps(atan2_p1);
+	const __m256 p3 = _mm256_set1_ps(atan2_p3);
+	const __m256 p5 = _mm256_set1_ps(atan2_p5);
+	const __m256 p7 = _mm256_set1_ps(atan2_p7);
+	const __m256i zero32 = _mm256_setzero_si256();
+
+	__m256i gx32 = _mm256_cvtepi16_epi32(gx16);
+	__m256i gy32 = _mm256_cvtepi16_epi32(gy16);
+	__m256 ax = _mm256_cvtepi32_ps(_mm256_abs_epi32(gx32));
+	__m256 ay = _mm256_cvtepi32_ps(_mm256_abs_epi32(gy32));
+	__m256 useX = _mm256_cmp_ps(ay, ax, _CMP_LE_OQ);
+	__m256 mn = _mm256_min_ps(ax, ay);
+	__m256 mx = _mm256_max_ps(ax, ay);
+	__m256 c = _mm256_div_ps(mn, _mm256_add_ps(mx, eps));
+	__m256 c2 = _mm256_mul_ps(c, c);
+	__m256 poly = _mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(p7, c2), p5), c2), p3), c2), p1), c);
+	__m256 angle = _mm256_blendv_ps(_mm256_sub_ps(ninety, poly), poly, useX);
+
+	__m256 gxNeg = _mm256_castsi256_ps(_mm256_cmpgt_epi32(zero32, gx32));
+	__m256 gyNeg = _mm256_castsi256_ps(_mm256_cmpgt_epi32(zero32, gy32));
+	angle = _mm256_blendv_ps(angle, _mm256_sub_ps(oneEighty, angle), gxNeg);
+	angle = _mm256_blendv_ps(angle, _mm256_sub_ps(threeSixty, angle), gyNeg);
+	__m256i phase32 = _mm256_cvttps_epi32(_mm256_add_ps(_mm256_mul_ps(angle, scale), half));
+	__m128i phase16 = _mm_packs_epi32(_mm256_castsi256_si128(phase32), _mm256_extracti128_si256(phase32, 1));
+	return _mm_packus_epi16(phase16, phase16);
+}
+
+// Vectorized sqrt(Gx^2 + Gy^2) for 8 int16 (Gx, Gy) lanes -> 8 int16 magnitudes
+// packed into __m128i (with saturated cast to int16). Uses single-precision
+// sqrt which is far cheaper than the double-precision pipeline the legacy code
+// used. The values fit since max |Gx|, |Gy| from a 3x3 Sobel on uint8 input is
+// 4*255 = 1020 and the magnitude is sqrt(2)*1020 = ~1442, well within int16.
+static inline __m128i HafCpu_SobelMagnitude_S16_8(__m128i gx16, __m128i gy16)
+{
+	__m256i gx32 = _mm256_cvtepi16_epi32(gx16);
+	__m256i gy32 = _mm256_cvtepi16_epi32(gy16);
+	__m256 gxf = _mm256_cvtepi32_ps(gx32);
+	__m256 gyf = _mm256_cvtepi32_ps(gy32);
+	__m256 sumf = _mm256_add_ps(_mm256_mul_ps(gxf, gxf), _mm256_mul_ps(gyf, gyf));
+	__m256 magf = _mm256_sqrt_ps(sumf);
+	__m256i mag32 = _mm256_cvttps_epi32(magf);
+	return _mm_packs_epi32(_mm256_castsi256_si128(mag32), _mm256_extracti128_si256(mag32, 1));
+}
+#endif
 
 /* The function assumes at least one pixel padding on the top, left, right and bottom
 Separable filter
@@ -4179,35 +4238,44 @@ int HafCpu_SobelMagnitudePhase_S16U8_U8_3x3
 			GyH = _mm_sub_epi16(GyH, temp);
 			GyL = _mm_sub_epi16(GyL, shiftedL);
 
-			// Calculate phase
+#if USE_AVX
+			// Vectorized phase: 8 lanes at a time via AVX2 polynomial atan2.
+			__m128i phaseL = HafCpu_FastAtan2_PhaseByte_8(GxL, GyL);
+			__m128i phaseH = HafCpu_FastAtan2_PhaseByte_8(GxH, GyH);
+			_mm_storel_epi64((__m128i *)pLocalDstPhase, phaseL);
+			_mm_storel_epi64((__m128i *)(pLocalDstPhase + 8), phaseH);
+			pLocalDstPhase += 16;
+
+			// Vectorized magnitude using single-precision sqrt (was double-precision).
+			__m128i magL = HafCpu_SobelMagnitude_S16_8(GxL, GyL);
+			__m128i magH = HafCpu_SobelMagnitude_S16_8(GxH, GyH);
+			_mm_store_si128((__m128i *)pLocalDstMag, magL);
+			_mm_store_si128((__m128i *)(pLocalDstMag + 8), magH);
+#else
 			for (int i = 0; i < 8; i++)
 			{
 				float arct = HafCpu_FastAtan2_deg(M128I(GxL).m128i_i16[i], M128I(GyL).m128i_i16[i]);
 				*pLocalDstPhase++ = (vx_uint8)((vx_uint32)(arct*scale + 0.5) & 0xFF);
 			}
-
 			for (int i = 0; i < 8; i++)
 			{
 				float arct = HafCpu_FastAtan2_deg(M128I(GxH).m128i_i16[i], M128I(GyH).m128i_i16[i]);
 				*pLocalDstPhase++ = (vx_uint8)((vx_uint32)(arct*scale + 0.5) & 0xFF);
 			}
 
-			// Magnitude
 			row0 = _mm_srli_si128(GxH, 8);
 			row1 = _mm_srli_si128(GxL, 8);
-			row0 = _mm_cvtepi16_epi32(row0);							// GxH: Upper 4 words to dwords
-			GxH = _mm_cvtepi16_epi32(GxH);								// GxH: Lower 4 words to dwords
-			row1 = _mm_cvtepi16_epi32(row1);							// GxL: Upper 4 words to dwords
-			GxL = _mm_cvtepi16_epi32(GxL);								// GxL: Lower 4 words to dwords
-
+			row0 = _mm_cvtepi16_epi32(row0);
+			GxH = _mm_cvtepi16_epi32(GxH);
+			row1 = _mm_cvtepi16_epi32(row1);
+			GxL = _mm_cvtepi16_epi32(GxL);
 			row2 = _mm_srli_si128(GyH, 8);
 			temp = _mm_srli_si128(GyL, 8);
-			row2 = _mm_cvtepi16_epi32(row2);							// GyH: Upper 4 words to dwords
-			GyH = _mm_cvtepi16_epi32(GyH);								// GyH: Lower 4 words to dwords
-			temp = _mm_cvtepi16_epi32(temp);							// GyL: Upper 4 words to dwords
-			GyL = _mm_cvtepi16_epi32(GyL);								// GyL: Lower 4 words to dwords
-
-			row0 = _mm_mullo_epi32(row0, row0);							// Square
+			row2 = _mm_cvtepi16_epi32(row2);
+			GyH = _mm_cvtepi16_epi32(GyH);
+			temp = _mm_cvtepi16_epi32(temp);
+			GyL = _mm_cvtepi16_epi32(GyL);
+			row0 = _mm_mullo_epi32(row0, row0);
 			GxH = _mm_mullo_epi32(GxH, GxH);
 			row1 = _mm_mullo_epi32(row1, row1);
 			GxL = _mm_mullo_epi32(GxL, GxL);
@@ -4215,56 +4283,23 @@ int HafCpu_SobelMagnitudePhase_S16U8_U8_3x3
 			GyH = _mm_mullo_epi32(GyH, GyH);
 			temp = _mm_mullo_epi32(temp, temp);
 			GyL = _mm_mullo_epi32(GyL, GyL);
-
-			row0 = _mm_add_epi32(row0, row2);							// Add
+			row0 = _mm_add_epi32(row0, row2);
 			GxH = _mm_add_epi32(GxH, GyH);
 			row1 = _mm_add_epi32(row1, temp);
 			GxL = _mm_add_epi32(GxL, GyL);
-
-			temp = _mm_srli_si128(row0, 8);
-			__m128d d_pix1 = _mm_cvtepi32_pd(temp);						// Pixels 15, 14
-			__m128d d_pix0 = _mm_cvtepi32_pd(row0);						// Pixels 13, 12
-			d_pix1 = _mm_sqrt_pd(d_pix1);
-			d_pix0 = _mm_sqrt_pd(d_pix0);
-			row0 = _mm_cvtpd_epi32(d_pix1);
-			temp = _mm_cvtpd_epi32(d_pix0);
-			row0 = _mm_slli_si128(row0, 8);
-			row0 = _mm_or_si128(row0, temp);							// Pixels 15, 14, 13, 12 (DWORDS)
-
-			temp = _mm_srli_si128(GxH, 8);
-			d_pix1 = _mm_cvtepi32_pd(temp);								// Pixels 11, 10
-			d_pix0 = _mm_cvtepi32_pd(GxH);								// Pixels 9, 8
-			d_pix1 = _mm_sqrt_pd(d_pix1);
-			d_pix0 = _mm_sqrt_pd(d_pix0);
-			GxH = _mm_cvtpd_epi32(d_pix1);
-			temp = _mm_cvtpd_epi32(d_pix0);
-			GxH = _mm_slli_si128(GxH, 8);
-			GxH = _mm_or_si128(GxH, temp);								// Pixels 11, 10, 9, 8 (DWORDS)
-			row0 = _mm_packus_epi32(GxH, row0);							// Pixels 15, 14, 13, 12, 11, 10, 9, 8 (WORDS)
-
-			temp = _mm_srli_si128(row1, 8);
-			d_pix1 = _mm_cvtepi32_pd(temp);								// Pixels 7, 6
-			d_pix0 = _mm_cvtepi32_pd(row1);								// Pixels 5, 4
-			d_pix1 = _mm_sqrt_pd(d_pix1);
-			d_pix0 = _mm_sqrt_pd(d_pix0);
-			row1 = _mm_cvtpd_epi32(d_pix1);
-			temp = _mm_cvtpd_epi32(d_pix0);
-			row1 = _mm_slli_si128(row1, 8);
-			row1 = _mm_or_si128(row1, temp);							// Pixels 7, 6, 5, 4 (DWORDS)
-
-			temp = _mm_srli_si128(GxL, 8);
-			d_pix1 = _mm_cvtepi32_pd(temp);								// Pixels 3, 2
-			d_pix0 = _mm_cvtepi32_pd(GxL);								// Pixels 1, 0
-			d_pix1 = _mm_sqrt_pd(d_pix1);
-			d_pix0 = _mm_sqrt_pd(d_pix0);
-			GxL = _mm_cvtpd_epi32(d_pix1);
-			temp = _mm_cvtpd_epi32(d_pix0);
-			GxL = _mm_slli_si128(GxL, 8);
-			GxL = _mm_or_si128(GxL, temp);								// Pixels 3, 2, 1, 0 (DWORDS)
-			row1 = _mm_packus_epi32(GxL, row1);							// Pixels 7, 6, 5, 4, 3, 2, 1, 0 (WORDS)
-
-			_mm_store_si128((__m128i *) pLocalDstMag, row1);
-			_mm_store_si128((__m128i *) (pLocalDstMag + 8), row0);
+			__m128 mag0 = _mm_sqrt_ps(_mm_cvtepi32_ps(row0));
+			__m128 mag1 = _mm_sqrt_ps(_mm_cvtepi32_ps(GxH));
+			__m128 mag2 = _mm_sqrt_ps(_mm_cvtepi32_ps(row1));
+			__m128 mag3 = _mm_sqrt_ps(_mm_cvtepi32_ps(GxL));
+			__m128i mag0i = _mm_cvttps_epi32(mag0);
+			__m128i mag1i = _mm_cvttps_epi32(mag1);
+			__m128i mag2i = _mm_cvttps_epi32(mag2);
+			__m128i mag3i = _mm_cvttps_epi32(mag3);
+			__m128i pkH = _mm_packus_epi32(mag1i, mag0i);
+			__m128i pkL = _mm_packus_epi32(mag3i, mag2i);
+			_mm_store_si128((__m128i *)pLocalDstMag, pkL);
+			_mm_store_si128((__m128i *)(pLocalDstMag + 8), pkH);
+#endif
 
 			pLocalSrc += 16;
 			pLocalDstMag += 16;

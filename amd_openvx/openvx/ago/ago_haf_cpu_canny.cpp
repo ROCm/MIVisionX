@@ -23,6 +23,46 @@ THE SOFTWARE.
 
 #include "ago_internal.h"
 
+// Vectorized version of HafCpu_FastAtan2_Canny for 8 int16 (Gx, Gy) lanes.
+// Returns 8 angle codes in [0,3] packed into int16 lanes.
+// Selection order matches the scalar reference: angle codes are
+//   0 if |Gy| <= |Gx| * tan(22.5deg)   (nearly horizontal)
+//   2 if |Gy| >= |Gx| * tan(67.5deg)   (nearly vertical)
+//   1 if Gx*Gy >= 0 in between (diagonal, same sign)
+//   3 otherwise                        (anti-diagonal, opposite signs)
+static inline __m128i HafCpu_FastAtan2_Canny_8(__m128i Gx, __m128i Gy)
+{
+	const __m128i z = _mm_setzero_si128();
+	const __m128 c_p414 = _mm_set1_ps(0.4142135623730950488f);
+	const __m128 c_p2414 = _mm_set1_ps(2.4142135623730950488f);
+
+	__m128i ax = _mm_abs_epi16(Gx);
+	__m128i ay = _mm_abs_epi16(Gy);
+
+	__m128 axLoF = _mm_cvtepi32_ps(_mm_unpacklo_epi16(ax, z));
+	__m128 axHiF = _mm_cvtepi32_ps(_mm_unpackhi_epi16(ax, z));
+	__m128 ayLoF = _mm_cvtepi32_ps(_mm_unpacklo_epi16(ay, z));
+	__m128 ayHiF = _mm_cvtepi32_ps(_mm_unpackhi_epi16(ay, z));
+
+	__m128 d1Lo = _mm_mul_ps(axLoF, c_p414);
+	__m128 d1Hi = _mm_mul_ps(axHiF, c_p414);
+	__m128 d2Lo = _mm_mul_ps(axLoF, c_p2414);
+	__m128 d2Hi = _mm_mul_ps(axHiF, c_p2414);
+
+	__m128i leD1 = _mm_packs_epi32(
+		_mm_castps_si128(_mm_cmple_ps(ayLoF, d1Lo)),
+		_mm_castps_si128(_mm_cmple_ps(ayHiF, d1Hi)));
+	__m128i geD2 = _mm_packs_epi32(
+		_mm_castps_si128(_mm_cmpge_ps(ayLoF, d2Lo)),
+		_mm_castps_si128(_mm_cmpge_ps(ayHiF, d2Hi)));
+
+	__m128i signProd = _mm_xor_si128(_mm_srai_epi16(Gx, 15), _mm_srai_epi16(Gy, 15));
+
+	__m128i quad13 = _mm_blendv_epi8(_mm_set1_epi16(1), _mm_set1_epi16(3), signProd);
+	__m128i quadOr2 = _mm_blendv_epi8(quad13, _mm_set1_epi16(2), geD2);
+	return _mm_blendv_epi8(quadOr2, z, leD1);
+}
+
 static const int n_offset[][2][2] = {
 	{ { -1, 0 }, { 1, 0 } },
 	{ { 1, -1 }, { -1, 1 } },
@@ -109,9 +149,7 @@ int HafCpu_CannySobel_U16_U8_3x3_L1NORM
 			__m128i t0 = _mm_sub_epi16(s1, s0);
 			__m128i t1 = _mm_add_epi16(_mm_add_epi16(s2, s4), _mm_slli_epi16(s3, 1));
 			t1 = _mm_sub_epi16(z, t1);
-			for (int i = 0; i < 8; i++){
-				M128I(s1).m128i_i16[i] = HafCpu_FastAtan2_Canny(M128I(t0).m128i_i16[i], M128I(t1).m128i_i16[i]);
-			}
+			s1 = HafCpu_FastAtan2_Canny_8(t0, t1);
 			t0 = _mm_add_epi16(_mm_abs_epi16(t0), _mm_abs_epi16(t1));
 			// pack with signed saturation
 			t0 = _mm_or_si128(_mm_slli_epi16(t0, 2), s1);
@@ -237,9 +275,7 @@ int HafCpu_CannySobel_U16_U8_5x5_L1NORM
 			// find magnitude
 			s0 = _mm_add_epi16(_mm_abs_epi16(t0), _mm_abs_epi16(t1));
 			//s0 = _mm_min_epi16(s0, clamp);
-			for (int i = 0; i < 8; i++){
-				M128I(t0).m128i_i16[i] = HafCpu_FastAtan2_Canny(M128I(t0).m128i_i16[i], M128I(t1).m128i_i16[i]);
-			}
+			t0 = HafCpu_FastAtan2_Canny_8(t0, t1);
 			s0 = _mm_or_si128(_mm_slli_epi16(s0, 2), t0);
 			// store magnitude and angle to destination
 			_mm_store_si128((__m128i*)(drow + x), s0);
@@ -390,9 +426,7 @@ int HafCpu_CannySobel_U16_U8_7x7_L1NORM
 			// find magnitude
 			s0 = _mm_add_epi16(_mm_abs_epi16(t0), _mm_abs_epi16(t1));
 			s0 = _mm_min_epi16(s0, clamp);
-			for (int i = 0; i < 8; i++){
-				M128I(t0).m128i_i16[i] = HafCpu_FastAtan2_Canny(M128I(t0).m128i_i16[i], M128I(t1).m128i_i16[i]);
-			}
+			t0 = HafCpu_FastAtan2_Canny_8(t0, t1);
 			s0 = _mm_or_si128(_mm_slli_epi16(s0, 2), t0);
 			// store magnitude and angle to destination
 			_mm_store_si128((__m128i*)(drow + x), s0);
@@ -742,9 +776,7 @@ int HafCpu_CannySobel_U16_U8_3x3_L2NORM
 			f0 = _mm_sqrt_ps(f0);
 			f1 = _mm_sqrt_ps(f1);
 
-			for (int i = 0; i < 8; i++){
-				M128I(s1).m128i_i16[i] = HafCpu_FastAtan2_Canny(M128I(t0).m128i_i16[i], M128I(t1).m128i_i16[i]);
-			}
+			s1 = HafCpu_FastAtan2_Canny_8(t0, t1);
 			t0 = _mm_cvtps_epi32(f0);
 			t1 = _mm_cvtps_epi32(f1);
 			// pack with signed saturation
@@ -871,9 +903,7 @@ int HafCpu_CannySobel_U16_U8_5x5_L2NORM
 			f0 = _mm_sqrt_ps(f0);
 			f1 = _mm_sqrt_ps(f1);
 
-			for (int i = 0; i < 8; i++){
-				M128I(s1).m128i_i16[i] = HafCpu_FastAtan2_Canny(M128I(t0).m128i_i16[i], M128I(t1).m128i_i16[i]);
-			}
+			s1 = HafCpu_FastAtan2_Canny_8(t0, t1);
 			t0 = _mm_cvtps_epi32(f0);
 			t1 = _mm_cvtps_epi32(f1);
 			// pack with signed saturation
@@ -1034,9 +1064,7 @@ int HafCpu_CannySobel_U16_U8_7x7_L2NORM
 			__m128 f1 = _mm_cvtepi32_ps(s2);
 			f0 = _mm_sqrt_ps(f0);
 			f1 = _mm_sqrt_ps(f1);
-			for (int i = 0; i < 8; i++){
-				M128I(s1).m128i_i16[i] = HafCpu_FastAtan2_Canny(M128I(t0).m128i_i16[i], M128I(t1).m128i_i16[i]);
-			}
+			s1 = HafCpu_FastAtan2_Canny_8(t0, t1);
 			t0 = _mm_cvtps_epi32(f0);
 			t1 = _mm_cvtps_epi32(f1);
 			// pack with signed saturation

@@ -478,9 +478,11 @@ int HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM
 	vx_int16 *Gx, *Gy;
 	vx_uint8 * pTemp;
 	vx_uint32 dstride = ((dstWidth + 15)&~15);
+	// Gx and Gy each need (dstride * dstHeight) vx_int16 elements; the original code
+	// only spaced them by `dstride` u16 elements, aliasing Gy row 0 onto Gx row 1.
 	Gx = (vx_int16 *)pScratch;
-	Gy = (vx_int16 *)(pScratch + dstride*sizeof(vx_int16));
-	pTemp = pScratch + 2*dstride*sizeof(vx_int16);
+	Gy = (vx_int16 *)(pScratch + dstride * dstHeight * sizeof(vx_int16));
+	pTemp = pScratch + 2 * dstride * dstHeight * sizeof(vx_int16);
 	// compute Sobel gradients
 	HafCpu_Sobel_S16S16_U8_3x3_GXY(dstWidth, dstHeight - 2, Gx + dstride, dstride * 2, Gy + dstride, dstride * 2, pSrcImage + srcImageStrideInBytes, srcImageStrideInBytes, pTemp);
 	
@@ -488,11 +490,21 @@ int HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM
 	// Vectorize the scalar HafCpu_FastAtan2_deg loop using HafCpu_FastAtan2_Canny_8 which
 	// produces the same 0..3 angle bucket directly from (Gx, Gy) vectors. The 8-wide path
 	// packs (mag << 2) | orientation into u16 lanes and stores them as a __m128i.
-	unsigned int y = 1;
+	//
+	// NOTE on Gy sign convention: HafCpu_Sobel_S16S16_U8_3x3_GXY emits Gy = src(y+1) - src(y-1)
+	// (positive downward in screen coordinates) while the angle table (n_offset) and the
+	// HafCpu_FastAtan2_Canny_8 quadrant logic expect the Canny-classic Gy = src(y-1) - src(y+1)
+	// (positive upward). Negate Gy before feeding the angle classifier to keep the
+	// diagonal angle buckets (1 and 3) correctly aligned with the right neighbour pair.
+	//
+	// The Sobel kernel populates rows 1..dstHeight-2 of Gx/Gy in-place (called with
+	// dstHeight-2 as the output height). Write the packed mag+angle back into the same
+	// (Gx) row we read from, so that the subsequent NMS loop indexes correctly by row.
 	vx_int16 *pGx = Gx + dstride;
 	vx_int16 *pGy = Gy + dstride;
-	vx_int16 *pMag = Gx;
-	while (y < dstHeight)
+	vx_int16 *pMag = Gx + dstride;
+	const __m128i sse_zero = _mm_setzero_si128();
+	for (unsigned int y = 1; y < dstHeight - 1; y++)
 	{
 		vx_uint16 *pdst = (vx_uint16*)pMag;		// to store the result
 
@@ -501,7 +513,8 @@ int HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM
 		{
 			__m128i gxv = _mm_loadu_si128((const __m128i *)(pGx + x));
 			__m128i gyv = _mm_loadu_si128((const __m128i *)(pGy + x));
-			__m128i orn = HafCpu_FastAtan2_Canny_8(gxv, gyv);
+			__m128i gy_neg = _mm_sub_epi16(sse_zero, gyv);
+			__m128i orn = HafCpu_FastAtan2_Canny_8(gxv, gy_neg);
 			__m128i ax = _mm_abs_epi16(gxv);
 			__m128i ay = _mm_abs_epi16(gyv);
 			__m128i mag = _mm_add_epi16(ax, ay);
@@ -513,7 +526,7 @@ int HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM
 			vx_uint8 orn;	// orientation
 
 			float scale = (float)128 / 180.f;
-			float arct = HafCpu_FastAtan2_deg(pGx[x], pGy[x]);
+			float arct = HafCpu_FastAtan2_deg(pGx[x], (vx_int16)(-pGy[x]));
 			// normalize and convert to degrees 0-180
 			orn = (((int)(arct*scale) + 16) >> 5)&7;		// quantize to 8 (22.5 degrees)
 			if (orn >= 4)orn -= 4;
@@ -523,12 +536,11 @@ int HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM
 		pGx += dstride;
 		pGy += dstride;
 		pMag += dstride;
-		y++;
 	}
 
 	// do minmax suppression: from Gx
 	ago_coord2d_ushort_t *pxyStack = xyStack;
-	for (y = 1; y < dstHeight - 1; y++)
+	for (int y = 1; y < dstHeight - 1; y++)
 	{
 		vx_uint8* pOut = pDst + y*dstStrideInBytes;
 		vx_int16 *pSrc = (vx_int16 *)(Gx + y * dstride);	// we are processing from 2nd row
@@ -549,6 +561,106 @@ int HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM
 				pxyStack++;
 			}
 			else if (edge <= hyst_lower){
+				pOut[x] = 0;
+			}
+			else pOut[x] = 127;
+		}
+	}
+	*pxyStackTop = (vx_uint32)(pxyStack - xyStack);
+
+	return AGO_SUCCESS;
+}
+
+int HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM
+	(
+		vx_uint32              capacityOfXY,
+		ago_coord2d_ushort_t   xyStack[],
+		vx_uint32            * pxyStackTop,
+		vx_uint32              dstWidth,
+		vx_uint32              dstHeight,
+		vx_uint8             * pDst,
+		vx_uint32              dstStrideInBytes,
+		vx_uint8             * pSrcImage,
+		vx_uint32              srcImageStrideInBytes,
+		vx_uint16               hyst_lower,
+		vx_uint16               hyst_upper,
+		vx_uint8			 * pScratch
+	)
+{
+	vx_int16 *Gx, *Gy;
+	vx_uint8 * pTemp;
+	vx_uint32 dstride = ((dstWidth + 15)&~15);
+	// Same layout as the L1NORM 3x3 fused path. Gx and Gy each occupy
+	// dstride*dstHeight vx_int16 elements; pTemp follows.
+	Gx = (vx_int16 *)pScratch;
+	Gy = (vx_int16 *)(pScratch + dstride * dstHeight * sizeof(vx_int16));
+	pTemp = pScratch + 2 * dstride * dstHeight * sizeof(vx_int16);
+	HafCpu_Sobel_S16S16_U8_3x3_GXY(dstWidth, dstHeight - 2, Gx + dstride, dstride * 2, Gy + dstride, dstride * 2, pSrcImage + srcImageStrideInBytes, srcImageStrideInBytes, pTemp);
+
+	// Compute L2 norm magnitude (sqrt(Gx^2 + Gy^2)) and angle bucket, packing
+	// (mag << 2) | orientation back into the Gx rows. Mirrors the SIMD trick used
+	// by HafCpu_CannySobel_U16_U8_3x3_L2NORM (unpacklo/unpackhi + madd + sqrt_ps).
+	vx_int16 *pGx = Gx + dstride;
+	vx_int16 *pGy = Gy + dstride;
+	vx_int16 *pMag = Gx + dstride;
+	const __m128i sse_zero = _mm_setzero_si128();
+	for (unsigned int y = 1; y < dstHeight - 1; y++)
+	{
+		vx_uint16 *pdst = (vx_uint16*)pMag;
+		unsigned int x = 1;
+		for (; x + 8 <= dstWidth; x += 8)
+		{
+			__m128i gxv = _mm_loadu_si128((const __m128i *)(pGx + x));
+			__m128i gyv = _mm_loadu_si128((const __m128i *)(pGy + x));
+			__m128i gy_neg = _mm_sub_epi16(sse_zero, gyv);
+			__m128i orn = HafCpu_FastAtan2_Canny_8(gxv, gy_neg);
+			__m128i lo = _mm_unpacklo_epi16(gxv, gyv);
+			__m128i hi = _mm_unpackhi_epi16(gxv, gyv);
+			lo = _mm_madd_epi16(lo, lo);
+			hi = _mm_madd_epi16(hi, hi);
+			__m128 flo = _mm_sqrt_ps(_mm_cvtepi32_ps(lo));
+			__m128 fhi = _mm_sqrt_ps(_mm_cvtepi32_ps(hi));
+			__m128i mlo = _mm_cvtps_epi32(flo);
+			__m128i mhi = _mm_cvtps_epi32(fhi);
+			__m128i mag = _mm_packus_epi32(mlo, mhi);
+			__m128i out = _mm_or_si128(_mm_slli_epi16(mag, 2), orn);
+			_mm_storeu_si128((__m128i *)(pdst + x), out);
+		}
+		for (; x < dstWidth; x++)
+		{
+			float scale = (float)128 / 180.f;
+			float arct = HafCpu_FastAtan2_deg(pGx[x], (vx_int16)(-pGy[x]));
+			vx_uint8 orn = (((int)(arct*scale) + 16) >> 5) & 7;
+			if (orn >= 4) orn -= 4;
+			vx_int32 g2 = (vx_int32)pGx[x] * pGx[x] + (vx_int32)pGy[x] * pGy[x];
+			vx_int16 val = (vx_int16)sqrtf((float)g2);
+			pdst[x] = (vx_uint16)((val << 2) | orn);
+		}
+		pGx += dstride;
+		pGy += dstride;
+		pMag += dstride;
+	}
+
+	// Non-max suppression + dual-threshold (identical to L1 variant).
+	ago_coord2d_ushort_t *pxyStack = xyStack;
+	for (int y = 1; y < (int)dstHeight - 1; y++)
+	{
+		vx_uint8* pOut = pDst + y*dstStrideInBytes;
+		vx_int16 *pSrc = (vx_int16 *)(Gx + y * dstride);
+		for (unsigned int x = 1; x < dstWidth - 1; x++, pSrc++)
+		{
+			int mag = (pSrc[0] >> 2);
+			int ang = pSrc[0] & 3;
+			int offset0 = n_offset[ang][0][1] * dstride + n_offset[ang][0][0];
+			int offset1 = n_offset[ang][1][1] * dstride + n_offset[ang][1][0];
+			vx_int32 edge = ((mag > (pSrc[offset0] >> 2)) && (mag > (pSrc[offset1] >> 2))) ? mag : 0;
+			if (edge > hyst_upper) {
+				pOut[x] = (vx_int8)255;
+				pxyStack->x = x;
+				pxyStack->y = y;
+				pxyStack++;
+			}
+			else if (edge <= hyst_lower) {
 				pOut[x] = 0;
 			}
 			else pOut[x] = 127;

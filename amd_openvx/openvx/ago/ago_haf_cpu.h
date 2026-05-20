@@ -2295,7 +2295,8 @@ int HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM
 		vx_uint8             * pSrcImage,
 		vx_uint32              srcImageStrideInBytes,
 		vx_uint16               hyst_lower,
-		vx_uint16               hyst_upper
+		vx_uint16               hyst_upper,
+		vx_uint8			 * pScratch
 	);
 int HafCpu_CannySobelSuppThreshold_U8XY_U8_5x5_L1NORM
 	(

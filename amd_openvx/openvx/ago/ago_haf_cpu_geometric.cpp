@@ -1871,6 +1871,32 @@ vx_uint8				 * pLocalData
 }
 
 
+static inline __m128i HafCpu_BlendU8_3_1(__m128i a, __m128i b)
+{
+	const __m128i zero = _mm_setzero_si128();
+	const __m128i round = _mm_set1_epi16(2);
+	__m128i aLo = _mm_unpacklo_epi8(a, zero);
+	__m128i aHi = _mm_unpackhi_epi8(a, zero);
+	__m128i bLo = _mm_unpacklo_epi8(b, zero);
+	__m128i bHi = _mm_unpackhi_epi8(b, zero);
+	aLo = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(_mm_add_epi16(aLo, _mm_slli_epi16(aLo, 1)), bLo), round), 2);
+	aHi = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(_mm_add_epi16(aHi, _mm_slli_epi16(aHi, 1)), bHi), round), 2);
+	return _mm_packus_epi16(aLo, aHi);
+}
+
+static inline __m128i HafCpu_BlendU8_1_3(__m128i a, __m128i b)
+{
+	const __m128i zero = _mm_setzero_si128();
+	const __m128i round = _mm_set1_epi16(2);
+	__m128i aLo = _mm_unpacklo_epi8(a, zero);
+	__m128i aHi = _mm_unpackhi_epi8(a, zero);
+	__m128i bLo = _mm_unpacklo_epi8(b, zero);
+	__m128i bHi = _mm_unpackhi_epi8(b, zero);
+	bLo = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(aLo, _mm_add_epi16(bLo, _mm_slli_epi16(bLo, 1))), round), 2);
+	bHi = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(aHi, _mm_add_epi16(bHi, _mm_slli_epi16(bHi, 1))), round), 2);
+	return _mm_packus_epi16(bLo, bHi);
+}
+
 int HafCpu_ScaleImage_U8_U8_Nearest
 (
 vx_uint32            dstWidth,
@@ -2020,6 +2046,62 @@ ago_scale_matrix_t * matrix
 				pDstImage[x] = (vx_uint8)((pSrc[0] + pSrc[1] + pSrc[srcImageStrideInBytes] + pSrc[srcImageStrideInBytes + 1] + 2) >> 2);
 			}
 			pDstImage += dstImageStrideInBytes;
+		}
+		return AGO_SUCCESS;
+	}
+
+	if (dstWidth == (srcWidth << 1) && dstHeight == (srcHeight << 1) &&
+		xinc == (FP_MUL >> 1) && yinc == (FP_MUL >> 1) &&
+		xoffs == -(FP_MUL >> 2) && yoffs == -(FP_MUL >> 2))
+	{
+		for (vx_uint32 y = 0; y < dstHeight; y++)
+		{
+			bool useTop3 = (y & 1) != 0;
+			bool useBottom3 = y != 0 && !useTop3;
+			vx_uint32 sy0 = (y == 0) ? 0 : ((y - 1) >> 1);
+			vx_uint32 sy1 = min(sy0 + 1, srcHeight - 1);
+			vx_uint8 *pSrc0 = pSrcImage + sy0 * srcImageStrideInBytes;
+			vx_uint8 *pSrc1 = pSrcImage + sy1 * srcImageStrideInBytes;
+			vx_uint8 *pDst = pDstImage + y * dstImageStrideInBytes;
+
+			vx_uint32 x = 0;
+			for (; x < 1; x++)
+			{
+				vx_uint32 sx0 = 0;
+				vx_uint32 sx1 = min((vx_uint32)1, srcWidth - 1);
+				vx_uint16 h0 = (pSrc0[sx0] + 3 * pSrc0[sx1] + 2) >> 2;
+				vx_uint16 h1 = (pSrc1[sx0] + 3 * pSrc1[sx1] + 2) >> 2;
+				pDst[x] = useBottom3 ? (vx_uint8)((h0 + 3 * h1 + 2) >> 2) : (useTop3 ? (vx_uint8)((3 * h0 + h1 + 2) >> 2) : (vx_uint8)h0);
+			}
+			for (; x + 31 < dstWidth; x += 32)
+			{
+				vx_uint32 sx = (x - 1) >> 1;
+				__m128i topA = _mm_loadu_si128((__m128i *)(pSrc0 + sx));
+				__m128i topB = _mm_loadu_si128((__m128i *)(pSrc0 + sx + 1));
+				__m128i topOdd = HafCpu_BlendU8_3_1(topA, topB);
+				__m128i topEven = HafCpu_BlendU8_1_3(topA, topB);
+				__m128i outOdd = topOdd;
+				__m128i outEven = topEven;
+				if (useTop3 || useBottom3)
+				{
+					__m128i botA = _mm_loadu_si128((__m128i *)(pSrc1 + sx));
+					__m128i botB = _mm_loadu_si128((__m128i *)(pSrc1 + sx + 1));
+					__m128i botOdd = HafCpu_BlendU8_3_1(botA, botB);
+					__m128i botEven = HafCpu_BlendU8_1_3(botA, botB);
+					outOdd = useTop3 ? HafCpu_BlendU8_3_1(topOdd, botOdd) : HafCpu_BlendU8_1_3(topOdd, botOdd);
+					outEven = useTop3 ? HafCpu_BlendU8_3_1(topEven, botEven) : HafCpu_BlendU8_1_3(topEven, botEven);
+				}
+				_mm_storeu_si128((__m128i *)(pDst + x), _mm_unpacklo_epi8(outOdd, outEven));
+				_mm_storeu_si128((__m128i *)(pDst + x + 16), _mm_unpackhi_epi8(outOdd, outEven));
+			}
+			for (; x < dstWidth; x++)
+			{
+				vx_uint32 sx0 = (x == 0) ? 0 : ((x - 1) >> 1);
+				vx_uint32 sx1 = min(sx0 + 1, srcWidth - 1);
+				vx_uint16 h0 = (x & 1) ? ((3 * pSrc0[sx0] + pSrc0[sx1] + 2) >> 2) : ((pSrc0[sx0] + 3 * pSrc0[sx1] + 2) >> 2);
+				vx_uint16 h1 = (x & 1) ? ((3 * pSrc1[sx0] + pSrc1[sx1] + 2) >> 2) : ((pSrc1[sx0] + 3 * pSrc1[sx1] + 2) >> 2);
+				pDst[x] = useBottom3 ? (vx_uint8)((h0 + 3 * h1 + 2) >> 2) : (useTop3 ? (vx_uint8)((3 * h0 + h1 + 2) >> 2) : (vx_uint8)h0);
+			}
 		}
 		return AGO_SUCCESS;
 	}

@@ -610,48 +610,52 @@ int HafCpu_HarrisScore_HVC_HG3_3x3
 	vx_float32 Tc = strength_threshold;
 	vx_int32 srcStride = srcGxyStrideInBytes / sizeof(ago_harris_Gxy_t);
 	vx_int32 dstStride = dstVcStrideInBytes / sizeof(vx_float32);
-	pSrcGxy += srcStride;															// Skip first row
 	memset(pDstVc, 0, dstVcStrideInBytes);											// Zero the thresholds of first row
 	pDstVc += dstStride;
 
 	for (int y = 1; y < (int)dstHeight - 1; y++)
 	{
-		ago_harris_Gxy_t * pLocalSrc = pSrcGxy;
 		vx_float32 * pLocalDst = pDstVc;
+		ago_harris_Gxy_t * pRow0 = pSrcGxy + (y - 1) * srcStride;
+		ago_harris_Gxy_t * pRow1 = pRow0 + srcStride;
+		ago_harris_Gxy_t * pRow2 = pRow1 + srcStride;
 
 		*pLocalDst = 0;															// First column Vc = 0;
 		pLocalDst++;
-		pLocalSrc++;
+
+		vx_float32 gx2 = 0;
+		vx_float32 gy2 = 0;
+		vx_float32 gxy2 = 0;
+		for (int i = 0; i < 3; i++)
+		{
+			gx2 += pRow0[i].GxGx + pRow1[i].GxGx + pRow2[i].GxGx;
+			gxy2 += pRow0[i].GxGy + pRow1[i].GxGy + pRow2[i].GxGy;
+			gy2 += pRow0[i].GyGy + pRow1[i].GyGy + pRow2[i].GyGy;
+		}
+
 		for (int x = 1; x < (int)dstWidth - 1; x++)
 		{
-			vx_float32 gx2 = 0;
-			vx_float32 gy2 = 0;
-			vx_float32 gxy2 = 0;
-
-			// Windowing
-			for (int j = -1; j <= 1; j++)
-			{
-				ago_harris_Gxy_t * pTemp = pLocalSrc + j * srcStride;
-				for (int i = -1; i <= 1; i++)
-				{
-					gx2 += pTemp[i].GxGx;
-					gxy2 += pTemp[i].GxGy;
-					gy2 += pTemp[i].GyGy;
-				}
-			}
-
 			vx_float32 traceA = gx2 + gy2;
 			vx_float32 detA = (gx2 * gy2) - (gxy2 * gxy2);
 			vx_float32 Mc = detA - (sensitivity * traceA * traceA);
 			Mc /= normalization_factor;
 			*pLocalDst = (Mc > Tc) ? Mc : 0;
 
-			pLocalSrc++;
 			pLocalDst++;
+			if (x < (int)dstWidth - 2)
+			{
+				int removeCol = x - 1;
+				int addCol = x + 2;
+				gx2 += pRow0[addCol].GxGx + pRow1[addCol].GxGx + pRow2[addCol].GxGx
+					- pRow0[removeCol].GxGx - pRow1[removeCol].GxGx - pRow2[removeCol].GxGx;
+				gxy2 += pRow0[addCol].GxGy + pRow1[addCol].GxGy + pRow2[addCol].GxGy
+					- pRow0[removeCol].GxGy - pRow1[removeCol].GxGy - pRow2[removeCol].GxGy;
+				gy2 += pRow0[addCol].GyGy + pRow1[addCol].GyGy + pRow2[addCol].GyGy
+					- pRow0[removeCol].GyGy - pRow1[removeCol].GyGy - pRow2[removeCol].GyGy;
+			}
 		}
 
 		*pLocalDst = 0;															// Last column Vc = 0;
-		pSrcGxy += srcStride;
 		pDstVc += dstStride;
 	}
 	memset(pDstVc, 0, dstVcStrideInBytes);											// Zero the thresholds of last row

@@ -17322,7 +17322,7 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM(AgoNode * node, AgoKern
         if (HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM(oStack->u.cannystack.count, (ago_coord2d_ushort_t *)oStack->buffer, &oStack->u.cannystack.stackTop,
                                                               oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
                                                               iImg->buffer, iImg->u.img.stride_in_bytes,
-                                                              iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1))
+                                                              iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1, node->localDataPtr))
         {
             status = VX_FAILURE;
         }
@@ -17330,7 +17330,12 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM(AgoNode * node, AgoKern
     else if (cmd == ago_kernel_cmd_validate) {
         status = ValidateArguments_CannySuppThreshold_U8XY(node, VX_DF_IMAGE_U8, 1, 1);
     }
-    else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+    else if (cmd == ago_kernel_cmd_initialize) {
+        int alignedStride = (node->paramList[0]->u.img.stride_in_bytes + 15) & ~15;
+        node->localDataSize = ((2 * alignedStride * node->paramList[0]->u.img.height) + (6 * alignedStride)) * sizeof(vx_int16);
+        status = VX_SUCCESS;
+    }
+    else if (cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_query_target_support) {

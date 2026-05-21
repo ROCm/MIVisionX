@@ -128,8 +128,20 @@ typedef union {
 // platform independent data types
 typedef struct _ago_module    * ago_module;
 
+typedef struct {
+	bool sse42;
+	bool avx;
+	bool avx2;
+	bool bmi2;
+	bool avx512f;
+	bool avx512bw;
+	bool avx512vl;
+	bool avx512dq;
+} ago_cpu_features_t;
+
 // platform independent functions
 bool       agoIsCpuHardwareSupported();
+const ago_cpu_features_t & agoGetCpuFeatures();
 uint32_t   agoControlFpSetRoundEven();
 void       agoControlFpReset(uint32_t state);
 int64_t    agoGetClockCounter();

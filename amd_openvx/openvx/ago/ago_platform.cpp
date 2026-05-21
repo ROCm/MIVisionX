@@ -23,27 +23,119 @@ THE SOFTWARE.
 
 #include "ago_platform.h"
 
-// macro to port VisualStudio __cpuid to g++
-#if !_WIN32
-#define __cpuid(out, infoType) asm("cpuid": "=a" (out[0]), "=b" (out[1]), "=c" (out[2]), "=d" (out[3]): "a" (infoType));
+static void agoCpuid(int out[4], int leaf, int subleaf)
+{
+#if _WIN32
+	__cpuidex(out, leaf, subleaf);
+#else
+	// `volatile` + "memory" clobber: cpuid is an ordered hardware query
+	// (its outputs depend on global CPU state that other code paths can
+	// touch via wrmsr/cpuid serialization), so we must prevent the
+	// compiler from reordering it across surrounding ops or merging
+	// adjacent identical-input invocations.
+	asm volatile("cpuid"
+		: "=a" (out[0]), "=b" (out[1]), "=c" (out[2]), "=d" (out[3])
+		: "a" (leaf), "c" (subleaf)
+		: "memory");
 #endif
+}
+
+static uint64_t agoXgetbv(uint32_t index)
+{
+#if _WIN32
+	return _xgetbv(index);
+#else
+	uint32_t eax, edx;
+	// `volatile` + "memory" clobber: xgetbv reads the OS-controlled XCR0
+	// (AVX/AVX2/AVX-512 enablement bits). Treat it like cpuid above —
+	// the value is hardware/OS state we don't want the optimizer to
+	// reorder around any nearby feature-detection logic.
+	asm volatile("xgetbv"
+		: "=a" (eax), "=d" (edx)
+		: "c" (index)
+		: "memory");
+	return ((uint64_t)edx << 32) | eax;
+#endif
+}
 
 #if _WIN32 && ENABLE_OPENCL
 #pragma comment(lib, "OpenCL.lib")
 #endif
 
+// Mirror the USE_AVX / USE_BMI2 compile-time switches from ago_internal.h
+// so the hardware-support check below can reflect the *actual* minimum ISA
+// emitted by this binary. Both ago_internal.h and the block here use the
+// same `#ifndef … #define … 1 … #endif` guard, so a single
+// `-DUSE_AVX=0` / `-DUSE_BMI2=0` on the CMake line propagates consistently
+// to every translation unit (this file is compiled before ago_internal.h
+// is included down below in the !_WIN32 section).
+#ifndef USE_AVX
+#define USE_AVX 1
+#endif
+#ifndef USE_BMI2
+#define USE_BMI2 1
+#endif
+
 bool agoIsCpuHardwareSupported()
 {
-	bool isHardwareSupported = false;
-	int CPUInfo[4] = { -1 };
-	__cpuid(CPUInfo, 0);
-	if (CPUInfo[0] > 1) {
-		__cpuid(CPUInfo, 1);
-		// check for SSE4.2 support
-		if (CPUInfo[2] & 0x100000)
-			isHardwareSupported = true;
-	}
-	return isHardwareSupported;
+	// Refuse to come up on a CPU/OS that can't actually execute the
+	// instruction set the binary was compiled to emit. Previously this
+	// only checked SSE4.2, so on a SSE4.2-only Nehalem-class CPU we
+	// would happily create a vx_context and then SIGILL on the first
+	// AVX2 kernel invocation. With USE_AVX/USE_BMI2 enabled at compile
+	// time, the corresponding runtime feature bits are now hard
+	// preconditions. f.avx2 already AND-folds the OSXSAVE/XCR0 check
+	// in agoGetCpuFeatures() so an OS that disabled AVX state save also
+	// correctly fails this gate.
+	const ago_cpu_features_t & f = agoGetCpuFeatures();
+	if (!f.sse42) return false;
+#if USE_AVX
+	if (!f.avx2) return false;
+#endif
+#if USE_BMI2
+	if (!f.bmi2) return false;
+#endif
+	return true;
+}
+
+const ago_cpu_features_t & agoGetCpuFeatures()
+{
+	// C++17 guarantees thread-safe initialization of function-local statics,
+	// so the cpuid probe runs exactly once even under concurrent first calls.
+	static const ago_cpu_features_t features = []() {
+		ago_cpu_features_t f = {};
+		int CPUInfo[4] = { 0 };
+		agoCpuid(CPUInfo, 0, 0);
+		int maxLeaf = CPUInfo[0];
+
+		bool osAvx = false;
+		if (maxLeaf >= 1) {
+			agoCpuid(CPUInfo, 1, 0);
+			f.sse42 = (CPUInfo[2] & (1 << 20)) != 0;
+			bool cpuAvx = (CPUInfo[2] & (1 << 28)) != 0;
+			bool osxsave = (CPUInfo[2] & (1 << 27)) != 0;
+			if (cpuAvx && osxsave) {
+				uint64_t xcr0 = agoXgetbv(0);
+				osAvx = (xcr0 & 0x6) == 0x6;
+				f.avx = osAvx;
+			}
+		}
+
+		if (maxLeaf >= 7) {
+			agoCpuid(CPUInfo, 7, 0);
+			f.avx2 = osAvx && ((CPUInfo[1] & (1 << 5)) != 0);
+			f.bmi2 = (CPUInfo[1] & (1 << 8)) != 0;
+
+			uint64_t xcr0 = osAvx ? agoXgetbv(0) : 0;
+			bool osAvx512 = osAvx && ((xcr0 & 0xe0) == 0xe0);
+			f.avx512f = osAvx512 && ((CPUInfo[1] & (1 << 16)) != 0);
+			f.avx512dq = osAvx512 && ((CPUInfo[1] & (1 << 17)) != 0);
+			f.avx512bw = osAvx512 && ((CPUInfo[1] & (1 << 30)) != 0);
+			f.avx512vl = osAvx512 && ((CPUInfo[1] & (1 << 31)) != 0);
+		}
+		return f;
+	}();
+	return features;
 }
 
 uint32_t agoControlFpSetRoundEven()

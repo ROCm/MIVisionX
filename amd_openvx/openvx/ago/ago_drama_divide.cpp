@@ -1639,61 +1639,68 @@ int agoDramaDivideCannyEdgeDetectorNode(AgoNodeList * nodeList, AgoNode * anode)
 	if (!data) return -1;
 	agoGenerateVirtualDataName(agraph, "canny-stack", data->name);
 	agoAddData(&agraph->dataList, data);
-#if USE_AGO_CANNY_SOBEL_SUPP_THRESHOLD
-	// compute sobel, nonmax-supression, and threshold
-	anode->paramList[0] = paramList[4];
-	anode->paramList[1] = data;
-	anode->paramList[2] = paramList[0];
-	anode->paramList[3] = paramList[1];
-	anode->paramCount = 4;
-	vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
-	if (norm_type == VX_NORM_L1) {
-		if (gradient_size == 3) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_SUPP_THRESHOLD_U8XY_U8_3x3_L1NORM;
-		else if (gradient_size == 5) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_SUPP_THRESHOLD_U8XY_U8_5x5_L1NORM;
-		else if (gradient_size == 7) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_SUPP_THRESHOLD_U8XY_U8_7x7_L1NORM;
+	// Choose between fused (sobel + suppression + threshold in a single kernel)
+	// and separate (sobel kernel followed by suppression+threshold kernel).
+	// USE_AGO_CANNY_SOBEL_SUPP_THRESHOLD gates the fused path globally; in
+	// addition, we restrict the fused path to gradient_size == 3 because the
+	// 5x5 / 7x7 fused symbols (VX_KERNEL_AMD_CANNY_SOBEL_SUPP_THRESHOLD_*_5x5
+	// / *_7x7) are registered in ago_kernel_list.cpp but the corresponding
+	// HafCpu_CannySobelSuppThreshold_U8XY_U8_{5x5,7x7}_L{1,2}NORM bodies in
+	// ago_haf_cpu_canny.cpp / ago_haf_cpu.cpp are stubs that return
+	// AGO_ERROR_HAFCPU_NOT_IMPLEMENTED. Dispatching to them at runtime would
+	// fail the graph; the separate path below works for 5x5 and 7x7.
+	bool use_fused = (USE_AGO_CANNY_SOBEL_SUPP_THRESHOLD != 0) && (gradient_size == 3);
+	int status = 0;
+	if (use_fused) {
+		anode->paramList[0] = paramList[4];
+		anode->paramList[1] = data;
+		anode->paramList[2] = paramList[0];
+		anode->paramList[3] = paramList[1];
+		anode->paramCount = 4;
+		vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
+		if (norm_type == VX_NORM_L1) {
+			new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_SUPP_THRESHOLD_U8XY_U8_3x3_L1NORM;
+		}
+		else if (norm_type == VX_NORM_L2) {
+			new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_SUPP_THRESHOLD_U8XY_U8_3x3_L2NORM;
+		}
+		status = agoDramaDivideAppend(nodeList, anode, new_kernel_id);
 	}
-	else if (norm_type == VX_NORM_L2) {
-		if (gradient_size == 3) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_SUPP_THRESHOLD_U8XY_U8_3x3_L2NORM;
-		else if (gradient_size == 5) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_SUPP_THRESHOLD_U8XY_U8_5x5_L2NORM;
-		else if (gradient_size == 7) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_SUPP_THRESHOLD_U8XY_U8_7x7_L2NORM;
+	else {
+		// create virtual data for sobel output
+		char descSobel[64]; snprintf(descSobel, sizeof(descSobel), "image-virtual:U016,%d,%d", paramList[0]->u.img.width, paramList[0]->u.img.height);
+		AgoData * dataSobel = agoCreateDataFromDescription(anode->ref.context, agraph, descSobel, false);
+		if (!dataSobel) return -1;
+		agoGenerateVirtualDataName(agraph, "canny-sobel", dataSobel->name);
+		agoAddData(&agraph->dataList, dataSobel);
+		anode->paramList[0] = dataSobel;
+		anode->paramList[1] = paramList[0];
+		anode->paramCount = 2;
+		vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
+		if (norm_type == VX_NORM_L1) {
+			if (gradient_size == 3) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_3x3_L1NORM;
+			else if (gradient_size == 5) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_5x5_L1NORM;
+			else if (gradient_size == 7) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L1NORM;
+		}
+		else if (norm_type == VX_NORM_L2) {
+			if (gradient_size == 3) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_3x3_L2NORM;
+			else if (gradient_size == 5) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_5x5_L2NORM;
+			else if (gradient_size == 7) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L2NORM;
+		}
+		status = agoDramaDivideAppend(nodeList, anode, new_kernel_id);
+		// compute nonmax-supression and threshold
+		anode->paramList[0] = paramList[4];
+		anode->paramList[1] = data;
+		anode->paramList[2] = dataSobel;
+		anode->paramList[3] = paramList[1];
+		anode->paramList[4] = paramList[2];
+		anode->paramCount = 5;
+		if (gradient_size == 7) {
+			status |= agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_7x7);
+		}
+		else
+			status |= agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_3x3);
 	}
-	int status = agoDramaDivideAppend(nodeList, anode, new_kernel_id);
-#else
-	// create virtual data for sobel output
-	char descSobel[64]; snprintf(descSobel, sizeof(descSobel), "image-virtual:U016,%d,%d", paramList[0]->u.img.width, paramList[0]->u.img.height);
-	AgoData * dataSobel = agoCreateDataFromDescription(anode->ref.context, agraph, descSobel, false);
-	if (!dataSobel) return -1;
-	agoGenerateVirtualDataName(agraph, "canny-sobel", dataSobel->name);
-	agoAddData(&agraph->dataList, dataSobel);
-	// compute sobel
-	anode->paramList[0] = dataSobel;
-	anode->paramList[1] = paramList[0];
-	anode->paramCount = 2;
-	vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
-	if (norm_type == VX_NORM_L1) {
-		if (gradient_size == 3) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_3x3_L1NORM;
-		else if (gradient_size == 5) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_5x5_L1NORM;
-		else if (gradient_size == 7) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L1NORM;
-	}
-	else if (norm_type == VX_NORM_L2) {
-		if (gradient_size == 3) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_3x3_L2NORM;
-		else if (gradient_size == 5) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_5x5_L2NORM;
-		else if (gradient_size == 7) new_kernel_id = VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L2NORM;
-	}
-	int status = agoDramaDivideAppend(nodeList, anode, new_kernel_id);
-	// compute nonmax-supression and threshold
-	anode->paramList[0] = paramList[4];
-	anode->paramList[1] = data;
-	anode->paramList[2] = dataSobel;
-	anode->paramList[3] = paramList[1];
-	anode->paramList[4] = paramList[2];
-	anode->paramCount = 5;
-	if (gradient_size == 7) {
-		status |= agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_7x7);	
-	}
-	else
-		status |= agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_3x3);
-#endif
 	// run edge trace
 	anode->paramList[0] = paramList[4];
 	anode->paramList[1] = data;

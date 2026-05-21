@@ -241,21 +241,24 @@ jobs:
         run: |
           cd ${{ github.workspace }}/openvx-mark/build-pr
           export LD_LIBRARY_PATH=${{ github.workspace }}/pr-pkg/build/lib
-          # Warmup: prime caches
-          ./openvx-mark --resolution FHD --iterations 5 --warmup 0 \
-            --output /tmp/warmup-pr-throwaway >/dev/null 2>&1 || true
-          # Real measurement
-          ./openvx-mark --resolution FHD --iterations 20 --warmup 5
+          # Timer self-test up front — bail loud if the runner clock is
+          # sloppy before any timing number makes it into the perf gate.
+          ./openvx-mark --validate-timing
+          # Warmup: prime caches (output thrown away).
+          ./openvx-mark --resolution FHD --iterations 5 --warmup 0 --threads 1 \
+            --output-dir /tmp/warmup-pr-throwaway >/dev/null 2>&1 || true
+          # Real measurement — pinned single-threaded for noise-free PR-vs-main
+          # comparison (parity with the OpenVX-vs-OpenCV bench downstream).
+          ./openvx-mark --resolution FHD --iterations 20 --warmup 5 --threads 1
 
       - name: Bench main (warmup + measure)
         run: |
           cd ${{ github.workspace }}/openvx-mark/build-main
           export LD_LIBRARY_PATH=${{ github.workspace }}/main-pkg/build/lib
-          # Warmup: prime caches
-          ./openvx-mark --resolution FHD --iterations 5 --warmup 0 \
-            --output /tmp/warmup-main-throwaway >/dev/null 2>&1 || true
-          # Real measurement
-          ./openvx-mark --resolution FHD --iterations 20 --warmup 5
+          ./openvx-mark --validate-timing
+          ./openvx-mark --resolution FHD --iterations 5 --warmup 0 --threads 1 \
+            --output-dir /tmp/warmup-main-throwaway >/dev/null 2>&1 || true
+          ./openvx-mark --resolution FHD --iterations 20 --warmup 5 --threads 1
 
       - name: Run perf gate
         run: |
@@ -729,7 +732,34 @@ jobs:
           if-no-files-found: ignore
 
   # ===========================================================================
-  # Benchmark Stage — uses the release build artifact and compares OpenVX vs OpenCV
+  # Benchmark Stage — uses the release build artifact and compares MIVisionX
+  # OpenVX vs the OpenCV baseline on the same runner.
+  #
+  # The benchmark binaries (`openvx-mark` + `opencv-mark`) both live in the
+  # upstream openvx-mark v1.1+ source tree at https://github.com/kiritigowda/openvx-mark.
+  # We clone that repo and build both targets from the same CMake invocation
+  # so the two binaries share build flags, compiler, glibc, and benchmark
+  # infrastructure (timer, stats, JSON schema) — i.e. the only intentional
+  # variable between the two reports is the backing implementation.
+  #
+  # The shape of this job mirrors the upstream openvx-mark CI's MIVisionX-vs-
+  # OpenCV pairwise comparison (.github/workflows/ci.yml on kiritigowda/openvx-mark):
+  #   1. `--validate-timing` self-test gates every bench step.
+  #   2. `--threads 1` pin on both binaries so OpenCV's TBB/OpenMP default
+  #      doesn't silently turn this into "1-thread OpenVX vs n-thread OpenCV".
+  #      MIVisionX's AGO CPU path is single-threaded per kernel anyway.
+  #   3. `--feature-set vision` (or `vision,framework` on the OpenVX side) at
+  #      FHD × 20 iterations × 5 warmup. opencv-mark deliberately doesn't
+  #      implement the `framework` feature set (OpenCV has no graph framework
+  #      analogue), and `compare_reports.py` silently drops non-overlapping
+  #      benchmarks, so framework rows simply don't appear in the OpenCV
+  #      comparison.
+  #   4. `--dump-outputs` from both binaries feeds `cross_verify_outputs.py`
+  #      to prove numerical equivalence — the speedup numbers below are
+  #      only credible if OpenCV and MIVisionX agree at the pixel level.
+  #   5. `ci_pairwise_summary.py` renders the GitHub Actions step summary
+  #      (TL;DR speedup matrix + grouped headline tables + collapsed
+  #      per-kernel detail). Same shape and helper as the upstream CI.
   # ===========================================================================
 
   benchmark:
@@ -757,7 +787,11 @@ jobs:
       - name: Install benchmark dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake git python3 libopencv-dev
+          # python3-numpy is required by scripts/cross_verify_outputs.py;
+          # libopencv-dev makes the parent CMake auto-include opencv-mark/.
+          sudo apt-get install -y build-essential cmake git python3 \
+            python3-numpy libopencv-dev
+          pkg-config --modversion opencv4 || true
 
       - name: Download AMD OpenVX Release artifacts
         uses: actions/download-artifact@v4
@@ -765,13 +799,17 @@ jobs:
           name: build-artifacts
           path: ${{ github.workspace }}/artifacts
 
-      - name: Clone openvx-mark
+      - name: Clone openvx-mark (vendor-agnostic benchmark suite + opencv-mark companion)
         run: |
           git clone --depth 1 https://github.com/kiritigowda/openvx-mark.git \
             ${{ github.workspace }}/openvx-mark
 
-      - name: Build openvx-mark
+      - name: Build openvx-mark + opencv-mark (single source tree, identical flags)
         run: |
+          # Parent CMake auto-includes opencv-mark/ when libopencv-dev is found,
+          # producing two binaries from one configure pass — guarantees both
+          # link the same bench_core static lib (timer, stats, JSON schema) so
+          # only the backing implementation differs.
           mkdir -p ${{ github.workspace }}/openvx-mark/build
           cd ${{ github.workspace }}/openvx-mark/build
           cmake \
@@ -780,65 +818,170 @@ jobs:
             -DOPENVX_LIB_DIR=${{ github.workspace }}/artifacts/build/lib \
             ..
           cmake --build . -j$(nproc)
+          test -x ./openvx-mark \
+            || { echo "ERROR: openvx-mark not built"; exit 1; }
+          test -x ./opencv-mark/opencv-mark \
+            || { echo "ERROR: opencv-mark not built — libopencv-dev likely not detected by CMake"; exit 1; }
+          ./openvx-mark --help | head -3 || true
+          ./opencv-mark/opencv-mark --help | head -3 || true
 
-      - name: Run AMD OpenVX benchmark on this runner
+      - name: Timer self-test (both binaries)
         run: |
           cd ${{ github.workspace }}/openvx-mark/build
           export LD_LIBRARY_PATH=${{ github.workspace }}/artifacts/build/lib
-          ./openvx-mark --resolution FHD --iterations 5 --warmup 0 \
-            --output /tmp/warmup-openvx-throwaway >/dev/null 2>&1 || true
-          ./openvx-mark --resolution FHD --iterations 20 --warmup 5
+          # Catches a sloppy runner clock before we trust a single timing number.
+          ./openvx-mark --validate-timing
+          ./opencv-mark/opencv-mark --validate-timing
 
-      - name: Upload OpenVX benchmark results
+      - name: Bench MIVisionX (vision-parity, FHD × 20, single-threaded)
+        run: |
+          cd ${{ github.workspace }}/openvx-mark/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/artifacts/build/lib
+          # `--vision-parity` runs exactly the 41 OpenVX vision kernels that
+          # have a 1:1 OpenCV equivalent — apples-to-apples per-kernel rows
+          # across both binaries. Warmup uses the same iteration count as the
+          # full bench so the second `--warmup 5` JIT/cache warmup matters.
+          ./openvx-mark --resolution FHD --iterations 5 --warmup 0 --threads 1 \
+            --vision-parity --output-dir /tmp/warmup-mivisionx-throwaway \
+            >/dev/null 2>&1 || true
+          ./openvx-mark --vision-parity \
+            --resolution FHD --iterations 20 --warmup 5 --threads 1 \
+            --output-dir results-mivisionx
+          # Sentinel-kernel dump for downstream cross_verify_outputs.py.
+          # Runs the kernel set ONCE (no timing, no warmup) so it's cheap.
+          ./openvx-mark --dump-outputs dump-mivisionx --seed 42
+
+      - name: Bench OpenCV (vision-parity, FHD × 20, single-threaded)
+        run: |
+          cd ${{ github.workspace }}/openvx-mark/build
+          # `--threads 1` calls cv::setNumThreads(1) and sets OMP_NUM_THREADS=1
+          # for any OpenMP-using OpenCV code path. Without this OpenCV would
+          # grab nproc threads via TBB by default and silently get an unfair
+          # parallelism boost vs single-threaded MIVisionX.
+          ./opencv-mark/opencv-mark --resolution FHD --iterations 5 --warmup 0 --threads 1 \
+            --vision-parity --output-dir /tmp/warmup-opencv-throwaway \
+            >/dev/null 2>&1 || true
+          ./opencv-mark/opencv-mark --vision-parity \
+            --resolution FHD --iterations 20 --warmup 5 --threads 1 \
+            --output-dir results-opencv
+          ./opencv-mark/opencv-mark --dump-outputs dump-opencv --seed 42
+
+      - name: Cross-impl numerical verification (OpenCV ↔ MIVisionX)
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: benchmark-results
-          path: ${{ github.workspace }}/openvx-mark/build/benchmark_results/
-          if-no-files-found: ignore
-          retention-days: 90
-
-      - name: Build opencv-mark
         run: |
-          mkdir -p ${{ github.workspace }}/tests/opencv_benchmark/build
-          cd ${{ github.workspace }}/tests/opencv_benchmark/build
-          cmake -DCMAKE_BUILD_TYPE=Release ..
-          cmake --build . -j$(nproc)
+          set -euo pipefail
+          cd ${{ github.workspace }}/openvx-mark
+          OPENCV_DUMP=build/dump-opencv
+          VX_DUMP=build/dump-mivisionx
+          mkdir -p comparisons
+          {
+            echo ""
+            echo "---"
+            echo ""
+            echo "## Cross-impl numerical verification (OpenCV ↔ MIVisionX)"
+            echo ""
+            echo "Sentinel kernel suite (no timing, no warmup) dumped by"
+            echo "\`--dump-outputs\` on each binary; \`scripts/cross_verify_outputs.py\`"
+            echo "loads both dumps and computes max-abs-diff + PSNR + exact-%"
+            echo "per kernel against per-kernel tolerance rules. Proves the"
+            echo "timing rows below are honest apples-to-apples and not"
+            echo "\"OpenCV is faster because it's silently computing the"
+            echo "wrong thing\"."
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ ! -d "$OPENCV_DUMP" ] || [ ! -d "$VX_DUMP" ]; then
+            echo "_Skipped — dump directory missing ($VX_DUMP or $OPENCV_DUMP)._" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          set +e
+          python3 scripts/cross_verify_outputs.py \
+            "$OPENCV_DUMP" "$VX_DUMP" \
+            --left-label "OpenCV" --right-label "MIVisionX" \
+            --json comparisons/cross-verify-mivisionx.json \
+            >> "$GITHUB_STEP_SUMMARY"
+          rc=$?
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            echo "::warning::Cross-impl verification flagged ≥1 divergence — see job summary"
+          fi
 
-      - name: Run OpenCV benchmark on this runner
-        run: |
-          cd ${{ github.workspace }}/tests/opencv_benchmark/build
-          ./opencv-mark --resolution FHD --iterations 5 --warmup 0 \
-            --output-dir /tmp/warmup-opencv-throwaway >/dev/null 2>&1 || true
-          ./opencv-mark --resolution FHD --iterations 20 --warmup 5
-
-      - name: Compare same-runner OpenVX vs OpenCV benchmarks
+      - name: Pairwise comparison (MIVisionX over OpenCV)
         if: always()
         run: |
-          OPENVX=${{ github.workspace }}/openvx-mark/build/benchmark_results/benchmark_results.json
-          OPENCV=${{ github.workspace }}/tests/opencv_benchmark/build/benchmark_results/benchmark_results.json
+          set -euo pipefail
+          cd ${{ github.workspace }}/openvx-mark
+          OPENVX=build/results-mivisionx/benchmark_results.json
+          OPENCV=build/results-opencv/benchmark_results.json
           if [ ! -f "$OPENVX" ] || [ ! -f "$OPENCV" ]; then
             echo "_Missing benchmark results for comparison._" >> "$GITHUB_STEP_SUMMARY"
             echo "OpenVX results: $([ -f "$OPENVX" ] && echo 'found' || echo 'missing')"
             echo "OpenCV results: $([ -f "$OPENCV" ] && echo 'found' || echo 'missing')"
             exit 0
           fi
-          # Pass OpenCV first and OpenVX second so compare_reports.py reports
-          # speedup as OpenVX throughput divided by OpenCV throughput.
-          python3 ${{ github.workspace }}/openvx-mark/scripts/compare_reports.py \
-            "$OPENCV" "$OPENVX" \
-            --output ${{ github.workspace }}/comparison
-          cat ${{ github.workspace }}/comparison.md >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p comparisons
+          # Per-kernel detail report — speedup = throughput(arg2) / throughput(arg1),
+          # so passing OpenCV first and MIVisionX second reads as "MIVisionX over
+          # OpenCV" (>1.00x means MIVisionX wins). This .md is referenced by
+          # ci_pairwise_summary.py's <details> block.
+          python3 scripts/compare_reports.py "$OPENCV" "$OPENVX" \
+            --output comparisons/mivisionx-over-opencv
 
-      - name: Upload benchmark comparison artifacts
+          # Render organized step summary: TL;DR matrix + grouped headline
+          # table + collapsed per-kernel detail. Same renderer as the upstream
+          # openvx-mark CI uses for its 6-pair MIVisionX/Khronos/rustVX/OpenCV
+          # matrix; here it's invoked with a single pair.
+          cat > /tmp/pairwise-config.json <<'JSON'
+          {
+            "reports": {
+              "mivisionx": {"label": "MIVisionX (AMD OpenVX, this PR)", "path": "build/results-mivisionx/benchmark_results.json"},
+              "opencv":    {"label": "OpenCV",                          "path": "build/results-opencv/benchmark_results.json"}
+            },
+            "groups": [
+              {
+                "title":  "OpenVX-vs-OpenCV — does adopting MIVisionX pay off vs cv::?",
+                "intent": "Speedup reads as `MIVisionX / OpenCV`. Values >1.00x mean adopting MIVisionX OpenVX pays off vs writing the equivalent directly in OpenCV at the same runner / threading policy. Both binaries are built from the upstream openvx-mark v1.1+ source tree (so JSON schema, timer, and stats infrastructure are identical) and pinned to `--threads 1` so OpenCV's TBB default doesn't silently turn this into 1-thread vs n-thread.",
+                "pairs":  [["mivisionx", "opencv"]]
+              }
+            ],
+            "detail_dir": "comparisons"
+          }
+          JSON
+          python3 scripts/ci_pairwise_summary.py --config /tmp/pairwise-config.json \
+            >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload per-impl benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            ${{ github.workspace }}/openvx-mark/build/results-mivisionx/
+            ${{ github.workspace }}/openvx-mark/build/results-opencv/
+          if-no-files-found: ignore
+          retention-days: 90
+
+      - name: Upload pairwise comparison
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-comparison
+          path: ${{ github.workspace }}/openvx-mark/comparisons/
+          if-no-files-found: ignore
+          retention-days: 90
+
+      # Sentinel kernel dumps — uploaded so a reviewer can re-run
+      # scripts/cross_verify_outputs.py locally against either pair
+      # without rebuilding any binary, and so the raw .bin files are
+      # inspectable after the fact for any divergence the verifier
+      # flagged.
+      - name: Upload sentinel output dumps
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cross-verify-dumps
           path: |
-            ${{ github.workspace }}/comparison.md
-            ${{ github.workspace }}/comparison.csv
-            ${{ github.workspace }}/tests/opencv_benchmark/build/benchmark_results/
+            ${{ github.workspace }}/openvx-mark/build/dump-mivisionx/
+            ${{ github.workspace }}/openvx-mark/build/dump-opencv/
           if-no-files-found: ignore
           retention-days: 90
 

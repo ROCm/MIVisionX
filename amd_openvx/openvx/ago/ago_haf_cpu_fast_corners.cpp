@@ -773,14 +773,14 @@ int HafCpu_FastCorners_XY_U8_Supression
 			m = _mm_and_si128(m, gt_dc);
 			m = _mm_and_si128(m, gt_dr);
 			m = _mm_andnot_si128(is_nz, m); // cand must also be != 0
-			int ok_mask = _mm_movemask_epi8(m);
+			unsigned int ok_mask = (unsigned int)_mm_movemask_epi8(m);
 			alignas(16) vx_uint8 cand_arr[16];
 			if (ok_mask)
 				_mm_store_si128((__m128i *)cand_arr, cand);
 			while (ok_mask)
 			{
-				int lane = __builtin_ctz(ok_mask);
-				ok_mask &= ok_mask - 1;
+				int lane = agoCtz32(ok_mask);
+				ok_mask &= ok_mask - 1u;
 				if (cornerCount < capacityOfDstCorner)
 				{
 					dstCorner[cornerCount].x = (vx_int32)(width + lane + 3);

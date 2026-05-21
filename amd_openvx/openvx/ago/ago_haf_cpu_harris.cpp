@@ -736,9 +736,14 @@ int HafCpu_HarrisScore_HVC_HG3_3x3
 	pDstVc += dstStride;
 
 	// Column-sum scratch: per source column, holds (gx2_sum, gxy2_sum, gy2_sum, 0)
-	// summed vertically over the current 3-row window. Single contiguous SSE-friendly buffer.
+	// summed vertically over the current 3-row window. We index it as plain
+	// float* and use unaligned SSE load/store; std::vector<float> storage is not
+	// guaranteed 16-byte aligned per the standard so __m128 array indexing would
+	// be undefined.
 	std::vector<float> colSumBuf((size_t)dstWidth * 4 + 16);
-	__m128 *colSum = reinterpret_cast<__m128 *>(colSumBuf.data());
+	float *colSum = colSumBuf.data();
+	auto colSumLoad  = [&](int idx) { return _mm_loadu_ps(colSum + (size_t)idx * 4); };
+	auto colSumStore = [&](int idx, __m128 v) { _mm_storeu_ps(colSum + (size_t)idx * 4, v); };
 
 	const __m128 invNorm = _mm_set1_ps(1.0f / normalization_factor);
 	const __m128 sens    = _mm_set1_ps(sensitivity);
@@ -761,14 +766,14 @@ int HafCpu_HarrisScore_HVC_HG3_3x3
 			__m128 a = _mm_loadu_ps(&pRow0[x].GxGx);
 			__m128 b = _mm_loadu_ps(&pRow1[x].GxGx);
 			__m128 c = _mm_loadu_ps(&pRow2[x].GxGx);
-			colSum[x] = _mm_add_ps(_mm_add_ps(a, b), c);
+			colSumStore(x, _mm_add_ps(_mm_add_ps(a, b), c));
 		}
 		{
 			int xl = (int)dstWidth - 1;
 			vx_float32 v0 = pRow0[xl].GxGx + pRow1[xl].GxGx + pRow2[xl].GxGx;
 			vx_float32 v1 = pRow0[xl].GxGy + pRow1[xl].GxGy + pRow2[xl].GxGy;
 			vx_float32 v2 = pRow0[xl].GyGy + pRow1[xl].GyGy + pRow2[xl].GyGy;
-			colSum[xl] = _mm_setr_ps(v0, v1, v2, 0.0f);
+			colSumStore(xl, _mm_setr_ps(v0, v1, v2, 0.0f));
 		}
 
 		*pLocalDst++ = 0.0f;													// First column Vc = 0;
@@ -779,12 +784,12 @@ int HafCpu_HarrisScore_HVC_HG3_3x3
 		x = 1;
 		for (; x + 4 <= (int)dstWidth - 1; x += 4)
 		{
-			__m128 c0 = colSum[x - 1];
-			__m128 c1 = colSum[x];
-			__m128 c2 = colSum[x + 1];
-			__m128 c3 = colSum[x + 2];
-			__m128 c4 = colSum[x + 3];
-			__m128 c5 = colSum[x + 4];
+			__m128 c0 = colSumLoad(x - 1);
+			__m128 c1 = colSumLoad(x);
+			__m128 c2 = colSumLoad(x + 1);
+			__m128 c3 = colSumLoad(x + 2);
+			__m128 c4 = colSumLoad(x + 3);
+			__m128 c5 = colSumLoad(x + 4);
 
 			__m128 w0 = _mm_add_ps(_mm_add_ps(c0, c1), c2);
 			__m128 w1 = _mm_add_ps(_mm_add_ps(c1, c2), c3);
@@ -804,7 +809,7 @@ int HafCpu_HarrisScore_HVC_HG3_3x3
 		}
 		for (; x < (int)dstWidth - 1; x++)
 		{
-			__m128 win = _mm_add_ps(_mm_add_ps(colSum[x - 1], colSum[x]), colSum[x + 1]);
+			__m128 win = _mm_add_ps(_mm_add_ps(colSumLoad(x - 1), colSumLoad(x)), colSumLoad(x + 1));
 			alignas(16) float w[4];
 			_mm_store_ps(w, win);
 			vx_float32 traceA = w[0] + w[2];
@@ -1095,11 +1100,11 @@ int HafCpu_NonMaxSupp_XY_ANY_3x3
 				m = _mm256_and_ps(m, _mm256_cmp_ps(c, dc, _CMP_GT_OQ));
 				m = _mm256_and_ps(m, _mm256_cmp_ps(c, dr, _CMP_GT_OQ));
 				m = _mm256_and_ps(m, nz_mask);
-				int ok_mask = _mm256_movemask_ps(m);
+				unsigned int ok_mask = (unsigned int)_mm256_movemask_ps(m);
 				while (ok_mask)
 				{
-					int lane = __builtin_ctz(ok_mask);
-					ok_mask &= ok_mask - 1;
+					int lane = agoCtz32(ok_mask);
+					ok_mask &= ok_mask - 1u;
 					if (count >= capacityOfList) break;
 					dstList->x = (vx_uint16)(x + lane);
 					dstList->y = (vx_uint16)y;

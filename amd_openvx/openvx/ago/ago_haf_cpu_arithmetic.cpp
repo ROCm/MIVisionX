@@ -24,17 +24,6 @@ THE SOFTWARE.
 #include "ago_internal.h"
 
 #if USE_AVX
-static inline int HafCpu_Ctz32(unsigned int value)
-{
-#if _WIN32
-	unsigned long index;
-	_BitScanForward(&index, value);
-	return (int)index;
-#else
-	return __builtin_ctz(value);
-#endif
-}
-
 static inline int HafCpu_PopCount32(unsigned int value)
 {
 #if _WIN32
@@ -5738,9 +5727,11 @@ int HafCpu_Mul_U8_U8U8_Sat_Trunc
 	vx_float32    scale
 )
 {
+#if USE_AVX
 	// Fast path: scale == 1.0 lets us stay entirely in integer arithmetic.
 	// Maximum u8*u8 = 65025 fits in uint16, so mullo_epi16 + epu16 saturation
 	// to 255 + packus_epi16 produces the correct U8 result without any FP work.
+	// Uses AVX2; the generic SSE/FP path below is the fallback when USE_AVX=0.
 	if (scale == 1.0f)
 	{
 		const __m256i u8max256 = _mm256_set1_epi16(255);
@@ -5771,6 +5762,7 @@ int HafCpu_Mul_U8_U8U8_Sat_Trunc
 		}
 		return AGO_SUCCESS;
 	}
+#endif
 
 	// do generic floating point calculation
 	__m128i pixels1, pixels2, pixels3, pixels4, mask;
@@ -5856,8 +5848,10 @@ int HafCpu_Mul_U8_U8U8_Sat_Round
 	vx_float32    scale
 )
 {
+#if USE_AVX
 	// Same scale==1.0 integer fast path as Sat_Trunc; with integer inputs
-	// the product is already exact so rounding is irrelevant.
+	// the product is already exact so rounding is irrelevant. Uses AVX2;
+	// the generic SSE/FP path below is the fallback when USE_AVX=0.
 	if (scale == 1.0f)
 	{
 		const __m256i u8max256 = _mm256_set1_epi16(255);
@@ -5888,6 +5882,7 @@ int HafCpu_Mul_U8_U8U8_Sat_Round
 		}
 		return AGO_SUCCESS;
 	}
+#endif
 
 	// do generic floating point calculation
 	__m128i pixels1, pixels2, pixels3, pixels4, mask;
@@ -8709,7 +8704,7 @@ int HafCpu_MinMaxLoc_DATA_U8DATA_Loc_MinMax_Count_MinMax
 			int oldMinCount = minCount;
 			while (minMask && minListNotFull)
 			{
-				int bit = HafCpu_Ctz32(minMask);
+				int bit = agoCtz32(minMask);
 				loc.x = width + bit;
 				loc.y = height;
 				minLocList[minCount] = loc;
@@ -8722,7 +8717,7 @@ int HafCpu_MinMaxLoc_DATA_U8DATA_Loc_MinMax_Count_MinMax
 			int oldMaxCount = maxCount;
 			while (maxMask && maxListNotFull)
 			{
-				int bit = HafCpu_Ctz32(maxMask);
+				int bit = agoCtz32(maxMask);
 				loc.x = width + bit;
 				loc.y = height;
 				maxLocList[maxCount] = loc;

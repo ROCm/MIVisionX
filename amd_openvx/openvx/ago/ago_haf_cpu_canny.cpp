@@ -809,11 +809,11 @@ int HafCpu_CannySuppThreshold_U8XY_U16_3x3
 			__m128i upper_lo = _mm256_castsi256_si128(gt_upper);
 			__m128i upper_hi = _mm256_extracti128_si256(gt_upper, 1);
 			__m128i upper_pack = _mm_packs_epi16(upper_lo, upper_hi);
-			int upper_mask = _mm_movemask_epi8(upper_pack);
+			unsigned int upper_mask = (unsigned int)_mm_movemask_epi8(upper_pack);
 			while (upper_mask)
 			{
-				int b = __builtin_ctz(upper_mask);
-				upper_mask &= upper_mask - 1;
+				int b = agoCtz32(upper_mask);
+				upper_mask &= upper_mask - 1u;
 				if (pxyStack < pxyStackEnd)
 				{
 					pxyStack->x = (vx_uint16)(x + b);
@@ -866,11 +866,11 @@ int HafCpu_CannySuppThreshold_U8XY_U16_3x3
 			// Stack push for lanes where edge > hyst_upper. movemask of an 8-lane
 			// i16 packed compare gives one byte per lane.
 			__m128i upper_pack = _mm_packs_epi16(gt_upper, gt_upper);
-			int upper_mask = _mm_movemask_epi8(upper_pack) & 0xFF;
+			unsigned int upper_mask = (unsigned int)_mm_movemask_epi8(upper_pack) & 0xFFu;
 			while (upper_mask)
 			{
-				int b = __builtin_ctz(upper_mask);
-				upper_mask &= upper_mask - 1;
+				int b = agoCtz32(upper_mask);
+				upper_mask &= upper_mask - 1u;
 				if (pxyStack < pxyStackEnd)
 				{
 					pxyStack->x = (vx_uint16)(x + b);

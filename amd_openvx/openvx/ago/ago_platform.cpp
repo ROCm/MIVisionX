@@ -62,9 +62,40 @@ static uint64_t agoXgetbv(uint32_t index)
 #pragma comment(lib, "OpenCL.lib")
 #endif
 
+// Mirror the USE_AVX / USE_BMI2 compile-time switches from ago_internal.h
+// so the hardware-support check below can reflect the *actual* minimum ISA
+// emitted by this binary. Both ago_internal.h and the block here use the
+// same `#ifndef … #define … 1 … #endif` guard, so a single
+// `-DUSE_AVX=0` / `-DUSE_BMI2=0` on the CMake line propagates consistently
+// to every translation unit (this file is compiled before ago_internal.h
+// is included down below in the !_WIN32 section).
+#ifndef USE_AVX
+#define USE_AVX 1
+#endif
+#ifndef USE_BMI2
+#define USE_BMI2 1
+#endif
+
 bool agoIsCpuHardwareSupported()
 {
-	return agoGetCpuFeatures().sse42;
+	// Refuse to come up on a CPU/OS that can't actually execute the
+	// instruction set the binary was compiled to emit. Previously this
+	// only checked SSE4.2, so on a SSE4.2-only Nehalem-class CPU we
+	// would happily create a vx_context and then SIGILL on the first
+	// AVX2 kernel invocation. With USE_AVX/USE_BMI2 enabled at compile
+	// time, the corresponding runtime feature bits are now hard
+	// preconditions. f.avx2 already AND-folds the OSXSAVE/XCR0 check
+	// in agoGetCpuFeatures() so an OS that disabled AVX state save also
+	// correctly fails this gate.
+	const ago_cpu_features_t & f = agoGetCpuFeatures();
+	if (!f.sse42) return false;
+#if USE_AVX
+	if (!f.avx2) return false;
+#endif
+#if USE_BMI2
+	if (!f.bmi2) return false;
+#endif
+	return true;
 }
 
 const ago_cpu_features_t & agoGetCpuFeatures()

@@ -1642,8 +1642,13 @@ int agoDramaDivideCannyEdgeDetectorNode(AgoNodeList * nodeList, AgoNode * anode)
 	// Choose between fused (sobel + suppression + threshold in a single kernel)
 	// and separate (sobel kernel followed by suppression+threshold kernel).
 	// USE_AGO_CANNY_SOBEL_SUPP_THRESHOLD gates the fused path globally; in
-	// addition, we only use the fused path for gradient_size == 3 since 5x5
-	// and 7x7 fused variants are not yet implemented.
+	// addition, we restrict the fused path to gradient_size == 3 because the
+	// 5x5 / 7x7 fused symbols (VX_KERNEL_AMD_CANNY_SOBEL_SUPP_THRESHOLD_*_5x5
+	// / *_7x7) are registered in ago_kernel_list.cpp but the corresponding
+	// HafCpu_CannySobelSuppThreshold_U8XY_U8_{5x5,7x7}_L{1,2}NORM bodies in
+	// ago_haf_cpu_canny.cpp / ago_haf_cpu.cpp are stubs that return
+	// AGO_ERROR_HAFCPU_NOT_IMPLEMENTED. Dispatching to them at runtime would
+	// fail the graph; the separate path below works for 5x5 and 7x7.
 	bool use_fused = (USE_AGO_CANNY_SOBEL_SUPP_THRESHOLD != 0) && (gradient_size == 3);
 	int status = 0;
 	if (use_fused) {

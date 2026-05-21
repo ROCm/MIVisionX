@@ -28,9 +28,15 @@ static void agoCpuid(int out[4], int leaf, int subleaf)
 #if _WIN32
 	__cpuidex(out, leaf, subleaf);
 #else
-	asm("cpuid"
+	// `volatile` + "memory" clobber: cpuid is an ordered hardware query
+	// (its outputs depend on global CPU state that other code paths can
+	// touch via wrmsr/cpuid serialization), so we must prevent the
+	// compiler from reordering it across surrounding ops or merging
+	// adjacent identical-input invocations.
+	asm volatile("cpuid"
 		: "=a" (out[0]), "=b" (out[1]), "=c" (out[2]), "=d" (out[3])
-		: "a" (leaf), "c" (subleaf));
+		: "a" (leaf), "c" (subleaf)
+		: "memory");
 #endif
 }
 
@@ -40,7 +46,14 @@ static uint64_t agoXgetbv(uint32_t index)
 	return _xgetbv(index);
 #else
 	uint32_t eax, edx;
-	asm("xgetbv" : "=a" (eax), "=d" (edx) : "c" (index));
+	// `volatile` + "memory" clobber: xgetbv reads the OS-controlled XCR0
+	// (AVX/AVX2/AVX-512 enablement bits). Treat it like cpuid above —
+	// the value is hardware/OS state we don't want the optimizer to
+	// reorder around any nearby feature-detection logic.
+	asm volatile("xgetbv"
+		: "=a" (eax), "=d" (edx)
+		: "c" (index)
+		: "memory");
 	return ((uint64_t)edx << 32) | eax;
 #endif
 }

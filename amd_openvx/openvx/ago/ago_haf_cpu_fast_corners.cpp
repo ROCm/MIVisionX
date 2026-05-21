@@ -740,9 +740,11 @@ int HafCpu_FastCorners_XY_U8_Supression
 		for (; width + 16 <= nmsW; width += 16)
 		{
 			__m128i cand = _mm_loadu_si128((const __m128i *)pScratch);
-			__m128i any_nz = _mm_cmpgt_epi8(cand, zero128); // unsigned compare via signed >0 for 0..127 works generally; refine below
-			// For unsigned bytes, _mm_cmpgt_epi8 treats sign bit as MSB, but FAST strength is in 0..127 typically.
-			// To be safe, use _mm_max_epu8 to keep semantics: any_nz mask: cand != 0
+			// FAST strength is unsigned, so use _mm_max_epu8 + _mm_cmpeq_epi8
+			// to build a "candidate == 0" mask (signed _mm_cmpgt_epi8 would
+			// mis-treat bytes with the MSB set). Skip whole 16-byte blocks
+			// when every candidate is zero — the common case in sparse FAST
+			// output.
 			__m128i is_nz = _mm_cmpeq_epi8(_mm_max_epu8(cand, zero128), zero128); // 0xFF if cand==0
 			int zero_mask = _mm_movemask_epi8(is_nz);
 			if (zero_mask == 0xFFFF) { pScratch += 16; continue; }

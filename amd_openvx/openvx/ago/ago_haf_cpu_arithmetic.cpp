@@ -7678,6 +7678,9 @@ int HafCpu_Histogram_DATA_U8
 			h0[pRow[x]]++;
 	}
 
+#if USE_AVX
+	// AVX2 four-way add into dstHist: each iteration merges 8 u32 bins
+	// from the four sub-histograms with one ymm add tree.
 	for (vx_uint32 i = 0; i + 8 <= NUM_BINS; i += 8)
 	{
 		__m256i s0 = _mm256_loadu_si256((const __m256i *)(h0 + i));
@@ -7687,6 +7690,12 @@ int HafCpu_Histogram_DATA_U8
 		__m256i sum = _mm256_add_epi32(_mm256_add_epi32(s0, s1), _mm256_add_epi32(s2, s3));
 		_mm256_storeu_si256((__m256i *)(dstHist + i), sum);
 	}
+#else
+	// Scalar fallback for USE_AVX=0 builds. Same 256-bin merge, just
+	// per-bin u32 adds. Negligible cost vs the per-pixel work above.
+	for (vx_uint32 i = 0; i < NUM_BINS; i++)
+		dstHist[i] = h0[i] + h1[i] + h2[i] + h3[i];
+#endif
 	return AGO_SUCCESS;
 }
 

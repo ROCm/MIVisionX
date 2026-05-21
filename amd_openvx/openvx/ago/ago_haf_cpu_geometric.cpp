@@ -2026,8 +2026,12 @@ ago_scale_matrix_t * matrix
 		// Exact 2x downscale bilinear: average the 2x2 source block into one
 		// destination pixel. _mm256_maddubs_epi16(src, ones) returns 16 horizontal
 		// pair sums in int16, which we then sum across rows and round-shift.
+		// AVX2 takes 32 dst px / iter; the SSE 16 px / iter fallback below
+		// handles the remainder (and the whole width when USE_AVX=0).
+#if USE_AVX
 		const __m256i ones256 = _mm256_set1_epi8(1);
 		const __m256i round256 = _mm256_set1_epi16(2);
+#endif
 		const __m128i ones128 = _mm_set1_epi8(1);
 		const __m128i round128 = _mm_set1_epi16(2);
 		for (vx_uint32 y = 0; y < dstHeight; y++)
@@ -2035,6 +2039,7 @@ ago_scale_matrix_t * matrix
 			vx_uint8 *pSrc0 = pSrcImage + (y << 1) * srcImageStrideInBytes;
 			vx_uint8 *pSrc1 = pSrc0 + srcImageStrideInBytes;
 			vx_uint32 x = 0;
+#if USE_AVX
 			for (; x + 32 <= dstWidth; x += 32)
 			{
 				__m256i row0Lo = _mm256_maddubs_epi16(_mm256_loadu_si256((__m256i *)(pSrc0 + (x << 1))), ones256);
@@ -2046,6 +2051,7 @@ ago_scale_matrix_t * matrix
 				__m256i packed = _mm256_packus_epi16(row0Lo, row0Hi);
 				_mm256_storeu_si256((__m256i *)(pDstImage + x), _mm256_permute4x64_epi64(packed, 0xd8));
 			}
+#endif
 			for (; x + 16 <= dstWidth; x += 16)
 			{
 				__m128i row0Lo = _mm_maddubs_epi16(_mm_loadu_si128((__m128i *)(pSrc0 + (x << 1))), ones128);

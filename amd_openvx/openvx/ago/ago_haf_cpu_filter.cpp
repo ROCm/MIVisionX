@@ -71,6 +71,12 @@ static inline __m128i HafCpu_FastAtan2_PhaseByte_8(__m128i gx16, __m128i gy16)
 // sqrt which is far cheaper than the double-precision pipeline the legacy code
 // used. The values fit since max |Gx|, |Gy| from a 3x3 Sobel on uint8 input is
 // 4*255 = 1020 and the magnitude is sqrt(2)*1020 = ~1442, well within int16.
+// Uses _mm256_cvtps_epi32 (round-to-nearest-even per the default MXCSR) so
+// non-integer magnitudes match the rounding behavior of the legacy double-
+// precision pipeline (which also rounded). Earlier this used truncate-
+// toward-zero (_mm256_cvttps_epi32), which systematically biased magnitudes
+// down by 1 on the fractional part and showed up as -1 differences vs CTS
+// reference at the Canny threshold boundary.
 static inline __m128i HafCpu_SobelMagnitude_S16_8(__m128i gx16, __m128i gy16)
 {
 	__m256i gx32 = _mm256_cvtepi16_epi32(gx16);
@@ -79,7 +85,7 @@ static inline __m128i HafCpu_SobelMagnitude_S16_8(__m128i gx16, __m128i gy16)
 	__m256 gyf = _mm256_cvtepi32_ps(gy32);
 	__m256 sumf = _mm256_add_ps(_mm256_mul_ps(gxf, gxf), _mm256_mul_ps(gyf, gyf));
 	__m256 magf = _mm256_sqrt_ps(sumf);
-	__m256i mag32 = _mm256_cvttps_epi32(magf);
+	__m256i mag32 = _mm256_cvtps_epi32(magf);
 	return _mm_packs_epi32(_mm256_castsi256_si128(mag32), _mm256_extracti128_si256(mag32, 1));
 }
 #endif

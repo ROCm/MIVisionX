@@ -33,13 +33,6 @@ static inline int HafCpu_PopCount32(unsigned int value)
 #endif
 }
 
-static inline __m128i HafCpu_PackEightI32ToI16(__m256i values)
-{
-	__m128i lo = _mm256_castsi256_si128(values);
-	__m128i hi = _mm256_extracti128_si256(values, 1);
-	return _mm_packs_epi32(lo, hi);
-}
-
 static inline void HafCpu_AccumulateSquaresU8_AVX2(__m256i bytes, __m256i &sum, __m256i &sumSquared)
 {
 	const __m256i zero = _mm256_setzero_si256();

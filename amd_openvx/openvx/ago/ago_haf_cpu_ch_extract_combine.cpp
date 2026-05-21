@@ -297,6 +297,38 @@ int HafCpu_ChannelCopy_U8_U8
 		vx_uint32     srcImageStrideInBytes
 	)
 {
+#if USE_AVX
+	// AVX2 path: 128 bytes per inner-loop iteration via 4 ymm load/store pairs.
+	// Falls back to a scalar tail. This is the kernel used as the level-0 copy
+	// in GaussianPyramid, so its throughput directly affects pyramid runtime.
+	for (vx_uint32 height = 0; height < dstHeight; height++)
+	{
+		vx_uint8 *pLocalSrc = pSrcImage;
+		vx_uint8 *pLocalDst = pDstImage;
+		vx_uint32 width = 0;
+		for (; width + 128 <= dstWidth; width += 128)
+		{
+			__m256i r0 = _mm256_loadu_si256((const __m256i *)(pLocalSrc + width));
+			__m256i r1 = _mm256_loadu_si256((const __m256i *)(pLocalSrc + width + 32));
+			__m256i r2 = _mm256_loadu_si256((const __m256i *)(pLocalSrc + width + 64));
+			__m256i r3 = _mm256_loadu_si256((const __m256i *)(pLocalSrc + width + 96));
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width      ), r0);
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width + 32 ), r1);
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width + 64 ), r2);
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width + 96 ), r3);
+		}
+		for (; width + 32 <= dstWidth; width += 32)
+		{
+			__m256i r0 = _mm256_loadu_si256((const __m256i *)(pLocalSrc + width));
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width), r0);
+		}
+		for (; width < dstWidth; width++)
+			pLocalDst[width] = pLocalSrc[width];
+		pSrcImage += srcImageStrideInBytes;
+		pDstImage += dstImageStrideInBytes;
+	}
+	return AGO_SUCCESS;
+#else
 	if ((srcImageStrideInBytes | dstImageStrideInBytes) & 15)
 	{
 		int height = (int)dstHeight;
@@ -360,6 +392,7 @@ int HafCpu_ChannelCopy_U8_U8
 		}
 	}
 	return AGO_SUCCESS;
+#endif
 }
 
 #if USE_BMI2

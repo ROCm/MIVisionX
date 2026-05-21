@@ -26,6 +26,24 @@ THE SOFTWARE.
 
 #include <VX/vx.h>
 
+#if defined(_WIN32)
+#include <intrin.h>
+#endif
+
+// Cross-platform 32-bit count-trailing-zeros helper. Used by AVX2 SIMD paths
+// that iterate set bits in a vector mask returned from _mm256_movemask_epi8
+// (or similar). MSVC does not provide __builtin_ctz, so prefer this wrapper.
+static inline int agoCtz32(unsigned int value)
+{
+#if defined(_WIN32)
+	unsigned long index;
+	_BitScanForward(&index, value);
+	return (int)index;
+#else
+	return __builtin_ctz(value);
+#endif
+}
+
 #define TWOPI			6.283185307f
 #define PI				3.1415926535898f
 #define CAST_S16(x)		(int16_t)((x) < -32768 ? -32768 : (x) > 32767 ? 32767 : (x))
@@ -2295,7 +2313,8 @@ int HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM
 		vx_uint8             * pSrcImage,
 		vx_uint32              srcImageStrideInBytes,
 		vx_uint16               hyst_lower,
-		vx_uint16               hyst_upper
+		vx_uint16               hyst_upper,
+		vx_uint8			 * pScratch
 	);
 int HafCpu_CannySobelSuppThreshold_U8XY_U8_5x5_L1NORM
 	(

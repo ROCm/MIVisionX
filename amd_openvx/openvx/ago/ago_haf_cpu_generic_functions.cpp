@@ -28,6 +28,17 @@ THE SOFTWARE.
 */
 #define C_MAX_NONLINEAR_DIM (9)
 
+#if USE_AVX
+static inline void HafCpu_StoreEightU8FromI32(vx_uint8 *dst, __m256i values)
+{
+    __m128i lo = _mm256_castsi256_si128(values);
+    __m128i hi = _mm256_extracti128_si256(values, 1);
+    __m128i packed16 = _mm_packus_epi32(lo, hi);
+    __m128i packed8 = _mm_packus_epi16(packed16, packed16);
+    _mm_storel_epi64((__m128i *)dst, packed8);
+}
+#endif
+
 int HafCpu_WeightedAverage_U8_U8U8
     (
         vx_image img1, 
@@ -60,17 +71,54 @@ int HafCpu_WeightedAverage_U8_U8U8
                               VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
     width = src_addr[0].dim_x;
     height = src_addr[0].dim_y;
-    for (y = 0; y < height; y++)
+    if (img1_format == VX_DF_IMAGE_U8 && img2_format == VX_DF_IMAGE_U8 && out_format == VX_DF_IMAGE_U8 &&
+        src_addr[0].stride_x == 1 && src_addr[1].stride_x == 1 && dst_addr.stride_x == 1)
     {
-        for (x = 0; x < width; x++)
+        const vx_float32 beta = 1.0f - alpha;
+#if USE_AVX
+        const __m256 alpha_ps = _mm256_set1_ps(alpha);
+        const __m256 beta_ps = _mm256_set1_ps(beta);
+#endif
+        for (y = 0; y < height; y++)
         {
-            void *src0p = vxFormatImagePatchAddress2d(src_base[0], x, y, &src_addr[0]);
-            void *src1p = vxFormatImagePatchAddress2d(src_base[1], x, y, &src_addr[1]);
-            void *dstp = vxFormatImagePatchAddress2d(dst_base, x, y, &dst_addr);
-            vx_int32 src0 = *(vx_uint8 *)src0p;
-            vx_int32 src1 = *(vx_uint8 *)src1p;
-            vx_int32 result = (vx_int32)((1 - alpha) * (vx_float32)src1 + alpha * (vx_float32)src0);
-            *(vx_uint8 *)dstp = (vx_uint8)result;
+            vx_uint8 *src0 = (vx_uint8 *)src_base[0] + y * src_addr[0].stride_y;
+            vx_uint8 *src1 = (vx_uint8 *)src_base[1] + y * src_addr[1].stride_y;
+            vx_uint8 *dst = (vx_uint8 *)dst_base + y * dst_addr.stride_y;
+            x = 0;
+#if USE_AVX
+            for (; x + 8 <= width; x += 8)
+            {
+                __m128i s0_u8 = _mm_loadl_epi64((__m128i *)(src0 + x));
+                __m128i s1_u8 = _mm_loadl_epi64((__m128i *)(src1 + x));
+                __m256 s0_ps = _mm256_cvtepi32_ps(_mm256_cvtepu8_epi32(s0_u8));
+                __m256 s1_ps = _mm256_cvtepi32_ps(_mm256_cvtepu8_epi32(s1_u8));
+                __m256 result_ps = _mm256_add_ps(_mm256_mul_ps(alpha_ps, s0_ps), _mm256_mul_ps(beta_ps, s1_ps));
+                HafCpu_StoreEightU8FromI32(dst + x, _mm256_cvttps_epi32(result_ps));
+            }
+#endif
+            for (; x < width; x++)
+            {
+                vx_int32 src0Value = src0[x];
+                vx_int32 src1Value = src1[x];
+                vx_int32 result = (vx_int32)(beta * (vx_float32)src1Value + alpha * (vx_float32)src0Value);
+                dst[x] = (vx_uint8)result;
+            }
+        }
+    }
+    else
+    {
+        for (y = 0; y < height; y++)
+        {
+            for (x = 0; x < width; x++)
+            {
+                void *src0p = vxFormatImagePatchAddress2d(src_base[0], x, y, &src_addr[0]);
+                void *src1p = vxFormatImagePatchAddress2d(src_base[1], x, y, &src_addr[1]);
+                void *dstp = vxFormatImagePatchAddress2d(dst_base, x, y, &dst_addr);
+                vx_int32 src0 = *(vx_uint8 *)src0p;
+                vx_int32 src1 = *(vx_uint8 *)src1p;
+                vx_int32 result = (vx_int32)((1 - alpha) * (vx_float32)src1 + alpha * (vx_float32)src0);
+                *(vx_uint8 *)dstp = (vx_uint8)result;
+            }
         }
     }
     status |= vxUnmapImagePatch(img1, src_map_id[0]);
@@ -245,28 +293,248 @@ int HafCpu_NonLinearFilter_DATA_DATADATA
             vxAlterRectangle(&rect, (vx_int32)rx0, (vx_int32)ry0, -(vx_int32)rx1, -(vx_int32)ry1);
         }
 
+        // SIMD fast path: 3x3 mask, U8 image, REPLICATE or UNDEFINED border.
+        // Median over 5 elements (e.g., cross) is computed with 10 SIMD min/max ops;
+        // median over 9 (3x3 box) uses the same sort network as HafCpu_Median_U8_U8_3x3.
+        // Falls through to the scalar code path for borders or unsupported cases.
+        vx_uint32 ix0 = low_x, ix1 = high_x, iy0 = low_y, iy1 = high_y;
+        bool simd_did_interior = false;
+        if (format == VX_DF_IMAGE_U8 && mtype == VX_TYPE_UINT8 &&
+            mcols == 3 && mrows == 3 && origin.x == 1 && origin.y == 1 &&
+            src_addr.stride_x == 1 && dst_addr.stride_x == 1 &&
+            (border->mode == VX_BORDER_REPLICATE || border->mode == VX_BORDER_UNDEFINED) &&
+            src_addr.dim_x >= 16 && src_addr.dim_y >= 2)
+        {
+            vx_int32 dxo[9], dyo[9];
+            vx_int32 active_count = 0;
+            for (vx_int32 my = 0; my < 3; my++)
+            {
+                for (vx_int32 mx = 0; mx < 3; mx++)
+                {
+                    if (m[my*3 + mx])
+                    {
+                        dxo[active_count] = mx - 1;
+                        dyo[active_count] = my - 1;
+                        active_count++;
+                    }
+                }
+            }
+
+            bool simd_supported = (active_count > 0) &&
+                ((func == VX_NONLINEAR_FILTER_MIN) ||
+                 (func == VX_NONLINEAR_FILTER_MAX) ||
+                 (func == VX_NONLINEAR_FILTER_MEDIAN && (active_count == 5 || active_count == 9)));
+
+            if (simd_supported)
+            {
+                // Interior = SIMD-safe region (no need to clamp to borders).
+                ix0 = (border->mode == VX_BORDER_UNDEFINED) ? low_x  : ((low_x  > 1) ? low_x  : 1);
+                iy0 = (border->mode == VX_BORDER_UNDEFINED) ? low_y  : ((low_y  > 1) ? low_y  : 1);
+                ix1 = (border->mode == VX_BORDER_UNDEFINED) ? high_x : ((high_x < src_addr.dim_x - 1) ? high_x : src_addr.dim_x - 1);
+                iy1 = (border->mode == VX_BORDER_UNDEFINED) ? high_y : ((high_y < src_addr.dim_y - 1) ? high_y : src_addr.dim_y - 1);
+
+                const vx_uint8 *src_p = (const vx_uint8 *)src_base;
+                vx_uint8 *dst_p = (vx_uint8 *)dst_base;
+                vx_int32 sstride = src_addr.stride_y;
+                vx_int32 dstride = dst_addr.stride_y;
+
+                for (y = iy0; y < iy1; y++)
+                {
+                    vx_uint8 *drow = dst_p + y * dstride;
+                    x = ix0;
+#if USE_AVX
+                    // AVX2 chunks of 32 bytes.
+                    for (; x + 32 <= ix1; x += 32)
+                    {
+                        __m256i vals[9];
+                        for (vx_int32 i = 0; i < active_count; i++)
+                        {
+                            vals[i] = _mm256_loadu_si256((const __m256i *)(src_p + ((vx_int32)y + dyo[i]) * sstride + (vx_int32)x + dxo[i]));
+                        }
+                        __m256i result;
+                        if (func == VX_NONLINEAR_FILTER_MIN)
+                        {
+                            result = vals[0];
+                            for (vx_int32 i = 1; i < active_count; i++) result = _mm256_min_epu8(result, vals[i]);
+                        }
+                        else if (func == VX_NONLINEAR_FILTER_MAX)
+                        {
+                            result = vals[0];
+                            for (vx_int32 i = 1; i < active_count; i++) result = _mm256_max_epu8(result, vals[i]);
+                        }
+                        else if (active_count == 5)
+                        {
+                            __m256i a = vals[0], b = vals[1], c = vals[2], d = vals[3], e = vals[4];
+                            __m256i ab_lo = _mm256_min_epu8(a, b);
+                            __m256i ab_hi = _mm256_max_epu8(a, b);
+                            __m256i cd_lo = _mm256_min_epu8(c, d);
+                            __m256i cd_hi = _mm256_max_epu8(c, d);
+                            __m256i rl = _mm256_max_epu8(ab_lo, cd_lo);
+                            __m256i ru = _mm256_min_epu8(ab_hi, cd_hi);
+                            __m256i lo = _mm256_min_epu8(rl, ru);
+                            __m256i hi = _mm256_max_epu8(rl, ru);
+                            result = _mm256_max_epu8(lo, _mm256_min_epu8(hi, e));
+                        }
+                        else // active_count == 9, median 3x3 box
+                        {
+                            __m256i a0 = vals[0], a1 = vals[1], a2 = vals[2];
+                            __m256i a3 = vals[3], a4 = vals[4], a5 = vals[5];
+                            __m256i a6 = vals[6], a7 = vals[7], a8 = vals[8];
+                            #define MFCS256(p1, p2) { __m256i mn = _mm256_min_epu8((p1),(p2)); __m256i mx = _mm256_max_epu8((p1),(p2)); (p1) = mn; (p2) = mx; }
+                            MFCS256(a1, a2); MFCS256(a4, a5); MFCS256(a7, a8);
+                            MFCS256(a0, a1); MFCS256(a3, a4); MFCS256(a6, a7);
+                            MFCS256(a1, a2); MFCS256(a4, a5); MFCS256(a7, a8);
+                            MFCS256(a0, a3); MFCS256(a5, a8); MFCS256(a4, a7);
+                            MFCS256(a3, a6); MFCS256(a1, a4); MFCS256(a2, a5);
+                            MFCS256(a4, a7); MFCS256(a4, a2); MFCS256(a6, a4);
+                            MFCS256(a4, a2);
+                            #undef MFCS256
+                            result = a4;
+                        }
+                        _mm256_storeu_si256((__m256i *)(drow + x), result);
+                    }
+#endif
+                    // SSE chunks of 16 bytes for the remainder.
+                    for (; x + 16 <= ix1; x += 16)
+                    {
+                        __m128i vals[9];
+                        for (vx_int32 i = 0; i < active_count; i++)
+                        {
+                            vals[i] = _mm_loadu_si128((const __m128i *)(src_p + ((vx_int32)y + dyo[i]) * sstride + (vx_int32)x + dxo[i]));
+                        }
+                        __m128i result;
+                        if (func == VX_NONLINEAR_FILTER_MIN)
+                        {
+                            result = vals[0];
+                            for (vx_int32 i = 1; i < active_count; i++) result = _mm_min_epu8(result, vals[i]);
+                        }
+                        else if (func == VX_NONLINEAR_FILTER_MAX)
+                        {
+                            result = vals[0];
+                            for (vx_int32 i = 1; i < active_count; i++) result = _mm_max_epu8(result, vals[i]);
+                        }
+                        else if (active_count == 5)
+                        {
+                            // Median-of-5 via 10 SIMD min/max ops.
+                            __m128i a = vals[0], b = vals[1], c = vals[2], d = vals[3], e = vals[4];
+                            __m128i ab_lo = _mm_min_epu8(a, b);
+                            __m128i ab_hi = _mm_max_epu8(a, b);
+                            __m128i cd_lo = _mm_min_epu8(c, d);
+                            __m128i cd_hi = _mm_max_epu8(c, d);
+                            __m128i rl = _mm_max_epu8(ab_lo, cd_lo);
+                            __m128i ru = _mm_min_epu8(ab_hi, cd_hi);
+                            __m128i lo = _mm_min_epu8(rl, ru);
+                            __m128i hi = _mm_max_epu8(rl, ru);
+                            result = _mm_max_epu8(lo, _mm_min_epu8(hi, e));
+                        }
+                        else // active_count == 9, median 3x3 box
+                        {
+                            __m128i a0 = vals[0], a1 = vals[1], a2 = vals[2];
+                            __m128i a3 = vals[3], a4 = vals[4], a5 = vals[5];
+                            __m128i a6 = vals[6], a7 = vals[7], a8 = vals[8];
+                            #define MFCS(p1, p2) { __m128i mn = _mm_min_epu8((p1),(p2)); __m128i mx = _mm_max_epu8((p1),(p2)); (p1) = mn; (p2) = mx; }
+                            MFCS(a1, a2); MFCS(a4, a5); MFCS(a7, a8);
+                            MFCS(a0, a1); MFCS(a3, a4); MFCS(a6, a7);
+                            MFCS(a1, a2); MFCS(a4, a5); MFCS(a7, a8);
+                            MFCS(a0, a3); MFCS(a5, a8); MFCS(a4, a7);
+                            MFCS(a3, a6); MFCS(a1, a4); MFCS(a2, a5);
+                            MFCS(a4, a7); MFCS(a4, a2); MFCS(a6, a4);
+                            MFCS(a4, a2);
+                            #undef MFCS
+                            result = a4;
+                        }
+                        _mm_storeu_si128((__m128i *)(drow + x), result);
+                    }
+                    // Scalar tail for interior columns past the SIMD chunks.
+                    for (; x < ix1; x++)
+                    {
+                        vx_uint8 sv[9];
+                        for (vx_int32 i = 0; i < active_count; i++)
+                            sv[i] = src_p[((vx_int32)y + dyo[i]) * sstride + (vx_int32)x + dxo[i]];
+                        vx_uint8 r;
+                        if (func == VX_NONLINEAR_FILTER_MIN)
+                        {
+                            r = sv[0];
+                            for (vx_int32 i = 1; i < active_count; i++) if (sv[i] < r) r = sv[i];
+                        }
+                        else if (func == VX_NONLINEAR_FILTER_MAX)
+                        {
+                            r = sv[0];
+                            for (vx_int32 i = 1; i < active_count; i++) if (sv[i] > r) r = sv[i];
+                        }
+                        else
+                        {
+                            for (vx_int32 i = 1; i < active_count; i++)
+                            {
+                                vx_uint8 key = sv[i]; vx_int32 j = i - 1;
+                                while (j >= 0 && sv[j] > key) { sv[j+1] = sv[j]; j--; }
+                                sv[j+1] = key;
+                            }
+                            r = sv[active_count >> 1];
+                        }
+                        drow[x] = r;
+                    }
+                }
+                simd_did_interior = (iy0 < iy1) && (ix0 < ix1);
+            }
+        }
+
         for (y = low_y; y < high_y; y++)
         {
-            for (x = low_x; x < high_x; x++)
+            bool y_in_simd = simd_did_interior && (y >= iy0 && y < iy1);
+            vx_uint32 xs_lo = low_x, xs_hi = high_x;
+            // If SIMD handled this row's interior, only process the side borders here.
+            if (y_in_simd) xs_hi = ix0;  // first scalar pass: [low_x, ix0)
+            for (vx_uint32 pass = 0; pass < 2u; pass++)
             {
-                vx_uint32 xShftd = x + shift_x_u1;      // Bit-shift for U1 valid region start
-                vx_uint8 *dst_ptr = (vx_uint8*)vxFormatImagePatchAddress2d(dst_base, xShftd, y, &dst_addr);
-                vx_int32 count = (vx_int32)readMaskedRectangle(src_base, &src_addr, border, format, xShftd, y, (vx_uint32)rx0, (vx_uint32)ry0, (vx_uint32)rx1, (vx_uint32)ry1, m, v, shift_x_u1);
-
-                qsort(v, count, sizeof(vx_uint8), vx_uint8_compare);
-
-                switch (func)
+                for (x = xs_lo; x < xs_hi; x++)
                 {
-                case VX_NONLINEAR_FILTER_MIN:    res_val = v[0];         break; /* minimal value */
-                case VX_NONLINEAR_FILTER_MAX:    res_val = v[count - 1]; break; /* maximum value */
-                case VX_NONLINEAR_FILTER_MEDIAN: res_val = v[count / 2]; break; /* pick the middle value */
+                    vx_uint32 xShftd = x + shift_x_u1;      // Bit-shift for U1 valid region start
+                    vx_uint8 *dst_ptr = (vx_uint8*)vxFormatImagePatchAddress2d(dst_base, xShftd, y, &dst_addr);
+                    vx_int32 count = (vx_int32)readMaskedRectangle(src_base, &src_addr, border, format, xShftd, y, (vx_uint32)rx0, (vx_uint32)ry0, (vx_uint32)rx1, (vx_uint32)ry1, m, v, shift_x_u1);
+
+                    // Avoid the qsort per pixel: linear scan for min/max, or a 256-bucket
+                    // histogram for median (count <= mrows*mcols <= 81).
+                    switch (func)
+                    {
+                    case VX_NONLINEAR_FILTER_MIN:
+                    {
+                        vx_uint8 mn = v[0];
+                        for (vx_int32 i = 1; i < count; i++) if (v[i] < mn) mn = v[i];
+                        res_val = mn;
+                        break;
+                    }
+                    case VX_NONLINEAR_FILTER_MAX:
+                    {
+                        vx_uint8 mx = v[0];
+                        for (vx_int32 i = 1; i < count; i++) if (v[i] > mx) mx = v[i];
+                        res_val = mx;
+                        break;
+                    }
+                    case VX_NONLINEAR_FILTER_MEDIAN:
+                    {
+                        // Insertion sort is fastest for the small counts we see (<= 81).
+                        for (vx_int32 i = 1; i < count; i++)
+                        {
+                            vx_uint8 key = v[i];
+                            vx_int32 j = i - 1;
+                            while (j >= 0 && v[j] > key) { v[j+1] = v[j]; j--; }
+                            v[j+1] = key;
+                        }
+                        res_val = v[count >> 1];
+                        break;
+                    }
+                    }
+                    if (format == VX_DF_IMAGE_U1)
+                    {
+                        *dst_ptr = (*dst_ptr & ~(1 << (xShftd % 8))) | (res_val << (xShftd % 8));
+                    }
+                    else
+                        *dst_ptr = res_val;
                 }
-                if (format == VX_DF_IMAGE_U1)
-                {
-                    *dst_ptr = (*dst_ptr & ~(1 << (xShftd % 8))) | (res_val << (xShftd % 8));
-                }
-                else
-                    *dst_ptr = res_val;
+                if (!y_in_simd) break;
+                // second pass: [ix1, high_x)
+                xs_lo = ix1; xs_hi = high_x;
             }
         }
     }
@@ -595,14 +863,580 @@ static vx_status replicateConvolve(vx_image src, vx_convolution conv, vx_image d
     return status;
 }
 
+// Fast pyramid-up with 5x5 Gaussian filter for U8 input -> U8/S16 output.
+// Combines zero-stuffing, 5x5 separable Gaussian (kernel = {1,4,6,4,1}/16 x same) and *4 scaling
+// into a single pass using two 1D passes on the original source, exploiting the fact that
+// 4 of every 5 columns and rows in the zero-stuffed image contribute zero. This eliminates
+// ~25x per-pixel work compared to the original scalar replicateConvolve path.
+// Border behaviour matches a tmp-coordinate VX_BORDER_REPLICATE convolution: replicate at
+// top/left edges, zero contribution where the kernel extends past the bottom/right edge.
+static void HafCpu_PyramidUp_Gaussian5x5_U8(
+    const vx_uint8 *src, vx_int32 srcStride, vx_int32 srcW, vx_int32 srcH,
+    void *dst, vx_int32 dstStride, vx_int32 dstW, vx_int32 dstH,
+    bool dst_is_s16)
+{
+    // Vertical-pass buffer: extra 1 slot on each side, indexed as V[1..srcW] = real cols.
+    // V[0] := V[1] (left replicate); V[srcW+1] := 0 (right zero); V[srcW+2] := 0 (pad).
+    // Add extra padding to allow safe AVX2 over-reads in the horizontal pass.
+    std::vector<vx_int16> Vbuf((size_t)srcW + 18);
+    vx_int16 *V = Vbuf.data();
+
+    const __m128i zero128 = _mm_setzero_si128();
+    const __m128i mul6_128 = _mm_set1_epi16(6);
+#if USE_AVX
+    const __m256i zero256 = _mm256_setzero_si256();
+    const __m256i mul6_256 = _mm256_set1_epi16(6);
+#endif
+
+    for (vx_int32 y = 0; y < dstH; y++)
+    {
+        bool y_even = (y & 1) == 0;
+        vx_int32 fy = y >> 1;
+
+        vx_int32 fy_top = fy - 1;
+        vx_int32 fy_mid = fy;
+        vx_int32 fy_bot = fy + 1;
+        // Source-level replicate at both ends (matches CTS reference convolve on
+        // the zero-stuffed image, including INSERT_ZERO_Y/INSERT_VALUES_Y).
+        if (fy_top < 0) fy_top = 0;
+        if (fy_mid >= srcH) fy_mid = srcH - 1;
+        if (fy_bot >= srcH) fy_bot = srcH - 1;
+
+        const vx_uint8 *rm = y_even ? (src + (size_t)fy_top * srcStride) : nullptr;
+        const vx_uint8 *r0 = (src + (size_t)fy_mid * srcStride);
+        const vx_uint8 *rp = (src + (size_t)fy_bot * srcStride);
+
+        // Vertical pass: V[fx] in [0, srcW) stored to V[fx + 1].
+        vx_int32 fx = 0;
+        if (y_even)
+        {
+#if USE_AVX
+            for (; fx + 32 <= srcW; fx += 32)
+            {
+                __m256i a = rm ? _mm256_loadu_si256((const __m256i *)(rm + fx)) : zero256;
+                __m256i b = r0 ? _mm256_loadu_si256((const __m256i *)(r0 + fx)) : zero256;
+                __m256i c = rp ? _mm256_loadu_si256((const __m256i *)(rp + fx)) : zero256;
+                __m256i a_lo = _mm256_unpacklo_epi8(a, zero256);
+                __m256i a_hi = _mm256_unpackhi_epi8(a, zero256);
+                __m256i b_lo = _mm256_unpacklo_epi8(b, zero256);
+                __m256i b_hi = _mm256_unpackhi_epi8(b, zero256);
+                __m256i c_lo = _mm256_unpacklo_epi8(c, zero256);
+                __m256i c_hi = _mm256_unpackhi_epi8(c, zero256);
+                __m256i vlo = _mm256_add_epi16(_mm256_add_epi16(a_lo, c_lo), _mm256_mullo_epi16(b_lo, mul6_256));
+                __m256i vhi = _mm256_add_epi16(_mm256_add_epi16(a_hi, c_hi), _mm256_mullo_epi16(b_hi, mul6_256));
+                // unpack interleaves 128-bit lanes, so de-interleave with permute
+                __m256i out_lo = _mm256_permute2x128_si256(vlo, vhi, 0x20);
+                __m256i out_hi = _mm256_permute2x128_si256(vlo, vhi, 0x31);
+                _mm256_storeu_si256((__m256i *)(V + 1 + fx), out_lo);
+                _mm256_storeu_si256((__m256i *)(V + 1 + fx + 16), out_hi);
+            }
+#endif
+            for (; fx + 16 <= srcW; fx += 16)
+            {
+                __m128i a = rm ? _mm_loadu_si128((const __m128i *)(rm + fx)) : zero128;
+                __m128i b = r0 ? _mm_loadu_si128((const __m128i *)(r0 + fx)) : zero128;
+                __m128i c = rp ? _mm_loadu_si128((const __m128i *)(rp + fx)) : zero128;
+                __m128i a_lo = _mm_unpacklo_epi8(a, zero128);
+                __m128i a_hi = _mm_unpackhi_epi8(a, zero128);
+                __m128i b_lo = _mm_unpacklo_epi8(b, zero128);
+                __m128i b_hi = _mm_unpackhi_epi8(b, zero128);
+                __m128i c_lo = _mm_unpacklo_epi8(c, zero128);
+                __m128i c_hi = _mm_unpackhi_epi8(c, zero128);
+                __m128i vlo = _mm_add_epi16(_mm_add_epi16(a_lo, c_lo), _mm_mullo_epi16(b_lo, mul6_128));
+                __m128i vhi = _mm_add_epi16(_mm_add_epi16(a_hi, c_hi), _mm_mullo_epi16(b_hi, mul6_128));
+                _mm_storeu_si128((__m128i *)(V + 1 + fx), vlo);
+                _mm_storeu_si128((__m128i *)(V + 1 + fx + 8), vhi);
+            }
+            for (; fx < srcW; fx++)
+            {
+                vx_int16 av = rm ? rm[fx] : 0;
+                vx_int16 bv = r0 ? r0[fx] : 0;
+                vx_int16 cv = rp ? rp[fx] : 0;
+                V[1 + fx] = (vx_int16)(av + 6 * bv + cv);
+            }
+        }
+        else // y_odd: V = 4*(r0 + rp)
+        {
+#if USE_AVX
+            for (; fx + 32 <= srcW; fx += 32)
+            {
+                __m256i b = r0 ? _mm256_loadu_si256((const __m256i *)(r0 + fx)) : zero256;
+                __m256i c = rp ? _mm256_loadu_si256((const __m256i *)(rp + fx)) : zero256;
+                __m256i b_lo = _mm256_unpacklo_epi8(b, zero256);
+                __m256i b_hi = _mm256_unpackhi_epi8(b, zero256);
+                __m256i c_lo = _mm256_unpacklo_epi8(c, zero256);
+                __m256i c_hi = _mm256_unpackhi_epi8(c, zero256);
+                __m256i vlo = _mm256_slli_epi16(_mm256_add_epi16(b_lo, c_lo), 2);
+                __m256i vhi = _mm256_slli_epi16(_mm256_add_epi16(b_hi, c_hi), 2);
+                __m256i out_lo = _mm256_permute2x128_si256(vlo, vhi, 0x20);
+                __m256i out_hi = _mm256_permute2x128_si256(vlo, vhi, 0x31);
+                _mm256_storeu_si256((__m256i *)(V + 1 + fx), out_lo);
+                _mm256_storeu_si256((__m256i *)(V + 1 + fx + 16), out_hi);
+            }
+#endif
+            for (; fx + 16 <= srcW; fx += 16)
+            {
+                __m128i b = r0 ? _mm_loadu_si128((const __m128i *)(r0 + fx)) : zero128;
+                __m128i c = rp ? _mm_loadu_si128((const __m128i *)(rp + fx)) : zero128;
+                __m128i b_lo = _mm_unpacklo_epi8(b, zero128);
+                __m128i b_hi = _mm_unpackhi_epi8(b, zero128);
+                __m128i c_lo = _mm_unpacklo_epi8(c, zero128);
+                __m128i c_hi = _mm_unpackhi_epi8(c, zero128);
+                __m128i vlo = _mm_slli_epi16(_mm_add_epi16(b_lo, c_lo), 2);
+                __m128i vhi = _mm_slli_epi16(_mm_add_epi16(b_hi, c_hi), 2);
+                _mm_storeu_si128((__m128i *)(V + 1 + fx), vlo);
+                _mm_storeu_si128((__m128i *)(V + 1 + fx + 8), vhi);
+            }
+            for (; fx < srcW; fx++)
+            {
+                vx_int16 bv = r0 ? r0[fx] : 0;
+                vx_int16 cv = rp ? rp[fx] : 0;
+                V[1 + fx] = (vx_int16)(4 * (bv + cv));
+            }
+        }
+        V[0] = V[1];                       // left replicate
+        // Right replicate: matches CTS reference convolve at the right edge
+        // (INSERT_VALUES_X copies V[srcW] outward for x >= dstW - 2*kernelHalf).
+        V[srcW + 1] = V[srcW];
+        V[srcW + 2] = V[srcW];
+        // pad the AVX2 over-read range with the same replicate so wide SIMD loads at
+        // fx = srcW - 15 still see well-defined values
+        for (int i = 3; i < 18; i++) V[srcW + i] = V[srcW];
+
+        // Horizontal pass.
+        if (!dst_is_s16)
+        {
+            vx_uint8 *drow = (vx_uint8 *)dst + (size_t)y * dstStride;
+            fx = 0;
+#if USE_AVX
+            // Process 16 source cols -> 32 dst bytes.
+            vx_int32 fx_max256 = (srcW >= 16) ? srcW - 16 : 0;
+            for (; fx <= fx_max256 && 2*fx + 32 <= dstW; fx += 16)
+            {
+                __m256i v_left   = _mm256_loadu_si256((const __m256i *)(V + fx));
+                __m256i v_center = _mm256_loadu_si256((const __m256i *)(V + fx + 1));
+                __m256i v_right  = _mm256_loadu_si256((const __m256i *)(V + fx + 2));
+                __m256i h_even = _mm256_add_epi16(_mm256_add_epi16(v_left, v_right), _mm256_mullo_epi16(v_center, mul6_256));
+                __m256i h_odd  = _mm256_slli_epi16(_mm256_add_epi16(v_center, v_right), 2);
+                // Spec computes (sum / 256) * 4, NOT sum / 64. The integer division
+                // before the multiply discards the lower 8 bits, so use (h >> 8) << 2.
+                __m256i out_even = _mm256_slli_epi16(_mm256_srai_epi16(h_even, 8), 2);
+                __m256i out_odd  = _mm256_slli_epi16(_mm256_srai_epi16(h_odd, 8), 2);
+                __m256i out_lo = _mm256_unpacklo_epi16(out_even, out_odd);  // 128-bit lanes interleave separately
+                __m256i out_hi = _mm256_unpackhi_epi16(out_even, out_odd);
+                __m256i packed = _mm256_packus_epi16(out_lo, out_hi);       // also lane-wise
+                // packed layout: [lane0: lo0..7,hi0..7][lane1: lo8..15,hi8..15] -> 32 bytes
+                // Need permute to fix: we want sequential output (idx 0..31)
+                // After unpacklo: even-odd interleaved within each lane (8 pairs)
+                // After packus: 16 bytes from out_lo then 16 from out_hi, per lane
+                // Goal: positions 0..15 from lane0, 16..31 from lane1
+                // packed already has lane0 first (16 bytes from lo+hi of lane0), lane1 next
+                // But out_lo has unpacklo of [lo0..3, hi0..3, lo8..11, hi8..11]
+                // Let's compute via simpler approach: write 128-bit halves
+                __m128i pack_lo = _mm256_castsi256_si128(packed);
+                __m128i pack_hi = _mm256_extracti128_si256(packed, 1);
+                _mm_storeu_si128((__m128i *)(drow + 2*fx), pack_lo);
+                _mm_storeu_si128((__m128i *)(drow + 2*fx + 16), pack_hi);
+            }
+#endif
+            // Process 8 source cols -> 16 dst bytes.
+            vx_int32 fx_max = (srcW >= 8) ? srcW - 8 : 0;
+            for (; fx <= fx_max && 2*fx + 16 <= dstW; fx += 8)
+            {
+                __m128i v_left   = _mm_loadu_si128((const __m128i *)(V + fx));
+                __m128i v_center = _mm_loadu_si128((const __m128i *)(V + fx + 1));
+                __m128i v_right  = _mm_loadu_si128((const __m128i *)(V + fx + 2));
+                __m128i h_even = _mm_add_epi16(_mm_add_epi16(v_left, v_right), _mm_mullo_epi16(v_center, mul6_128));
+                __m128i h_odd  = _mm_slli_epi16(_mm_add_epi16(v_center, v_right), 2);
+                __m128i out_even = _mm_slli_epi16(_mm_srai_epi16(h_even, 8), 2);
+                __m128i out_odd  = _mm_slli_epi16(_mm_srai_epi16(h_odd, 8), 2);
+                __m128i out_lo = _mm_unpacklo_epi16(out_even, out_odd);
+                __m128i out_hi = _mm_unpackhi_epi16(out_even, out_odd);
+                __m128i packed = _mm_packus_epi16(out_lo, out_hi);
+                _mm_storeu_si128((__m128i *)(drow + 2*fx), packed);
+            }
+            for (vx_int32 x = 2*fx; x < dstW; x++)
+            {
+                vx_int32 fxx = x >> 1;
+                vx_int32 H = ((x & 1) == 0)
+                    ? (V[fxx] + 6 * V[fxx + 1] + V[fxx + 2])
+                    : (4 * (V[fxx + 1] + V[fxx + 2]));
+                vx_int32 dv = (H >> 8) << 2;
+                if (dv > 255) dv = 255;
+                else if (dv < 0) dv = 0;
+                drow[x] = (vx_uint8)dv;
+            }
+        }
+        else
+        {
+            vx_int16 *drow = (vx_int16 *)((vx_uint8 *)dst + (size_t)y * dstStride);
+            fx = 0;
+#if USE_AVX
+            vx_int32 fx_max256 = (srcW >= 16) ? srcW - 16 : 0;
+            for (; fx <= fx_max256 && 2*fx + 32 <= dstW; fx += 16)
+            {
+                __m256i v_left   = _mm256_loadu_si256((const __m256i *)(V + fx));
+                __m256i v_center = _mm256_loadu_si256((const __m256i *)(V + fx + 1));
+                __m256i v_right  = _mm256_loadu_si256((const __m256i *)(V + fx + 2));
+                __m256i h_even = _mm256_add_epi16(_mm256_add_epi16(v_left, v_right), _mm256_mullo_epi16(v_center, mul6_256));
+                __m256i h_odd  = _mm256_slli_epi16(_mm256_add_epi16(v_center, v_right), 2);
+                // Spec computes (sum / 256) * 4, NOT sum / 64.
+                __m256i out_even = _mm256_slli_epi16(_mm256_srai_epi16(h_even, 8), 2);
+                __m256i out_odd  = _mm256_slli_epi16(_mm256_srai_epi16(h_odd, 8), 2);
+                __m256i interlo = _mm256_unpacklo_epi16(out_even, out_odd); // lane-wise
+                __m256i interhi = _mm256_unpackhi_epi16(out_even, out_odd);
+                // Each lane has 8 sequential 16-bit values. Need to write in correct order:
+                // First write lane0 of interlo, then lane0 of interhi, then lane1 of interlo, then lane1 of interhi.
+                __m128i lo_lo = _mm256_castsi256_si128(interlo);
+                __m128i hi_lo = _mm256_castsi256_si128(interhi);
+                __m128i lo_hi = _mm256_extracti128_si256(interlo, 1);
+                __m128i hi_hi = _mm256_extracti128_si256(interhi, 1);
+                _mm_storeu_si128((__m128i *)(drow + 2*fx), lo_lo);
+                _mm_storeu_si128((__m128i *)(drow + 2*fx + 8), hi_lo);
+                _mm_storeu_si128((__m128i *)(drow + 2*fx + 16), lo_hi);
+                _mm_storeu_si128((__m128i *)(drow + 2*fx + 24), hi_hi);
+            }
+#endif
+            vx_int32 fx_max = (srcW >= 8) ? srcW - 8 : 0;
+            for (; fx <= fx_max && 2*fx + 16 <= dstW; fx += 8)
+            {
+                __m128i v_left   = _mm_loadu_si128((const __m128i *)(V + fx));
+                __m128i v_center = _mm_loadu_si128((const __m128i *)(V + fx + 1));
+                __m128i v_right  = _mm_loadu_si128((const __m128i *)(V + fx + 2));
+                __m128i h_even = _mm_add_epi16(_mm_add_epi16(v_left, v_right), _mm_mullo_epi16(v_center, mul6_128));
+                __m128i h_odd  = _mm_slli_epi16(_mm_add_epi16(v_center, v_right), 2);
+                __m128i out_even = _mm_slli_epi16(_mm_srai_epi16(h_even, 8), 2);
+                __m128i out_odd  = _mm_slli_epi16(_mm_srai_epi16(h_odd, 8), 2);
+                __m128i out_lo = _mm_unpacklo_epi16(out_even, out_odd);
+                __m128i out_hi = _mm_unpackhi_epi16(out_even, out_odd);
+                _mm_storeu_si128((__m128i *)(drow + 2*fx), out_lo);
+                _mm_storeu_si128((__m128i *)(drow + 2*fx + 8), out_hi);
+            }
+            for (vx_int32 x = 2*fx; x < dstW; x++)
+            {
+                vx_int32 fxx = x >> 1;
+                vx_int32 H = ((x & 1) == 0)
+                    ? (V[fxx] + 6 * V[fxx + 1] + V[fxx + 2])
+                    : (4 * (V[fxx + 1] + V[fxx + 2]));
+                vx_int32 dv = (H >> 8) << 2;
+                if (dv > INT16_MAX) dv = INT16_MAX;
+                else if (dv < INT16_MIN) dv = INT16_MIN;
+                drow[x] = (vx_int16)dv;
+            }
+        }
+    }
+}
+
+// Fused PyramidUp (5x5 Gaussian, replicate border) + saturate subtract:
+//   out_s16[y,x] = saturate_s16(src_u8[y,x] - upsampled_s16[y,x])
+// where upsampled_s16 = HafCpu_PyramidUp_Gaussian5x5_U8(filling -> S16, dst size = src size).
+// Eliminates the intermediate S16 image and the vxuSubtract graph overhead used by
+// the legacy LaplacianPyramid flow.
+static void HafCpu_PyramidUp_Gaussian5x5_Subtract_U8(
+    const vx_uint8 *fill, vx_int32 fillStride, vx_int32 srcW, vx_int32 srcH,
+    const vx_uint8 *src,  vx_int32 srcStride,
+    vx_int16 *dst, vx_int32 dstStride, vx_int32 dstW, vx_int32 dstH)
+{
+    // Vertical buffer (same layout as HafCpu_PyramidUp_Gaussian5x5_U8).
+    std::vector<vx_int16> Vbuf((size_t)srcW + 18);
+    vx_int16 *V = Vbuf.data();
+
+    const __m128i zero128 = _mm_setzero_si128();
+    const __m128i mul6_128 = _mm_set1_epi16(6);
+#if USE_AVX
+    const __m256i zero256 = _mm256_setzero_si256();
+    const __m256i mul6_256 = _mm256_set1_epi16(6);
+#endif
+
+    for (vx_int32 y = 0; y < dstH; y++)
+    {
+        bool y_even = (y & 1) == 0;
+        vx_int32 fy = y >> 1;
+        vx_int32 fy_top = fy - 1;
+        vx_int32 fy_mid = fy;
+        vx_int32 fy_bot = fy + 1;
+        // Source-level replicate at both ends (matches CTS reference).
+        if (fy_top < 0) fy_top = 0;
+        if (fy_mid >= srcH) fy_mid = srcH - 1;
+        if (fy_bot >= srcH) fy_bot = srcH - 1;
+        const vx_uint8 *rm = y_even ? (fill + (size_t)fy_top * fillStride) : nullptr;
+        const vx_uint8 *r0 = (fill + (size_t)fy_mid * fillStride);
+        const vx_uint8 *rp = (fill + (size_t)fy_bot * fillStride);
+
+        vx_int32 fx = 0;
+        if (y_even)
+        {
+#if USE_AVX
+            for (; fx + 32 <= srcW; fx += 32)
+            {
+                __m256i a = rm ? _mm256_loadu_si256((const __m256i *)(rm + fx)) : zero256;
+                __m256i b = r0 ? _mm256_loadu_si256((const __m256i *)(r0 + fx)) : zero256;
+                __m256i c = rp ? _mm256_loadu_si256((const __m256i *)(rp + fx)) : zero256;
+                __m256i a_lo = _mm256_unpacklo_epi8(a, zero256);
+                __m256i a_hi = _mm256_unpackhi_epi8(a, zero256);
+                __m256i b_lo = _mm256_unpacklo_epi8(b, zero256);
+                __m256i b_hi = _mm256_unpackhi_epi8(b, zero256);
+                __m256i c_lo = _mm256_unpacklo_epi8(c, zero256);
+                __m256i c_hi = _mm256_unpackhi_epi8(c, zero256);
+                __m256i vlo = _mm256_add_epi16(_mm256_add_epi16(a_lo, c_lo), _mm256_mullo_epi16(b_lo, mul6_256));
+                __m256i vhi = _mm256_add_epi16(_mm256_add_epi16(a_hi, c_hi), _mm256_mullo_epi16(b_hi, mul6_256));
+                __m256i out_lo = _mm256_permute2x128_si256(vlo, vhi, 0x20);
+                __m256i out_hi = _mm256_permute2x128_si256(vlo, vhi, 0x31);
+                _mm256_storeu_si256((__m256i *)(V + 1 + fx), out_lo);
+                _mm256_storeu_si256((__m256i *)(V + 1 + fx + 16), out_hi);
+            }
+#endif
+            for (; fx + 16 <= srcW; fx += 16)
+            {
+                __m128i a = rm ? _mm_loadu_si128((const __m128i *)(rm + fx)) : zero128;
+                __m128i b = r0 ? _mm_loadu_si128((const __m128i *)(r0 + fx)) : zero128;
+                __m128i c = rp ? _mm_loadu_si128((const __m128i *)(rp + fx)) : zero128;
+                __m128i a_lo = _mm_unpacklo_epi8(a, zero128);
+                __m128i a_hi = _mm_unpackhi_epi8(a, zero128);
+                __m128i b_lo = _mm_unpacklo_epi8(b, zero128);
+                __m128i b_hi = _mm_unpackhi_epi8(b, zero128);
+                __m128i c_lo = _mm_unpacklo_epi8(c, zero128);
+                __m128i c_hi = _mm_unpackhi_epi8(c, zero128);
+                __m128i vlo = _mm_add_epi16(_mm_add_epi16(a_lo, c_lo), _mm_mullo_epi16(b_lo, mul6_128));
+                __m128i vhi = _mm_add_epi16(_mm_add_epi16(a_hi, c_hi), _mm_mullo_epi16(b_hi, mul6_128));
+                _mm_storeu_si128((__m128i *)(V + 1 + fx), vlo);
+                _mm_storeu_si128((__m128i *)(V + 1 + fx + 8), vhi);
+            }
+            for (; fx < srcW; fx++)
+            {
+                vx_int16 av = rm ? rm[fx] : 0;
+                vx_int16 bv = r0 ? r0[fx] : 0;
+                vx_int16 cv = rp ? rp[fx] : 0;
+                V[1 + fx] = (vx_int16)(av + 6 * bv + cv);
+            }
+        }
+        else
+        {
+#if USE_AVX
+            for (; fx + 32 <= srcW; fx += 32)
+            {
+                __m256i b = r0 ? _mm256_loadu_si256((const __m256i *)(r0 + fx)) : zero256;
+                __m256i c = rp ? _mm256_loadu_si256((const __m256i *)(rp + fx)) : zero256;
+                __m256i b_lo = _mm256_unpacklo_epi8(b, zero256);
+                __m256i b_hi = _mm256_unpackhi_epi8(b, zero256);
+                __m256i c_lo = _mm256_unpacklo_epi8(c, zero256);
+                __m256i c_hi = _mm256_unpackhi_epi8(c, zero256);
+                __m256i vlo = _mm256_slli_epi16(_mm256_add_epi16(b_lo, c_lo), 2);
+                __m256i vhi = _mm256_slli_epi16(_mm256_add_epi16(b_hi, c_hi), 2);
+                __m256i out_lo = _mm256_permute2x128_si256(vlo, vhi, 0x20);
+                __m256i out_hi = _mm256_permute2x128_si256(vlo, vhi, 0x31);
+                _mm256_storeu_si256((__m256i *)(V + 1 + fx), out_lo);
+                _mm256_storeu_si256((__m256i *)(V + 1 + fx + 16), out_hi);
+            }
+#endif
+            for (; fx + 16 <= srcW; fx += 16)
+            {
+                __m128i b = r0 ? _mm_loadu_si128((const __m128i *)(r0 + fx)) : zero128;
+                __m128i c = rp ? _mm_loadu_si128((const __m128i *)(rp + fx)) : zero128;
+                __m128i b_lo = _mm_unpacklo_epi8(b, zero128);
+                __m128i b_hi = _mm_unpackhi_epi8(b, zero128);
+                __m128i c_lo = _mm_unpacklo_epi8(c, zero128);
+                __m128i c_hi = _mm_unpackhi_epi8(c, zero128);
+                __m128i vlo = _mm_slli_epi16(_mm_add_epi16(b_lo, c_lo), 2);
+                __m128i vhi = _mm_slli_epi16(_mm_add_epi16(b_hi, c_hi), 2);
+                _mm_storeu_si128((__m128i *)(V + 1 + fx), vlo);
+                _mm_storeu_si128((__m128i *)(V + 1 + fx + 8), vhi);
+            }
+            for (; fx < srcW; fx++)
+            {
+                vx_int16 bv = r0 ? r0[fx] : 0;
+                vx_int16 cv = rp ? rp[fx] : 0;
+                V[1 + fx] = (vx_int16)(4 * (bv + cv));
+            }
+        }
+        V[0] = V[1];                       // left replicate
+        V[srcW + 1] = V[srcW];             // right replicate (CTS reference INSERT_VALUES_X)
+        V[srcW + 2] = V[srcW];
+        for (int i = 3; i < 18; i++) V[srcW + i] = V[srcW];
+
+        // Horizontal pass + subtract: produces 16 dst S16 values from 8 source cols at a time.
+        const vx_uint8 *srow = src + (size_t)y * srcStride;
+        vx_int16 *drow = dst + (size_t)y * (dstStride / (vx_int32)sizeof(vx_int16));
+        fx = 0;
+#if USE_AVX
+        vx_int32 fx_max256 = (srcW >= 16) ? srcW - 16 : 0;
+        for (; fx <= fx_max256 && 2*fx + 32 <= dstW; fx += 16)
+        {
+            __m256i v_left   = _mm256_loadu_si256((const __m256i *)(V + fx));
+            __m256i v_center = _mm256_loadu_si256((const __m256i *)(V + fx + 1));
+            __m256i v_right  = _mm256_loadu_si256((const __m256i *)(V + fx + 2));
+            __m256i h_even = _mm256_add_epi16(_mm256_add_epi16(v_left, v_right), _mm256_mullo_epi16(v_center, mul6_256));
+            __m256i h_odd  = _mm256_slli_epi16(_mm256_add_epi16(v_center, v_right), 2);
+            // Spec computes (sum / 256) * 4, NOT sum / 64.
+            __m256i out_even = _mm256_slli_epi16(_mm256_srai_epi16(h_even, 8), 2);
+            __m256i out_odd  = _mm256_slli_epi16(_mm256_srai_epi16(h_odd, 8), 2);
+            __m256i interlo = _mm256_unpacklo_epi16(out_even, out_odd);
+            __m256i interhi = _mm256_unpackhi_epi16(out_even, out_odd);
+            // Load 32 U8 source pixels and widen to two __m256i s16 vectors in the correct order.
+            __m256i src32 = _mm256_loadu_si256((const __m256i *)(srow + 2*fx));
+            __m128i s_lo = _mm256_castsi256_si128(src32);
+            __m128i s_hi = _mm256_extracti128_si256(src32, 1);
+            __m256i src_w0 = _mm256_cvtepu8_epi16(s_lo);   // 16 s16: src[0..15]
+            __m256i src_w1 = _mm256_cvtepu8_epi16(s_hi);   // 16 s16: src[16..31]
+            // 'interlo' lane0 holds out[0..7] interleaved (positions 0..15 of dst), lane1 holds out[16..23]
+            // 'interhi' lane0 holds out[8..15] (positions 16..31 of dst), wait re-examine.
+            // unpacklo/hi each works per 128-bit lane:
+            //   interlo lane0: pairs from out_even[0..3], out_odd[0..3] => dst positions 0..7
+            //   interhi lane0: pairs from out_even[4..7], out_odd[4..7] => dst positions 8..15
+            //   interlo lane1: pairs from out_even[8..11], out_odd[8..11] => dst positions 16..23
+            //   interhi lane1: pairs from out_even[12..15], out_odd[12..15] => dst positions 24..31
+            // Sequential write order: lane0_lo, lane0_hi, lane1_lo, lane1_hi.
+            __m128i d0 = _mm256_castsi256_si128(interlo);
+            __m128i d1 = _mm256_castsi256_si128(interhi);
+            __m128i d2 = _mm256_extracti128_si256(interlo, 1);
+            __m128i d3 = _mm256_extracti128_si256(interhi, 1);
+            __m256i up_lo = _mm256_setr_m128i(d0, d1); // dst positions 0..15
+            __m256i up_hi = _mm256_setr_m128i(d2, d3); // dst positions 16..31
+            // Saturating subtract: src(u8 widened to s16) - upsample(s16). Range fits in s16 since both inputs are in [-32768, 32767].
+            __m256i out_lo = _mm256_subs_epi16(src_w0, up_lo);
+            __m256i out_hi = _mm256_subs_epi16(src_w1, up_hi);
+            _mm256_storeu_si256((__m256i *)(drow + 2*fx),      out_lo);
+            _mm256_storeu_si256((__m256i *)(drow + 2*fx + 16), out_hi);
+        }
+#endif
+        vx_int32 fx_max = (srcW >= 8) ? srcW - 8 : 0;
+        for (; fx <= fx_max && 2*fx + 16 <= dstW; fx += 8)
+        {
+            __m128i v_left   = _mm_loadu_si128((const __m128i *)(V + fx));
+            __m128i v_center = _mm_loadu_si128((const __m128i *)(V + fx + 1));
+            __m128i v_right  = _mm_loadu_si128((const __m128i *)(V + fx + 2));
+            __m128i h_even = _mm_add_epi16(_mm_add_epi16(v_left, v_right), _mm_mullo_epi16(v_center, mul6_128));
+            __m128i h_odd  = _mm_slli_epi16(_mm_add_epi16(v_center, v_right), 2);
+            __m128i out_even = _mm_slli_epi16(_mm_srai_epi16(h_even, 8), 2);
+            __m128i out_odd  = _mm_slli_epi16(_mm_srai_epi16(h_odd, 8), 2);
+            __m128i up_lo = _mm_unpacklo_epi16(out_even, out_odd);
+            __m128i up_hi = _mm_unpackhi_epi16(out_even, out_odd);
+            __m128i src16 = _mm_loadu_si128((const __m128i *)(srow + 2*fx));
+            __m128i src_w_lo = _mm_cvtepu8_epi16(src16);
+            __m128i src_w_hi = _mm_cvtepu8_epi16(_mm_srli_si128(src16, 8));
+            __m128i out_lo = _mm_subs_epi16(src_w_lo, up_lo);
+            __m128i out_hi = _mm_subs_epi16(src_w_hi, up_hi);
+            _mm_storeu_si128((__m128i *)(drow + 2*fx),     out_lo);
+            _mm_storeu_si128((__m128i *)(drow + 2*fx + 8), out_hi);
+        }
+        for (vx_int32 x = 2*fx; x < dstW; x++)
+        {
+            vx_int32 fxx = x >> 1;
+            vx_int32 H = ((x & 1) == 0)
+                ? (V[fxx] + 6 * V[fxx + 1] + V[fxx + 2])
+                : (4 * (V[fxx + 1] + V[fxx + 2]));
+            vx_int32 dv = (H >> 8) << 2;
+            // Saturating subtract to s16
+            vx_int32 sub = (vx_int32)srow[x] - dv;
+            if (sub > INT16_MAX) sub = INT16_MAX;
+            else if (sub < INT16_MIN) sub = INT16_MIN;
+            drow[x] = (vx_int16)sub;
+        }
+    }
+}
+
 static vx_status upsampleImage(vx_context context, vx_uint32 width, vx_uint32 height, vx_image filling, vx_convolution conv, vx_image upsample, vx_border_t *border)
 {
     vx_status status = VX_SUCCESS;
     vx_df_image format, filling_format;
 
     format = VX_DF_IMAGE_U8;
-    vx_image tmp = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
     status |= vxQueryImage(filling, VX_IMAGE_FORMAT, &filling_format, sizeof(filling_format));
+
+    // Fast direct upsample path: 5x5 Gaussian with scale 256 is the only convolution used by
+    // LaplacianPyramid/LaplacianReconstruct. Combining the zero-stuff + 5x5 conv + x4 scaling
+    // into a separable two-pass kernel cuts the original ~25 mul-adds/pixel scalar work down to
+    // ~6 SIMD adds/shifts/pixel and removes the temporary U8 image entirely.
+    {
+        vx_size conv_w = 0, conv_h = 0;
+        vx_uint32 conv_scale = 1;
+        vxQueryConvolution(conv, VX_CONVOLUTION_COLUMNS, &conv_w, sizeof(conv_w));
+        vxQueryConvolution(conv, VX_CONVOLUTION_ROWS, &conv_h, sizeof(conv_h));
+        vxQueryConvolution(conv, VX_CONVOLUTION_SCALE, &conv_scale, sizeof(conv_scale));
+
+        vx_df_image upsample_format = 0;
+        vxQueryImage(upsample, VX_IMAGE_FORMAT, &upsample_format, sizeof(upsample_format));
+
+        if (conv_w == 5 && conv_h == 5 && conv_scale == 256 &&
+            border && border->mode == VX_BORDER_REPLICATE &&
+            (filling_format == VX_DF_IMAGE_U8 || filling_format == VX_DF_IMAGE_S16) &&
+            (upsample_format == VX_DF_IMAGE_U8 || upsample_format == VX_DF_IMAGE_S16))
+        {
+            vx_int16 coef[25];
+            if (vxCopyConvolutionCoefficients(conv, coef, VX_READ_ONLY, VX_MEMORY_TYPE_HOST) == VX_SUCCESS)
+            {
+                static const vx_int16 gauss_ref[25] = {
+                    1,  4,  6,  4, 1,
+                    4, 16, 24, 16, 4,
+                    6, 24, 36, 24, 6,
+                    4, 16, 24, 16, 4,
+                    1,  4,  6,  4, 1
+                };
+                bool is_gauss = true;
+                for (int i = 0; i < 25; i++) if (coef[i] != gauss_ref[i]) { is_gauss = false; break; }
+
+                if (is_gauss)
+                {
+                    vx_rectangle_t f_rect, u_rect;
+                    vx_imagepatch_addressing_t f_addr = VX_IMAGEPATCH_ADDR_INIT;
+                    vx_imagepatch_addressing_t u_addr = VX_IMAGEPATCH_ADDR_INIT;
+                    vx_map_id f_id, u_id;
+                    void *f_base = NULL, *u_base = NULL;
+
+                    status = vxGetValidRegionImage(filling, &f_rect);
+                    status |= vxMapImagePatch(filling, &f_rect, 0, &f_id, &f_addr, &f_base, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
+                    status |= vxGetValidRegionImage(upsample, &u_rect);
+                    status |= vxMapImagePatch(upsample, &u_rect, 0, &u_id, &u_addr, &u_base, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
+
+                    if (status == VX_SUCCESS && f_addr.stride_x == (filling_format == VX_DF_IMAGE_U8 ? 1 : 2) &&
+                        u_addr.stride_x == (upsample_format == VX_DF_IMAGE_U8 ? 1 : 2))
+                    {
+                        vx_int32 srcW = (vx_int32)f_addr.dim_x;
+                        vx_int32 srcH = (vx_int32)f_addr.dim_y;
+                        vx_int32 dstW = (vx_int32)u_addr.dim_x;
+                        vx_int32 dstH = (vx_int32)u_addr.dim_y;
+
+                        // Saturate S16 filling to U8 into a small scratch row buffer when needed.
+                        if (filling_format == VX_DF_IMAGE_U8)
+                        {
+                            HafCpu_PyramidUp_Gaussian5x5_U8(
+                                (const vx_uint8 *)f_base, f_addr.stride_y, srcW, srcH,
+                                u_base, u_addr.stride_y, dstW, dstH,
+                                upsample_format == VX_DF_IMAGE_S16);
+                        }
+                        else // VX_DF_IMAGE_S16: original behaviour saturates filling to U8 first.
+                        {
+                            std::vector<vx_uint8> u8src((size_t)srcW * srcH);
+                            for (vx_int32 ry = 0; ry < srcH; ry++)
+                            {
+                                const vx_int16 *srow = (const vx_int16 *)((const vx_uint8 *)f_base + (size_t)ry * f_addr.stride_y);
+                                vx_uint8 *drow = u8src.data() + (size_t)ry * srcW;
+                                for (vx_int32 rx = 0; rx < srcW; rx++)
+                                {
+                                    vx_int32 v = srow[rx];
+                                    drow[rx] = (vx_uint8)((v < 0) ? 0 : ((v > 255) ? 255 : v));
+                                }
+                            }
+                            HafCpu_PyramidUp_Gaussian5x5_U8(
+                                u8src.data(), srcW, srcW, srcH,
+                                u_base, u_addr.stride_y, dstW, dstH,
+                                upsample_format == VX_DF_IMAGE_S16);
+                        }
+                    }
+                    else
+                    {
+                        is_gauss = false;
+                    }
+                    vxUnmapImagePatch(filling, f_id);
+                    vxUnmapImagePatch(upsample, u_id);
+                    if (is_gauss)
+                        return status;
+                }
+            }
+        }
+    }
+
+    vx_image tmp = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 
     vx_rectangle_t tmp_rect, filling_rect;
     vx_imagepatch_addressing_t tmp_addr = VX_IMAGEPATCH_ADDR_INIT;
@@ -616,42 +1450,75 @@ static vx_status upsampleImage(vx_context context, vx_uint32 width, vx_uint32 he
     status = vxGetValidRegionImage(filling, &filling_rect);
     status |= vxMapImagePatch(filling, &filling_rect, 0, &filling_map_id, &filling_addr, (void **)&filling_base, VX_READ_AND_WRITE, VX_MEMORY_TYPE_HOST, 0);
 
-    for (int ix = 0; ix < (int)width; ix++)
+    // Zero-stuff upsample: write tmp[ix, iy] = (ix even && iy even) ? saturate(filling[ix/2, iy/2]) : 0
+    // tmp is U8; filling is U8 or S16. Use row-major SIMD for high throughput
+    // (the original column-major scalar loop was a major bottleneck).
     {
-        for (int iy = 0; iy < (int)height; iy++)
+        const vx_int32 tmpStride = tmp_addr.stride_y;
+        const vx_int32 fillStride = filling_addr.stride_y;
+        const int wInt = (int)width;
+        const int hInt = (int)height;
+
+        for (int iy = 0; iy < hInt; iy++)
         {
-
-            void* tmp_datap = vxFormatImagePatchAddress2d(tmp_base, ix, iy, &tmp_addr);
-
-            if (iy % 2 != 0 || ix % 2 != 0)
+            vx_uint8 *tmpRow = (vx_uint8 *)tmp_base + (size_t)iy * tmpStride;
+            if ((iy & 1) != 0)
             {
-                if (format == VX_DF_IMAGE_U8)
-                    *(vx_uint8 *)tmp_datap = (vx_uint8)0;
-                else
-                    *(vx_int16 *)tmp_datap = (vx_int16)0;
+                memset(tmpRow, 0, (size_t)wInt);
+                continue;
             }
-            else
+            // Even row: even-indexed pixels are saturated copies; odd indexed are 0.
+            int hf = iy >> 1;
+            if (filling_format == VX_DF_IMAGE_U8)
             {
-                void* filling_tmp = vxFormatImagePatchAddress2d(filling_base, ix / 2, iy / 2, &filling_addr);
-                vx_int32 filling_data = filling_format == VX_DF_IMAGE_U8 ? *(vx_uint8 *)filling_tmp : *(vx_int16 *)filling_tmp;
-                if (format == VX_DF_IMAGE_U8)
+                const vx_uint8 *fillRow = (const vx_uint8 *)filling_base + (size_t)hf * fillStride;
+                int ix = 0;
+#if USE_AVX
+                __m256i zero256 = _mm256_setzero_si256();
+                for (; ix + 32 <= wInt; ix += 32)
                 {
-                    if (filling_data > UINT8_MAX)
-                        filling_data = UINT8_MAX;
-                    else if (filling_data < 0)
-                        filling_data = 0;
-                    *(vx_uint8 *)tmp_datap = (vx_uint8)filling_data;
+                    __m128i src = _mm_loadu_si128((const __m128i *)(fillRow + (ix >> 1)));
+                    // Interleave src bytes with zero bytes via unpack to get 32 bytes
+                    __m128i lo = _mm_unpacklo_epi8(src, _mm_setzero_si128());
+                    __m128i hi = _mm_unpackhi_epi8(src, _mm_setzero_si128());
+                    __m256i out = _mm256_setr_m128i(lo, hi);
+                    (void)zero256;
+                    _mm256_storeu_si256((__m256i *)(tmpRow + ix), out);
                 }
-                else
+#endif
+                for (; ix + 16 <= wInt; ix += 16)
                 {
-                    if (filling_data > INT16_MAX)
-                        filling_data = INT16_MAX;
-                    else if (filling_data < INT16_MIN)
-                        filling_data = INT16_MIN;
-                    *(vx_int16 *)tmp_datap = (vx_int16)filling_data;
+                    __m128i src = _mm_loadl_epi64((const __m128i *)(fillRow + (ix >> 1)));
+                    __m128i out = _mm_unpacklo_epi8(src, _mm_setzero_si128());
+                    _mm_storeu_si128((__m128i *)(tmpRow + ix), out);
+                }
+                for (; ix < wInt; ix++)
+                {
+                    tmpRow[ix] = ((ix & 1) == 0) ? fillRow[ix >> 1] : (vx_uint8)0;
+                }
+            }
+            else // filling is S16; saturate to U8 (0..255)
+            {
+                const vx_int16 *fillRow = (const vx_int16 *)((const vx_uint8 *)filling_base + (size_t)hf * fillStride);
+                int ix = 0;
+                for (; ix + 16 <= wInt; ix += 16)
+                {
+                    __m128i lo = _mm_loadu_si128((const __m128i *)(fillRow + (ix >> 1)));     // 8 int16
+                    __m128i hi = _mm_setzero_si128();
+                    __m128i packed = _mm_packus_epi16(lo, hi);                                // 8 saturated U8 in lower 8
+                    __m128i out = _mm_unpacklo_epi8(packed, _mm_setzero_si128());             // 16 U8 with zeros between
+                    _mm_storeu_si128((__m128i *)(tmpRow + ix), out);
+                }
+                for (; ix < wInt; ix++)
+                {
+                    if ((ix & 1) != 0) { tmpRow[ix] = 0; continue; }
+                    vx_int32 v = fillRow[ix >> 1];
+                    v = v < 0 ? 0 : (v > 255 ? 255 : v);
+                    tmpRow[ix] = (vx_uint8)v;
                 }
             }
         }
+        (void)format;
     }
 
     status |= vxUnmapImagePatch(tmp, tmp_map_id);
@@ -669,28 +1536,60 @@ static vx_status upsampleImage(vx_context context, vx_uint32 width, vx_uint32 he
     status = vxGetValidRegionImage(upsample, &upsample_rect);
     status |= vxMapImagePatch(upsample, &upsample_rect, 0, &upsample_map_id, &upsample_addr, (void **)&upsample_base, VX_READ_AND_WRITE, VX_MEMORY_TYPE_HOST, 0);
 
-    for (int ix = 0; ix < (int)width; ix++)
+    // Multiply by 4 with saturation, row-major SIMD (was column-major scalar bottleneck).
     {
-        for (int iy = 0; iy < (int)height; iy++)
+        const vx_int32 upStride = upsample_addr.stride_y;
+        const int wInt = (int)width;
+        const int hInt = (int)height;
+
+        if (upsample_format == VX_DF_IMAGE_U8)
         {
-            void* upsample_p = vxFormatImagePatchAddress2d(upsample_base, ix, iy, &upsample_addr);
-            vx_int32 upsample_data = upsample_format == VX_DF_IMAGE_U8 ? *(vx_uint8 *)upsample_p : *(vx_int16 *)upsample_p;
-            upsample_data *= 4;
-            if (upsample_format == VX_DF_IMAGE_U8)
+            for (int iy = 0; iy < hInt; iy++)
             {
-                if (upsample_data > UINT8_MAX)
-                    upsample_data = UINT8_MAX;
-                else if (upsample_data < 0)
-                    upsample_data = 0;
-                *(vx_uint8 *)upsample_p = (vx_uint8)upsample_data;
+                vx_uint8 *row = (vx_uint8 *)upsample_base + (size_t)iy * upStride;
+                int ix = 0;
+                for (; ix + 16 <= wInt; ix += 16)
+                {
+                    __m128i v = _mm_loadu_si128((const __m128i *)(row + ix));
+                    __m128i lo = _mm_unpacklo_epi8(v, _mm_setzero_si128());
+                    __m128i hi = _mm_unpackhi_epi8(v, _mm_setzero_si128());
+                    lo = _mm_slli_epi16(lo, 2);
+                    hi = _mm_slli_epi16(hi, 2);
+                    __m128i out = _mm_packus_epi16(lo, hi);
+                    _mm_storeu_si128((__m128i *)(row + ix), out);
+                }
+                for (; ix < wInt; ix++)
+                {
+                    vx_int32 v = row[ix] * 4;
+                    if (v > 255) v = 255;
+                    row[ix] = (vx_uint8)v;
+                }
             }
-            else
+        }
+        else // S16 with saturation to [INT16_MIN, INT16_MAX]
+        {
+            for (int iy = 0; iy < hInt; iy++)
             {
-                if (upsample_data > INT16_MAX)
-                    upsample_data = INT16_MAX;
-                else if (upsample_data < INT16_MIN)
-                    upsample_data = INT16_MIN;
-                *(vx_int16 *)upsample_p = (vx_int16)upsample_data;
+                vx_int16 *row = (vx_int16 *)((vx_uint8 *)upsample_base + (size_t)iy * upStride);
+                int ix = 0;
+                for (; ix + 8 <= wInt; ix += 8)
+                {
+                    __m128i v = _mm_loadu_si128((const __m128i *)(row + ix));
+                    // Sign-extend to 32-bit, shift, then signed-saturate-pack
+                    __m128i lo = _mm_cvtepi16_epi32(v);
+                    __m128i hi = _mm_cvtepi16_epi32(_mm_srli_si128(v, 8));
+                    lo = _mm_slli_epi32(lo, 2);
+                    hi = _mm_slli_epi32(hi, 2);
+                    __m128i out = _mm_packs_epi32(lo, hi);
+                    _mm_storeu_si128((__m128i *)(row + ix), out);
+                }
+                for (; ix < wInt; ix++)
+                {
+                    vx_int32 v = row[ix] * 4;
+                    if (v > INT16_MAX) v = INT16_MAX;
+                    else if (v < INT16_MIN) v = INT16_MIN;
+                    row[ix] = (vx_int16)v;
+                }
             }
         }
     }
@@ -754,11 +1653,54 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
     gauss_next = vxGetPyramidLevel(gaussian, 1);
     for (lev = 0; lev < levels; lev++)
     {
-        pyr_gauss_curr_level_filtered = vxCreateImage(context, level_width, level_height, VX_DF_IMAGE_S16);
-        upsampleImage(context, level_width, level_height, gauss_next, conv, pyr_gauss_curr_level_filtered, &border);
-
         pyr_laplacian_curr_level = vxGetPyramidLevel(laplacian, (vx_uint32)lev);
-        status |= vxuSubtract(context, gauss_cur, pyr_gauss_curr_level_filtered, policy, pyr_laplacian_curr_level);
+
+        // Fast path: gauss_cur is U8 with replicate border, laplacian level is S16; map
+        // them directly and run a fused PyramidUp_Gaussian5x5+saturate-subtract, skipping
+        // the intermediate S16 image and the vxuSubtract graph round-trip.
+        bool fused_done = false;
+        if (border.mode == VX_BORDER_REPLICATE)
+        {
+            vx_df_image fmt_cur = 0, fmt_next = 0, fmt_lap = 0;
+            vxQueryImage(gauss_cur, VX_IMAGE_FORMAT, &fmt_cur, sizeof(fmt_cur));
+            vxQueryImage(gauss_next, VX_IMAGE_FORMAT, &fmt_next, sizeof(fmt_next));
+            vxQueryImage(pyr_laplacian_curr_level, VX_IMAGE_FORMAT, &fmt_lap, sizeof(fmt_lap));
+            if (fmt_cur == VX_DF_IMAGE_U8 && fmt_next == VX_DF_IMAGE_U8 && fmt_lap == VX_DF_IMAGE_S16)
+            {
+                vx_rectangle_t r_cur, r_next, r_lap;
+                vx_imagepatch_addressing_t a_cur = VX_IMAGEPATCH_ADDR_INIT;
+                vx_imagepatch_addressing_t a_next = VX_IMAGEPATCH_ADDR_INIT;
+                vx_imagepatch_addressing_t a_lap = VX_IMAGEPATCH_ADDR_INIT;
+                vx_map_id m_cur, m_next, m_lap;
+                void *b_cur = NULL, *b_next = NULL, *b_lap = NULL;
+                vx_status st = VX_SUCCESS;
+                st |= vxGetValidRegionImage(gauss_cur, &r_cur);
+                st |= vxMapImagePatch(gauss_cur, &r_cur, 0, &m_cur, &a_cur, &b_cur, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
+                st |= vxGetValidRegionImage(gauss_next, &r_next);
+                st |= vxMapImagePatch(gauss_next, &r_next, 0, &m_next, &a_next, &b_next, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
+                st |= vxGetValidRegionImage(pyr_laplacian_curr_level, &r_lap);
+                st |= vxMapImagePatch(pyr_laplacian_curr_level, &r_lap, 0, &m_lap, &a_lap, &b_lap, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
+                if (st == VX_SUCCESS && a_cur.stride_x == 1 && a_next.stride_x == 1 && a_lap.stride_x == 2)
+                {
+                    HafCpu_PyramidUp_Gaussian5x5_Subtract_U8(
+                        (const vx_uint8 *)b_next, a_next.stride_y, (vx_int32)a_next.dim_x, (vx_int32)a_next.dim_y,
+                        (const vx_uint8 *)b_cur,  a_cur.stride_y,
+                        (vx_int16 *)b_lap, a_lap.stride_y, (vx_int32)a_lap.dim_x, (vx_int32)a_lap.dim_y);
+                    fused_done = true;
+                }
+                vxUnmapImagePatch(gauss_cur, m_cur);
+                vxUnmapImagePatch(gauss_next, m_next);
+                vxUnmapImagePatch(pyr_laplacian_curr_level, m_lap);
+            }
+        }
+
+        if (!fused_done)
+        {
+            pyr_gauss_curr_level_filtered = vxCreateImage(context, level_width, level_height, VX_DF_IMAGE_S16);
+            upsampleImage(context, level_width, level_height, gauss_next, conv, pyr_gauss_curr_level_filtered, &border);
+            status |= vxuSubtract(context, gauss_cur, pyr_gauss_curr_level_filtered, policy, pyr_laplacian_curr_level);
+            status |= vxReleaseImage(&pyr_gauss_curr_level_filtered);
+        }
 
         if (lev == levels - 1)
         {
@@ -783,8 +1725,6 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
         }
 
         /* decrements the references */
-
-        status |= vxReleaseImage(&pyr_gauss_curr_level_filtered);
         status |= vxReleaseImage(&pyr_laplacian_curr_level);
     }
 

@@ -10224,19 +10224,8 @@ int HafCpu_Phase_U8_S16S16
 			__m256 mnHi = _mm256_min_ps(axHi, ayHi);
 			__m256 mxHi = _mm256_max_ps(axHi, ayHi);
 
-			// Replace _mm256_div_ps (~13 cycles latency on Zen) with rcp_ps +
-			// one Newton-Raphson step for ~12-bit -> ~24-bit precision. The
-			// downstream poly + scale * (128/180) * angle path absorbs the
-			// remaining error well within the OpenVX Phase +/-1 tolerance.
-			__m256 dLo = _mm256_add_ps(mxLo, eps);
-			__m256 dHi = _mm256_add_ps(mxHi, eps);
-			__m256 rLo = _mm256_rcp_ps(dLo);
-			__m256 rHi = _mm256_rcp_ps(dHi);
-			const __m256 two = _mm256_set1_ps(2.0f);
-			rLo = _mm256_mul_ps(rLo, _mm256_sub_ps(two, _mm256_mul_ps(dLo, rLo)));
-			rHi = _mm256_mul_ps(rHi, _mm256_sub_ps(two, _mm256_mul_ps(dHi, rHi)));
-			__m256 cLo = _mm256_mul_ps(mnLo, rLo);
-			__m256 cHi = _mm256_mul_ps(mnHi, rHi);
+			__m256 cLo = _mm256_div_ps(mnLo, _mm256_add_ps(mxLo, eps));
+			__m256 cHi = _mm256_div_ps(mnHi, _mm256_add_ps(mxHi, eps));
 			__m256 c2Lo = _mm256_mul_ps(cLo, cLo);
 			__m256 c2Hi = _mm256_mul_ps(cHi, cHi);
 
@@ -10272,10 +10261,7 @@ int HafCpu_Phase_U8_S16S16
 			__m256 useX = _mm256_cmp_ps(ay, ax, _CMP_LE_OQ);
 			__m256 mn = _mm256_min_ps(ax, ay);
 			__m256 mx = _mm256_max_ps(ax, ay);
-			__m256 d = _mm256_add_ps(mx, eps);
-			__m256 r = _mm256_rcp_ps(d);
-			r = _mm256_mul_ps(r, _mm256_sub_ps(_mm256_set1_ps(2.0f), _mm256_mul_ps(d, r)));
-			__m256 c = _mm256_mul_ps(mn, r);
+			__m256 c = _mm256_div_ps(mn, _mm256_add_ps(mx, eps));
 			__m256 c2 = _mm256_mul_ps(c, c);
 			__m256 poly = _mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(p7, c2), p5), c2), p3), c2), p1), c);
 			__m256 angle = _mm256_blendv_ps(_mm256_sub_ps(ninety, poly), poly, useX);

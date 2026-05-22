@@ -52,13 +52,7 @@ static inline __m128i HafCpu_FastAtan2_PhaseByte_8(__m128i gx16, __m128i gy16)
 	__m256 useX = _mm256_cmp_ps(ay, ax, _CMP_LE_OQ);
 	__m256 mn = _mm256_min_ps(ax, ay);
 	__m256 mx = _mm256_max_ps(ax, ay);
-	// Use rcp_ps + one Newton-Raphson step (~24-bit precision) instead of
-	// _mm256_div_ps. Final output is u8 with +/-1 tolerance so the residual
-	// precision loss is well within spec.
-	__m256 d = _mm256_add_ps(mx, eps);
-	__m256 r = _mm256_rcp_ps(d);
-	r = _mm256_mul_ps(r, _mm256_sub_ps(_mm256_set1_ps(2.0f), _mm256_mul_ps(d, r)));
-	__m256 c = _mm256_mul_ps(mn, r);
+	__m256 c = _mm256_div_ps(mn, _mm256_add_ps(mx, eps));
 	__m256 c2 = _mm256_mul_ps(c, c);
 	__m256 poly = _mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(p7, c2), p5), c2), p3), c2), p1), c);
 	__m256 angle = _mm256_blendv_ps(_mm256_sub_ps(ninety, poly), poly, useX);

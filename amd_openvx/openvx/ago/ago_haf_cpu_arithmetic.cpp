@@ -7164,9 +7164,15 @@ int HafCpu_MeanStdDev_DATA_U8
 	)
 {
 #if USE_AVX
-	__m256i sum = _mm256_setzero_si256();
+	__m256i sum0 = _mm256_setzero_si256();
+	__m256i sum1 = _mm256_setzero_si256();
+	__m256i sum2 = _mm256_setzero_si256();
+	__m256i sum3 = _mm256_setzero_si256();
 	__m256i sumSquared64 = _mm256_setzero_si256();
-	__m256i sumSquared32 = _mm256_setzero_si256();
+	__m256i sumSquared32_0 = _mm256_setzero_si256();
+	__m256i sumSquared32_1 = _mm256_setzero_si256();
+	__m256i sumSquared32_2 = _mm256_setzero_si256();
+	__m256i sumSquared32_3 = _mm256_setzero_si256();
 	unsigned long long tailSum = 0;
 	unsigned long long tailSumSquared = 0;
 
@@ -7174,24 +7180,51 @@ int HafCpu_MeanStdDev_DATA_U8
 	// `flushInterval` 32-byte iterations to break the long dependency chain
 	// the previous "widen every iter" version had on `sumSquared`.
 	// Safety: each iter contributes up to 8 * (4 * 255^2) = 2,080,800 to a
-	// single i32 lane; INT32_MAX / 2,080,800 ≈ 1032 iters max, so 1024 is
-	// a safe flush cadence.
-	const vx_uint32 flushInterval = 1024;
+	// single i32 lane. Each of the four independent chains below receives one
+	// in four iterations, so 8192 total iterations keeps each i32 lane below
+	// INT32_MAX while reducing flush overhead on large images.
+	const vx_uint32 flushInterval = 8192;
 	vx_uint32 itersSinceFlush = 0;
+	auto flushSquared32 = [&]()
+	{
+		sumSquared64 = HafCpu_WidenAddI32ToI64_AVX2(sumSquared64, sumSquared32_0);
+		sumSquared64 = HafCpu_WidenAddI32ToI64_AVX2(sumSquared64, sumSquared32_1);
+		sumSquared64 = HafCpu_WidenAddI32ToI64_AVX2(sumSquared64, sumSquared32_2);
+		sumSquared64 = HafCpu_WidenAddI32ToI64_AVX2(sumSquared64, sumSquared32_3);
+		sumSquared32_0 = _mm256_setzero_si256();
+		sumSquared32_1 = _mm256_setzero_si256();
+		sumSquared32_2 = _mm256_setzero_si256();
+		sumSquared32_3 = _mm256_setzero_si256();
+		itersSinceFlush = 0;
+	};
 
 	for (vx_uint32 y = 0; y < srcHeight; y++)
 	{
 		vx_uint8 *pLocalSrc = pSrcImage;
 		vx_uint32 x = 0;
+		for (; x + 128 <= srcWidth; x += 128)
+		{
+			__m256i pixels0 = _mm256_loadu_si256((__m256i *)(pLocalSrc + x));
+			__m256i pixels1 = _mm256_loadu_si256((__m256i *)(pLocalSrc + x + 32));
+			__m256i pixels2 = _mm256_loadu_si256((__m256i *)(pLocalSrc + x + 64));
+			__m256i pixels3 = _mm256_loadu_si256((__m256i *)(pLocalSrc + x + 96));
+			HafCpu_AccumulateU8_AVX2(pixels0, sum0, sumSquared32_0);
+			HafCpu_AccumulateU8_AVX2(pixels1, sum1, sumSquared32_1);
+			HafCpu_AccumulateU8_AVX2(pixels2, sum2, sumSquared32_2);
+			HafCpu_AccumulateU8_AVX2(pixels3, sum3, sumSquared32_3);
+			itersSinceFlush += 4;
+			if (itersSinceFlush >= flushInterval)
+			{
+				flushSquared32();
+			}
+		}
 		for (; x + 32 <= srcWidth; x += 32)
 		{
 			__m256i pixels = _mm256_loadu_si256((__m256i *)(pLocalSrc + x));
-			HafCpu_AccumulateU8_AVX2(pixels, sum, sumSquared32);
+			HafCpu_AccumulateU8_AVX2(pixels, sum0, sumSquared32_0);
 			if (++itersSinceFlush >= flushInterval)
 			{
-				sumSquared64 = HafCpu_WidenAddI32ToI64_AVX2(sumSquared64, sumSquared32);
-				sumSquared32 = _mm256_setzero_si256();
-				itersSinceFlush = 0;
+				flushSquared32();
 			}
 		}
 		for (; x < srcWidth; x++)
@@ -7203,7 +7236,8 @@ int HafCpu_MeanStdDev_DATA_U8
 		pSrcImage += srcImageStrideInBytes;
 	}
 	// Final flush
-	sumSquared64 = HafCpu_WidenAddI32ToI64_AVX2(sumSquared64, sumSquared32);
+	flushSquared32();
+	__m256i sum = _mm256_add_epi64(_mm256_add_epi64(sum0, sum1), _mm256_add_epi64(sum2, sum3));
 
 	DECL_ALIGN(32) unsigned long long sumParts[4] ATTR_ALIGN(32);
 	DECL_ALIGN(32) unsigned long long squareParts[4] ATTR_ALIGN(32);
@@ -7842,7 +7876,20 @@ int HafCpu_MinMax_DATA_U8
 	__m256i minVal_b = ones;
 	__m256i minVal_c = ones;
 	__m256i minVal_d = ones;
+	const __m256i zero = _mm256_setzero_si256();
 	unsigned char maxVal = 0, minVal = 255;
+	int fullRangeCheckCountdown = 2048;
+
+	auto foundFullU8Range = [&]() -> bool
+	{
+		__m256i maxAB = _mm256_or_si256(_mm256_cmpeq_epi8(maxVal_a, ones), _mm256_cmpeq_epi8(maxVal_b, ones));
+		__m256i maxCD = _mm256_or_si256(_mm256_cmpeq_epi8(maxVal_c, ones), _mm256_cmpeq_epi8(maxVal_d, ones));
+		__m256i minAB = _mm256_or_si256(_mm256_cmpeq_epi8(minVal_a, zero), _mm256_cmpeq_epi8(minVal_b, zero));
+		__m256i minCD = _mm256_or_si256(_mm256_cmpeq_epi8(minVal_c, zero), _mm256_cmpeq_epi8(minVal_d, zero));
+		bool foundMax = (maxVal == 255) || (_mm256_movemask_epi8(_mm256_or_si256(maxAB, maxCD)) != 0);
+		bool foundMin = (minVal == 0)   || (_mm256_movemask_epi8(_mm256_or_si256(minAB, minCD)) != 0);
+		return foundMax && foundMin;
+	};
 
 	for (vx_uint32 y = 0; y < srcHeight; y++)
 	{
@@ -7862,6 +7909,17 @@ int HafCpu_MinMax_DATA_U8
 			minVal_b = _mm256_min_epu8(minVal_b, p1);
 			minVal_c = _mm256_min_epu8(minVal_c, p2);
 			minVal_d = _mm256_min_epu8(minVal_d, p3);
+			fullRangeCheckCountdown -= 128;
+			if (fullRangeCheckCountdown <= 0)
+			{
+				if (foundFullU8Range())
+				{
+					*pDstMinValue = 0;
+					*pDstMaxValue = 255;
+					return AGO_SUCCESS;
+				}
+				fullRangeCheckCountdown = 2048;
+			}
 		}
 		for (; x + 32 <= srcWidth; x += 32)
 		{
@@ -7873,6 +7931,12 @@ int HafCpu_MinMax_DATA_U8
 		{
 			maxVal = max(maxVal, pLocalSrc[x]);
 			minVal = min(minVal, pLocalSrc[x]);
+		}
+		if (foundFullU8Range())
+		{
+			*pDstMinValue = 0;
+			*pDstMaxValue = 255;
+			return AGO_SUCCESS;
 		}
 		pSrcImage += srcImageStrideInBytes;
 	}

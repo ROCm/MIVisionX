@@ -52,7 +52,13 @@ static inline __m128i HafCpu_FastAtan2_PhaseByte_8(__m128i gx16, __m128i gy16)
 	__m256 useX = _mm256_cmp_ps(ay, ax, _CMP_LE_OQ);
 	__m256 mn = _mm256_min_ps(ax, ay);
 	__m256 mx = _mm256_max_ps(ax, ay);
-	__m256 c = _mm256_div_ps(mn, _mm256_add_ps(mx, eps));
+	// Use rcp_ps + one Newton-Raphson step (~24-bit precision) instead of
+	// _mm256_div_ps. Final output is u8 with +/-1 tolerance so the residual
+	// precision loss is well within spec.
+	__m256 d = _mm256_add_ps(mx, eps);
+	__m256 r = _mm256_rcp_ps(d);
+	r = _mm256_mul_ps(r, _mm256_sub_ps(_mm256_set1_ps(2.0f), _mm256_mul_ps(d, r)));
+	__m256 c = _mm256_mul_ps(mn, r);
 	__m256 c2 = _mm256_mul_ps(c, c);
 	__m256 poly = _mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(p7, c2), p5), c2), p3), c2), p1), c);
 	__m256 angle = _mm256_blendv_ps(_mm256_sub_ps(ninety, poly), poly, useX);
@@ -3182,7 +3188,73 @@ int HafCpu_Convolve_U8_U8_3xN
 		}
 
 		pLocalDst_xmm = (__m128i *) pLocalDst;
-		int width = (int)(alignedWidth >> 4);							// Each loop processess 16 pixels
+
+		int remainingWidth = alignedWidth;
+#if USE_AVX
+		// AVX2 path: process 32 dst pixels per iter using mullo/mulhi_epi16
+		// (1-cycle throughput on Zen) instead of the SSE path's mullo_epi32
+		// (3-cycle throughput). For each conv coefficient we widen 32 source
+		// bytes to two __m256i s16 vectors and accumulate full-width s32
+		// partial products into four lane accumulators.
+		int avxWidth = remainingWidth & ~31;							// multiple of 32 dst pixels
+		int width32 = avxWidth >> 5;
+		remainingWidth -= avxWidth;
+		while (width32)
+		{
+			pLocalConvMat = convMatrix + numConvCoeffs - 1;
+			__m256i acc0 = _mm256_setzero_si256();
+			__m256i acc1 = _mm256_setzero_si256();
+			__m256i acc2 = _mm256_setzero_si256();
+			__m256i acc3 = _mm256_setzero_si256();
+
+			for (int y = -rowLimit; y <= rowLimit; y++)
+			{
+				int offset = y * srcStride;
+				// Three horizontal taps share two underlying 32-byte loads:
+				// load[0] covers src[-1..30] (shifted-left + at-loc), load[1] covers src[31..32]
+				// We just do three loadu — they're cheap on cached data.
+				for (int xoff = -1; xoff <= 1; xoff++)
+				{
+					__m256i src32 = _mm256_loadu_si256((__m256i *)(pLocalSrc + offset + xoff));
+					__m256i src_lo16 = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(src32));
+					__m256i src_hi16 = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(src32, 1));
+					__m256i cv = _mm256_set1_epi16((short)(*pLocalConvMat--));
+					__m256i lo_l = _mm256_mullo_epi16(src_lo16, cv);
+					__m256i lo_h = _mm256_mulhi_epi16(src_lo16, cv);
+					__m256i hi_l = _mm256_mullo_epi16(src_hi16, cv);
+					__m256i hi_h = _mm256_mulhi_epi16(src_hi16, cv);
+					// In-lane unpack: produces correct sequential s32 within each 128-bit lane.
+					acc0 = _mm256_add_epi32(acc0, _mm256_unpacklo_epi16(lo_l, lo_h));
+					acc1 = _mm256_add_epi32(acc1, _mm256_unpackhi_epi16(lo_l, lo_h));
+					acc2 = _mm256_add_epi32(acc2, _mm256_unpacklo_epi16(hi_l, hi_h));
+					acc3 = _mm256_add_epi32(acc3, _mm256_unpackhi_epi16(hi_l, hi_h));
+				}
+			}
+
+			// Arithmetic right shift so negative intermediates clamp correctly
+			// in the subsequent unsigned-saturating pack to U8.
+			acc0 = _mm256_srai_epi32(acc0, shift);
+			acc1 = _mm256_srai_epi32(acc1, shift);
+			acc2 = _mm256_srai_epi32(acc2, shift);
+			acc3 = _mm256_srai_epi32(acc3, shift);
+
+			// In-lane packs_epi32 collapses to sequential s16 within each 128-bit lane.
+			__m256i s16_lo = _mm256_packs_epi32(acc0, acc1);
+			__m256i s16_hi = _mm256_packs_epi32(acc2, acc3);
+			// In-lane packus_epi16 of s16_lo + s16_hi produces:
+			//   lane0 bytes: s16_lo lane0 (bytes 0..7) + s16_hi lane0 (bytes 8..15)
+			//   lane1 bytes: s16_lo lane1 (bytes 0..7) + s16_hi lane1 (bytes 8..15)
+			// We need bytes 0..15 from s16_lo, bytes 16..31 from s16_hi, so reshuffle 64-bit lanes.
+			__m256i packed = _mm256_packus_epi16(s16_lo, s16_hi);
+			packed = _mm256_permute4x64_epi64(packed, 0xD8); // (0, 2, 1, 3)
+			_mm256_storeu_si256((__m256i *)pLocalDst_xmm, packed);
+			pLocalDst_xmm = (__m128i *)((char *)pLocalDst_xmm + 32);
+			pLocalSrc += 32;
+			width32--;
+		}
+#endif
+
+		int width = remainingWidth >> 4;								// Each loop processess 16 pixels
 		while (width)
 		{
 			pLocalConvMat = convMatrix + numConvCoeffs - 1;

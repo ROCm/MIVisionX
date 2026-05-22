@@ -7179,10 +7179,23 @@ int HafCpu_MeanStdDev_DATA_U8
 	// Flush the i32 squared-partials into the i64 running total every
 	// `flushInterval` 32-byte iterations to break the long dependency chain
 	// the previous "widen every iter" version had on `sumSquared`.
-	// Safety: each iter contributes up to 8 * (4 * 255^2) = 2,080,800 to a
-	// single i32 lane. Each of the four independent chains below receives one
-	// in four iterations, so 8192 total iterations keeps each i32 lane below
-	// INT32_MAX while reducing flush overhead on large images.
+	//
+	// Per-iter safety (single i32 lane): HafCpu_AccumulateU8_AVX2 adds two
+	// _mm256_madd_epi16 results lane-wise. Each madd lane holds the
+	// pair-sum of two squared u8 values, so a single i32 lane receives
+	// at most 2 * (2 * 255^2) = 4 * 65,025 = 260,100 per 32-byte iter.
+	// INT32_MAX / 260,100 is about 8,255, so 8192 iters between flushes
+	// is the largest power-of-two bound that stays safe.
+	//
+	// itersSinceFlush counts iters across both inner loops:
+	//   * the 128-byte loop contributes one update to each of the four
+	//     independent chains per outer iter (++=4 per outer iter), so
+	//     each chain sees up to flushInterval/4 = 2048 iters between
+	//     flushes (peak ~5.3e8, well under INT32_MAX);
+	//   * the 32-byte remainder loop drives only chain 0 (++=1 per
+	//     outer iter), so chain 0 can see up to flushInterval = 8192
+	//     iters between flushes -- still under INT32_MAX by the bound
+	//     above.
 	const vx_uint32 flushInterval = 8192;
 	vx_uint32 itersSinceFlush = 0;
 	auto flushSquared32 = [&]()

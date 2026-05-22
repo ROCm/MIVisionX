@@ -2520,36 +2520,38 @@ int HafCpu_ColorConvert_IYUV_RGB
 
 	// Shuffle masks for one __m256i that holds two 128-bit lanes of RGB
 	// bytes. Lane 0 covers bytes 0..15 of the row (pixels 0..4 plus some
-	// extra) and lane 1 covers bytes 12..27 (pixels 4..7 plus some
-	// extra). Each mask extracts one channel per pixel into the low
-	// byte of every 32-bit lane.
+	// extra) and lane 1 covers bytes 8..23 (pixels 2..7). For lane 1 we
+	// extract only pixels 4..7, whose channel byte offsets within the
+	// +8 load are R={4,7,10,13}, G={5,8,11,14}, B={6,9,12,15}. Each mask
+	// extracts one channel per pixel into the low byte of every 32-bit
+	// lane.
 	const __m256i mask_R256 = _mm256_setr_epi8(
 		 0, (char)0x80, (char)0x80, (char)0x80,
 		 3, (char)0x80, (char)0x80, (char)0x80,
 		 6, (char)0x80, (char)0x80, (char)0x80,
 		 9, (char)0x80, (char)0x80, (char)0x80,
-		 0, (char)0x80, (char)0x80, (char)0x80,
-		 3, (char)0x80, (char)0x80, (char)0x80,
-		 6, (char)0x80, (char)0x80, (char)0x80,
-		 9, (char)0x80, (char)0x80, (char)0x80);
+		 4, (char)0x80, (char)0x80, (char)0x80,
+		 7, (char)0x80, (char)0x80, (char)0x80,
+		10, (char)0x80, (char)0x80, (char)0x80,
+		13, (char)0x80, (char)0x80, (char)0x80);
 	const __m256i mask_G256 = _mm256_setr_epi8(
 		 1, (char)0x80, (char)0x80, (char)0x80,
 		 4, (char)0x80, (char)0x80, (char)0x80,
 		 7, (char)0x80, (char)0x80, (char)0x80,
 		10, (char)0x80, (char)0x80, (char)0x80,
-		 1, (char)0x80, (char)0x80, (char)0x80,
-		 4, (char)0x80, (char)0x80, (char)0x80,
-		 7, (char)0x80, (char)0x80, (char)0x80,
-		10, (char)0x80, (char)0x80, (char)0x80);
+		 5, (char)0x80, (char)0x80, (char)0x80,
+		 8, (char)0x80, (char)0x80, (char)0x80,
+		11, (char)0x80, (char)0x80, (char)0x80,
+		14, (char)0x80, (char)0x80, (char)0x80);
 	const __m256i mask_B256 = _mm256_setr_epi8(
 		 2, (char)0x80, (char)0x80, (char)0x80,
 		 5, (char)0x80, (char)0x80, (char)0x80,
 		 8, (char)0x80, (char)0x80, (char)0x80,
 		11, (char)0x80, (char)0x80, (char)0x80,
-		 2, (char)0x80, (char)0x80, (char)0x80,
-		 5, (char)0x80, (char)0x80, (char)0x80,
-		 8, (char)0x80, (char)0x80, (char)0x80,
-		11, (char)0x80, (char)0x80, (char)0x80);
+		 6, (char)0x80, (char)0x80, (char)0x80,
+		 9, (char)0x80, (char)0x80, (char)0x80,
+		12, (char)0x80, (char)0x80, (char)0x80,
+		15, (char)0x80, (char)0x80, (char)0x80);
 
 	const __m256 cYR = _mm256_set1_ps( 0.2126f);
 	const __m256 cYG = _mm256_set1_ps( 0.7152f);
@@ -2573,24 +2575,20 @@ int HafCpu_ColorConvert_IYUV_RGB
 		for (int width = 0; width < (avxAlignedWidth >> 3); width++)
 		{
 			// Build the 32-byte working set per row from two 16-byte
-			// loads. The high-half load at offset +12 brings pixels
-			// 4..7 into lane 1 of the __m256i so a single in-lane
-			// shuffle covers all 8 pixels.
-			//
-			// Memory safety: per row we read bytes 0..27 (the +12 load
-			// reaches byte 27). The OpenVX image pitch always rounds
-			// up to a multiple of 16 bytes, so the only risk would be
-			// the very last row of the very last AVX iter on a width
-			// that's an exact multiple of 8. dstWidth is u32 and the
-			// loop bound is the floored multiple, so the +12 load
-			// stays inside the row's allocated pitch (>= 3*dstWidth
-			// rounded up to 16) for any dstWidth >= 8.
+			// loads. The high-half load is taken from offset +8
+			// (bytes 8..23) so all source bytes referenced this
+			// iteration stay inside the 24-byte RGB span for 8
+			// pixels. This avoids any read past the end of the row
+			// even when srcImageStrideInBytes is exactly 3*dstWidth
+			// (no trailing pitch padding). Lane 1's shuffle masks
+			// are shifted accordingly so pixels 4..7 are extracted
+			// from offsets {4,7,10,13} / {5,8,11,14} / {6,9,12,15}.
 			__m128i src0_lo = _mm_loadu_si128((__m128i *)(pLocalSrc));
-			__m128i src0_hi = _mm_loadu_si128((__m128i *)(pLocalSrc + 12));
+			__m128i src0_hi = _mm_loadu_si128((__m128i *)(pLocalSrc + 8));
 			__m256i src0    = _mm256_inserti128_si256(_mm256_castsi128_si256(src0_lo), src0_hi, 1);
 
 			__m128i src1_lo = _mm_loadu_si128((__m128i *)(pLocalSrc + srcImageStrideInBytes));
-			__m128i src1_hi = _mm_loadu_si128((__m128i *)(pLocalSrc + srcImageStrideInBytes + 12));
+			__m128i src1_hi = _mm_loadu_si128((__m128i *)(pLocalSrc + srcImageStrideInBytes + 8));
 			__m256i src1    = _mm256_inserti128_si256(_mm256_castsi128_si256(src1_lo), src1_hi, 1);
 
 			__m256 R0 = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(src0, mask_R256));

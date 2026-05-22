@@ -3336,10 +3336,14 @@ int HafCpu_Convolve_U8_U8_3xN
 				result0 = _mm_add_epi32(result0, temp0);
 			}
 
-			result0 = _mm_srli_epi32(result0, shift);
-			result1 = _mm_srli_epi32(result1, shift);
-			result2 = _mm_srli_epi32(result2, shift);
-			result3 = _mm_srli_epi32(result3, shift);
+			// Arithmetic right shift (sign-preserving) so negative
+			// intermediates saturate to 0 in the subsequent unsigned
+			// pack to U8. This matches the scalar prefix/postfix
+			// clamp(0,255) behavior and the AVX2 path above.
+			result0 = _mm_srai_epi32(result0, shift);
+			result1 = _mm_srai_epi32(result1, shift);
+			result2 = _mm_srai_epi32(result2, shift);
+			result3 = _mm_srai_epi32(result3, shift);
 
 			row = _mm_packs_epi32(result2, result3);
 			temp0 = _mm_packs_epi32(result0, result1);

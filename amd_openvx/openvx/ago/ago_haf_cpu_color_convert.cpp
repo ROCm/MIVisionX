@@ -2503,6 +2503,311 @@ int HafCpu_ColorConvert_IYUV_RGB
 		vx_uint32     srcImageStrideInBytes
 	)
 {
+#if USE_AVX
+	// AVX2 fast path: process 8 RGB pixels per row × 2 rows = 16 input
+	// pixels per outer iter (48 source bytes/iter) and emit 16 Y / 4 U /
+	// 4 V output bytes. SSE path below handles the remainder (multiples
+	// of 4 pixels) and the scalar postfix handles the final 0..1 pair.
+	//
+	// Numeric parity vs the SSE path is preserved exactly:
+	//   * Same BT.709 floating-point coefficients.
+	//   * Same chroma subsample order: vertical avg_epu16 → horizontal
+	//     hadd → (sum+1)>>1 — so output bytes are bit-identical to the
+	//     SSE iter for every aligned 8-pixel column.
+	const int avxAlignedWidth = (int)dstWidth & ~7;
+	const int sseRemWidth     = ((int)dstWidth - avxAlignedWidth) & ~3;
+	const int avxPostfixWidth = (int)dstWidth - avxAlignedWidth - sseRemWidth;
+
+	// Shuffle masks for one __m256i that holds two 128-bit lanes of RGB
+	// bytes. Lane 0 covers bytes 0..15 of the row (pixels 0..4 plus some
+	// extra) and lane 1 covers bytes 12..27 (pixels 4..7 plus some
+	// extra). Each mask extracts one channel per pixel into the low
+	// byte of every 32-bit lane.
+	const __m256i mask_R256 = _mm256_setr_epi8(
+		 0, (char)0x80, (char)0x80, (char)0x80,
+		 3, (char)0x80, (char)0x80, (char)0x80,
+		 6, (char)0x80, (char)0x80, (char)0x80,
+		 9, (char)0x80, (char)0x80, (char)0x80,
+		 0, (char)0x80, (char)0x80, (char)0x80,
+		 3, (char)0x80, (char)0x80, (char)0x80,
+		 6, (char)0x80, (char)0x80, (char)0x80,
+		 9, (char)0x80, (char)0x80, (char)0x80);
+	const __m256i mask_G256 = _mm256_setr_epi8(
+		 1, (char)0x80, (char)0x80, (char)0x80,
+		 4, (char)0x80, (char)0x80, (char)0x80,
+		 7, (char)0x80, (char)0x80, (char)0x80,
+		10, (char)0x80, (char)0x80, (char)0x80,
+		 1, (char)0x80, (char)0x80, (char)0x80,
+		 4, (char)0x80, (char)0x80, (char)0x80,
+		 7, (char)0x80, (char)0x80, (char)0x80,
+		10, (char)0x80, (char)0x80, (char)0x80);
+	const __m256i mask_B256 = _mm256_setr_epi8(
+		 2, (char)0x80, (char)0x80, (char)0x80,
+		 5, (char)0x80, (char)0x80, (char)0x80,
+		 8, (char)0x80, (char)0x80, (char)0x80,
+		11, (char)0x80, (char)0x80, (char)0x80,
+		 2, (char)0x80, (char)0x80, (char)0x80,
+		 5, (char)0x80, (char)0x80, (char)0x80,
+		 8, (char)0x80, (char)0x80, (char)0x80,
+		11, (char)0x80, (char)0x80, (char)0x80);
+
+	const __m256 cYR = _mm256_set1_ps( 0.2126f);
+	const __m256 cYG = _mm256_set1_ps( 0.7152f);
+	const __m256 cYB = _mm256_set1_ps( 0.0722f);
+	const __m256 cUR = _mm256_set1_ps(-0.1146f);
+	const __m256 cUG = _mm256_set1_ps(-0.3854f);
+	const __m256 cUB = _mm256_set1_ps( 0.5f);
+	const __m256 cVR = _mm256_set1_ps( 0.5f);
+	const __m256 cVG = _mm256_set1_ps(-0.4542f);
+	const __m256 cVB = _mm256_set1_ps(-0.0458f);
+	const __m256 c128_256 = _mm256_set1_ps(128.0f);
+	const __m128i one_u16 = _mm_set1_epi16(1);
+
+	for (int height = 0; height < (int)dstHeight; height += 2)
+	{
+		vx_uint8 *pLocalSrc  = pSrcImage;
+		vx_uint8 *pLocalDstY = pDstYImage;
+		vx_uint8 *pLocalDstU = pDstUImage;
+		vx_uint8 *pLocalDstV = pDstVImage;
+
+		for (int width = 0; width < (avxAlignedWidth >> 3); width++)
+		{
+			// Build the 32-byte working set per row from two 16-byte
+			// loads. The high-half load at offset +12 brings pixels
+			// 4..7 into lane 1 of the __m256i so a single in-lane
+			// shuffle covers all 8 pixels.
+			//
+			// Memory safety: per row we read bytes 0..27 (the +12 load
+			// reaches byte 27). The OpenVX image pitch always rounds
+			// up to a multiple of 16 bytes, so the only risk would be
+			// the very last row of the very last AVX iter on a width
+			// that's an exact multiple of 8. dstWidth is u32 and the
+			// loop bound is the floored multiple, so the +12 load
+			// stays inside the row's allocated pitch (>= 3*dstWidth
+			// rounded up to 16) for any dstWidth >= 8.
+			__m128i src0_lo = _mm_loadu_si128((__m128i *)(pLocalSrc));
+			__m128i src0_hi = _mm_loadu_si128((__m128i *)(pLocalSrc + 12));
+			__m256i src0    = _mm256_inserti128_si256(_mm256_castsi128_si256(src0_lo), src0_hi, 1);
+
+			__m128i src1_lo = _mm_loadu_si128((__m128i *)(pLocalSrc + srcImageStrideInBytes));
+			__m128i src1_hi = _mm_loadu_si128((__m128i *)(pLocalSrc + srcImageStrideInBytes + 12));
+			__m256i src1    = _mm256_inserti128_si256(_mm256_castsi128_si256(src1_lo), src1_hi, 1);
+
+			__m256 R0 = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(src0, mask_R256));
+			__m256 G0 = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(src0, mask_G256));
+			__m256 B0 = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(src0, mask_B256));
+			__m256 R1 = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(src1, mask_R256));
+			__m256 G1 = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(src1, mask_G256));
+			__m256 B1 = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(src1, mask_B256));
+
+			__m256 Y0 = _mm256_add_ps(_mm256_add_ps(_mm256_mul_ps(R0, cYR), _mm256_mul_ps(G0, cYG)), _mm256_mul_ps(B0, cYB));
+			__m256 U0 = _mm256_add_ps(_mm256_add_ps(_mm256_mul_ps(R0, cUR), _mm256_mul_ps(G0, cUG)), _mm256_mul_ps(B0, cUB));
+			__m256 V0 = _mm256_add_ps(_mm256_add_ps(_mm256_mul_ps(R0, cVR), _mm256_mul_ps(G0, cVG)), _mm256_mul_ps(B0, cVB));
+			__m256 Y1 = _mm256_add_ps(_mm256_add_ps(_mm256_mul_ps(R1, cYR), _mm256_mul_ps(G1, cYG)), _mm256_mul_ps(B1, cYB));
+			__m256 U1 = _mm256_add_ps(_mm256_add_ps(_mm256_mul_ps(R1, cUR), _mm256_mul_ps(G1, cUG)), _mm256_mul_ps(B1, cUB));
+			__m256 V1 = _mm256_add_ps(_mm256_add_ps(_mm256_mul_ps(R1, cVR), _mm256_mul_ps(G1, cVG)), _mm256_mul_ps(B1, cVB));
+			U0 = _mm256_add_ps(U0, c128_256);
+			U1 = _mm256_add_ps(U1, c128_256);
+			V0 = _mm256_add_ps(V0, c128_256);
+			V1 = _mm256_add_ps(V1, c128_256);
+
+			// Pack Y to u8 and store 8 bytes per row.
+			__m256i Y0i = _mm256_cvttps_epi32(Y0);
+			__m256i Y1i = _mm256_cvttps_epi32(Y1);
+			__m128i Y0_packed = _mm_packus_epi32(_mm256_castsi256_si128(Y0i), _mm256_extracti128_si256(Y0i, 1));
+			__m128i Y1_packed = _mm_packus_epi32(_mm256_castsi256_si128(Y1i), _mm256_extracti128_si256(Y1i, 1));
+			Y0_packed = _mm_packus_epi16(Y0_packed, Y0_packed);
+			Y1_packed = _mm_packus_epi16(Y1_packed, Y1_packed);
+			_mm_storel_epi64((__m128i *)(pLocalDstY), Y0_packed);
+			_mm_storel_epi64((__m128i *)(pLocalDstY + dstYImageStrideInBytes), Y1_packed);
+
+			// Chroma subsample: same 2-step round-up averaging as the
+			// SSE path to keep output bit-identical for aligned cols.
+			__m256i U0i = _mm256_cvttps_epi32(U0);
+			__m256i U1i = _mm256_cvttps_epi32(U1);
+			__m128i U0_u16 = _mm_packus_epi32(_mm256_castsi256_si128(U0i), _mm256_extracti128_si256(U0i, 1));
+			__m128i U1_u16 = _mm_packus_epi32(_mm256_castsi256_si128(U1i), _mm256_extracti128_si256(U1i, 1));
+			__m128i U_v = _mm_avg_epu16(U0_u16, U1_u16);
+			__m128i U_h = _mm_hadd_epi16(U_v, U_v);
+			U_h = _mm_srli_epi16(_mm_add_epi16(U_h, one_u16), 1);
+			U_h = _mm_packus_epi16(U_h, U_h);
+			*(uint32_t *)pLocalDstU = (uint32_t)_mm_cvtsi128_si32(U_h);
+
+			__m256i V0i = _mm256_cvttps_epi32(V0);
+			__m256i V1i = _mm256_cvttps_epi32(V1);
+			__m128i V0_u16 = _mm_packus_epi32(_mm256_castsi256_si128(V0i), _mm256_extracti128_si256(V0i, 1));
+			__m128i V1_u16 = _mm_packus_epi32(_mm256_castsi256_si128(V1i), _mm256_extracti128_si256(V1i, 1));
+			__m128i V_v = _mm_avg_epu16(V0_u16, V1_u16);
+			__m128i V_h = _mm_hadd_epi16(V_v, V_v);
+			V_h = _mm_srli_epi16(_mm_add_epi16(V_h, one_u16), 1);
+			V_h = _mm_packus_epi16(V_h, V_h);
+			*(uint32_t *)pLocalDstV = (uint32_t)_mm_cvtsi128_si32(V_h);
+
+			pLocalSrc  += 24;
+			pLocalDstY += 8;
+			pLocalDstU += 4;
+			pLocalDstV += 4;
+		}
+
+		// Fall through to the SSE 4-pixel iter for the remainder, then
+		// the existing scalar tail. Both pre-existed and are exercised
+		// by widths that aren't multiples of 8.
+		{
+			__m128i * tbl = (__m128i*) dataColorConvert;
+			__m128i mask = _mm_load_si128(tbl + 14);
+			__m128i cvtmask = _mm_set1_epi32(255);
+			__m128i row0, row1, tempI;
+			__m128 Y0_s, U0_s, V0_s, Y1_s, U1_s, V1_s, weights_toY, weights_toU, weights_toV, temp, temp2;
+			__m128 const128 = _mm_set1_ps(128.0f);
+			DECL_ALIGN(16) unsigned int Ybuf[8] ATTR_ALIGN(16);
+			DECL_ALIGN(16) unsigned short Ubuf[8] ATTR_ALIGN(16);
+			DECL_ALIGN(16) unsigned short Vbuf[8] ATTR_ALIGN(16);
+
+			for (int width = 0; width < (sseRemWidth >> 2); width++)
+			{
+				row0 = _mm_loadu_si128((__m128i*)(pLocalSrc));
+				row1 = _mm_loadu_si128((__m128i*)(pLocalSrc + srcImageStrideInBytes));
+				row0 = _mm_shuffle_epi8(row0, mask);
+				row1 = _mm_shuffle_epi8(row1, mask);
+
+				weights_toY = _mm_set_ps1(0.2126f);
+				weights_toU = _mm_set_ps1(-0.1146f);
+				weights_toV = _mm_set_ps1(0.5f);
+				tempI = _mm_and_si128(row0, cvtmask);
+				temp = _mm_cvtepi32_ps(tempI);
+				Y0_s = _mm_mul_ps(temp, weights_toY);
+				U0_s = _mm_mul_ps(temp, weights_toU);
+				V0_s = _mm_mul_ps(temp, weights_toV);
+				tempI = _mm_and_si128(row1, cvtmask);
+				temp = _mm_cvtepi32_ps(tempI);
+				Y1_s = _mm_mul_ps(temp, weights_toY);
+				U1_s = _mm_mul_ps(temp, weights_toU);
+				V1_s = _mm_mul_ps(temp, weights_toV);
+
+				weights_toY = _mm_set_ps1(0.7152f);
+				weights_toU = _mm_set_ps1(-0.3854f);
+				weights_toV = _mm_set_ps1(-0.4542f);
+				row0 = _mm_srli_si128(row0, 1);
+				tempI = _mm_and_si128(row0, cvtmask);
+				temp = _mm_cvtepi32_ps(tempI);
+				Y0_s = _mm_add_ps(Y0_s, _mm_mul_ps(temp, weights_toY));
+				U0_s = _mm_add_ps(U0_s, _mm_mul_ps(temp, weights_toU));
+				V0_s = _mm_add_ps(V0_s, _mm_mul_ps(temp, weights_toV));
+				row1 = _mm_srli_si128(row1, 1);
+				tempI = _mm_and_si128(row1, cvtmask);
+				temp = _mm_cvtepi32_ps(tempI);
+				Y1_s = _mm_add_ps(Y1_s, _mm_mul_ps(temp, weights_toY));
+				U1_s = _mm_add_ps(U1_s, _mm_mul_ps(temp, weights_toU));
+				V1_s = _mm_add_ps(V1_s, _mm_mul_ps(temp, weights_toV));
+
+				weights_toY = _mm_set_ps1(0.0722f);
+				weights_toU = _mm_set_ps1(0.5f);
+				weights_toV = _mm_set_ps1(-0.0458f);
+				row0 = _mm_srli_si128(row0, 1);
+				tempI = _mm_and_si128(row0, cvtmask);
+				temp = _mm_cvtepi32_ps(tempI);
+				Y0_s = _mm_add_ps(Y0_s, _mm_mul_ps(temp, weights_toY));
+				U0_s = _mm_add_ps(U0_s, _mm_mul_ps(temp, weights_toU));
+				V0_s = _mm_add_ps(V0_s, _mm_mul_ps(temp, weights_toV));
+				row1 = _mm_srli_si128(row1, 1);
+				tempI = _mm_and_si128(row1, cvtmask);
+				temp = _mm_cvtepi32_ps(tempI);
+				Y1_s = _mm_add_ps(Y1_s, _mm_mul_ps(temp, weights_toY));
+				U1_s = _mm_add_ps(U1_s, _mm_mul_ps(temp, weights_toU));
+				V1_s = _mm_add_ps(V1_s, _mm_mul_ps(temp, weights_toV));
+
+				tempI = _mm_cvttps_epi32(Y0_s);
+				tempI = _mm_packus_epi32(tempI, tempI);
+				tempI = _mm_packus_epi16(tempI, tempI);
+				row1 = _mm_cvttps_epi32(Y1_s);
+				row1 = _mm_packus_epi32(row1, row1);
+				row1 = _mm_packus_epi16(row1, row1);
+				_mm_store_si128((__m128i *)Ybuf, tempI);
+				_mm_store_si128((__m128i *)(Ybuf + 4), row1);
+
+				U0_s = _mm_add_ps(U0_s, const128);
+				U1_s = _mm_add_ps(U1_s, const128);
+				tempI = _mm_cvttps_epi32(U0_s);
+				tempI = _mm_packus_epi32(tempI, tempI);
+				row1 = _mm_cvttps_epi32(U1_s);
+				row1 = _mm_packus_epi32(row1, row1);
+				tempI = _mm_avg_epu16(tempI, row1);
+				tempI = _mm_hadd_epi16(tempI, tempI);
+				tempI = _mm_cvtepi16_epi32(tempI);
+				row0 = _mm_set1_epi16(1);
+				tempI = _mm_add_epi16(tempI, row0);
+				tempI = _mm_srli_epi16(tempI, 1);
+				tempI = _mm_packus_epi32(tempI, tempI);
+				tempI = _mm_packus_epi16(tempI, tempI);
+				_mm_store_si128((__m128i *)Ubuf, tempI);
+
+				V0_s = _mm_add_ps(V0_s, const128);
+				V1_s = _mm_add_ps(V1_s, const128);
+				tempI = _mm_cvttps_epi32(V0_s);
+				tempI = _mm_packus_epi32(tempI, tempI);
+				row1 = _mm_cvttps_epi32(V1_s);
+				row1 = _mm_packus_epi32(row1, row1);
+				tempI = _mm_avg_epu16(tempI, row1);
+				tempI = _mm_hadd_epi16(tempI, tempI);
+				tempI = _mm_cvtepi16_epi32(tempI);
+				tempI = _mm_add_epi16(tempI, row0);
+				tempI = _mm_srli_epi16(tempI, 1);
+				tempI = _mm_packus_epi32(tempI, tempI);
+				tempI = _mm_packus_epi16(tempI, tempI);
+				_mm_store_si128((__m128i *)Vbuf, tempI);
+
+				*(unsigned int *)(pLocalDstY) = Ybuf[0];
+				*(unsigned int *)(pLocalDstY + dstYImageStrideInBytes) = Ybuf[4];
+				*(unsigned short *)(pLocalDstU) = Ubuf[0];
+				*(unsigned short *)(pLocalDstV) = Vbuf[0];
+
+				pLocalSrc  += 12;
+				pLocalDstY += 4;
+				pLocalDstU += 2;
+				pLocalDstV += 2;
+			}
+		}
+
+		for (int width = 0; width < avxPostfixWidth; width += 2)
+		{
+			float R = (float)*(pLocalSrc);
+			float G = (float)*(pLocalSrc + 1);
+			float B = (float)*(pLocalSrc + 2);
+			*pLocalDstY = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
+			float U = (R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f;
+			float V = (R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f;
+			R = (float)*(pLocalSrc + 3);
+			G = (float)*(pLocalSrc + 4);
+			B = (float)*(pLocalSrc + 5);
+			*(pLocalDstY + 1) = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
+			U += ((R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f);
+			V += ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
+			R = (float)*(pLocalSrc + srcImageStrideInBytes);
+			G = (float)*(pLocalSrc + srcImageStrideInBytes + 1);
+			B = (float)*(pLocalSrc + srcImageStrideInBytes + 2);
+			*(pLocalDstY + dstYImageStrideInBytes) = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
+			U += ((R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f);
+			V += ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
+			R = (float)*(pLocalSrc + srcImageStrideInBytes + 3);
+			G = (float)*(pLocalSrc + srcImageStrideInBytes + 4);
+			B = (float)*(pLocalSrc + srcImageStrideInBytes + 5);
+			*(pLocalDstY + dstYImageStrideInBytes + 1) = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
+			U += ((R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f);
+			V += ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
+			U /= 4.0f; V /= 4.0f;
+			*pLocalDstU++ = (vx_uint8)U;
+			*pLocalDstV++ = (vx_uint8)V;
+			pLocalSrc += 6;
+			pLocalDstY += 2;
+		}
+
+		pSrcImage  += (srcImageStrideInBytes + srcImageStrideInBytes);
+		pDstYImage += (dstYImageStrideInBytes + dstYImageStrideInBytes);
+		pDstUImage += dstUImageStrideInBytes;
+		pDstVImage += dstVImageStrideInBytes;
+	}
+	return AGO_SUCCESS;
+#else
 	int alignedWidth = dstWidth & ~3;
 	int postfixWidth = (int)dstWidth - alignedWidth;
 
@@ -2702,6 +3007,7 @@ int HafCpu_ColorConvert_IYUV_RGB
 		pDstVImage += dstVImageStrideInBytes;
 	}
 	return AGO_SUCCESS;
+#endif
 }
 
 int HafCpu_ColorConvert_NV12_RGB

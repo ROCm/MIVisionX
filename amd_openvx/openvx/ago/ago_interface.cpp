@@ -424,8 +424,11 @@ static void agoUpdateLine(char * line, std::vector< std::pair< std::string, std:
 
 static void agoUpdateN(char * output, size_t output_size, char * input, int N, int Nchar)
 {
-    int ki = 0;
-    for (int i = 0; input[i]; i++, ki++) {
+    if (output_size == 0) return;
+    // reserve last byte of output for the terminating NUL
+    const size_t cap = output_size - 1;
+    size_t ki = 0;
+    for (int i = 0; input[i] && ki < cap; i++, ki++) {
         output[ki] = input[i];
         if (input[i] == '{') {
             // get variable name
@@ -443,10 +446,16 @@ static void agoUpdateN(char * output, size_t output_size, char * input, int N, i
             }
             index += (op == '+') ? v : -v;
             if (s[k] == '}') {
-                // replace $[expr] with index
-                size_t remaining = ((size_t)ki < output_size) ? (output_size - (size_t)ki) : 0;
-                snprintf(&output[ki], remaining, "%d", index);
-                ki = (int)strlen(output) - 1;
+                // replace $[expr] with index, bounded by remaining space (incl. terminating NUL)
+                size_t remaining = output_size - ki;
+                int written = snprintf(&output[ki], remaining, "%d", index);
+                if (written < 0) break;
+                // snprintf truncates when written >= remaining; advance to the
+                // last byte actually written, then let the for-loop ki++ to the
+                // position past it
+                size_t advance = ((size_t)written < remaining) ? (size_t)written : (remaining - 1);
+                ki += advance;
+                if (ki > 0) ki--;
                 i += k + 1;
             }
         }

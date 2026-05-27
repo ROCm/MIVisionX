@@ -2951,7 +2951,7 @@ int agoReleaseNode(AgoNode * node)
     return 0;
 }
 
-void agoEvaluateIntegerExpression(char * expr)
+void agoEvaluateIntegerExpression(char * expr, size_t expr_size)
 {
     bool inValue = false;
     char opStack[32];
@@ -3044,7 +3044,7 @@ void agoEvaluateIntegerExpression(char * expr)
             return; // error
     }
     if (valStackTop == 1) {
-        snprintf(expr, sizeof(expr), "%d", valStack[0]);
+        snprintf(expr, expr_size, "%d", valStack[0]);
     }
 }
 

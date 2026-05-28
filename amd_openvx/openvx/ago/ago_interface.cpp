@@ -422,10 +422,13 @@ static void agoUpdateLine(char * line, std::vector< std::pair< std::string, std:
     line[ki] = 0;
 }
 
-static void agoUpdateN(char * output, char * input, int N, int Nchar)
+static void agoUpdateN(char * output, size_t output_size, char * input, int N, int Nchar)
 {
-    int ki = 0;
-    for (int i = 0; input[i]; i++, ki++) {
+    if (output_size == 0) return;
+    // reserve last byte of output for the terminating NUL
+    const size_t cap = output_size - 1;
+    size_t ki = 0;
+    for (int i = 0; input[i] && ki < cap; i++, ki++) {
         output[ki] = input[i];
         if (input[i] == '{') {
             // get variable name
@@ -443,9 +446,17 @@ static void agoUpdateN(char * output, char * input, int N, int Nchar)
             }
             index += (op == '+') ? v : -v;
             if (s[k] == '}') {
-                // replace $[expr] with index
-                snprintf(&output[ki], sizeof(&output[ki]), "%d", index);
-                ki = (int)strlen(output) - 1;
+                // replace the {N+/-offset} expression with the computed integer,
+                // bounded by remaining space (incl. terminating NUL)
+                size_t remaining = output_size - ki;
+                int written = snprintf(&output[ki], remaining, "%d", index);
+                if (written < 0) break;
+                // snprintf truncates when written >= remaining; advance to the
+                // last byte actually written, then let the for-loop ki++ to the
+                // position past it
+                size_t advance = ((size_t)written < remaining) ? (size_t)written : (remaining - 1);
+                ki += advance;
+                if (ki > 0) ki--;
                 i += k + 1;
             }
         }
@@ -499,7 +510,7 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
             if (narg == 4 && !strcmp(argv[0], "for") && !strcmp(argv[2], "in") && strlen(argv[1]) == 1 && (argv[1][0] >= 'a' && argv[1][0] <= 'z')) {
                 // set for-loop parameters
                 Nchar = argv[1][0];
-                char range[128]; agoUpdateN(range, argv[3], 0, '\0');
+                char range[128]; agoUpdateN(range, sizeof(range), argv[3], 0, '\0');
                 if (sscanf(range, "%d:%d,%d", &Nbegin, &Nend, &Nstep) < 2 || Nstep <= 0) {
                     agoAddLogEntry(&agraph->ref, VX_FAILURE, "ERROR: agoReadGraph: line %d: invalid for syntax: should be 'for i in <begin>:<end>[,<step>]'\n>>>> %s\n", lineno, lineCopy);
                     agraph->status = -1;
@@ -516,8 +527,8 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
             continue;
         }
         if (narg == 4 && (!strcmp(argv[0], "if") || !strcmp(argv[0], "elseif"))) {
-            char expr1[128]; agoUpdateN(expr1, argv[1], 0, '\0');
-            char expr2[128]; agoUpdateN(expr2, argv[3], 0, '\0');
+            char expr1[128]; agoUpdateN(expr1, sizeof(expr1), argv[1], 0, '\0');
+            char expr2[128]; agoUpdateN(expr2, sizeof(expr2), argv[3], 0, '\0');
             int value1 = atoi(expr1);
             int value2 = atoi(expr2);
             bool result = false;
@@ -584,10 +595,25 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
         for (int N = Nbegin; N <= Nend; N += Nstep) {
             // create arguments with {N} expression substitution
             char argBuf[2048] = { 0 }, *arg[64] = { 0 };
+            bool argBufOverflow = false;
             for (int i = 0, j = 0; i < narg; i++) {
+                if ((size_t)j >= sizeof(argBuf)) {
+                    argBufOverflow = true;
+                    break;
+                }
                 arg[i] = argBuf + j;
-                agoUpdateN(arg[i], argv[i], N, Nchar);
-                j += (int)strlen(arg[i]) + 1;
+                agoUpdateN(arg[i], sizeof(argBuf) - (size_t)j, argv[i], N, Nchar);
+                size_t arg_len = strlen(arg[i]);
+                if (arg_len + 1 > sizeof(argBuf) - (size_t)j) {
+                    argBufOverflow = true;
+                    break;
+                }
+                j += (int)arg_len + 1;
+            }
+            if (argBufOverflow) {
+                agoAddLogEntry(&agraph->ref, VX_FAILURE, "ERROR: agoReadGraph: line %d: argument buffer overflow (limit %zu bytes)\n>>>> %s\n", lineno, sizeof(argBuf), lineCopy);
+                agraph->status = -1;
+                break;
             }
             // process the actual commands
             if (narg == 4 && !strcmp(arg[0], "data") && !strcmp(arg[2], "=")) {
@@ -918,7 +944,7 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
                     }
                     else {
                         strcpy(value, arg[2]);
-                        agoEvaluateIntegerExpression(value);
+                        agoEvaluateIntegerExpression(value, sizeof(value));
                     }
                     if ((!strncmp(value, "WIDTH(", 6) || !strncmp(value, "HEIGHT(", 7) || !strncmp(value, "FORMAT(", 7)) && value[strlen(value) - 1] == ')') {
                         char * name = strstr(value, "(") + 1; value[strlen(value) - 1] = 0;
@@ -987,8 +1013,8 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
                 }
                 if (agraph->status)
                     break;
-                char name1[128]; agoUpdateN(name1, arg[1], 0, '\0');
-                char name2[128]; agoUpdateN(name2, arg[2], 0, '\0');
+                char name1[128]; agoUpdateN(name1, sizeof(name1), arg[1], 0, '\0');
+                char name2[128]; agoUpdateN(name2, sizeof(name2), arg[2], 0, '\0');
                 for (std::vector< std::pair< std::string, std::string > >::iterator it = aliases.begin(); it != aliases.end(); ++it) {
                     if (!strcmp(it->first.c_str(), name1)) {
                         agoAddLogEntry(&agraph->ref, VX_FAILURE, "ERROR: agoReadGraph: line %d: alias already exists: %s\n>>>> %s\n", lineno, name1, lineCopy);
@@ -1035,8 +1061,8 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
             }
             else if (narg == 3 && !strcmp(arg[0], "directive")) {
                 agraph->status = -1;
-                char name1[128]; agoUpdateN(name1, arg[1], 0, '\0');
-                char name2[128]; agoUpdateN(name2, arg[2], 0, '\0');
+                char name1[128]; agoUpdateN(name1, sizeof(name1), arg[1], 0, '\0');
+                char name2[128]; agoUpdateN(name2, sizeof(name2), arg[2], 0, '\0');
                 AgoData * data = agoFindDataByName(context, agraph, name1);
                 if (data) {
                     vx_enum directive = agoName2Enum(name2);

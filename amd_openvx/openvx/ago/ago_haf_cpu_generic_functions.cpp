@@ -1777,21 +1777,6 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
         }
     }
 
-    // Map the input as the implicit gauss[0] level (matches the CHANNEL_COPY at
-    // pyramid level 0 in vxuGaussianPyramid, but without the byte-for-byte copy).
-    vx_rectangle_t in_rect;
-    vxGetValidRegionImage(input, &in_rect);
-    vx_imagepatch_addressing_t in_addr = VX_IMAGEPATCH_ADDR_INIT;
-    vx_map_id in_map = 0;
-    void *in_base = nullptr;
-    status |= vxMapImagePatch(input, &in_rect, 0, &in_map, &in_addr, &in_base,
-                              VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
-    if (status != VX_SUCCESS || in_addr.stride_x != 1)
-    {
-        if (in_base) vxUnmapImagePatch(input, in_map);
-        return HafCpu_LaplacianPyramid_Legacy(node, input, laplacian, output);
-    }
-
     // Pre-compute per-level dimensions using the same rounding rule as
     // vxCreatePyramid (ceilf(prev * 0.5)).
     std::vector<vx_uint32> lw(levels + 1), lh(levels + 1);
@@ -1803,39 +1788,80 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
         lh[i] = (vx_uint32)ceilf(lh[i - 1] * VX_SCALE_PYRAMID_HALF);
     }
 
-    // Owned gaussian-pyramid buffers for levels 1..N. Level 0 is the input map
-    // (no copy). Strides are ALIGN16(width) to match the layout that
-    // vxCreatePyramid would produce, so the SIMD horizontal kernel's small
-    // out-of-row reads (e.g. pLocalSrc[-2] at column 0 of dst row 1) land on
-    // exactly the same bytes as the legacy graph path. Buffers are zero-
-    // initialised so that the un-touched border rows (which
-    // ScaleGaussianHalf/5x5 deliberately skips) read back as zero, matching the
-    // legacy behaviour. Each buffer is also given a one-row zero pad above and
-    // below so that the fused upsample/subtract kernel's vertical reads at the
-    // very top and bottom rows never alias into another allocation.
+    // Owned gaussian-pyramid buffers for levels 0..N. Level 0 is a copy of the
+    // input (the byte-for-byte CHANNEL_COPY equivalent that vxuGaussianPyramid
+    // does internally). Owning level 0 is required because the SIMD primitive
+    // HafCpu_ScaleGaussianHalf_U8_U8_5x5 issues horizontal loads at
+    // srcImage[-1] / srcImage[-2] for the leftmost sampled column (see
+    // ago_haf_cpu_pyramid.cpp Horizontal5x5GaussianFilter_C / SSE variants).
+    // The caller-supplied input map carries no guaranteed left/top padding, so
+    // reading before it is undefined; routing those reads into our private
+    // padded buffer keeps the behaviour identical to the legacy copied
+    // pyramid path. Strides are ALIGN16(width) to match the layout that
+    // vxCreatePyramid would produce, so the kernel's small out-of-row reads
+    // (e.g. pLocalSrc[-2] at column 0 of dst row 1) land on exactly the same
+    // bytes as the legacy graph path. Buffers are zero-initialised so the
+    // un-touched border rows (which ScaleGaussianHalf/5x5 deliberately skips)
+    // read back as zero, matching the legacy behaviour. Each buffer also has a
+    // two-row zero pad above and below so that the fused upsample/subtract
+    // kernel's vertical reads at the very top and bottom rows never alias
+    // into another allocation or before the allocation start.
     std::vector<vx_uint8 *> gptr(levels + 1, nullptr);
     std::vector<vx_int32> gstride(levels + 1, 0);
     std::vector<void *> gowned(levels + 1, nullptr);
 
-    gptr[0] = (vx_uint8 *)in_base;
-    gstride[0] = in_addr.stride_y;
+    auto release_owned = [&]() {
+        for (vx_size i = 0; i <= levels; i++) {
+            if (gowned[i]) { free(gowned[i]); gowned[i] = nullptr; }
+        }
+    };
 
     constexpr size_t kPadRows = 2;
-    for (vx_size i = 1; i <= levels; i++)
+    for (vx_size i = 0; i <= levels; i++)
     {
         vx_int32 stride = (vx_int32)((lw[i] + 15) & ~15);
         size_t bytes = (size_t)stride * (lh[i] + 2 * kPadRows);
         void *p = nullptr;
         if (posix_memalign(&p, 64, bytes) != 0 || !p)
         {
-            for (vx_size j = 1; j < i; j++) free(gowned[j]);
-            vxUnmapImagePatch(input, in_map);
+            release_owned();
             return HafCpu_LaplacianPyramid_Legacy(node, input, laplacian, output);
         }
         memset(p, 0, bytes);
         gowned[i] = p;
         gptr[i] = (vx_uint8 *)p + kPadRows * (size_t)stride;
         gstride[i] = stride;
+    }
+
+    // Map the input read-only and copy it into the owned gauss[0] buffer.
+    // The copy is per-row so any stride padding in either the input map or
+    // our owned buffer is preserved as zero (matching the legacy CHANNEL_COPY
+    // into a freshly-allocated, calloc'd pyramid level 0 buffer).
+    {
+        vx_rectangle_t in_rect;
+        vxGetValidRegionImage(input, &in_rect);
+        vx_imagepatch_addressing_t in_addr = VX_IMAGEPATCH_ADDR_INIT;
+        vx_map_id in_map = 0;
+        void *in_base = nullptr;
+        vx_status st = vxMapImagePatch(input, &in_rect, 0, &in_map, &in_addr,
+                                       &in_base, VX_READ_ONLY,
+                                       VX_MEMORY_TYPE_HOST, 0);
+        if (st != VX_SUCCESS || in_addr.stride_x != 1)
+        {
+            if (st == VX_SUCCESS) vxUnmapImagePatch(input, in_map);
+            release_owned();
+            return HafCpu_LaplacianPyramid_Legacy(node, input, laplacian, output);
+        }
+        const vx_uint8 *src_p = (const vx_uint8 *)in_base;
+        vx_uint8 *dst_p = gptr[0];
+        vx_uint32 copy_w = (in_addr.dim_x < lw[0]) ? in_addr.dim_x : lw[0];
+        vx_uint32 copy_h = (in_addr.dim_y < lh[0]) ? in_addr.dim_y : lh[0];
+        for (vx_uint32 r = 0; r < copy_h; r++)
+        {
+            memcpy(dst_p + (size_t)r * gstride[0],
+                   src_p + (size_t)r * in_addr.stride_y, copy_w);
+        }
+        vxUnmapImagePatch(input, in_map);
     }
 
     // Scratch storage reused across all ScaleGaussianHalf invocations. Sized
@@ -1868,6 +1894,10 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
     }
 
     // Fused upsample(gauss[i+1]) - subtract from gauss[i] -> laplacian[i].
+    // If any vxMapImagePatch fails (or returns an unexpected stride), bail out
+    // to the legacy path instead of leaving the caller with a partially-
+    // written pyramid and a misleading VX_SUCCESS status. The unmap is only
+    // issued on successful maps to avoid passing invalid map ids to the API.
     for (vx_size lev = 0; lev < levels; lev++)
     {
         vx_image lap_img = vxGetPyramidLevel(laplacian, (vx_uint32)lev);
@@ -1876,48 +1906,59 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
         vx_imagepatch_addressing_t a_lap = VX_IMAGEPATCH_ADDR_INIT;
         vx_map_id m_lap = 0;
         void *b_lap = nullptr;
-        vx_status st = vxMapImagePatch(lap_img, &r_lap, 0, &m_lap, &a_lap, &b_lap,
-                                        VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
-        if (st == VX_SUCCESS && a_lap.stride_x == 2)
+        vx_status st = vxMapImagePatch(lap_img, &r_lap, 0, &m_lap, &a_lap,
+                                       &b_lap, VX_WRITE_ONLY,
+                                       VX_MEMORY_TYPE_HOST, 0);
+        if (st != VX_SUCCESS || a_lap.stride_x != 2)
         {
-            HafCpu_PyramidUp_Gaussian5x5_Subtract_U8(
-                gptr[lev + 1], gstride[lev + 1],
-                (vx_int32)lw[lev + 1], (vx_int32)lh[lev + 1],
-                gptr[lev], gstride[lev],
-                (vx_int16 *)b_lap, a_lap.stride_y,
-                (vx_int32)a_lap.dim_x, (vx_int32)a_lap.dim_y);
+            if (st == VX_SUCCESS) vxUnmapImagePatch(lap_img, m_lap);
+            vxReleaseImage(&lap_img);
+            release_owned();
+            return HafCpu_LaplacianPyramid_Legacy(node, input, laplacian, output);
         }
+        HafCpu_PyramidUp_Gaussian5x5_Subtract_U8(
+            gptr[lev + 1], gstride[lev + 1],
+            (vx_int32)lw[lev + 1], (vx_int32)lh[lev + 1],
+            gptr[lev], gstride[lev],
+            (vx_int16 *)b_lap, a_lap.stride_y,
+            (vx_int32)a_lap.dim_x, (vx_int32)a_lap.dim_y);
         vxUnmapImagePatch(lap_img, m_lap);
         vxReleaseImage(&lap_img);
     }
 
     // Copy the deepest gaussian level into the output image (mirrors the
     // ownCopyImage(gaussian[levels], output) in the legacy implementation).
+    // Same map-error handling: only unmap on success, and propagate a failure
+    // through the legacy path so the caller never sees VX_SUCCESS with an
+    // unwritten output.
     {
         vx_rectangle_t r_out;
         vxGetValidRegionImage(output, &r_out);
         vx_imagepatch_addressing_t a_out = VX_IMAGEPATCH_ADDR_INIT;
         vx_map_id m_out = 0;
         void *b_out = nullptr;
-        vx_status st = vxMapImagePatch(output, &r_out, 0, &m_out, &a_out, &b_out,
-                                        VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
-        if (st == VX_SUCCESS && a_out.stride_x == 1)
+        vx_status st = vxMapImagePatch(output, &r_out, 0, &m_out, &a_out,
+                                       &b_out, VX_WRITE_ONLY,
+                                       VX_MEMORY_TYPE_HOST, 0);
+        if (st != VX_SUCCESS || a_out.stride_x != 1)
         {
-            vx_uint8 *src_p = gptr[levels];
-            vx_uint8 *dst_p = (vx_uint8 *)b_out;
-            vx_uint32 copy_w = (a_out.dim_x < lw[levels]) ? a_out.dim_x : lw[levels];
-            vx_uint32 copy_h = (a_out.dim_y < lh[levels]) ? a_out.dim_y : lh[levels];
-            for (vx_uint32 r = 0; r < copy_h; r++)
-            {
-                memcpy(dst_p + (size_t)r * a_out.stride_y,
-                       src_p + (size_t)r * gstride[levels], copy_w);
-            }
+            if (st == VX_SUCCESS) vxUnmapImagePatch(output, m_out);
+            release_owned();
+            return HafCpu_LaplacianPyramid_Legacy(node, input, laplacian, output);
+        }
+        vx_uint8 *src_p = gptr[levels];
+        vx_uint8 *dst_p = (vx_uint8 *)b_out;
+        vx_uint32 copy_w = (a_out.dim_x < lw[levels]) ? a_out.dim_x : lw[levels];
+        vx_uint32 copy_h = (a_out.dim_y < lh[levels]) ? a_out.dim_y : lh[levels];
+        for (vx_uint32 r = 0; r < copy_h; r++)
+        {
+            memcpy(dst_p + (size_t)r * a_out.stride_y,
+                   src_p + (size_t)r * gstride[levels], copy_w);
         }
         vxUnmapImagePatch(output, m_out);
     }
 
-    for (vx_size i = 1; i <= levels; i++) free(gowned[i]);
-    vxUnmapImagePatch(input, in_map);
+    release_owned();
 
     return status;
 }

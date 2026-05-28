@@ -888,7 +888,7 @@ void agoImportKernelConfig(AgoKernel * kernel, vx_kernel vxkernel);
 void agoImportNodeConfig(AgoNode * node, vx_node vxnode);
 void agoImportDataConfig(AgoData * data, vx_reference vxref, AgoGraph * graph);
 // string processing
-void agoEvaluateIntegerExpression(char * expr);
+void agoEvaluateIntegerExpression(char * expr, size_t expr_size);
 // performance
 void agoPerfProfileEntry(AgoGraph * graph, AgoProfileEntryType type, vx_reference ref);
 void agoPerfCaptureReset(vx_perf_t * perf);

@@ -446,7 +446,8 @@ static void agoUpdateN(char * output, size_t output_size, char * input, int N, i
             }
             index += (op == '+') ? v : -v;
             if (s[k] == '}') {
-                // replace $[expr] with index, bounded by remaining space (incl. terminating NUL)
+                // replace the {N+/-offset} expression with the computed integer,
+                // bounded by remaining space (incl. terminating NUL)
                 size_t remaining = output_size - ki;
                 int written = snprintf(&output[ki], remaining, "%d", index);
                 if (written < 0) break;
@@ -594,10 +595,25 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
         for (int N = Nbegin; N <= Nend; N += Nstep) {
             // create arguments with {N} expression substitution
             char argBuf[2048] = { 0 }, *arg[64] = { 0 };
+            bool argBufOverflow = false;
             for (int i = 0, j = 0; i < narg; i++) {
+                if ((size_t)j >= sizeof(argBuf)) {
+                    argBufOverflow = true;
+                    break;
+                }
                 arg[i] = argBuf + j;
                 agoUpdateN(arg[i], sizeof(argBuf) - (size_t)j, argv[i], N, Nchar);
-                j += (int)strlen(arg[i]) + 1;
+                size_t arg_len = strlen(arg[i]);
+                if (arg_len + 1 > sizeof(argBuf) - (size_t)j) {
+                    argBufOverflow = true;
+                    break;
+                }
+                j += (int)arg_len + 1;
+            }
+            if (argBufOverflow) {
+                agoAddLogEntry(&agraph->ref, VX_FAILURE, "ERROR: agoReadGraph: line %d: argument buffer overflow (limit %zu bytes)\n>>>> %s\n", lineno, sizeof(argBuf), lineCopy);
+                agraph->status = -1;
+                break;
             }
             // process the actual commands
             if (narg == 4 && !strcmp(arg[0], "data") && !strcmp(arg[2], "=")) {

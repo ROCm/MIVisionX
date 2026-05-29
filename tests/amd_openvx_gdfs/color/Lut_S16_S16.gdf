@@ -1,0 +1,5 @@
+# agoKernel_Lut_S16_S16
+data input_1 = uniform-image:1920,1080,S016,125
+data output_1 = image:1920,1080,S016
+data look_up_table = lut:INT16,65536
+node org.khronos.openvx.table_lookup input_1 look_up_table output_1

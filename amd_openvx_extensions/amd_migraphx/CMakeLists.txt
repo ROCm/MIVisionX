@@ -74,7 +74,7 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
         # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
         install(FILES include/vx_amd_migraphx.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
         # install - test
-        install(DIRECTORY ${CMAKE_SOURCE_DIR}/tests/amd_migraphx_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
+        install(DIRECTORY ${MIVISIONX_ROOT_DIR}/tests/amd_migraphx_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
     else()
         message("-- ${Red}WARNING: MIGraphX or HIP Not Found -- ${PROJECT_NAME} module excluded${ColourReset}")
     endif()

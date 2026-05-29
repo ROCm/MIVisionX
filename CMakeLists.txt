@@ -20,8 +20,9 @@
 cmake_minimum_required(VERSION 3.10)
 include( utils.cmake )
 set( MIVISIONX "mivisionx" )
-set( BUILD_ENABLE_LINTIAN_OVERRIDES ON CACHE BOOL "Enable/Disable Lintian Overrides" )
-set( BUILD_DEBIAN_PKGING_FLAG ON CACHE BOOL "Internal Status Flag to indicate Debian Packaging Build" )
+set( BUILD_ENABLE_LINTIAN_OVERRIDES OFF CACHE BOOL "Enable/Disable Lintian Overrides" )
+set( BUILD_DEBIAN_PKGING_FLAG OFF CACHE BOOL "Internal Status Flag to indicate Debian Packaging Build" )
+option(DISABLE_LINTIAN "disable lintian" ON) 
 
 # ROCM Path
 if(DEFINED ENV{ROCM_PATH})
@@ -40,18 +41,45 @@ if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/lib/llvm/bin/amdclang
   set(CMAKE_CXX_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang++)
 endif()
 
+set(MIVISIONX_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(MIVISIONX_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
+
 ## MIVisionX package version
 set(VERSION "3.5.0")
 
 # Set Project Version and Language
 project(mivisionx VERSION ${VERSION} LANGUAGES CXX)
 
+# Determine if we are building using the TheRock install of ROCm.
+set(USING_THE_ROCK OFF)
+if (EXISTS "${ROCM_PATH}/lib/rocm_sysdeps/lib")
+    set(USING_THE_ROCK ON)
+endif()
+message("-- ${White}${PROJECT_NAME} -- USING_THE_ROCK: ${USING_THE_ROCK}${ColorReset}")
+
+# Set device library path for TheRock install of ROCm.
+if (USING_THE_ROCK)
+    if (NOT DEFINED ENV{HIP_DEVICE_LIB_PATH})
+        set(ENV{HIP_DEVICE_LIB_PATH} ${ROCM_PATH}/lib/llvm/amdgcn/bitcode)
+        set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "HIP_DEVICE_LIB_PATH=${ROCM_PATH}/lib/llvm/amdgcn/bitcode")
+    endif()
+endif()
+
+# Set HIP_PLATFORM to amd if not set. This is required before finding HIP.
+if (NOT DEFINED ENV{HIP_PLATFORM})
+    set(ENV{HIP_PLATFORM} "amd")
+endif()
+
+set(CMAKE_BUILD_WITH_INSTALL_RPATH OFF)
+set(CMAKE_BUILD_RPATH "\$ORIGIN/../lib;${ROCM_PATH}/lib")
+set(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib")
+
 set(CMAKE_INSTALL_LIBDIR "lib" CACHE STRING "Library install directory")
 include(GNUInstallDirs)
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${MIVISIONX_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${MIVISIONX_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${MIVISIONX_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
 
 find_program(MAKE_NSIS_EXE makensis)
 find_program(RPMBUILD_EXE rpmbuild)
@@ -67,7 +95,8 @@ option(ENHANCED_MESSAGE "MIVisionX Enhanced Message Option"        ON)
 option(NEURAL_NET       "Build MIVisionX with Neural Net Support"  ON)
 option(LOOM             "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT      "Build MIVisionX with GPU Support"         ON)
-option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    ON)
+option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    OFF)
+option(CODE_COVERAGE    "Build with code coverage instrumentation (gcov/lcov)" OFF)
 
 if(WIN32)
   set(BACKEND "OpenCL")
@@ -90,10 +119,10 @@ if(ENHANCED_MESSAGE)
 endif()
 message("-- ${BoldBlue}MIVisionX Version -- ${VERSION}${ColourReset}")
 message("-- ${BoldBlue}MIVisionX Install Path -- ${CMAKE_INSTALL_PREFIX}${ColourReset}")
+message("-- ${BoldBlue}MIVisionX Source Root Path -- ${MIVISIONX_ROOT_DIR}${ColourReset}")
 
 if(APPLE)
   set(CMAKE_MACOSX_RPATH ON)
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
   set(GPU_SUPPORT OFF)
   set(BACKEND "CPU")
   message("-- ${Magenta}Apple macOS Detected -- GPU Support turned OFF${ColourReset}")
@@ -133,6 +162,12 @@ else()
 endif()
 # Generate position-independent code for all targets
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# Code coverage instrumentation (LLVM source-based coverage)
+if(CODE_COVERAGE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+  message("-- ${BoldBlue}MIVisionX Code Coverage -- ENABLED (LLVM)${ColourReset}")
+endif()
 message("-- ${BoldBlue}MIVisionX Build Type -- ${CMAKE_BUILD_TYPE}${ColourReset}")
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -181,7 +216,8 @@ if(NOT DEFINED MIN_DEPS_MODE)
   if(EXISTS "/etc/os-release")
     file(READ "/etc/os-release" OS_RELEASE)
     string(REGEX MATCH "22.04" UBUNTU_22_FOUND ${OS_RELEASE})
-    if(NOT UBUNTU_22_FOUND)
+    string(REGEX MATCH "24.04" UBUNTU_24_FOUND ${OS_RELEASE})
+    if(NOT UBUNTU_22_FOUND AND NOT UBUNTU_24_FOUND)
       set(MIN_DEPS_MODE ON)
       message("-- ${Yellow}${PROJECT_NAME} Warning -- Non-Ubuntu OS, Min dependency option turned on${ColourReset}")
     endif()
@@ -349,8 +385,8 @@ endif()
 if(APPLE)
   set(CPACK_GENERATOR "Bundle")
   set(CPACK_BUNDLE_NAME "${PROJECT_NAME}")
-  set(CPACK_BUNDLE_PLIST "${CMAKE_SOURCE_DIR}/.github/info.plist")
-  set(CPACK_BUNDLE_ICON "${CMAKE_SOURCE_DIR}/docs/data/MIVisionX.bmp")
+  set(CPACK_BUNDLE_PLIST "${MIVISIONX_ROOT_DIR}/.github/info.plist")
+  set(CPACK_BUNDLE_ICON "${MIVISIONX_ROOT_DIR}/docs/data/MIVisionX.bmp")
 else()
   set(CPACK_GENERATOR "TGZ;ZIP")
   if(EXISTS ${MAKE_NSIS_EXE})
@@ -368,7 +404,9 @@ else()
   endif()
 endif()
 
-configure_pkg( ${MIVISIONX} ${COMP_TYPE} ${CPACK_PACKAGE_VERSION} ${PKG_MAINTAINER_NM} ${PKG_MAINTAINER_EMAIL} )
+if(NOT DISABLE_LINTIAN)
+    configure_pkg( ${MIVISIONX} ${COMP_TYPE} ${CPACK_PACKAGE_VERSION} ${PKG_MAINTAINER_NM} ${PKG_MAINTAINER_EMAIL} )
+endif()
 
 include(CPack)
 

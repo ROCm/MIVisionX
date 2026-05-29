@@ -62,8 +62,11 @@ static vx_status VX_CALLBACK refreshSpectrogram(vx_node node, const vx_reference
     vx_status return_status = VX_SUCCESS;
     void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL || ENABLE_HIP
-        return_status = VX_ERROR_NOT_IMPLEMENTED;
+#if ENABLE_HIP
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
@@ -130,19 +133,20 @@ static vx_status VX_CALLBACK processSpectrogram(vx_node node, const vx_reference
     SpectrogramLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshSpectrogram(node, parameters, data);
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL || ENABLE_HIP
-        return_status = VX_ERROR_NOT_IMPLEMENTED;
-#endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-#if RPP_AUDIO
-        rpp_status = rppt_spectrogram_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcLength, data->centerWindows, data->reflectPadding,
-                                           data->pWindowFn, data->nfft, data->power, data->windowLength, data->windowStep, data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+#if ENABLE_HIP
+    RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
 #else
-        return_status = VX_ERROR_NOT_SUPPORTED; 
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
+    RppBackend backend = RPP_HOST_BACKEND;
 #endif
-    }
+#if RPP_AUDIO
+    rpp_status = rppt_spectrogram(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcLength, data->centerWindows, data->reflectPadding,
+                                    data->pWindowFn, data->nfft, data->power, data->windowLength, data->windowStep, data->handle->rppHandle, backend);
+    return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+#else
+    return_status = VX_ERROR_NOT_SUPPORTED; 
+#endif
     return return_status;
 }
 
@@ -182,8 +186,15 @@ static vx_status VX_CALLBACK initializeSpectrogram(vx_node node, const vx_refere
         data->pDstDesc->offsetInBytes = 0;
         fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims, data->spectrogramLayout);
 
-        data->pSrcLength = new int[data->pSrcDesc->n];
-        data->pWindowFn = new float[data->windowLength];
+        if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+            CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pSrcLength, data->pSrcDesc->n * sizeof(int)));
+            CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pWindowFn, data->windowLength * sizeof(float)));
+#endif
+        } else {
+            data->pSrcLength = new int[data->pSrcDesc->n];
+            data->pWindowFn = new float[data->windowLength];
+        }
 
         STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->windowLength, sizeof(float), data->pWindowFn, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
         STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
@@ -197,8 +208,15 @@ static vx_status VX_CALLBACK initializeSpectrogram(vx_node node, const vx_refere
 static vx_status VX_CALLBACK uninitializeSpectrogram(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     SpectrogramLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    if (data->pSrcLength) delete[] data->pSrcLength;
-    if (data->pWindowFn) delete[] data->pWindowFn;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        if (data->pSrcLength) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSrcLength));
+        if (data->pWindowFn) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pWindowFn));
+#endif
+    } else {
+        if (data->pSrcLength) delete[] data->pSrcLength;
+        if (data->pWindowFn) delete[] data->pWindowFn;
+    }
     if (data->pSrcDesc) delete data->pSrcDesc;
     if (data->pDstDesc) delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

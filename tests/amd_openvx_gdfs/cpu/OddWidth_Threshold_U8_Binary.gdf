@@ -1,0 +1,5 @@
+# Exercise postfix scalar loops in Threshold
+data input_1 = uniform-image:1277,719,U008,125
+data output_1 = image:1277,719,U008
+data value = threshold:BINARY,U008,U008:INIT,127
+node org.khronos.openvx.threshold input_1 value output_1

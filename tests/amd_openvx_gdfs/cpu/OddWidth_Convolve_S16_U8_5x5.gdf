@@ -1,0 +1,5 @@
+# Exercise postfix in 5x5 convolution S16 output
+data input = image:1277,719,U008
+data output = image:1277,719,S016
+data matrix = convolution:5,5:INIT,{0;0;0;0;0;0;0;0;0;0;0;0;1;0;0;0;0;0;0;0;0;0;0;0;0}
+node org.khronos.openvx.custom_convolution input matrix output

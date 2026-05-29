@@ -131,6 +131,8 @@ static vx_status VX_CALLBACK CV_norm_Kernel(vx_node node, const vx_reference *pa
     //Converting int to Scalar
     STATUS_ERROR_CHECK(vxWriteScalarValue(scalar, &NORM_Val));
 
+    if (mat) delete mat;
+
     return status;
 }
 

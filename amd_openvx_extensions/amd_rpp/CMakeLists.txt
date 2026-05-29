@@ -31,14 +31,14 @@ endif()
 
 # VX_RPP Version
 # * must match with include/vx_ext_rpp_version.h
-set(VERSION "3.1.0")
+set(VERSION "3.3.2")
 
 project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 
 list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH}/lib/cmake)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake)
 
-find_package(rpp 2.2.1 REQUIRED)
+find_package(rpp 3.1.0 REQUIRED)
 
 message("-- ${White}${PROJECT_NAME}: rpp found with find_package(rpp REQUIRED)${ColourReset}")
 message("-- \t${White}rpp_INCLUDE_DIR -- ${rpp_INCLUDE_DIR}${ColourReset}")
@@ -65,147 +65,87 @@ set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} rpp::rpp)
 
 list(APPEND SOURCES
         source/tensor/Blend.cpp
+        source/tensor/BitwiseOps.cpp
         source/tensor/Blur.cpp
         source/tensor/Brightness.cpp
+        source/tensor/ChannelPermute.cpp
+        source/tensor/ColorJitter.cpp
         source/tensor/ColorTemperature.cpp
+        source/tensor/ColorCast.cpp
+        source/tensor/ColorToGreyscale.cpp
         source/tensor/ColorTwist.cpp
         source/tensor/Contrast.cpp
         source/tensor/Copy.cpp
         source/tensor/Crop.cpp
+        source/tensor/CropAndPatch.cpp
         source/tensor/CropMirrorNormalize.cpp
+        source/tensor/Dilate.cpp
         source/tensor/Downmix.cpp
+        source/tensor/Erase.cpp
+        source/tensor/Erode.cpp
         source/tensor/Exposure.cpp
         source/tensor/FishEye.cpp
         source/tensor/Flip.cpp
         source/tensor/Fog.cpp
         source/tensor/GammaCorrection.cpp
+        source/tensor/GaussianFilter.cpp
+        source/tensor/GaussianNoise.cpp
         source/tensor/Glitch.cpp
+        source/tensor/GridMask.cpp
         source/tensor/Hue.cpp
         source/tensor/Jitter.cpp
+        source/tensor/JpegCompressionDistortion.cpp
         source/tensor/LensCorrection.cpp
+        source/tensor/Log.cpp
         source/tensor/Log1p.cpp
+        source/tensor/Magnitude.cpp
+        source/tensor/MedianFilter.cpp
+        source/tensor/Lut.cpp
         source/tensor/MelFilterBank.cpp
         source/tensor/Noise.cpp
         source/tensor/NonSilentRegionDetection.cpp
+        source/tensor/NonLinearBlend.cpp
         source/tensor/Nop.cpp
         source/tensor/Normalize.cpp
         source/tensor/Rotate.cpp
+        source/tensor/Phase.cpp
         source/tensor/Pixelate.cpp
+        source/tensor/Posterize.cpp
         source/tensor/PreemphasisFilter.cpp
         source/tensor/Rain.cpp
+        source/tensor/Remap.cpp
         source/tensor/Resample.cpp
         source/tensor/Resize.cpp
         source/tensor/ResizeCrop.cpp
         source/tensor/ResizeCropMirror.cpp
         source/tensor/ResizeMirrorNormalize.cpp
+        source/tensor/Ricap.cpp
         source/tensor/Saturation.cpp
         source/tensor/SequenceRearrange.cpp
+        source/tensor/ShotNoise.cpp
         source/tensor/Snow.cpp
+        source/tensor/Solarize.cpp
+        source/tensor/Spatter.cpp
         source/tensor/Spectrogram.cpp
         source/tensor/TensorAddTensor.cpp
+        source/tensor/TensorMax.cpp
+        source/tensor/TensorMean.cpp
+        source/tensor/TensorMin.cpp
         source/tensor/TensorMulScalar.cpp
+        source/tensor/TensorStdDev.cpp
+        source/tensor/TensorSum.cpp
+        source/tensor/Threshold.cpp
         source/tensor/ToDecibels.cpp
         source/tensor/Vignette.cpp
         source/tensor/WarpAffine.cpp
+        source/tensor/WarpPerspective.cpp
+        source/tensor/Water.cpp
         source/tensor/Slice.cpp
         source/tensor/Transpose.cpp
+        source/tensor/PythonFunction.cpp
         source/kernel_rpp.cpp
         source/internal_publishKernels.cpp
     )
-
-set(RPP_LEGACY_SUPPORT_FOUND 0)
-if(EXISTS ${rpp_INCLUDE_DIR}/rpp/rpp_legacy_support.h)
-    file(READ ${rpp_INCLUDE_DIR}/rpp/rpp_legacy_support.h RPP_LEGACY_SUPPORT_FILE)
-    string(REGEX MATCH "RPP_LEGACY_SUPPORT ([0-1]*)" _ ${RPP_LEGACY_SUPPORT_FILE})
-    set(RPP_LEGACY_SUPPORT_FOUND ${CMAKE_MATCH_1})
-endif()
-
-if(RPP_LEGACY_SUPPORT_FOUND)
-    list(APPEND SOURCES
-        source/image/AbsoluteDifferencebatchPD.cpp
-        source/image/AccumulatebatchPD.cpp
-        source/image/AccumulateSquaredbatchPD.cpp
-        source/image/AccumulateWeightedbatchPD.cpp
-        source/image/AddbatchPD.cpp
-        source/image/BitwiseANDbatchPD.cpp
-        source/image/BitwiseNOTbatchPD.cpp
-        source/image/BlendbatchPD.cpp
-        source/image/BlurbatchPD.cpp
-        source/image/BoxFilterbatchPD.cpp
-        source/image/BrightnessbatchPD.cpp
-        source/image/CannyEdgeDetector.cpp
-        source/image/ChannelCombinebatchPD.cpp
-        source/image/ChannelExtractbatchPD.cpp
-        source/image/ColorTemperaturebatchPD.cpp
-        source/image/ColorTwistbatchPD.cpp
-        source/image/ContrastbatchPD.cpp
-        source/image/CopybatchPD.cpp
-        source/image/CropMirrorNormalizePD.cpp
-        source/image/CropPD.cpp
-        source/image/CustomConvolutionbatchPD.cpp
-        source/image/DataObjectCopybatchPD.cpp
-        source/image/DilatebatchPD.cpp
-        source/image/ErodebatchPD.cpp
-        source/image/ExclusiveORbatchPD.cpp
-        source/image/ExposurebatchPD.cpp
-        source/image/FastCornerDetector.cpp
-        source/image/FisheyebatchPD.cpp
-        source/image/FlipbatchPD.cpp
-        source/image/FogbatchPD.cpp
-        source/image/GammaCorrectionbatchPD.cpp
-        source/image/GaussianFilterbatchPD.cpp
-        source/image/GaussianImagePyramidbatchPD.cpp
-        source/image/HarrisCornerDetector.cpp
-        source/image/Histogram.cpp
-        source/image/HistogramBalancebatchPD.cpp
-        source/image/HistogramEqualizebatchPD.cpp
-        source/image/HuebatchPD.cpp
-        source/image/InclusiveORbatchPD.cpp
-        source/image/JitterbatchPD.cpp
-        source/image/LaplacianImagePyramid.cpp
-        source/image/LensCorrectionbatchPD.cpp
-        source/image/LocalBinaryPatternbatchPD.cpp
-        source/image/LookUpTablebatchPD.cpp
-        source/image/MagnitudebatchPD.cpp
-        source/image/MaxbatchPD.cpp
-        source/image/MeanStddev.cpp
-        source/image/MedianFilterbatchPD.cpp
-        source/image/MinbatchPD.cpp
-        source/image/MinMaxLoc.cpp
-        source/image/MultiplybatchPD.cpp
-        source/image/NoisebatchPD.cpp
-        source/image/NonLinearFilterbatchPD.cpp
-        source/image/NonMaxSupressionbatchPD.cpp
-        source/image/NopbatchPD.cpp
-        source/image/PhasebatchPD.cpp
-        source/image/PixelatebatchPD.cpp
-        source/image/RainbatchPD.cpp
-        source/image/RandomCropLetterBoxbatchPD.cpp
-        source/image/RandomShadowbatchPD.cpp
-        source/image/Remap.cpp
-        source/image/ResizebatchPD.cpp
-        source/image/ResizeCropbatchPD.cpp
-        source/image/ResizeCropMirrorPD.cpp
-        source/image/ResizeMirrorNormalizeTensor.cpp
-        source/image/Resizetensor.cpp
-        source/image/RotatebatchPD.cpp
-        source/image/SaturationbatchPD.cpp
-        source/image/ScalebatchPD.cpp
-        source/image/SequenceRearrangebatchPD.cpp
-        source/image/SnowbatchPD.cpp
-        source/image/SobelbatchPD.cpp
-        source/image/SubtractbatchPD.cpp
-        source/image/TensorAdd.cpp
-        source/image/TensorLookup.cpp
-        source/image/TensorMatrixMultiply.cpp
-        source/image/TensorMultiply.cpp
-        source/image/TensorSubtract.cpp
-        source/image/ThresholdingbatchPD.cpp
-        source/image/VignettebatchPD.cpp
-        source/image/WarpAffinebatchPD.cpp
-        source/image/WarpPerspectivebatchPD.cpp
-    )
-endif()
 
 if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)
     message("-- ${Green}vx_rpp -- Building with OpenCL${ColourReset}")
@@ -246,7 +186,7 @@ if(EXISTS ${rpp_INCLUDE_DIR}/rpp/rpp_audio_augmentations_support.h)
 endif()
 
 # Audio features for VX_RPP
-if((${rpp_VERSION_MAJOR} VERSION_GREATER "1") OR (${rpp_VERSION_MAJOR} VERSION_EQUAL "1" AND ${rpp_VERSION_MINOR} VERSION_GREATER_EQUAL "8" AND ${rpp_VERSION_PATCH} VERSION_GREATER_EQUAL "0")
+if((${rpp_VERSION_MAJOR} VERSION_GREATER "3") OR (${rpp_VERSION_MAJOR} VERSION_EQUAL "3" AND ${rpp_VERSION_MINOR} VERSION_GREATER_EQUAL "1" AND ${rpp_VERSION_PATCH} VERSION_GREATER_EQUAL "1")
 AND RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DAUDIO_SUPPORT=1")
     message("-- ${White}vx_rpp Audio Features Included${ColourReset}")
@@ -254,15 +194,6 @@ AND RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND)
 else()
     target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=0)
     message("-- ${Yellow}vx_rpp Audio Features Excluded${ColourReset}")
-endif()
-
-if(RPP_LEGACY_SUPPORT_FOUND)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLEGACY_SUPPORT=1")
-    target_compile_definitions(vx_rpp PUBLIC RPP_LEGACY_SUPPORT=1)
-    message("-- ${White}vx_rpp BatchPD augmentations included${ColourReset}")
-else()
-    target_compile_definitions(vx_rpp PUBLIC RPP_LEGACY_SUPPORT=0)
-    message("-- ${Yellow}vx_rpp BatchPD augmentations excluded${ColourReset}")
 endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
@@ -286,4 +217,4 @@ install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMP
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
 install(FILES include/vx_ext_rpp.h include/vx_ext_rpp_version.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/tests/vx_rpp_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
+install(DIRECTORY ${MIVISIONX_ROOT_DIR}/tests/vx_rpp_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)

@@ -55,22 +55,23 @@ void copy_src_dims_and_update_dst_roi(MelFilterBankLocalData *data, RpptROI *src
 
 static vx_status VX_CALLBACK refreshMelFilterBank(vx_node node, const vx_reference *parameters, vx_uint32 num, MelFilterBankLocalData *data) {
     vx_status status = VX_SUCCESS;
+    void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL || ENABLE_HIP
-        return VX_ERROR_NOT_IMPLEMENTED;
+#if ENABLE_HIP
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
 #endif
-    }
-    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        void *roi_tensor_ptr_src, *roi_tensor_ptr_dst;
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
-        RpptROI *srcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
-        RpptROI *dstRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
-        copy_src_dims_and_update_dst_roi(data, srcRoi, dstRoi);
-        return status;
     }
+    RpptROI *srcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_src);
+    RpptROI *dstRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr_dst);
+    copy_src_dims_and_update_dst_roi(data, srcRoi, dstRoi);
     return status;
 }
 
@@ -130,20 +131,20 @@ static vx_status VX_CALLBACK processMelFilterBank(vx_node node, const vx_referen
     MelFilterBankLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshMelFilterBank(node, parameters, num, data);
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL || ENABLE_HIP
-        return VX_ERROR_NOT_IMPLEMENTED;
-#endif
-    }
-    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-#if RPP_AUDIO
-        rpp_status = rppt_mel_filter_bank_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcDims, data->freqHigh, data->freqLow,
-                                               data->melFormula, data->nfilter, data->sampleRate, data->normalize, data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+#if ENABLE_HIP
+    RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
 #else
-        return_status = VX_ERROR_NOT_SUPPORTED;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
+    RppBackend backend = RPP_HOST_BACKEND;
 #endif
-    }
+#if RPP_AUDIO
+    rpp_status = rppt_mel_filter_bank(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pSrcDims, data->freqHigh, data->freqLow,
+                                        data->melFormula, data->nfilter, data->sampleRate, data->normalize, data->handle->rppHandle, backend);
+    return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+#else
+    return_status = VX_ERROR_NOT_SUPPORTED;
+#endif
     return return_status;
 }
 
@@ -187,7 +188,13 @@ static vx_status VX_CALLBACK initializeMelFilterBank(vx_node node, const vx_refe
         data->pDstDesc->offsetInBytes = 0;
         fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims, data->outputLayout);
 
-        data->pSrcDims = new Rpp32s[data->pSrcDesc->n * 2];
+        if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pSrcDims, data->pSrcDesc->n * 2 * sizeof(Rpp32s)));
+#endif
+        } else {
+            data->pSrcDims = new Rpp32s[data->pSrcDesc->n * 2];
+        }
         STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
         STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
         return VX_SUCCESS;
@@ -199,7 +206,13 @@ static vx_status VX_CALLBACK initializeMelFilterBank(vx_node node, const vx_refe
 static vx_status VX_CALLBACK uninitializeMelFilterBank(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     MelFilterBankLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    if (data->pSrcDims) delete[] data->pSrcDims;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        if (data->pSrcDims) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSrcDims));
+#endif
+    } else {
+        if (data->pSrcDims) delete[] data->pSrcDims;
+    }
     if (data->pSrcDesc) delete data->pSrcDesc;
     if (data->pDstDesc) delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

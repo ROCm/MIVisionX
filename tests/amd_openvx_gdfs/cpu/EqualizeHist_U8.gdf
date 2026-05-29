@@ -1,0 +1,4 @@
+# Exercise Equalize Histogram
+data input = uniform-image:640,480,U008,128
+data output = image:640,480,U008
+node org.khronos.openvx.equalize_histogram input output

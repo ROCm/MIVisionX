@@ -1,5 +1,11 @@
 ## Configure Copyright File for Debian Package
 function( configure_pkg PACKAGE_NAME_T COMPONENT_NAME_T PACKAGE_VERSION_T MAINTAINER_NM_T MAINTAINER_EMAIL_T)
+    if("${COMPONENT_NAME_T}" STREQUAL "asan")
+      set(LINTIAN_DOCS_DIR "${CMAKE_INSTALL_DOCDIR}-asan")
+    else()
+      set(LINTIAN_DOCS_DIR ${CMAKE_INSTALL_DOCDIR})
+    endif()
+
     # Check If Debian Platform
     find_file (DEBIAN debian_version debconf.conf PATHS /etc)
     if(DEBIAN)
@@ -8,33 +14,33 @@ function( configure_pkg PACKAGE_NAME_T COMPONENT_NAME_T PACKAGE_VERSION_T MAINTA
                                   ${MAINTAINER_NM_T} ${MAINTAINER_EMAIL_T} )
 
       # Create debian directory in build tree
-      file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/DEBIAN")
+      file(MAKE_DIRECTORY "${MIVISIONX_BINARY_DIR}/DEBIAN")
 
       # Configure the copyright file
       configure_file(
-        "${CMAKE_SOURCE_DIR}/copyright.txt"
-        "${CMAKE_BINARY_DIR}/DEBIAN/copyright.txt"
+        "${MIVISIONX_ROOT_DIR}/copyright.txt"
+        "${MIVISIONX_BINARY_DIR}/DEBIAN/copyright.txt"
         @ONLY
       )
 
       # Install copyright file
-      install ( FILES "${CMAKE_BINARY_DIR}/DEBIAN/copyright.txt"
-      DESTINATION "${CMAKE_INSTALL_DOCDIR}"
+      install ( FILES "${MIVISIONX_BINARY_DIR}/DEBIAN/copyright.txt"
+      DESTINATION "${LINTIAN_DOCS_DIR}"
       COMPONENT ${COMPONENT_NAME_T} )
 
       # Configure the changelog file
       configure_file(
-        "${CMAKE_SOURCE_DIR}/CHANGELOG.md"
-        "${CMAKE_BINARY_DIR}/DEBIAN/CHANGELOG.md"
+        "${MIVISIONX_ROOT_DIR}/CHANGELOG.md"
+        "${MIVISIONX_BINARY_DIR}/DEBIAN/CHANGELOG.md"
         @ONLY
       )
 
       # Install Change Log 
       find_program ( DEB_GZIP_EXEC gzip )
-      if(EXISTS "${CMAKE_BINARY_DIR}/DEBIAN/CHANGELOG.md" )
+      if(EXISTS "${MIVISIONX_BINARY_DIR}/DEBIAN/CHANGELOG.md" )
         execute_process(
-          COMMAND ${DEB_GZIP_EXEC} -f -n -9 "${CMAKE_BINARY_DIR}/DEBIAN/CHANGELOG.md"
-          WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/DEBIAN"
+          COMMAND ${DEB_GZIP_EXEC} -f -n -9 "${MIVISIONX_BINARY_DIR}/DEBIAN/CHANGELOG.md"
+          WORKING_DIRECTORY "${MIVISIONX_BINARY_DIR}/DEBIAN"
           RESULT_VARIABLE result
           OUTPUT_VARIABLE output
           ERROR_VARIABLE error
@@ -42,15 +48,16 @@ function( configure_pkg PACKAGE_NAME_T COMPONENT_NAME_T PACKAGE_VERSION_T MAINTA
         if(NOT ${result} EQUAL 0)
           message(FATAL_ERROR "Failed to compress: ${error}")
         endif()
-        install ( FILES "${CMAKE_BINARY_DIR}/DEBIAN/${DEB_CHANGELOG_INSTALL_FILENM}"
-                  DESTINATION ${CMAKE_INSTALL_DOCDIR}
+
+        install ( FILES "${MIVISIONX_BINARY_DIR}/DEBIAN/${DEB_CHANGELOG_INSTALL_FILENM}"
+                  DESTINATION ${LINTIAN_DOCS_DIR}
                   COMPONENT ${COMPONENT_NAME_T})
       endif()
 
     else()
         # License file
         install ( FILES ${LICENSE_FILE}
-            DESTINATION ${CMAKE_INSTALL_DOCDIR} RENAME LICENSE.txt
+            DESTINATION ${LINTIAN_DOCS_DIR} RENAME LICENSE.txt
             COMPONENT ${COMPONENT_NAME_T})
     endif()
 endfunction()

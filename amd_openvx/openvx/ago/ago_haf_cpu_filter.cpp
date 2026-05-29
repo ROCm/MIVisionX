@@ -22,8 +22,73 @@ THE SOFTWARE.
 
 
 #include "ago_internal.h"
+#include <float.h>
 
 extern vx_uint32 dataConvertU1ToU8_4bytes[16];
+
+#if USE_AVX
+// Vectorized FastAtan2-to-phase-byte for 8 int16 (Gx, Gy) lanes packed into an
+// __m128i. Returns 8 phase bytes (0..255) packed into the lower 64 bits of an
+// __m128i (upper 64 bits zero). Matches the scalar HafCpu_FastAtan2_deg path
+// used in SobelMagnitudePhase.
+static inline __m128i HafCpu_FastAtan2_PhaseByte_8(__m128i gx16, __m128i gy16)
+{
+	const __m256 eps = _mm256_set1_ps((float)DBL_EPSILON);
+	const __m256 ninety = _mm256_set1_ps(90.0f);
+	const __m256 oneEighty = _mm256_set1_ps(180.0f);
+	const __m256 threeSixty = _mm256_set1_ps(360.0f);
+	const __m256 scale = _mm256_set1_ps((float)128 / 180.0f);
+	const __m256 half = _mm256_set1_ps(0.5f);
+	const __m256 p1 = _mm256_set1_ps(atan2_p1);
+	const __m256 p3 = _mm256_set1_ps(atan2_p3);
+	const __m256 p5 = _mm256_set1_ps(atan2_p5);
+	const __m256 p7 = _mm256_set1_ps(atan2_p7);
+	const __m256i zero32 = _mm256_setzero_si256();
+
+	__m256i gx32 = _mm256_cvtepi16_epi32(gx16);
+	__m256i gy32 = _mm256_cvtepi16_epi32(gy16);
+	__m256 ax = _mm256_cvtepi32_ps(_mm256_abs_epi32(gx32));
+	__m256 ay = _mm256_cvtepi32_ps(_mm256_abs_epi32(gy32));
+	__m256 useX = _mm256_cmp_ps(ay, ax, _CMP_LE_OQ);
+	__m256 mn = _mm256_min_ps(ax, ay);
+	__m256 mx = _mm256_max_ps(ax, ay);
+	__m256 c = _mm256_div_ps(mn, _mm256_add_ps(mx, eps));
+	__m256 c2 = _mm256_mul_ps(c, c);
+	__m256 poly = _mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(p7, c2), p5), c2), p3), c2), p1), c);
+	__m256 angle = _mm256_blendv_ps(_mm256_sub_ps(ninety, poly), poly, useX);
+
+	__m256 gxNeg = _mm256_castsi256_ps(_mm256_cmpgt_epi32(zero32, gx32));
+	__m256 gyNeg = _mm256_castsi256_ps(_mm256_cmpgt_epi32(zero32, gy32));
+	angle = _mm256_blendv_ps(angle, _mm256_sub_ps(oneEighty, angle), gxNeg);
+	angle = _mm256_blendv_ps(angle, _mm256_sub_ps(threeSixty, angle), gyNeg);
+	__m256i phase32 = _mm256_cvttps_epi32(_mm256_add_ps(_mm256_mul_ps(angle, scale), half));
+	__m128i phase16 = _mm_packs_epi32(_mm256_castsi256_si128(phase32), _mm256_extracti128_si256(phase32, 1));
+	return _mm_packus_epi16(phase16, phase16);
+}
+
+// Vectorized sqrt(Gx^2 + Gy^2) for 8 int16 (Gx, Gy) lanes -> 8 int16 magnitudes
+// packed into __m128i (with saturated cast to int16). Uses single-precision
+// sqrt which is far cheaper than the double-precision pipeline the legacy code
+// used. The values fit since max |Gx|, |Gy| from a 3x3 Sobel on uint8 input is
+// 4*255 = 1020 and the magnitude is sqrt(2)*1020 = ~1442, well within int16.
+// Uses _mm256_cvtps_epi32 (round-to-nearest-even per the default MXCSR) so
+// non-integer magnitudes match the rounding behavior of the legacy double-
+// precision pipeline (which also rounded). Earlier this used truncate-
+// toward-zero (_mm256_cvttps_epi32), which systematically biased magnitudes
+// down by 1 on the fractional part and showed up as -1 differences vs CTS
+// reference at the Canny threshold boundary.
+static inline __m128i HafCpu_SobelMagnitude_S16_8(__m128i gx16, __m128i gy16)
+{
+	__m256i gx32 = _mm256_cvtepi16_epi32(gx16);
+	__m256i gy32 = _mm256_cvtepi16_epi32(gy16);
+	__m256 gxf = _mm256_cvtepi32_ps(gx32);
+	__m256 gyf = _mm256_cvtepi32_ps(gy32);
+	__m256 sumf = _mm256_add_ps(_mm256_mul_ps(gxf, gxf), _mm256_mul_ps(gyf, gyf));
+	__m256 magf = _mm256_sqrt_ps(sumf);
+	__m256i mag32 = _mm256_cvtps_epi32(magf);
+	return _mm_packs_epi32(_mm256_castsi256_si128(mag32), _mm256_extracti128_si256(mag32, 1));
+}
+#endif
 
 /* The function assumes at least one pixel padding on the top, left, right and bottom
 Separable filter
@@ -228,6 +293,50 @@ int HafCpu_Dilate_U8_U8_3x3
 		vx_uint32     srcImageStrideInBytes
 	)
 {
+#if USE_AVX
+	for (int height = 0; height < (int)dstHeight; height++)
+	{
+		unsigned char *pLocalSrc = (unsigned char *)pSrcImage;
+		unsigned char *pLocalDst = (unsigned char *)pDstImage;
+		int x = 0;
+		for (; x + 32 <= (int)dstWidth; x += 32, pLocalSrc += 32, pLocalDst += 32)
+		{
+			__m256i row0 = _mm256_loadu_si256((__m256i *)(pLocalSrc - srcImageStrideInBytes));
+			__m256i shiftedL = _mm256_loadu_si256((__m256i *)(pLocalSrc - srcImageStrideInBytes - 1));
+			__m256i shiftedR = _mm256_loadu_si256((__m256i *)(pLocalSrc - srcImageStrideInBytes + 1));
+			row0 = _mm256_max_epu8(row0, shiftedL);
+			row0 = _mm256_max_epu8(row0, shiftedR);
+
+			__m256i row1 = _mm256_loadu_si256((__m256i *)pLocalSrc);
+			shiftedL = _mm256_loadu_si256((__m256i *)(pLocalSrc - 1));
+			shiftedR = _mm256_loadu_si256((__m256i *)(pLocalSrc + 1));
+			row1 = _mm256_max_epu8(row1, shiftedL);
+			row1 = _mm256_max_epu8(row1, shiftedR);
+
+			__m256i row2 = _mm256_loadu_si256((__m256i *)(pLocalSrc + srcImageStrideInBytes));
+			shiftedL = _mm256_loadu_si256((__m256i *)(pLocalSrc + srcImageStrideInBytes - 1));
+			shiftedR = _mm256_loadu_si256((__m256i *)(pLocalSrc + srcImageStrideInBytes + 1));
+			row2 = _mm256_max_epu8(row2, shiftedL);
+			row2 = _mm256_max_epu8(row2, shiftedR);
+
+			row0 = _mm256_max_epu8(row0, row1);
+			row0 = _mm256_max_epu8(row0, row2);
+			_mm256_storeu_si256((__m256i *)pLocalDst, row0);
+		}
+		for (; x < (int)dstWidth; x++, pLocalSrc++)
+		{
+			unsigned char temp1, temp2;
+			temp1 = max(max(pLocalSrc[-(int)srcImageStrideInBytes - 1], pLocalSrc[-(int)srcImageStrideInBytes]), pLocalSrc[-(int)srcImageStrideInBytes + 1]);
+			temp2 = max(max(pLocalSrc[-1], pLocalSrc[0]), pLocalSrc[1]);
+			temp1 = max(temp1, temp2);
+			temp2 = max(max(pLocalSrc[(int)srcImageStrideInBytes - 1], pLocalSrc[(int)srcImageStrideInBytes]), pLocalSrc[(int)srcImageStrideInBytes + 1]);
+			*pLocalDst++ = max(temp1, temp2);
+		}
+		pSrcImage += srcImageStrideInBytes;
+		pDstImage += dstImageStrideInBytes;
+	}
+	return AGO_SUCCESS;
+#else
 	unsigned char *pLocalSrc, *pLocalDst;
 	__m128i row0, row1, row2, shiftedR, shiftedL;
 
@@ -293,6 +402,7 @@ int HafCpu_Dilate_U8_U8_3x3
 		pDstImage += dstImageStrideInBytes;
 	}
 	return AGO_SUCCESS;
+#endif
 }
 
 int HafCpu_Erode_U8_U8_3x3
@@ -305,6 +415,50 @@ int HafCpu_Erode_U8_U8_3x3
 		vx_uint32     srcImageStrideInBytes
 	)
 {
+#if USE_AVX
+	for (int height = 0; height < (int)dstHeight; height++)
+	{
+		unsigned char *pLocalSrc = (unsigned char *)pSrcImage;
+		unsigned char *pLocalDst = (unsigned char *)pDstImage;
+		int x = 0;
+		for (; x + 32 <= (int)dstWidth; x += 32, pLocalSrc += 32, pLocalDst += 32)
+		{
+			__m256i row0 = _mm256_loadu_si256((__m256i *)(pLocalSrc - srcImageStrideInBytes));
+			__m256i shiftedL = _mm256_loadu_si256((__m256i *)(pLocalSrc - srcImageStrideInBytes - 1));
+			__m256i shiftedR = _mm256_loadu_si256((__m256i *)(pLocalSrc - srcImageStrideInBytes + 1));
+			row0 = _mm256_min_epu8(row0, shiftedL);
+			row0 = _mm256_min_epu8(row0, shiftedR);
+
+			__m256i row1 = _mm256_loadu_si256((__m256i *)pLocalSrc);
+			shiftedL = _mm256_loadu_si256((__m256i *)(pLocalSrc - 1));
+			shiftedR = _mm256_loadu_si256((__m256i *)(pLocalSrc + 1));
+			row1 = _mm256_min_epu8(row1, shiftedL);
+			row1 = _mm256_min_epu8(row1, shiftedR);
+
+			__m256i row2 = _mm256_loadu_si256((__m256i *)(pLocalSrc + srcImageStrideInBytes));
+			shiftedL = _mm256_loadu_si256((__m256i *)(pLocalSrc + srcImageStrideInBytes - 1));
+			shiftedR = _mm256_loadu_si256((__m256i *)(pLocalSrc + srcImageStrideInBytes + 1));
+			row2 = _mm256_min_epu8(row2, shiftedL);
+			row2 = _mm256_min_epu8(row2, shiftedR);
+
+			row0 = _mm256_min_epu8(row0, row1);
+			row0 = _mm256_min_epu8(row0, row2);
+			_mm256_storeu_si256((__m256i *)pLocalDst, row0);
+		}
+		for (; x < (int)dstWidth; x++, pLocalSrc++)
+		{
+			unsigned char temp1, temp2;
+			temp1 = min(min(pLocalSrc[-(int)srcImageStrideInBytes - 1], pLocalSrc[-(int)srcImageStrideInBytes]), pLocalSrc[-(int)srcImageStrideInBytes + 1]);
+			temp2 = min(min(pLocalSrc[-1], pLocalSrc[0]), pLocalSrc[1]);
+			temp1 = min(temp1, temp2);
+			temp2 = min(min(pLocalSrc[(int)srcImageStrideInBytes - 1], pLocalSrc[(int)srcImageStrideInBytes]), pLocalSrc[(int)srcImageStrideInBytes + 1]);
+			*pLocalDst++ = min(temp1, temp2);
+		}
+		pSrcImage += srcImageStrideInBytes;
+		pDstImage += dstImageStrideInBytes;
+	}
+	return AGO_SUCCESS;
+#else
 	unsigned char *pLocalSrc, *pLocalDst;
 	__m128i row0, row1, row2, shiftedR, shiftedL;
 
@@ -370,9 +524,10 @@ int HafCpu_Erode_U8_U8_3x3
 		pDstImage += dstImageStrideInBytes;
 	}
 	return AGO_SUCCESS;
+#endif
 }
 
-#if USE_BMI2
+#if 0 // USE_BMI2 -- disabled: BMI2 U1 filter implementations have bugs (missing pSrcImage update per row/width)
 /* The function assumes that the source image pointer is 16 byte aligned, and the source stride as well
 It processes the pixels in a width which is the next highest multiple of 16 after dstWidth.
 The function assumes at least one pixel padding on the top, left, right and bottom */
@@ -444,13 +599,13 @@ int HafCpu_Dilate_U1_U8_3x3
 			row0 = _mm_or_si128(row0, row2);
 
 			// Convert U8 to U1
-#ifdef _WIN64
-			result[0] = _pext_u64(row0.m128i_u64[0], maskConv);
-			result[1] = _pext_u64(row0.m128i_u64[1], maskConv);
+#if defined(_WIN64) || defined(__x86_64__)
+			result[0] = _pext_u64(M128I(row0).m128i_u64[0], maskConv);
+			result[1] = _pext_u64(M128I(row0).m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
-			
+
 			*((unsigned char*)pDstImage + (width >> 4))= (unsigned char)(result[0]);
 			*((unsigned char*)pDstImage + (width >> 4) + 1) = (unsigned char)(result[1]);
 		}
@@ -531,9 +686,9 @@ int HafCpu_Erode_U1_U8_3x3
 			row0 = _mm_and_si128(row0, row2);
 
 			// Convert U8 to U1
-#ifdef _WIN64
-			result[0] = _pext_u64(row0.m128i_u64[0], maskConv);
-			result[1] = _pext_u64(row0.m128i_u64[1], maskConv);
+#if defined(_WIN64) || defined(__x86_64__)
+			result[0] = _pext_u64(M128I(row0).m128i_u64[0], maskConv);
+			result[1] = _pext_u64(M128I(row0).m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -565,7 +720,7 @@ int HafCpu_Dilate_U8_U1_3x3
 	__m128i maskL = _mm_set_epi8((char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0xFF);
 	__m128i maskR = _mm_set_epi8((char)0xFF, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0);
 	
-	__declspec(align(16)) uint64_t pixels[2];
+	alignas(16) uint64_t pixels[2];
 	uint64_t maskConv = 0x0101010101010101;
 	char lpixel, rpixel;
 
@@ -576,7 +731,7 @@ int HafCpu_Dilate_U8_U1_3x3
 			// Read the row above
 			pixels[0] = (uint64_t)(*(pSrcImage - srcImageStrideInBytes));
 			pixels[1] = (uint64_t)(*(pSrcImage - srcImageStrideInBytes + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -587,7 +742,7 @@ int HafCpu_Dilate_U8_U1_3x3
 			// Read the current row
 			pixels[0] = (uint64_t)(*pSrcImage);
 			pixels[1] = (uint64_t)(*(pSrcImage + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -598,7 +753,7 @@ int HafCpu_Dilate_U8_U1_3x3
 			// Read the row below
 			pixels[0] = (uint64_t)(*(pSrcImage + srcImageStrideInBytes));
 			pixels[1] = (uint64_t)(*(pSrcImage + srcImageStrideInBytes + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -644,7 +799,7 @@ int HafCpu_Dilate_U8_U1_3x3
 
 			row0 = _mm_or_si128(row0, row1);
 			row0 = _mm_or_si128(row0, row2);
-			
+
 			// Convert the bytes from 0x01 -> 0xFF and 0x0 -> 0x0
 			temp = _mm_setzero_si128();
 			row0 = _mm_cmpgt_epi8(row0, temp);
@@ -676,7 +831,7 @@ int HafCpu_Erode_U8_U1_3x3
 	__m128i maskL = _mm_set_epi8((char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0xFF);
 	__m128i maskR = _mm_set_epi8((char)0xFF, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0);
 
-	__declspec(align(16)) uint64_t pixels[2];
+	alignas(16) uint64_t pixels[2];
 	uint64_t maskConv = 0x0101010101010101;
 	char lpixel, rpixel;
 
@@ -687,7 +842,7 @@ int HafCpu_Erode_U8_U1_3x3
 			// Read the row above
 			pixels[0] = (uint64_t)(*(pSrcImage - srcImageStrideInBytes));
 			pixels[1] = (uint64_t)(*(pSrcImage - srcImageStrideInBytes + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -698,7 +853,7 @@ int HafCpu_Erode_U8_U1_3x3
 			// Read the current row
 			pixels[0] = (uint64_t)(*pSrcImage);
 			pixels[1] = (uint64_t)(*(pSrcImage + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -709,7 +864,7 @@ int HafCpu_Erode_U8_U1_3x3
 			// Read the row below
 			pixels[0] = (uint64_t)(*(pSrcImage + srcImageStrideInBytes));
 			pixels[1] = (uint64_t)(*(pSrcImage + srcImageStrideInBytes + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -784,7 +939,7 @@ int HafCpu_Dilate_U1_U1_3x3
 	__m128i maskL = _mm_set_epi8((char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0xFF);
 	__m128i maskR = _mm_set_epi8((char)0xFF, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0);
 
-	__declspec(align(16)) uint64_t pixels[2];
+	alignas(16) uint64_t pixels[2];
 	uint64_t maskConv = 0x0101010101010101;
 	char lpixel, rpixel;
 
@@ -795,7 +950,7 @@ int HafCpu_Dilate_U1_U1_3x3
 			// Read the row above
 			pixels[0] = (uint64_t)(*(pSrcImage - srcImageStrideInBytes));
 			pixels[1] = (uint64_t)(*(pSrcImage - srcImageStrideInBytes + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -806,7 +961,7 @@ int HafCpu_Dilate_U1_U1_3x3
 			// Read the current row
 			pixels[0] = (uint64_t)(*pSrcImage);
 			pixels[1] = (uint64_t)(*(pSrcImage + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -817,7 +972,7 @@ int HafCpu_Dilate_U1_U1_3x3
 			// Read the row below
 			pixels[0] = (uint64_t)(*(pSrcImage + srcImageStrideInBytes));
 			pixels[1] = (uint64_t)(*(pSrcImage + srcImageStrideInBytes + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -865,9 +1020,9 @@ int HafCpu_Dilate_U1_U1_3x3
 			row0 = _mm_or_si128(row0, row2);
 
 			// Convert U8 to U1
-#ifdef _WIN64
-			pixels[0] = _pext_u64(row0.m128i_u64[0], maskConv);
-			pixels[1] = _pext_u64(row0.m128i_u64[1], maskConv);
+#if defined(_WIN64) || defined(__x86_64__)
+			pixels[0] = _pext_u64(M128I(row0).m128i_u64[0], maskConv);
+			pixels[1] = _pext_u64(M128I(row0).m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -895,7 +1050,7 @@ int HafCpu_Erode_U1_U1_3x3
 	__m128i maskL = _mm_set_epi8((char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0xFF);
 	__m128i maskR = _mm_set_epi8((char)0xFF, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0, (char)0);
 
-	__declspec(align(16)) uint64_t pixels[2];
+	alignas(16) uint64_t pixels[2];
 	uint64_t maskConv = 0x0101010101010101;
 	char lpixel, rpixel;
 
@@ -906,7 +1061,7 @@ int HafCpu_Erode_U1_U1_3x3
 			// Read the row above
 			pixels[0] = (uint64_t)(*(pSrcImage - srcImageStrideInBytes));
 			pixels[1] = (uint64_t)(*(pSrcImage - srcImageStrideInBytes + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -917,7 +1072,7 @@ int HafCpu_Erode_U1_U1_3x3
 			// Read the current row
 			pixels[0] = (uint64_t)(*pSrcImage);
 			pixels[1] = (uint64_t)(*(pSrcImage + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -928,7 +1083,7 @@ int HafCpu_Erode_U1_U1_3x3
 			// Read the row below
 			pixels[0] = (uint64_t)(*(pSrcImage + srcImageStrideInBytes));
 			pixels[1] = (uint64_t)(*(pSrcImage + srcImageStrideInBytes + 8));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels[0] = _pdep_u64(pixels[0], maskConv);
 			pixels[1] = _pdep_u64(pixels[1], maskConv);
 #else
@@ -976,9 +1131,9 @@ int HafCpu_Erode_U1_U1_3x3
 			row0 = _mm_and_si128(row0, row2);
 
 			// Convert U8 to U1
-#ifdef _WIN64
-			pixels[0] = _pext_u64(row0.m128i_u64[0], maskConv);
-			pixels[1] = _pext_u64(row0.m128i_u64[1], maskConv);
+#if defined(_WIN64) || defined(__x86_64__)
+			pixels[0] = _pext_u64(M128I(row0).m128i_u64[0], maskConv);
+			pixels[1] = _pext_u64(M128I(row0).m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif
@@ -1646,8 +1801,9 @@ int HafCpu_Gaussian_U8_U8_3x3
 			resultL = _mm256_add_epi16(resultL, temp0);						// Prev row + 2*curr row + next row
 			resultL = _mm256_srli_epi16(resultL, 4);						// Div by 16 (normalization)
 			
-			resultL = _mm256_packus_epi16(resultL, resultL);				// Convert to 8 bit
-			row0 = _mm256_castsi256_si128(resultL);							// Lower 128 bits 
+			resultL = _mm256_packus_epi16(resultL, resultL);				// Convert to 8 bit (per-lane pack)
+			resultL = _mm256_permute4x64_epi64(resultL, 0x08);				// Fix lane-crossing: move qwords {0,2} to lower 128 bits
+			row0 = _mm256_castsi256_si128(resultL);							// Lower 128 bits
 			_mm_store_si128((__m128i*) pLocalDst, row0);
 
 			pLocalSrc += 16;
@@ -2234,6 +2390,62 @@ int HafCpu_Sobel_S16_U8_3x3_GY
    Gx = 2						Gy = 0
 		1							-1
 */
+#if USE_AVX
+// AVX2 helper: horizontally Sobel-filter one row of `width` source bytes into
+// the separable Gx_h (= src[x+1] - src[x-1]) and Gy_h (= src[x-1] + 2*src[x]
+// + src[x+1]) buffers. The caller guarantees one byte of padding to the left
+// and right of pSrc.
+static inline void HafCpu_Sobel_HFilter_AVX2(
+    const vx_uint8 *pSrc, int width,
+    vx_int16 *pGxH, vx_int16 *pGyH)
+{
+    int x = 0;
+    for (; x + 32 <= width; x += 32)
+    {
+        __m256i sL = _mm256_loadu_si256((const __m256i *)(pSrc + x - 1));
+        __m256i sC = _mm256_loadu_si256((const __m256i *)(pSrc + x));
+        __m256i sR = _mm256_loadu_si256((const __m256i *)(pSrc + x + 1));
+        __m256i sL_lo = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(sL));
+        __m256i sL_hi = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(sL, 1));
+        __m256i sC_lo = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(sC));
+        __m256i sC_hi = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(sC, 1));
+        __m256i sR_lo = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(sR));
+        __m256i sR_hi = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(sR, 1));
+        _mm256_storeu_si256((__m256i *)(pGxH + x),      _mm256_sub_epi16(sR_lo, sL_lo));
+        _mm256_storeu_si256((__m256i *)(pGxH + x + 16), _mm256_sub_epi16(sR_hi, sL_hi));
+        __m256i gy_lo = _mm256_add_epi16(_mm256_add_epi16(sL_lo, sR_lo), _mm256_slli_epi16(sC_lo, 1));
+        __m256i gy_hi = _mm256_add_epi16(_mm256_add_epi16(sL_hi, sR_hi), _mm256_slli_epi16(sC_hi, 1));
+        _mm256_storeu_si256((__m256i *)(pGyH + x),      gy_lo);
+        _mm256_storeu_si256((__m256i *)(pGyH + x + 16), gy_hi);
+    }
+    for (; x + 16 <= width; x += 16)
+    {
+        __m128i sL = _mm_loadu_si128((const __m128i *)(pSrc + x - 1));
+        __m128i sC = _mm_loadu_si128((const __m128i *)(pSrc + x));
+        __m128i sR = _mm_loadu_si128((const __m128i *)(pSrc + x + 1));
+        __m128i sL_lo = _mm_cvtepu8_epi16(sL);
+        __m128i sL_hi = _mm_unpackhi_epi8(sL, _mm_setzero_si128());
+        __m128i sC_lo = _mm_cvtepu8_epi16(sC);
+        __m128i sC_hi = _mm_unpackhi_epi8(sC, _mm_setzero_si128());
+        __m128i sR_lo = _mm_cvtepu8_epi16(sR);
+        __m128i sR_hi = _mm_unpackhi_epi8(sR, _mm_setzero_si128());
+        _mm_storeu_si128((__m128i *)(pGxH + x    ), _mm_sub_epi16(sR_lo, sL_lo));
+        _mm_storeu_si128((__m128i *)(pGxH + x + 8), _mm_sub_epi16(sR_hi, sL_hi));
+        _mm_storeu_si128((__m128i *)(pGyH + x    ),
+            _mm_add_epi16(_mm_add_epi16(sL_lo, sR_lo), _mm_slli_epi16(sC_lo, 1)));
+        _mm_storeu_si128((__m128i *)(pGyH + x + 8),
+            _mm_add_epi16(_mm_add_epi16(sL_hi, sR_hi), _mm_slli_epi16(sC_hi, 1)));
+    }
+    for (; x < width; x++)
+    {
+        pGxH[x] = (vx_int16)pSrc[x + 1] - (vx_int16)pSrc[x - 1];
+        pGyH[x] = (vx_int16)pSrc[x - 1]
+                + (vx_int16)((vx_int16)pSrc[x] << 1)
+                + (vx_int16)pSrc[x + 1];
+    }
+}
+#endif
+
 int HafCpu_Sobel_S16S16_U8_3x3_GXY
 	(
 		vx_uint32     dstWidth,
@@ -2246,7 +2458,69 @@ int HafCpu_Sobel_S16S16_U8_3x3_GXY
 		vx_uint32     srcImageStrideInBytes,
 		vx_uint8	* pScratch
 	)
-{	
+{
+#if USE_AVX
+	// AVX2 separable Sobel. The scratch is split into 3 ring-buffer rows of
+	// Gx_h and 3 ring-buffer rows of Gy_h (matching the original scratch
+	// budget of 6 * alignedWidth * sizeof(vx_int16)). Per output row we
+	// horizontally filter the new source row into the third slot, then
+	// vertically combine: Gx = Gxh_prev + 2*Gxh_curr + Gxh_next,
+	//                     Gy = Gyh_next - Gyh_prev.
+	const int width = (int)dstWidth;
+	const int alignedWidth = (width + 15) & ~15;
+	vx_int16 *Gxh[3], *Gyh[3];
+	Gxh[0] = (vx_int16 *)pScratch;
+	Gyh[0] = Gxh[0] + alignedWidth;
+	Gxh[1] = Gyh[0] + alignedWidth;
+	Gyh[1] = Gxh[1] + alignedWidth;
+	Gxh[2] = Gyh[1] + alignedWidth;
+	Gyh[2] = Gxh[2] + alignedWidth;
+
+	HafCpu_Sobel_HFilter_AVX2(pSrcImage - srcImageStrideInBytes, width, Gxh[0], Gyh[0]);
+	HafCpu_Sobel_HFilter_AVX2(pSrcImage,                          width, Gxh[1], Gyh[1]);
+
+	for (int y = 0; y < (int)dstHeight; y++)
+	{
+		HafCpu_Sobel_HFilter_AVX2(pSrcImage + srcImageStrideInBytes, width, Gxh[2], Gyh[2]);
+
+		int x = 0;
+		for (; x + 16 <= width; x += 16)
+		{
+			__m256i gx0 = _mm256_loadu_si256((const __m256i *)(Gxh[0] + x));
+			__m256i gx1 = _mm256_loadu_si256((const __m256i *)(Gxh[1] + x));
+			__m256i gx2 = _mm256_loadu_si256((const __m256i *)(Gxh[2] + x));
+			__m256i gx  = _mm256_add_epi16(_mm256_add_epi16(gx0, gx2), _mm256_slli_epi16(gx1, 1));
+			_mm256_storeu_si256((__m256i *)(pDstGxImage + x), gx);
+			__m256i gy0 = _mm256_loadu_si256((const __m256i *)(Gyh[0] + x));
+			__m256i gy2 = _mm256_loadu_si256((const __m256i *)(Gyh[2] + x));
+			_mm256_storeu_si256((__m256i *)(pDstGyImage + x), _mm256_sub_epi16(gy2, gy0));
+		}
+		for (; x + 8 <= width; x += 8)
+		{
+			__m128i gx0 = _mm_loadu_si128((const __m128i *)(Gxh[0] + x));
+			__m128i gx1 = _mm_loadu_si128((const __m128i *)(Gxh[1] + x));
+			__m128i gx2 = _mm_loadu_si128((const __m128i *)(Gxh[2] + x));
+			__m128i gx  = _mm_add_epi16(_mm_add_epi16(gx0, gx2), _mm_slli_epi16(gx1, 1));
+			_mm_storeu_si128((__m128i *)(pDstGxImage + x), gx);
+			__m128i gy0 = _mm_loadu_si128((const __m128i *)(Gyh[0] + x));
+			__m128i gy2 = _mm_loadu_si128((const __m128i *)(Gyh[2] + x));
+			_mm_storeu_si128((__m128i *)(pDstGyImage + x), _mm_sub_epi16(gy2, gy0));
+		}
+		for (; x < width; x++)
+		{
+			pDstGxImage[x] = (vx_int16)(Gxh[0][x] + (Gxh[1][x] << 1) + Gxh[2][x]);
+			pDstGyImage[x] = (vx_int16)(Gyh[2][x] - Gyh[0][x]);
+		}
+
+		vx_int16 *t = Gxh[0]; Gxh[0] = Gxh[1]; Gxh[1] = Gxh[2]; Gxh[2] = t;
+		t = Gyh[0]; Gyh[0] = Gyh[1]; Gyh[1] = Gyh[2]; Gyh[2] = t;
+
+		pSrcImage    += srcImageStrideInBytes;
+		pDstGxImage  += (dstGxImageStrideInBytes >> 1);
+		pDstGyImage  += (dstGyImageStrideInBytes >> 1);
+	}
+	return AGO_SUCCESS;
+#else
 	unsigned char *pLocalSrc = (unsigned char *)pSrcImage;
 	short *pLocalDstGx, *pLocalDstGy;
 
@@ -2462,6 +2736,7 @@ int HafCpu_Sobel_S16S16_U8_3x3_GXY
 		height--;
 	}
 	return AGO_SUCCESS;
+#endif
 }
 
 /* The function assumes at least one pixel padding on the top, left, right and bottom */
@@ -2907,7 +3182,73 @@ int HafCpu_Convolve_U8_U8_3xN
 		}
 
 		pLocalDst_xmm = (__m128i *) pLocalDst;
-		int width = (int)(alignedWidth >> 4);							// Each loop processess 16 pixels
+
+		int remainingWidth = alignedWidth;
+#if USE_AVX
+		// AVX2 path: process 32 dst pixels per iter using mullo/mulhi_epi16
+		// (1-cycle throughput on Zen) instead of the SSE path's mullo_epi32
+		// (3-cycle throughput). For each conv coefficient we widen 32 source
+		// bytes to two __m256i s16 vectors and accumulate full-width s32
+		// partial products into four lane accumulators.
+		int avxWidth = remainingWidth & ~31;							// multiple of 32 dst pixels
+		int width32 = avxWidth >> 5;
+		remainingWidth -= avxWidth;
+		while (width32)
+		{
+			pLocalConvMat = convMatrix + numConvCoeffs - 1;
+			__m256i acc0 = _mm256_setzero_si256();
+			__m256i acc1 = _mm256_setzero_si256();
+			__m256i acc2 = _mm256_setzero_si256();
+			__m256i acc3 = _mm256_setzero_si256();
+
+			for (int y = -rowLimit; y <= rowLimit; y++)
+			{
+				int offset = y * srcStride;
+				// Three horizontal taps share two underlying 32-byte loads:
+				// load[0] covers src[-1..30] (shifted-left + at-loc), load[1] covers src[31..32]
+				// We just do three loadu — they're cheap on cached data.
+				for (int xoff = -1; xoff <= 1; xoff++)
+				{
+					__m256i src32 = _mm256_loadu_si256((__m256i *)(pLocalSrc + offset + xoff));
+					__m256i src_lo16 = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(src32));
+					__m256i src_hi16 = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(src32, 1));
+					__m256i cv = _mm256_set1_epi16((short)(*pLocalConvMat--));
+					__m256i lo_l = _mm256_mullo_epi16(src_lo16, cv);
+					__m256i lo_h = _mm256_mulhi_epi16(src_lo16, cv);
+					__m256i hi_l = _mm256_mullo_epi16(src_hi16, cv);
+					__m256i hi_h = _mm256_mulhi_epi16(src_hi16, cv);
+					// In-lane unpack: produces correct sequential s32 within each 128-bit lane.
+					acc0 = _mm256_add_epi32(acc0, _mm256_unpacklo_epi16(lo_l, lo_h));
+					acc1 = _mm256_add_epi32(acc1, _mm256_unpackhi_epi16(lo_l, lo_h));
+					acc2 = _mm256_add_epi32(acc2, _mm256_unpacklo_epi16(hi_l, hi_h));
+					acc3 = _mm256_add_epi32(acc3, _mm256_unpackhi_epi16(hi_l, hi_h));
+				}
+			}
+
+			// Arithmetic right shift so negative intermediates clamp correctly
+			// in the subsequent unsigned-saturating pack to U8.
+			acc0 = _mm256_srai_epi32(acc0, shift);
+			acc1 = _mm256_srai_epi32(acc1, shift);
+			acc2 = _mm256_srai_epi32(acc2, shift);
+			acc3 = _mm256_srai_epi32(acc3, shift);
+
+			// In-lane packs_epi32 collapses to sequential s16 within each 128-bit lane.
+			__m256i s16_lo = _mm256_packs_epi32(acc0, acc1);
+			__m256i s16_hi = _mm256_packs_epi32(acc2, acc3);
+			// In-lane packus_epi16 of s16_lo + s16_hi produces:
+			//   lane0 bytes: s16_lo lane0 (bytes 0..7) + s16_hi lane0 (bytes 8..15)
+			//   lane1 bytes: s16_lo lane1 (bytes 0..7) + s16_hi lane1 (bytes 8..15)
+			// We need bytes 0..15 from s16_lo, bytes 16..31 from s16_hi, so reshuffle 64-bit lanes.
+			__m256i packed = _mm256_packus_epi16(s16_lo, s16_hi);
+			packed = _mm256_permute4x64_epi64(packed, 0xD8); // (0, 2, 1, 3)
+			_mm256_storeu_si256((__m256i *)pLocalDst_xmm, packed);
+			pLocalDst_xmm = (__m128i *)((char *)pLocalDst_xmm + 32);
+			pLocalSrc += 32;
+			width32--;
+		}
+#endif
+
+		int width = remainingWidth >> 4;								// Each loop processess 16 pixels
 		while (width)
 		{
 			pLocalConvMat = convMatrix + numConvCoeffs - 1;
@@ -2995,10 +3336,14 @@ int HafCpu_Convolve_U8_U8_3xN
 				result0 = _mm_add_epi32(result0, temp0);
 			}
 
-			result0 = _mm_srli_epi32(result0, shift);
-			result1 = _mm_srli_epi32(result1, shift);
-			result2 = _mm_srli_epi32(result2, shift);
-			result3 = _mm_srli_epi32(result3, shift);
+			// Arithmetic right shift (sign-preserving) so negative
+			// intermediates saturate to 0 in the subsequent unsigned
+			// pack to U8. This matches the scalar prefix/postfix
+			// clamp(0,255) behavior and the AVX2 path above.
+			result0 = _mm_srai_epi32(result0, shift);
+			result1 = _mm_srai_epi32(result1, shift);
+			result2 = _mm_srai_epi32(result2, shift);
+			result3 = _mm_srai_epi32(result3, shift);
 
 			row = _mm_packs_epi32(result2, result3);
 			temp0 = _mm_packs_epi32(result0, result1);
@@ -3834,6 +4179,16 @@ static inline void CompareAndSwap(__m128i& p1, __m128i& p2)
 	p2 = Sec;
 }
 
+#if USE_AVX
+static inline void CompareAndSwap256(__m256i& p1, __m256i& p2)
+{
+	__m256i First = _mm256_min_epu8(p1, p2);
+	__m256i Sec = _mm256_max_epu8(p1, p2);
+	p1 = First;
+	p2 = Sec;
+}
+#endif
+
 int compareTwo(const void * a, const void * b)
 {
 	return(*(unsigned char *)a > *(unsigned char *)b ? 1 : -1);
@@ -3880,7 +4235,48 @@ int HafCpu_Median_U8_U8_3x3
 			*pLocalDst = pixelArr[4];
 		}
 		
-		for (int width = 0; width < (alignedWidth >> 4); width++)
+		int width = 0;
+#if USE_AVX
+		for (; width + 32 <= alignedWidth; width += 32)
+		{
+			__m256i a0 = _mm256_loadu_si256((__m256i *)(pPrevSrc - 1));
+			__m256i a1 = _mm256_loadu_si256((__m256i *)(pPrevSrc));
+			__m256i a2 = _mm256_loadu_si256((__m256i *)(pPrevSrc + 1));
+			__m256i a3 = _mm256_loadu_si256((__m256i *)(pLocalSrc - 1));
+			__m256i a4 = _mm256_loadu_si256((__m256i *)(pLocalSrc));
+			__m256i a5 = _mm256_loadu_si256((__m256i *)(pLocalSrc + 1));
+			__m256i a6 = _mm256_loadu_si256((__m256i *)(pNextSrc - 1));
+			__m256i a7 = _mm256_loadu_si256((__m256i *)(pNextSrc));
+			__m256i a8 = _mm256_loadu_si256((__m256i *)(pNextSrc + 1));
+
+			CompareAndSwap256(a1, a2);
+			CompareAndSwap256(a4, a5);
+			CompareAndSwap256(a7, a8);
+			CompareAndSwap256(a0, a1);
+			CompareAndSwap256(a3, a4);
+			CompareAndSwap256(a6, a7);
+			CompareAndSwap256(a1, a2);
+			CompareAndSwap256(a4, a5);
+			CompareAndSwap256(a7, a8);
+			CompareAndSwap256(a0, a3);
+			CompareAndSwap256(a5, a8);
+			CompareAndSwap256(a4, a7);
+			CompareAndSwap256(a3, a6);
+			CompareAndSwap256(a1, a4);
+			CompareAndSwap256(a2, a5);
+			CompareAndSwap256(a4, a7);
+			CompareAndSwap256(a4, a2);
+			CompareAndSwap256(a6, a4);
+			CompareAndSwap256(a4, a2);
+
+			_mm256_storeu_si256((__m256i *)pLocalDst, a4);
+			pPrevSrc += 32;
+			pLocalSrc += 32;
+			pNextSrc += 32;
+			pLocalDst += 32;
+		}
+#endif
+		for (; width + 16 <= alignedWidth; width += 16)
 		{
 			pixels0 = _mm_loadu_si128((__m128i *)(pPrevSrc - 1));
 			pixels1 = _mm_loadu_si128((__m128i *)(pPrevSrc));
@@ -3892,7 +4288,6 @@ int HafCpu_Median_U8_U8_3x3
 			pixels7 = _mm_loadu_si128((__m128i *)(pNextSrc));
 			pixels8 = _mm_loadu_si128((__m128i *)(pNextSrc + 1));
 
-			// sort by compare and swap : no branching required
 			CompareAndSwap(pixels1, pixels2);
 			CompareAndSwap(pixels4, pixels5);
 			CompareAndSwap(pixels7, pixels8);
@@ -3913,7 +4308,6 @@ int HafCpu_Median_U8_U8_3x3
 			CompareAndSwap(pixels6, pixels4);
 			CompareAndSwap(pixels4, pixels2);
 
-			// store median value
 			_mm_store_si128((__m128i *)pLocalDst, pixels4);
 
 			pPrevSrc += 16;
@@ -4088,35 +4482,44 @@ int HafCpu_SobelMagnitudePhase_S16U8_U8_3x3
 			GyH = _mm_sub_epi16(GyH, temp);
 			GyL = _mm_sub_epi16(GyL, shiftedL);
 
-			// Calculate phase
+#if USE_AVX
+			// Vectorized phase: 8 lanes at a time via AVX2 polynomial atan2.
+			__m128i phaseL = HafCpu_FastAtan2_PhaseByte_8(GxL, GyL);
+			__m128i phaseH = HafCpu_FastAtan2_PhaseByte_8(GxH, GyH);
+			_mm_storel_epi64((__m128i *)pLocalDstPhase, phaseL);
+			_mm_storel_epi64((__m128i *)(pLocalDstPhase + 8), phaseH);
+			pLocalDstPhase += 16;
+
+			// Vectorized magnitude using single-precision sqrt (was double-precision).
+			__m128i magL = HafCpu_SobelMagnitude_S16_8(GxL, GyL);
+			__m128i magH = HafCpu_SobelMagnitude_S16_8(GxH, GyH);
+			_mm_store_si128((__m128i *)pLocalDstMag, magL);
+			_mm_store_si128((__m128i *)(pLocalDstMag + 8), magH);
+#else
 			for (int i = 0; i < 8; i++)
 			{
 				float arct = HafCpu_FastAtan2_deg(M128I(GxL).m128i_i16[i], M128I(GyL).m128i_i16[i]);
 				*pLocalDstPhase++ = (vx_uint8)((vx_uint32)(arct*scale + 0.5) & 0xFF);
 			}
-
 			for (int i = 0; i < 8; i++)
 			{
 				float arct = HafCpu_FastAtan2_deg(M128I(GxH).m128i_i16[i], M128I(GyH).m128i_i16[i]);
 				*pLocalDstPhase++ = (vx_uint8)((vx_uint32)(arct*scale + 0.5) & 0xFF);
 			}
 
-			// Magnitude
 			row0 = _mm_srli_si128(GxH, 8);
 			row1 = _mm_srli_si128(GxL, 8);
-			row0 = _mm_cvtepi16_epi32(row0);							// GxH: Upper 4 words to dwords
-			GxH = _mm_cvtepi16_epi32(GxH);								// GxH: Lower 4 words to dwords
-			row1 = _mm_cvtepi16_epi32(row1);							// GxL: Upper 4 words to dwords
-			GxL = _mm_cvtepi16_epi32(GxL);								// GxL: Lower 4 words to dwords
-
+			row0 = _mm_cvtepi16_epi32(row0);
+			GxH = _mm_cvtepi16_epi32(GxH);
+			row1 = _mm_cvtepi16_epi32(row1);
+			GxL = _mm_cvtepi16_epi32(GxL);
 			row2 = _mm_srli_si128(GyH, 8);
 			temp = _mm_srli_si128(GyL, 8);
-			row2 = _mm_cvtepi16_epi32(row2);							// GyH: Upper 4 words to dwords
-			GyH = _mm_cvtepi16_epi32(GyH);								// GyH: Lower 4 words to dwords
-			temp = _mm_cvtepi16_epi32(temp);							// GyL: Upper 4 words to dwords
-			GyL = _mm_cvtepi16_epi32(GyL);								// GyL: Lower 4 words to dwords
-
-			row0 = _mm_mullo_epi32(row0, row0);							// Square
+			row2 = _mm_cvtepi16_epi32(row2);
+			GyH = _mm_cvtepi16_epi32(GyH);
+			temp = _mm_cvtepi16_epi32(temp);
+			GyL = _mm_cvtepi16_epi32(GyL);
+			row0 = _mm_mullo_epi32(row0, row0);
 			GxH = _mm_mullo_epi32(GxH, GxH);
 			row1 = _mm_mullo_epi32(row1, row1);
 			GxL = _mm_mullo_epi32(GxL, GxL);
@@ -4124,56 +4527,23 @@ int HafCpu_SobelMagnitudePhase_S16U8_U8_3x3
 			GyH = _mm_mullo_epi32(GyH, GyH);
 			temp = _mm_mullo_epi32(temp, temp);
 			GyL = _mm_mullo_epi32(GyL, GyL);
-
-			row0 = _mm_add_epi32(row0, row2);							// Add
+			row0 = _mm_add_epi32(row0, row2);
 			GxH = _mm_add_epi32(GxH, GyH);
 			row1 = _mm_add_epi32(row1, temp);
 			GxL = _mm_add_epi32(GxL, GyL);
-
-			temp = _mm_srli_si128(row0, 8);
-			__m128d d_pix1 = _mm_cvtepi32_pd(temp);						// Pixels 15, 14
-			__m128d d_pix0 = _mm_cvtepi32_pd(row0);						// Pixels 13, 12
-			d_pix1 = _mm_sqrt_pd(d_pix1);
-			d_pix0 = _mm_sqrt_pd(d_pix0);
-			row0 = _mm_cvtpd_epi32(d_pix1);
-			temp = _mm_cvtpd_epi32(d_pix0);
-			row0 = _mm_slli_si128(row0, 8);
-			row0 = _mm_or_si128(row0, temp);							// Pixels 15, 14, 13, 12 (DWORDS)
-
-			temp = _mm_srli_si128(GxH, 8);
-			d_pix1 = _mm_cvtepi32_pd(temp);								// Pixels 11, 10
-			d_pix0 = _mm_cvtepi32_pd(GxH);								// Pixels 9, 8
-			d_pix1 = _mm_sqrt_pd(d_pix1);
-			d_pix0 = _mm_sqrt_pd(d_pix0);
-			GxH = _mm_cvtpd_epi32(d_pix1);
-			temp = _mm_cvtpd_epi32(d_pix0);
-			GxH = _mm_slli_si128(GxH, 8);
-			GxH = _mm_or_si128(GxH, temp);								// Pixels 11, 10, 9, 8 (DWORDS)
-			row0 = _mm_packus_epi32(GxH, row0);							// Pixels 15, 14, 13, 12, 11, 10, 9, 8 (WORDS)
-
-			temp = _mm_srli_si128(row1, 8);
-			d_pix1 = _mm_cvtepi32_pd(temp);								// Pixels 7, 6
-			d_pix0 = _mm_cvtepi32_pd(row1);								// Pixels 5, 4
-			d_pix1 = _mm_sqrt_pd(d_pix1);
-			d_pix0 = _mm_sqrt_pd(d_pix0);
-			row1 = _mm_cvtpd_epi32(d_pix1);
-			temp = _mm_cvtpd_epi32(d_pix0);
-			row1 = _mm_slli_si128(row1, 8);
-			row1 = _mm_or_si128(row1, temp);							// Pixels 7, 6, 5, 4 (DWORDS)
-
-			temp = _mm_srli_si128(GxL, 8);
-			d_pix1 = _mm_cvtepi32_pd(temp);								// Pixels 3, 2
-			d_pix0 = _mm_cvtepi32_pd(GxL);								// Pixels 1, 0
-			d_pix1 = _mm_sqrt_pd(d_pix1);
-			d_pix0 = _mm_sqrt_pd(d_pix0);
-			GxL = _mm_cvtpd_epi32(d_pix1);
-			temp = _mm_cvtpd_epi32(d_pix0);
-			GxL = _mm_slli_si128(GxL, 8);
-			GxL = _mm_or_si128(GxL, temp);								// Pixels 3, 2, 1, 0 (DWORDS)
-			row1 = _mm_packus_epi32(GxL, row1);							// Pixels 7, 6, 5, 4, 3, 2, 1, 0 (WORDS)
-
-			_mm_store_si128((__m128i *) pLocalDstMag, row1);
-			_mm_store_si128((__m128i *) (pLocalDstMag + 8), row0);
+			__m128 mag0 = _mm_sqrt_ps(_mm_cvtepi32_ps(row0));
+			__m128 mag1 = _mm_sqrt_ps(_mm_cvtepi32_ps(GxH));
+			__m128 mag2 = _mm_sqrt_ps(_mm_cvtepi32_ps(row1));
+			__m128 mag3 = _mm_sqrt_ps(_mm_cvtepi32_ps(GxL));
+			__m128i mag0i = _mm_cvttps_epi32(mag0);
+			__m128i mag1i = _mm_cvttps_epi32(mag1);
+			__m128i mag2i = _mm_cvttps_epi32(mag2);
+			__m128i mag3i = _mm_cvttps_epi32(mag3);
+			__m128i pkH = _mm_packus_epi32(mag1i, mag0i);
+			__m128i pkL = _mm_packus_epi32(mag3i, mag2i);
+			_mm_store_si128((__m128i *)pLocalDstMag, pkL);
+			_mm_store_si128((__m128i *)(pLocalDstMag + 8), pkH);
+#endif
 
 			pLocalSrc += 16;
 			pLocalDstMag += 16;

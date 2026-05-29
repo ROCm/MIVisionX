@@ -85,6 +85,8 @@ int HafGpu_LinearFilter_ANY_U8(AgoNode * node, vx_df_image dst_image_format, Ago
 
 	char item[1024];
 	std::string code;
+	int srcImageBufferSize = (int)node->paramList[1]->size;
+	int srcImageBufferOffset = (int)node->paramList[1]->gpu_buffer_offset;
 	if (filterHeight == 1 && filterWidth > 1) {
 		// generate code for Mx1 filter
 		vx_uint32 Mdiv2 = filterWidth >> 1; if (Mdiv2 == 0) { 
@@ -126,7 +128,7 @@ int HafGpu_LinearFilter_ANY_U8(AgoNode * node, vx_df_image dst_image_format, Ago
 			"  int gy = y;\n"
 			"  int gstride = stride;\n"
 			"  __global uchar * gbuf = p;\n");
-		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemStride, LMemHeight, LMemSide, 0, code) < 0) {
+		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemStride, LMemHeight, LMemSide, 0, srcImageBufferSize, srcImageBufferOffset, code) < 0) {
 			return -1;
 		}
 
@@ -221,7 +223,7 @@ int HafGpu_LinearFilter_ANY_U8(AgoNode * node, vx_df_image dst_image_format, Ago
 			"  int gy = y;\n"
 			"  int gstride = stride;\n"
 			"  __global uchar * gbuf = p;\n");
-		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemWidth, LMemHeight + Ndiv2 * 2, 0, Ndiv2, code) < 0) {
+		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemWidth, LMemHeight + Ndiv2 * 2, 0, Ndiv2, srcImageBufferSize, srcImageBufferOffset, code) < 0) {
 			return -1;
 		}
 
@@ -297,7 +299,7 @@ int HafGpu_LinearFilter_ANY_U8(AgoNode * node, vx_df_image dst_image_format, Ago
 			"  int gy = y;\n"
 			"  int gstride = stride;\n"
 			"  __global uchar * gbuf = p;\n");
-		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemStride, LMemHeight + 2 * LMemSideTB, LMemSideLR, LMemSideTB, code) < 0) {
+		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemStride, LMemHeight + 2 * LMemSideTB, LMemSideLR, LMemSideTB, srcImageBufferSize, srcImageBufferOffset, code) < 0) {
 			return -1;
 		}
 
@@ -461,12 +463,13 @@ int HafGpu_LinearFilter_ANY_S16(AgoNode * node, vx_df_image dst_image_format, Ag
 				filterCoefAreIntegers = false;
 		}
 	}
-
+	int srcImageBufferSize = (int)node->paramList[1]->size;
+	int srcImageBufferOffset = (int)node->paramList[1]->gpu_buffer_offset;
 	if (filterHeight == 1 && filterWidth > 1) {
 		// generate code for Mx1 filter
-		vx_uint32 Mdiv2 = filterWidth >> 1; if (Mdiv2 == 0) { 
+		vx_uint32 Mdiv2 = filterWidth >> 1; if (Mdiv2 == 0) {
 			agoAddLogEntry(NULL, VX_FAILURE, "ERROR: HafGpu_LinearFilter_ANY_S16 doesn't support %dx%d filter\n", filterWidth, filterHeight);
-			return -1; 
+			return -1;
 		}
 		vx_uint32 BytesPerPixel = (vx_uint32)sizeof(vx_int16);
 		vx_uint32 LMemSidePixelAlign = 4;
@@ -505,7 +508,7 @@ int HafGpu_LinearFilter_ANY_S16(AgoNode * node, vx_df_image dst_image_format, Ag
 			"  int gy = y;\n"
 			"  int gstride = stride;\n"
 			"  __global uchar * gbuf = p;\n");
-		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemStride, LMemHeight, LMemSide, 0, code) < 0) {
+		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemStride, LMemHeight, LMemSide, 0, srcImageBufferSize, srcImageBufferOffset, code) < 0) {
 			return -1;
 		}
 
@@ -647,7 +650,7 @@ int HafGpu_LinearFilter_ANY_S16(AgoNode * node, vx_df_image dst_image_format, Ag
 			"  int gy = y;\n"
 			"  int gstride = stride;\n"
 			"  __global uchar * gbuf = p;\n");
-		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemWidth, LMemHeight + Ndiv2 * 2, 0, Ndiv2, code) < 0) {
+		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemWidth, LMemHeight + Ndiv2 * 2, 0, Ndiv2, srcImageBufferSize, srcImageBufferOffset, code) < 0) {
 			return -1;
 		}
 
@@ -781,11 +784,13 @@ int HafGpu_LinearFilter_ANY_F32(AgoNode * node, vx_df_image dst_image_format, Ag
 		agoAddLogEntry(&node->akernel->ref, VX_FAILURE, "ERROR: HafGpu_LinearFilter_ANY_F32 doesn't expects vx_matrix or vx_convolution object for kernel %s\n", node->akernel->name);
 		return -1;
 	}
+	int srcImageBufferSize = (int)node->paramList[1]->size;
+	int srcImageBufferOffset = (int)node->paramList[1]->gpu_buffer_offset;
 	if (filterHeight == 1 && filterWidth > 1) {
 		// generate code for Mx1 filter
-		vx_uint32 Mdiv2 = filterWidth >> 1; if (Mdiv2 == 0) { 
+		vx_uint32 Mdiv2 = filterWidth >> 1; if (Mdiv2 == 0) {
 			agoAddLogEntry(NULL, VX_FAILURE, "ERROR: HafGpu_LinearFilter_ANY_F32 doesn't support %dx%d filter\n", filterWidth, filterHeight);
-			return -1; 
+			return -1;
 		}
 		vx_uint32 BytesPerPixel = (vx_uint32)sizeof(vx_float32);
 		vx_uint32 LMemSidePixelAlign = 4;
@@ -824,7 +829,7 @@ int HafGpu_LinearFilter_ANY_F32(AgoNode * node, vx_df_image dst_image_format, Ag
 			"  int gy = y;\n"
 			"  int gstride = stride;\n"
 			"  __global uchar * gbuf = p;\n");
-		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemStride, LMemHeight, LMemSide, 0, code) < 0) {
+		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemStride, LMemHeight, LMemSide, 0, srcImageBufferSize, srcImageBufferOffset, code) < 0) {
 			return -1;
 		}
 
@@ -961,7 +966,7 @@ int HafGpu_LinearFilter_ANY_F32(AgoNode * node, vx_df_image dst_image_format, Ag
 			"  int gy = y;\n"
 			"  int gstride = stride;\n"
 			"  __global uchar * gbuf = p;\n");
-		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemWidth, LMemHeight + Ndiv2 * 2, 0, Ndiv2, code) < 0) {
+		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemWidth, LMemHeight + Ndiv2 * 2, 0, Ndiv2, srcImageBufferSize, srcImageBufferOffset, code) < 0) {
 			return -1;
 		}
 
@@ -1125,6 +1130,8 @@ int HafGpu_LinearFilter_ANYx2_U8(AgoNode * node, vx_df_image dst_image_format, A
 
 	std::string code;
 	char item[1024];
+	int srcImageBufferSize = (int)node->paramList[1]->size;
+	int srcImageBufferOffset = (int)node->paramList[1]->gpu_buffer_offset;
 	if (filterHeight == 1 && filterWidth > 1) {
 		// generate code for Mx1 filter
 		vx_uint32 Mdiv2 = filterWidth >> 1; if (Mdiv2 == 0) { 
@@ -1166,7 +1173,7 @@ int HafGpu_LinearFilter_ANYx2_U8(AgoNode * node, vx_df_image dst_image_format, A
 			"  int gy = y;\n"
 			"  int gstride = stride;\n"
 			"  __global uchar * gbuf = p;\n");
-		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemStride, LMemHeight, LMemSide, 0, code) < 0) {
+		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemStride, LMemHeight, LMemSide, 0, srcImageBufferSize, srcImageBufferOffset, code) < 0) {
 			return -1;
 		}
 
@@ -1301,7 +1308,7 @@ int HafGpu_LinearFilter_ANYx2_U8(AgoNode * node, vx_df_image dst_image_format, A
 			"  int gy = y;\n"
 			"  int gstride = stride;\n"
 			"  __global uchar * gbuf = p;\n");
-		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemStride, LMemHeight + 2 * LMemSideTB, LMemSideLR, LMemSideTB, code) < 0) {
+		if (HafGpu_Load_Local(AGO_OPENCL_WORKGROUP_SIZE_0, AGO_OPENCL_WORKGROUP_SIZE_1, LMemStride, LMemHeight + 2 * LMemSideTB, LMemSideLR, LMemSideTB, srcImageBufferSize, srcImageBufferOffset, code) < 0) {
 			return -1;
 		}
 

@@ -1,0 +1,5 @@
+# Exercise postfix in Sobel magnitude+phase
+data input = image:1277,719,U008
+data output_mag = image:1277,719,S016
+data output_phase = image:1277,719,U008
+node com.amd.openvx.SobelMagnitudePhase_S16U8_U8_3x3 output_mag output_phase input

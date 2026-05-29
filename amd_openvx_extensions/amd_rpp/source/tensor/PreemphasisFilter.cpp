@@ -41,8 +41,10 @@ static vx_status VX_CALLBACK refreshPreemphasisFilter(vx_node node, const vx_ref
     void *roi_tensor_ptr_src;
     STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, data->pSrcDesc->n, sizeof(float), data->pPreemphCoeff, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL || ENABLE_HIP
-        return VX_ERROR_NOT_IMPLEMENTED;
+#if ENABLE_HIP
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_src, sizeof(roi_tensor_ptr_src)));
+        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
 #endif
     }
     if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
@@ -92,19 +94,19 @@ static vx_status VX_CALLBACK processPreemphasisFilter(vx_node node, const vx_ref
     PreemphasisFilterLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshPreemphasisFilter(node, parameters, data);
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL || ENABLE_HIP
-        return_status = VX_ERROR_NOT_IMPLEMENTED;
-#endif
-    }
-    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-#if RPP_AUDIO
-        rpp_status = rppt_pre_emphasis_filter_host((float *)data->pSrc, data->pSrcDesc, (float *)data->pDst, data->pDstDesc, (Rpp32s *)data->pSampleSize, data->pPreemphCoeff, RpptAudioBorderType(data->borderType), data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+#if ENABLE_HIP
+    RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
 #else
-        return_status = VX_ERROR_NOT_SUPPORTED;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
+    RppBackend backend = RPP_HOST_BACKEND;
 #endif
-    }
+#if RPP_AUDIO
+    rpp_status = rppt_pre_emphasis_filter((float *)data->pSrc, data->pSrcDesc, (float *)data->pDst, data->pDstDesc, (Rpp32s *)data->pSampleSize, data->pPreemphCoeff, RpptAudioBorderType(data->borderType), data->handle->rppHandle, backend);
+    return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+#else
+    return_status = VX_ERROR_NOT_SUPPORTED;
+#endif
     return return_status;
 }
 
@@ -135,8 +137,15 @@ static vx_status VX_CALLBACK initializePreemphasisFilter(vx_node node, const vx_
         data->pDstDesc->offsetInBytes = 0;
         fillAudioDescriptionPtrFromDims(data->pDstDesc, data->outputTensorDims);
 
-        data->pSampleSize = new unsigned[data->pSrcDesc->n];
-        data->pPreemphCoeff = new float[data->pSrcDesc->n];
+        if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pSampleSize, data->pSrcDesc->n * sizeof(unsigned)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pPreemphCoeff, data->pSrcDesc->n * sizeof(float)));
+#endif
+        } else {
+            data->pSampleSize = new unsigned[data->pSrcDesc->n];
+            data->pPreemphCoeff = new float[data->pSrcDesc->n];
+        }
 
         refreshPreemphasisFilter(node, parameters, data);
         STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
@@ -150,8 +159,15 @@ static vx_status VX_CALLBACK initializePreemphasisFilter(vx_node node, const vx_
 static vx_status VX_CALLBACK uninitializePreemphasisFilter(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     PreemphasisFilterLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    if (data->pSampleSize) delete[] data->pSampleSize;
-    if (data->pPreemphCoeff) delete[] data->pPreemphCoeff;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        if (data->pSampleSize) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSampleSize));
+        if (data->pPreemphCoeff) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pPreemphCoeff));
+#endif
+    } else {
+        if (data->pSampleSize) delete[] data->pSampleSize;
+        if (data->pPreemphCoeff) delete[] data->pPreemphCoeff;
+    }
     if (data->pSrcDesc) delete data->pSrcDesc;
     if (data->pDstDesc) delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

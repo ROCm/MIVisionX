@@ -1,0 +1,1244 @@
+# Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+name: AMD OpenVX CI
+
+on:
+  push:
+    branches: [master, main, develop]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+  pull_request:
+    branches: [master, main, develop]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  # ===========================================================================
+  # Build Stage — three builds run in parallel
+  # ===========================================================================
+
+  # Release build of the PR (or push) branch — used by perf-gate
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
+
+      - name: Build AMD OpenVX (CPU backend, Release)
+        run: |
+          mkdir build && cd build
+          cmake .. -DGPU_SUPPORT=OFF
+          make -j$(nproc)
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            build/lib/
+            amd_openvx/openvx/include/
+          retention-days: 1
+
+  # Release build of the merge-target branch — used by perf-gate (PR only)
+  build-main:
+    name: Build AMD OpenVX (main)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout merge target ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
+
+      - name: Build AMD OpenVX (CPU backend)
+        run: |
+          mkdir build && cd build
+          cmake .. -DGPU_SUPPORT=OFF
+          make -j$(nproc)
+
+      - name: Upload main build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-main
+          path: |
+            build/lib/
+            amd_openvx/openvx/include/
+          retention-days: 1
+
+  # Debug build with LLVM code-coverage instrumentation — used by all tests
+  build-debug:
+    name: Build AMD OpenVX (Debug + Coverage)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake python3 clang llvm
+
+      - name: Build and install AMD OpenVX (Debug + Coverage)
+        env:
+          INSTALL_PREFIX: ${{ github.workspace }}/install
+        run: |
+          mkdir build && cd build
+          cmake .. \
+            -DGPU_SUPPORT=OFF \
+            -DCODE_COVERAGE=ON \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX"
+          make -j$(nproc)
+          make install
+
+      - name: Build API tests
+        env:
+          INSTALL_PREFIX: ${{ github.workspace }}/install
+        run: |
+          API_TESTS=(
+            canny channel_extract color_convert accumulate
+            graph graph_api tensor_api data_objects user_kernel
+            tensor_advanced threshold_query graph_import vxu_api
+            coverage_boost
+          )
+          for test_dir in "${API_TESTS[@]}"; do
+            echo "::group::Building ${test_dir}"
+            mkdir -p build/api_tests/${test_dir}
+            cmake -S tests/openvx_api_tests/${test_dir} \
+                  -B build/api_tests/${test_dir} \
+                  -DROCM_PATH="$INSTALL_PREFIX"
+            cmake --build build/api_tests/${test_dir} -j$(nproc)
+            echo "::endgroup::"
+          done
+
+      - name: Clone and build OpenVX CTS
+        env:
+          INSTALL_PREFIX: ${{ github.workspace }}/install
+        run: |
+          git clone --depth 1 -b openvx_1.3 https://github.com/KhronosGroup/OpenVX-cts.git
+          cd OpenVX-cts
+          mkdir -p build && cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENVX_INCLUDES="${{ github.workspace }}/amd_openvx/openvx/include" \
+            -DOPENVX_LIBRARIES="${INSTALL_PREFIX}/lib/libopenvx.so;${INSTALL_PREFIX}/lib/libvxu.so;pthread;dl;m;rt" \
+            -DOPENVX_CONFORMANCE_VISION=ON
+          make -j$(nproc)
+
+      - name: Upload debug build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-debug
+          path: |
+            install/
+            build/api_tests/
+            OpenVX-cts/build/bin/vx_test_conformance
+            OpenVX-cts/build/lib/
+            OpenVX-cts/test_data/
+          retention-days: 1
+
+  # ===========================================================================
+  # Performance Stage — release builds only (PR only)
+  # ===========================================================================
+
+  perf-gate:
+    name: Perf gate (PR vs main)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    needs:
+      - build
+      - build-main
+    steps:
+      - name: Checkout repo (for perf_gate.py script)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake git python3
+
+      - name: Download PR build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: ${{ github.workspace }}/pr-pkg
+
+      - name: Download main build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-main
+          path: ${{ github.workspace }}/main-pkg
+
+      - name: Clone openvx-mark
+        run: |
+          git clone --depth 1 https://github.com/kiritigowda/openvx-mark.git \
+            ${{ github.workspace }}/openvx-mark
+
+      - name: Build openvx-mark against PR
+        run: |
+          mkdir -p ${{ github.workspace }}/openvx-mark/build-pr
+          cd ${{ github.workspace }}/openvx-mark/build-pr
+          cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DOPENVX_INCLUDES=${{ github.workspace }}/pr-pkg/amd_openvx/openvx/include \
+            -DOPENVX_LIB_DIR=${{ github.workspace }}/pr-pkg/build/lib \
+            ..
+          cmake --build . -j$(nproc)
+
+      - name: Build openvx-mark against main
+        run: |
+          mkdir -p ${{ github.workspace }}/openvx-mark/build-main
+          cd ${{ github.workspace }}/openvx-mark/build-main
+          cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DOPENVX_INCLUDES=${{ github.workspace }}/main-pkg/amd_openvx/openvx/include \
+            -DOPENVX_LIB_DIR=${{ github.workspace }}/main-pkg/build/lib \
+            ..
+          cmake --build . -j$(nproc)
+
+      - name: Bench PR (warmup + measure)
+        run: |
+          cd ${{ github.workspace }}/openvx-mark/build-pr
+          export LD_LIBRARY_PATH=${{ github.workspace }}/pr-pkg/build/lib
+          # Timer self-test up front — bail loud if the runner clock is
+          # sloppy before any timing number makes it into the perf gate.
+          ./openvx-mark --validate-timing
+          # Warmup: prime caches (output thrown away).
+          ./openvx-mark --resolution FHD --iterations 5 --warmup 0 --threads 1 \
+            --output-dir /tmp/warmup-pr-throwaway >/dev/null 2>&1 || true
+          # Real measurement — pinned single-threaded for noise-free PR-vs-main
+          # comparison (parity with the OpenVX-vs-OpenCV bench downstream).
+          ./openvx-mark --resolution FHD --iterations 20 --warmup 5 --threads 1
+
+      - name: Bench main (warmup + measure)
+        run: |
+          cd ${{ github.workspace }}/openvx-mark/build-main
+          export LD_LIBRARY_PATH=${{ github.workspace }}/main-pkg/build/lib
+          ./openvx-mark --validate-timing
+          ./openvx-mark --resolution FHD --iterations 5 --warmup 0 --threads 1 \
+            --output-dir /tmp/warmup-main-throwaway >/dev/null 2>&1 || true
+          ./openvx-mark --resolution FHD --iterations 20 --warmup 5 --threads 1
+
+      - name: Run perf gate
+        run: |
+          set -euo pipefail
+          PR=${{ github.workspace }}/openvx-mark/build-pr/benchmark_results/benchmark_results.json
+          MAIN=${{ github.workspace }}/openvx-mark/build-main/benchmark_results/benchmark_results.json
+          if [ ! -f "$PR" ] || [ ! -f "$MAIN" ]; then
+            echo "::error::Missing benchmark JSONs (PR=$PR, MAIN=$MAIN)."
+            ls -la "$(dirname "$PR")" "$(dirname "$MAIN")" 2>/dev/null || true
+            exit 1
+          fi
+
+          python3 ${{ github.workspace }}/.github/scripts/perf_gate.py \
+            "$MAIN" "$PR" \
+            --geomean-floor 0.95 \
+            --kernel-floor 0.90 \
+            --warn-floor 0.95 \
+            --max-cv 5.0 \
+            --summary-out "$GITHUB_STEP_SUMMARY"
+
+      - name: Post PR benchmark summary
+        if: always()
+        run: |
+          PR=${{ github.workspace }}/openvx-mark/build-pr/benchmark_results/benchmark_results.json
+          if [ ! -f "$PR" ]; then
+            echo "_No PR benchmark results found._" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          python3 - "$PR" >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import json, sys
+          with open(sys.argv[1]) as f:
+              report = json.load(f)
+          results = report.get("results", [])
+          if not results:
+              print("_No benchmark results._")
+              sys.exit(0)
+          print()
+          print("---")
+          print("## PR Benchmark Summary")
+          print()
+          si = report.get("system", {})
+          if si:
+              print(f'**Runner:** {si.get("cpu_model", "N/A")} '
+                    f'({si.get("cpu_cores", "?")} cores, '
+                    f'{si.get("ram_gb", "?")} GB RAM)')
+              print()
+          print("| Kernel | Mode | Res | MP/s | Median (ms) | CV% | Verified |")
+          print("|:---|---|---|---:|---:|---:|:---:|")
+          for r in sorted(results, key=lambda x: x.get("name", "")):
+              wc = r.get("wall_clock", {}) or {}
+              v = "PASS" if r.get("verified", False) else "FAIL"
+              print(f'| `{r.get("name","")}` '
+                    f'| {r.get("mode","")} '
+                    f'| {r.get("resolution","")} '
+                    f'| {r.get("megapixels_per_sec", 0):.2f} '
+                    f'| {wc.get("median_ms", 0):.3f} '
+                    f'| {wc.get("cv_percent", 0):.2f} '
+                    f'| {v} |')
+          print()
+          PY
+
+      - name: Upload PR benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-gate-results-pr
+          path: ${{ github.workspace }}/openvx-mark/build-pr/benchmark_results/
+          if-no-files-found: ignore
+
+      - name: Upload main benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-gate-results-main
+          path: ${{ github.workspace }}/openvx-mark/build-main/benchmark_results/
+          if-no-files-found: ignore
+
+  # ===========================================================================
+  # Test Stage — all jobs run in parallel against the debug+coverage build.
+  # Each job uploads profraw files for the coverage-summary job.
+  # ===========================================================================
+
+  # --- CTS Tests ---
+
+  baseline:
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run baseline tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/baseline_%p.profraw
+          timeout 300 ./bin/vx_test_conformance --filter="GraphBase.*:Logging.*:SmokeTestBase.*:SmokeTest.*:TargetBase.*:Target.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-baseline
+          path: profraw/
+          if-no-files-found: ignore
+
+  graph:
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run graph tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/graph_%p.profraw
+          timeout 600 ./bin/vx_test_conformance --filter="Graph.*:GraphCallback.*:GraphDelay.*:GraphROI.*:UserNode.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-graph
+          path: profraw/
+          if-no-files-found: ignore
+
+  data-objects:
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run data object tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/data_objects_%p.profraw
+          timeout 300 ./bin/vx_test_conformance --filter="Scalar.*:Array.*:ObjectArray.*:Matrix.*:Convolution.*:Distribution.*:LUT.*:Histogram.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-data-objects
+          path: profraw/
+          if-no-files-found: ignore
+
+  image-ops:
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run image operation tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/image_ops_%p.profraw
+          timeout 600 ./bin/vx_test_conformance --filter="Image.*:vxCopyImagePatch.*:vxMapImagePatch.*:vxCreateImageFromChannel.*:vxCopyRemapPatch.*:vxMapRemapPatch.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-image-ops
+          path: profraw/
+          if-no-files-found: ignore
+
+  vision-color:
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run color and channel tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_color_%p.profraw
+          timeout 300 ./bin/vx_test_conformance --filter="ColorConvert.*:ChannelExtract.*:ChannelCombine.*:vxConvertDepth.*:vxuConvertDepth.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-vision-color
+          path: profraw/
+          if-no-files-found: ignore
+
+  vision-filters:
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run filter and morphology tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_filters_%p.profraw
+          timeout 600 ./bin/vx_test_conformance --filter="Box3x3.*:Gaussian3x3.*:Median3x3.*:Dilate3x3.*:Erode3x3.*:Sobel3x3.*:Magnitude.*:Phase.*:NonLinearFilter.*:Convolve.*:EqualizeHistogram.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-vision-filters
+          path: profraw/
+          if-no-files-found: ignore
+
+  vision-arithmetic:
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run arithmetic and bitwise tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_arithmetic_%p.profraw
+          timeout 600 ./bin/vx_test_conformance --filter="vxAddSub.*:vxuAddSub.*:vxMultiply.*:vxuMultiply.*:vxBinOp8u.*:vxuBinOp8u.*:vxBinOp16s.*:vxuBinOp16s.*:vxBinOp1u.*:vxuBinOp1u.*:vxNot.*:vxuNot.*:WeightedAverage.*:Threshold.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-vision-arithmetic
+          path: profraw/
+          if-no-files-found: ignore
+
+  vision-geometric:
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run geometric transform tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_geometric_%p.profraw
+          timeout 600 ./bin/vx_test_conformance --filter="Scale.*:WarpAffine.*:WarpPerspective.*:Remap.*:HalfScaleGaussian.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-vision-geometric
+          path: profraw/
+          if-no-files-found: ignore
+
+  vision-features:
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run feature and edge detection tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_features_%p.profraw
+          timeout 600 ./bin/vx_test_conformance --filter="HarrisCorners.*:FastCorners.*:vxCanny.*:vxuCanny.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-vision-features
+          path: profraw/
+          if-no-files-found: ignore
+
+  vision-statistics:
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run statistics and analysis tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_statistics_%p.profraw
+          timeout 300 ./bin/vx_test_conformance --filter="MeanStdDev.*:MinMaxLoc.*:Integral.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-vision-statistics
+          path: profraw/
+          if-no-files-found: ignore
+
+  vision-pyramid:
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run pyramid and optical flow tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_pyramid_%p.profraw
+          timeout 300 ./bin/vx_test_conformance --filter="GaussianPyramid.*:LaplacianPyramid.*:LaplacianReconstruct.*:OptFlowPyrLK.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-vision-pyramid
+          path: profraw/
+          if-no-files-found: ignore
+
+  # --- Local Tests (API + GDF) ---
+
+  api-tests:
+    name: API tests
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run API tests
+        run: |
+          mkdir -p profraw
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib
+          export AGO_DEFAULT_TARGET=CPU
+          export ROCM_PATH=${{ github.workspace }}/install
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/api_%p.profraw
+
+          FAILED_TESTS=()
+          API_EXECUTABLES=(
+            "canny:openvx_canny"
+            "channel_extract:openvx_channel_extract"
+            "color_convert:openvx_color_convert"
+            "accumulate:openvx_accum"
+            "graph:openvx_graph"
+            "graph_api:openvx_graph_api"
+            "tensor_api:openvx_tensor_api"
+            "data_objects:openvx_data_objects_api"
+            "user_kernel:openvx_user_kernel_api"
+            "tensor_advanced:openvx_tensor_advanced_api"
+            "threshold_query:openvx_threshold_query_api"
+            "graph_import:openvx_graph_import_api"
+            "vxu_api:openvx_vxu_api"
+            "coverage_boost:openvx_coverage_boost"
+          )
+          for entry in "${API_EXECUTABLES[@]}"; do
+            dir="${entry%%:*}"
+            exe="${entry##*:}"
+            echo "::group::Running ${exe}"
+            chmod +x build/api_tests/${dir}/${exe}
+            if ! ./build/api_tests/${dir}/${exe}; then
+              echo "::error::${exe} FAILED"
+              FAILED_TESTS+=("${exe}")
+            fi
+            echo "::endgroup::"
+          done
+          if [ ${#FAILED_TESTS[@]} -ne 0 ]; then
+            echo "::error::The following API tests failed: ${FAILED_TESTS[*]}"
+            exit 1
+          fi
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-api-tests
+          path: profraw/
+          if-no-files-found: ignore
+
+  gdf-tests:
+    name: GDF tests
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run GDF tests
+        run: |
+          mkdir -p profraw
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib
+          export AGO_DEFAULT_TARGET=CPU
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/gdf_%p.profraw
+          chmod +x install/bin/runvx
+          python3 tests/amd_openvx_gdfs/runOpenVX.py \
+            --runvx_directory ${{ github.workspace }}/install/bin \
+            --num_frames 10 \
+            --backend_type CPU \
+            --hidden no
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-gdf-tests
+          path: profraw/
+          if-no-files-found: ignore
+
+  # ===========================================================================
+  # Benchmark Stage — uses the release build artifact and compares MIVisionX
+  # OpenVX vs the OpenCV baseline on the same runner.
+  #
+  # The benchmark binaries (`openvx-mark` + `opencv-mark`) both live in the
+  # upstream openvx-mark v1.1+ source tree at https://github.com/kiritigowda/openvx-mark.
+  # We clone that repo and build both targets from the same CMake invocation
+  # so the two binaries share build flags, compiler, glibc, and benchmark
+  # infrastructure (timer, stats, JSON schema) — i.e. the only intentional
+  # variable between the two reports is the backing implementation.
+  #
+  # The shape of this job mirrors the upstream openvx-mark CI's MIVisionX-vs-
+  # OpenCV pairwise comparison (.github/workflows/ci.yml on kiritigowda/openvx-mark):
+  #   1. `--validate-timing` self-test gates every bench step.
+  #   2. `--threads 1` pin on both binaries so OpenCV's TBB/OpenMP default
+  #      doesn't silently turn this into "1-thread OpenVX vs n-thread OpenCV".
+  #      MIVisionX's AGO CPU path is single-threaded per kernel anyway.
+  #   3. `--feature-set vision` (or `vision,framework` on the OpenVX side) at
+  #      FHD × 20 iterations × 5 warmup. opencv-mark deliberately doesn't
+  #      implement the `framework` feature set (OpenCV has no graph framework
+  #      analogue), and `compare_reports.py` silently drops non-overlapping
+  #      benchmarks, so framework rows simply don't appear in the OpenCV
+  #      comparison.
+  #   4. `--dump-outputs` from both binaries feeds `cross_verify_outputs.py`
+  #      to prove numerical equivalence — the speedup numbers below are
+  #      only credible if OpenCV and MIVisionX agree at the pixel level.
+  #   5. `ci_pairwise_summary.py` renders the GitHub Actions step summary
+  #      (TL;DR speedup matrix + grouped headline tables + collapsed
+  #      per-kernel detail). Same shape and helper as the upstream CI.
+  # ===========================================================================
+
+  benchmark:
+    name: Release OpenVX vs OpenCV benchmark
+    runs-on: ubuntu-24.04
+    needs:
+      - build
+      - baseline
+      - graph
+      - data-objects
+      - image-ops
+      - vision-color
+      - vision-filters
+      - vision-arithmetic
+      - vision-geometric
+      - vision-features
+      - vision-statistics
+      - vision-pyramid
+      - api-tests
+      - gdf-tests
+    if: always() && needs.build.result == 'success' && needs.baseline.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install benchmark dependencies
+        run: |
+          sudo apt-get update
+          # python3-numpy is required by scripts/cross_verify_outputs.py;
+          # libopencv-dev makes the parent CMake auto-include opencv-mark/.
+          sudo apt-get install -y build-essential cmake git python3 \
+            python3-numpy libopencv-dev
+          pkg-config --modversion opencv4 || true
+
+      - name: Download AMD OpenVX Release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: ${{ github.workspace }}/artifacts
+
+      - name: Clone openvx-mark (vendor-agnostic benchmark suite + opencv-mark companion)
+        run: |
+          git clone --depth 1 https://github.com/kiritigowda/openvx-mark.git \
+            ${{ github.workspace }}/openvx-mark
+
+      - name: Build openvx-mark + opencv-mark (single source tree, identical flags)
+        run: |
+          # Parent CMake auto-includes opencv-mark/ when libopencv-dev is found,
+          # producing two binaries from one configure pass — guarantees both
+          # link the same bench_core static lib (timer, stats, JSON schema) so
+          # only the backing implementation differs.
+          mkdir -p ${{ github.workspace }}/openvx-mark/build
+          cd ${{ github.workspace }}/openvx-mark/build
+          cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DOPENVX_INCLUDES=${{ github.workspace }}/amd_openvx/openvx/include \
+            -DOPENVX_LIB_DIR=${{ github.workspace }}/artifacts/build/lib \
+            ..
+          cmake --build . -j$(nproc)
+          test -x ./openvx-mark \
+            || { echo "ERROR: openvx-mark not built"; exit 1; }
+          test -x ./opencv-mark/opencv-mark \
+            || { echo "ERROR: opencv-mark not built — libopencv-dev likely not detected by CMake"; exit 1; }
+          ./openvx-mark --help | head -3 || true
+          ./opencv-mark/opencv-mark --help | head -3 || true
+
+      - name: Timer self-test (both binaries)
+        run: |
+          cd ${{ github.workspace }}/openvx-mark/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/artifacts/build/lib
+          # Catches a sloppy runner clock before we trust a single timing number.
+          ./openvx-mark --validate-timing
+          ./opencv-mark/opencv-mark --validate-timing
+
+      - name: Bench MIVisionX (vision-parity, FHD × 20, single-threaded)
+        run: |
+          cd ${{ github.workspace }}/openvx-mark/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/artifacts/build/lib
+          # `--vision-parity` runs exactly the 41 OpenVX vision kernels that
+          # have a 1:1 OpenCV equivalent — apples-to-apples per-kernel rows
+          # across both binaries. Warmup uses the same iteration count as the
+          # full bench so the second `--warmup 5` JIT/cache warmup matters.
+          ./openvx-mark --resolution FHD --iterations 5 --warmup 0 --threads 1 \
+            --vision-parity --output-dir /tmp/warmup-mivisionx-throwaway \
+            >/dev/null 2>&1 || true
+          ./openvx-mark --vision-parity \
+            --resolution FHD --iterations 20 --warmup 5 --threads 1 \
+            --output-dir results-mivisionx
+          # Sentinel-kernel dump for downstream cross_verify_outputs.py.
+          # Runs the kernel set ONCE (no timing, no warmup) so it's cheap.
+          ./openvx-mark --dump-outputs dump-mivisionx --seed 42
+
+      - name: Bench OpenCV (vision-parity, FHD × 20, single-threaded)
+        run: |
+          cd ${{ github.workspace }}/openvx-mark/build
+          # `--threads 1` calls cv::setNumThreads(1) and sets OMP_NUM_THREADS=1
+          # for any OpenMP-using OpenCV code path. Without this OpenCV would
+          # grab nproc threads via TBB by default and silently get an unfair
+          # parallelism boost vs single-threaded MIVisionX.
+          ./opencv-mark/opencv-mark --resolution FHD --iterations 5 --warmup 0 --threads 1 \
+            --vision-parity --output-dir /tmp/warmup-opencv-throwaway \
+            >/dev/null 2>&1 || true
+          ./opencv-mark/opencv-mark --vision-parity \
+            --resolution FHD --iterations 20 --warmup 5 --threads 1 \
+            --output-dir results-opencv
+          ./opencv-mark/opencv-mark --dump-outputs dump-opencv --seed 42
+
+      - name: Cross-impl numerical verification (OpenCV ↔ MIVisionX)
+        if: always()
+        run: |
+          set -euo pipefail
+          cd ${{ github.workspace }}/openvx-mark
+          OPENCV_DUMP=build/dump-opencv
+          VX_DUMP=build/dump-mivisionx
+          mkdir -p comparisons
+          {
+            echo ""
+            echo "---"
+            echo ""
+            echo "## Cross-impl numerical verification (OpenCV ↔ MIVisionX)"
+            echo ""
+            echo "Sentinel kernel suite (no timing, no warmup) dumped by"
+            echo "\`--dump-outputs\` on each binary; \`scripts/cross_verify_outputs.py\`"
+            echo "loads both dumps and computes max-abs-diff + PSNR + exact-%"
+            echo "per kernel against per-kernel tolerance rules. Proves the"
+            echo "timing rows below are honest apples-to-apples and not"
+            echo "\"OpenCV is faster because it's silently computing the"
+            echo "wrong thing\"."
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ ! -d "$OPENCV_DUMP" ] || [ ! -d "$VX_DUMP" ]; then
+            echo "_Skipped — dump directory missing ($VX_DUMP or $OPENCV_DUMP)._" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          set +e
+          python3 scripts/cross_verify_outputs.py \
+            "$OPENCV_DUMP" "$VX_DUMP" \
+            --left-label "OpenCV" --right-label "MIVisionX" \
+            --json comparisons/cross-verify-mivisionx.json \
+            >> "$GITHUB_STEP_SUMMARY"
+          rc=$?
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            echo "::warning::Cross-impl verification flagged ≥1 divergence — see job summary"
+          fi
+
+      - name: Pairwise comparison (MIVisionX over OpenCV)
+        if: always()
+        run: |
+          set -euo pipefail
+          cd ${{ github.workspace }}/openvx-mark
+          OPENVX=build/results-mivisionx/benchmark_results.json
+          OPENCV=build/results-opencv/benchmark_results.json
+          if [ ! -f "$OPENVX" ] || [ ! -f "$OPENCV" ]; then
+            echo "_Missing benchmark results for comparison._" >> "$GITHUB_STEP_SUMMARY"
+            echo "OpenVX results: $([ -f "$OPENVX" ] && echo 'found' || echo 'missing')"
+            echo "OpenCV results: $([ -f "$OPENCV" ] && echo 'found' || echo 'missing')"
+            exit 0
+          fi
+          mkdir -p comparisons
+          # Per-kernel detail report — speedup = throughput(arg2) / throughput(arg1),
+          # so passing OpenCV first and MIVisionX second reads as "MIVisionX over
+          # OpenCV" (>1.00x means MIVisionX wins). This .md is referenced by
+          # ci_pairwise_summary.py's <details> block.
+          python3 scripts/compare_reports.py "$OPENCV" "$OPENVX" \
+            --output comparisons/mivisionx-over-opencv
+
+          # Render organized step summary: TL;DR matrix + grouped headline
+          # table + collapsed per-kernel detail. Same renderer as the upstream
+          # openvx-mark CI uses for its 6-pair MIVisionX/Khronos/rustVX/OpenCV
+          # matrix; here it's invoked with a single pair.
+          cat > /tmp/pairwise-config.json <<'JSON'
+          {
+            "reports": {
+              "mivisionx": {"label": "MIVisionX (AMD OpenVX, this PR)", "path": "build/results-mivisionx/benchmark_results.json"},
+              "opencv":    {"label": "OpenCV",                          "path": "build/results-opencv/benchmark_results.json"}
+            },
+            "groups": [
+              {
+                "title":  "OpenVX-vs-OpenCV — does adopting MIVisionX pay off vs cv::?",
+                "intent": "Speedup reads as `MIVisionX / OpenCV`. Values >1.00x mean adopting MIVisionX OpenVX pays off vs writing the equivalent directly in OpenCV at the same runner / threading policy. Both binaries are built from the upstream openvx-mark v1.1+ source tree (so JSON schema, timer, and stats infrastructure are identical) and pinned to `--threads 1` so OpenCV's TBB default doesn't silently turn this into 1-thread vs n-thread.",
+                "pairs":  [["mivisionx", "opencv"]]
+              }
+            ],
+            "detail_dir": "comparisons"
+          }
+          JSON
+          python3 scripts/ci_pairwise_summary.py --config /tmp/pairwise-config.json \
+            >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload per-impl benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            ${{ github.workspace }}/openvx-mark/build/results-mivisionx/
+            ${{ github.workspace }}/openvx-mark/build/results-opencv/
+          if-no-files-found: ignore
+          retention-days: 90
+
+      - name: Upload pairwise comparison
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-comparison
+          path: ${{ github.workspace }}/openvx-mark/comparisons/
+          if-no-files-found: ignore
+          retention-days: 90
+
+      # Sentinel kernel dumps — uploaded so a reviewer can re-run
+      # scripts/cross_verify_outputs.py locally against either pair
+      # without rebuilding any binary, and so the raw .bin files are
+      # inspectable after the fact for any divergence the verifier
+      # flagged.
+      - name: Upload sentinel output dumps
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cross-verify-dumps
+          path: |
+            ${{ github.workspace }}/openvx-mark/build/dump-mivisionx/
+            ${{ github.workspace }}/openvx-mark/build/dump-opencv/
+          if-no-files-found: ignore
+          retention-days: 90
+
+  # ===========================================================================
+  # Coverage Stage — merge all profraw and generate report
+  # ===========================================================================
+
+  coverage-summary:
+    name: Code coverage summary
+    runs-on: ubuntu-24.04
+    if: always() && needs.build-debug.result == 'success'
+    needs:
+      - build-debug
+      - baseline
+      - graph
+      - data-objects
+      - image-ops
+      - vision-color
+      - vision-filters
+      - vision-arithmetic
+      - vision-geometric
+      - vision-features
+      - vision-statistics
+      - vision-pyramid
+      - api-tests
+      - gdf-tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install LLVM tools and lcov
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm lcov
+
+      - name: Download debug build (for libopenvx.so)
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+
+      - name: Download all profraw artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: profraw-*
+          path: all-profraw
+          merge-multiple: true
+
+      - name: Merge profraw files
+        run: |
+          echo "Profraw files found:"
+          find all-profraw -name '*.profraw' -type f | head -50
+          PROFRAW_COUNT=$(find all-profraw -name '*.profraw' -type f | wc -l)
+          echo "Total profraw files: ${PROFRAW_COUNT}"
+          if [ "$PROFRAW_COUNT" -eq 0 ]; then
+            echo "::error::No profraw files found — no coverage data collected"
+            echo "## Code Coverage" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "No profraw files were collected from test jobs." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          find all-profraw -name '*.profraw' -type f -print0 \
+            | xargs -0 llvm-profdata merge -sparse -o coverage.profdata
+
+      - name: Generate coverage report
+        run: |
+          LIBOPENVX="${{ github.workspace }}/install/lib/libopenvx.so"
+          PROFDATA="${{ github.workspace }}/coverage.profdata"
+
+          # Generate text report
+          llvm-cov report "${LIBOPENVX}" \
+            -instr-profile="${PROFDATA}" \
+            -ignore-filename-regex='(test|conformance)' \
+            | tee coverage_report.txt
+
+          # Generate JSON export (for structured summary)
+          llvm-cov export "${LIBOPENVX}" \
+            -instr-profile="${PROFDATA}" \
+            -format=text \
+            -ignore-filename-regex='(test|conformance)' \
+            > coverage.json
+
+          # Generate LCOV export
+          llvm-cov export "${LIBOPENVX}" \
+            -instr-profile="${PROFDATA}" \
+            -format=lcov \
+            -ignore-filename-regex='(test|conformance)' \
+            > coverage.lcov
+
+          # Generate LCOV-style HTML report with genhtml
+          # --ignore-errors unmapped was added in lcov 2.x; build the arg list
+          # conditionally so the step works on Ubuntu 22.04 (lcov 1.x) too.
+          GENHTML_EXTRA_ARGS=()
+          if genhtml --version 2>&1 | grep -qE 'LCOV version ([2-9]|[1-9][0-9])'; then
+            GENHTML_EXTRA_ARGS+=(--ignore-errors unmapped)
+          fi
+          genhtml coverage.lcov \
+            --output-directory coverage_html \
+            --branch-coverage \
+            --title "AMD OpenVX Code Coverage" \
+            --ignore-errors source \
+            "${GENHTML_EXTRA_ARGS[@]}" \
+            2>&1 || echo "::warning::genhtml had errors"
+
+      - name: Post coverage summary
+        if: always()
+        run: |
+          python3 - "$GITHUB_STEP_SUMMARY" <<'PYEOF'
+          import json, sys, os
+
+          summary_file = sys.argv[1]
+
+          # Try JSON export first (structured data), fall back to text report
+          json_path = "coverage.json"
+          text_path = "coverage_report.txt"
+
+          if not os.path.exists(json_path) and not os.path.exists(text_path):
+              with open(summary_file, "a") as f:
+                  f.write("## AMD OpenVX Code Coverage\n\n")
+                  f.write("Coverage report generation failed.\n")
+              sys.exit(0)
+
+          # Parse JSON export for structured data
+          if os.path.exists(json_path):
+              with open(json_path) as f:
+                  data = json.load(f)
+
+              totals = data.get("data", [{}])[0].get("totals", {})
+              files = data.get("data", [{}])[0].get("files", [])
+
+              lines = totals.get("lines", {})
+              funcs = totals.get("functions", {})
+              branches = totals.get("branches", {})
+              regions = totals.get("regions", {})
+
+              line_pct = lines.get("percent", 0)
+              func_pct = funcs.get("percent", 0)
+              branch_pct = branches.get("percent", 0)
+              region_pct = regions.get("percent", 0)
+
+              line_covered = lines.get("covered", 0)
+              line_total = lines.get("count", 0)
+              func_covered = funcs.get("covered", 0)
+              func_total = funcs.get("count", 0)
+              branch_covered = branches.get("covered", 0)
+              branch_total = branches.get("count", 0)
+
+              out = []
+
+              # -- Header --
+              out.append("## AMD OpenVX Code Coverage Report")
+              out.append("")
+
+              # -- Overview metrics --
+              out.append("### Overall Summary")
+              out.append("")
+              out.append("| Metric | Covered | Total | Coverage |")
+              out.append("|:-------|--------:|------:|---------:|")
+              out.append(f"| Lines | {line_covered:,} | {line_total:,} | **{line_pct:.2f}%** |")
+              out.append(f"| Functions | {func_covered:,} | {func_total:,} | **{func_pct:.2f}%** |")
+              out.append(f"| Branches | {branch_covered:,} | {branch_total:,} | **{branch_pct:.2f}%** |")
+              out.append(f"| Regions | {regions.get('covered', 0):,} | {regions.get('count', 0):,} | **{region_pct:.2f}%** |")
+              out.append("")
+
+              # -- Per-file breakdown --
+              # Group files by directory (ago/, api/, etc.)
+              file_data = []
+              for fobj in files:
+                  fname = fobj.get("filename", "")
+                  # Strip workspace prefix to get relative path
+                  for prefix in ["/home/runner/work/MIVisionX/MIVisionX/amd_openvx/openvx/",
+                                 "amd_openvx/openvx/"]:
+                      if fname.startswith(prefix):
+                          fname = fname[len(prefix):]
+                          break
+
+                  fl = fobj.get("summary", {}).get("lines", {})
+                  ff = fobj.get("summary", {}).get("functions", {})
+                  fb = fobj.get("summary", {}).get("branches", {})
+
+                  # Skip header-only files with no executable lines
+                  if fl.get("count", 0) == 0 and ff.get("count", 0) == 0:
+                      continue
+
+                  file_data.append({
+                      "name": fname,
+                      "lines_covered": fl.get("covered", 0),
+                      "lines_total": fl.get("count", 0),
+                      "lines_pct": fl.get("percent", 0),
+                      "funcs_covered": ff.get("covered", 0),
+                      "funcs_total": ff.get("count", 0),
+                      "funcs_pct": ff.get("percent", 0),
+                      "branches_covered": fb.get("covered", 0),
+                      "branches_total": fb.get("count", 0),
+                      "branches_pct": fb.get("percent", 0),
+                  })
+
+              # Sort by file path
+              file_data.sort(key=lambda x: x["name"])
+
+              # Group by directory
+              groups = {}
+              for fd in file_data:
+                  parts = fd["name"].split("/")
+                  group = parts[0] + "/" if len(parts) > 1 else ""
+                  groups.setdefault(group, []).append(fd)
+
+              out.append("### File Coverage Details")
+              out.append("")
+              out.append("| File | Lines | Line % | Functions | Func % | Branches | Branch % |")
+              out.append("|:-----|------:|-------:|----------:|-------:|---------:|---------:|")
+
+              for group_name in sorted(groups.keys()):
+                  group_files = groups[group_name]
+                  if group_name:
+                      # Group subtotals
+                      g_lc = sum(f["lines_covered"] for f in group_files)
+                      g_lt = sum(f["lines_total"] for f in group_files)
+                      g_fc = sum(f["funcs_covered"] for f in group_files)
+                      g_ft = sum(f["funcs_total"] for f in group_files)
+                      g_bc = sum(f["branches_covered"] for f in group_files)
+                      g_bt = sum(f["branches_total"] for f in group_files)
+                      g_lp = (g_lc / g_lt * 100) if g_lt > 0 else 0
+                      g_fp = (g_fc / g_ft * 100) if g_ft > 0 else 0
+                      g_bp = (g_bc / g_bt * 100) if g_bt > 0 else 0
+                      out.append(f"| **{group_name}** | **{g_lc}/{g_lt}** | **{g_lp:.1f}%** | **{g_fc}/{g_ft}** | **{g_fp:.1f}%** | **{g_bc}/{g_bt}** | **{g_bp:.1f}%** |")
+
+                  for fd in group_files:
+                      name = fd["name"]
+                      lc, lt, lp = fd["lines_covered"], fd["lines_total"], fd["lines_pct"]
+                      fc, ft, fp = fd["funcs_covered"], fd["funcs_total"], fd["funcs_pct"]
+                      bc, bt, bp = fd["branches_covered"], fd["branches_total"], fd["branches_pct"]
+                      out.append(f"| {name} | {lc}/{lt} | {lp:.1f}% | {fc}/{ft} | {fp:.1f}% | {bc}/{bt} | {bp:.1f}% |")
+
+              out.append("")
+
+              with open(summary_file, "a") as f:
+                  f.write("\n".join(out) + "\n")
+          else:
+              # Fallback: use text report
+              with open(text_path) as f:
+                  report_text = f.read()
+              with open(summary_file, "a") as f:
+                  f.write("## AMD OpenVX Code Coverage Report\n\n")
+                  f.write("```\n")
+                  f.write(report_text)
+                  f.write("```\n")
+          PYEOF
+
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-report
+          path: |
+            coverage.profdata
+            coverage_report.txt
+            coverage.json
+            coverage.lcov
+            coverage_html/
+          retention-days: 30
+          if-no-files-found: ignore

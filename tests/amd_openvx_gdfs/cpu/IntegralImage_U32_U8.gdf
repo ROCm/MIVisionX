@@ -1,0 +1,4 @@
+# Exercise Integral Image
+data input = uniform-image:640,480,U008,100
+data output = image:640,480,U032
+node org.khronos.openvx.integral_image input output

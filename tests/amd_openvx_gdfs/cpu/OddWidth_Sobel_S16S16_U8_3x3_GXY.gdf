@@ -1,0 +1,5 @@
+# Exercise postfix in Sobel GXY
+data input = image:1277,719,U008
+data output_gx = image:1277,719,S016
+data output_gy = image:1277,719,S016
+node org.khronos.openvx.sobel_3x3 input output_gx output_gy

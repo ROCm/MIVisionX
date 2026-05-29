@@ -36,8 +36,6 @@ struct HueLocalData {
     vxTensorLayout outputLayout;
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t ouputTensorDims[RPP_MAX_TENSOR_DIMS];
-    RppiSize *pSrcDimensions;
-    RppiSize maxSrcDimensions;
 };
 
 static vx_status VX_CALLBACK refreshHue(vx_node node, const vx_reference *parameters, vx_uint32 num, HueLocalData *data) {
@@ -59,18 +57,13 @@ static vx_status VX_CALLBACK refreshHue(vx_node node, const vx_reference *parame
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
     data->pSrcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
-    // Fill width and height array with ROI data required by RPP batchPD kernels
-    for (unsigned i = 0; i < data->inputTensorDims[0]; i++) {
-        data->pSrcDimensions[i].width = data->pSrcRoi[i].xywhROI.roiWidth;
-        data->pSrcDimensions[i].height = data->pSrcRoi[i].xywhROI.roiHeight;
-    }
     if (data->inputLayout == vxTensorLayout::VX_NFHWC || data->inputLayout == vxTensorLayout::VX_NFCHW) {
         unsigned num_of_frames = data->inputTensorDims[1]; // Num of frames 'F'
         for (int n = data->inputTensorDims[0] - 1; n >= 0; n--) {
             unsigned index = n * num_of_frames;
             for (unsigned f = 0; f < num_of_frames; f++) {
                 data->pHueShift[index + f] = data->pHueShift[n];
-                data->pSrcDimensions[index + f] = data->pSrcDimensions[n];
+                data->pSrcRoi[index + f].xywhROI = data->pSrcRoi[n].xywhROI;
             }
         }
     }
@@ -115,27 +108,21 @@ static vx_status VX_CALLBACK validateHue(vx_node node, const vx_reference parame
 }
 
 static vx_status VX_CALLBACK processHue(vx_node node, const vx_reference *parameters, vx_uint32 num) {
-    RppStatus rpp_status = RPP_SUCCESS;
-    vx_status return_status = VX_SUCCESS;
-
     HueLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshHue(node, parameters, num, data);
+    vx_status status = refreshHue(node, parameters, num, data);
+    if (status != VX_SUCCESS) return status;
     if (data->pSrcDesc->c == 1)
         return VX_ERROR_NOT_SUPPORTED;
-    
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
+#if ENABLE_HIP
+    RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+#else
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
         return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
-        rpp_status = rppi_hueRGB_u8_pkd3_batchPD_gpu(data->pSrc, data->pSrcDimensions, data->maxSrcDimensions, data->pDst, data->pHueShift, data->pSrcDesc->n, data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+    RppBackend backend = RPP_HOST_BACKEND;
 #endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppi_hueRGB_u8_pkd3_batchPD_host(data->pSrc, data->pSrcDimensions, data->maxSrcDimensions, data->pDst, data->pHueShift, data->pSrcDesc->n, data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-    }
-    return return_status;
+    RppStatus rpp_status = rppt_hue(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pHueShift, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
+    return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 }
 
 static vx_status VX_CALLBACK initializeHue(vx_node node, const vx_reference *parameters, vx_uint32 num) {
@@ -170,10 +157,13 @@ static vx_status VX_CALLBACK initializeHue(vx_node node, const vx_reference *par
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->ouputTensorDims);
 
-    data->maxSrcDimensions.height = data->pSrcDesc->h;
-    data->maxSrcDimensions.width = data->pSrcDesc->w;
-    data->pSrcDimensions = new RppiSize[data->pSrcDesc->n];
-    data->pHueShift = new vx_float32[data->pSrcDesc->n];
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        data->pHueShift = new vx_float32[data->pSrcDesc->n];
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pHueShift, data->pSrcDesc->n * sizeof(vx_float32)));
+#endif
+    }
     refreshHue(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -183,8 +173,13 @@ static vx_status VX_CALLBACK initializeHue(vx_node node, const vx_reference *par
 static vx_status VX_CALLBACK uninitializeHue(vx_node node, const vx_reference *parameters, vx_uint32 num) {
     HueLocalData *data;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    delete[] data->pHueShift;
-    delete[] data->pSrcDimensions;
+    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
+        delete[] data->pHueShift;
+    } else if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostFree(data->pHueShift));
+#endif
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

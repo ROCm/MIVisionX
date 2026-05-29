@@ -1,0 +1,4 @@
+# Exercise prefix/postfix in color conversion
+data output = image:1277,719,RGB2
+data input = image:1277,719,RGBA
+node com.amd.openvx.ColorConvert_RGB_RGBX output input

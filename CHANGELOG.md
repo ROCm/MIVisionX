@@ -4,16 +4,29 @@
 
 The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html)
 
-## MIVisionX 3.5.0 (Unreleased)
+## (Unreleased) MIVisionX 3.6.0
 
 ### Added
-* 
+*  Added the `PythonFunction` extension to VX_RPP
+*  Added unified `rppt_*()` function with `RppBackend` parameter for vx_rpp extensions to support runtime backend selection
+
+### Removed
+*  Removed the batchPD extensions from VX_RPP
+*  Removed separate `rppt_*_host()` and `rppt_*_gpu()` function calls for vx_rpp extensions
+
+### Changed
+*  Updated vx_rpp extension for Gaussian Filter
+*  **Breaking change**: This change requires updating to RPP version 3.1.0 with unified API support
+*  MIGraphX extension turned off by default
+
+## MIVisionX 3.5.0 for ROCm 7.2.0
 
 ### Changed
 * AMD Clang++ - Location updated `${ROCM_PATH}/lib/llvm/bin`
+* RPP required updated to RPP V2.2.1
 
 ### Resolved issues
-* 
+* Memory leaks in OpenVX core, vx_nn, & vx_opencv
 
 ### Known issues
 * Installation on CentOS/RedHat/SLES requires the manual installation of the `FFMPEG` & `OpenCV` dev packages.

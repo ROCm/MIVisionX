@@ -131,24 +131,6 @@ int HafCpu_ColorConvert_UV12_RGBX
 	return AGO_ERROR_HAFCPU_NOT_IMPLEMENTED;
 }
 
-int HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM
-	(
-		vx_uint32              capacityOfXY,
-		ago_coord2d_ushort_t   xyStack[],
-		vx_uint32            * pxyStackTop,
-		vx_uint32              dstWidth,
-		vx_uint32              dstHeight,
-		vx_uint8             * pDst,
-		vx_uint32              dstStrideInBytes,
-		vx_uint8             * pSrcImage,
-		vx_uint32              srcImageStrideInBytes,
-		vx_uint16               hyst_lower,
-		vx_uint16               hyst_upper
-	)
-{
-	return AGO_ERROR_HAFCPU_NOT_IMPLEMENTED;
-}
-
 int HafCpu_CannySobelSuppThreshold_U8XY_U8_5x5_L2NORM
 	(
 		vx_uint32              capacityOfXY,

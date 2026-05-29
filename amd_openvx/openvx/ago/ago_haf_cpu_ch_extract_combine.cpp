@@ -297,6 +297,38 @@ int HafCpu_ChannelCopy_U8_U8
 		vx_uint32     srcImageStrideInBytes
 	)
 {
+#if USE_AVX
+	// AVX2 path: 128 bytes per inner-loop iteration via 4 ymm load/store pairs.
+	// Falls back to a scalar tail. This is the kernel used as the level-0 copy
+	// in GaussianPyramid, so its throughput directly affects pyramid runtime.
+	for (vx_uint32 height = 0; height < dstHeight; height++)
+	{
+		vx_uint8 *pLocalSrc = pSrcImage;
+		vx_uint8 *pLocalDst = pDstImage;
+		vx_uint32 width = 0;
+		for (; width + 128 <= dstWidth; width += 128)
+		{
+			__m256i r0 = _mm256_loadu_si256((const __m256i *)(pLocalSrc + width));
+			__m256i r1 = _mm256_loadu_si256((const __m256i *)(pLocalSrc + width + 32));
+			__m256i r2 = _mm256_loadu_si256((const __m256i *)(pLocalSrc + width + 64));
+			__m256i r3 = _mm256_loadu_si256((const __m256i *)(pLocalSrc + width + 96));
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width      ), r0);
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width + 32 ), r1);
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width + 64 ), r2);
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width + 96 ), r3);
+		}
+		for (; width + 32 <= dstWidth; width += 32)
+		{
+			__m256i r0 = _mm256_loadu_si256((const __m256i *)(pLocalSrc + width));
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width), r0);
+		}
+		for (; width < dstWidth; width++)
+			pLocalDst[width] = pLocalSrc[width];
+		pSrcImage += srcImageStrideInBytes;
+		pDstImage += dstImageStrideInBytes;
+	}
+	return AGO_SUCCESS;
+#else
 	if ((srcImageStrideInBytes | dstImageStrideInBytes) & 15)
 	{
 		int height = (int)dstHeight;
@@ -360,6 +392,7 @@ int HafCpu_ChannelCopy_U8_U8
 		}
 	}
 	return AGO_SUCCESS;
+#endif
 }
 
 #if USE_BMI2
@@ -380,7 +413,7 @@ int HafCpu_ChannelCopy_U8_U1
 	__m128i r0, r1;
 	__m128i zeromask = _mm_setzero_si128();
 
-	__declspec(align(16)) uint64_t pixels_u64[4];
+	alignas(16) uint64_t pixels_u64[4];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -390,7 +423,7 @@ int HafCpu_ChannelCopy_U8_U1
 			// Read the U1 values from src1
 			pixels_u64[0] = (uint64_t)(*(pSrcImage + (width >> 3)));
 			pixels_u64[1] = (uint64_t)(*(pSrcImage + (width >> 3) + 1));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels_u64[0] = _pdep_u64(pixels_u64[0], maskConv);
 			pixels_u64[1] = _pdep_u64(pixels_u64[1], maskConv);
 #else
@@ -399,7 +432,7 @@ int HafCpu_ChannelCopy_U8_U1
 			// Read the U1 values from src2
 			pixels_u64[2] = (uint64_t)(*(pSrcImage + (width >> 3) + 2));
 			pixels_u64[3] = (uint64_t)(*(pSrcImage + (width >> 3) + 3));
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__x86_64__)
 			pixels_u64[2] = _pdep_u64(pixels_u64[2], maskConv);
 			pixels_u64[3] = _pdep_u64(pixels_u64[3], maskConv);
 #else
@@ -437,7 +470,7 @@ int HafCpu_ChannelCopy_U1_U8
 	__m128i * src = (__m128i*) pSrcImage;
 	__m128i r0;
 
-	__declspec(align(16)) uint64_t pixels_u64[2];
+	alignas(16) uint64_t pixels_u64[2];
 	uint64_t maskConv = 0x0101010101010101;
 
 	for (unsigned int height = 0; height < dstHeight; height++)
@@ -445,11 +478,11 @@ int HafCpu_ChannelCopy_U1_U8
 		for (unsigned int width = 0; width < dstWidth; width += 16)
 		{
 			r0 = _mm_load_si128(&src[width >> 4]);
-			
+
 			// Convert U8 to U1	- Extract LSB
-#ifdef _WIN64
-			pixels_u64[0] = _pext_u64(r0.m128i_u64[0], maskConv);
-			pixels_u64[1] = _pext_u64(r0.m128i_u64[1], maskConv);
+#if defined(_WIN64) || defined(__x86_64__)
+			pixels_u64[0] = _pext_u64(M128I(r0).m128i_u64[0], maskConv);
+			pixels_u64[1] = _pext_u64(M128I(r0).m128i_u64[1], maskConv);
 #else
 #pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
 #endif

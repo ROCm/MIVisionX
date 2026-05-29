@@ -38,7 +38,7 @@ THE SOFTWARE.
 //     ly   - local work item [1]
 //     lbuf - local buffer
 //
-int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int gxoffset, int gyoffset, std::string& code)
+int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int gxoffset, int gyoffset, int bufferSize, int bufferOffset, std::string& code)
 {
 	char item[1024];
 
@@ -89,13 +89,16 @@ int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int 
 			agoAddLogEntry(NULL, VX_FAILURE, "ERROR: HafGpu_Load_Local(%dx%d,%dx%d,(%d,%d)): doesn't support LMWidthRemain=%d with %s\n", WGWidth, WGHeight, LMWidth, LMHeight, gxoffset, gyoffset, LMWidthRemain, dType);
 			return -1;
 		}
+		snprintf(item, sizeof(item), "    if (goffset > -%d && goffset < %d) {\n", bufferOffset, bufferSize);
+		code += item;
 		if (use_vload) {
-			snprintf(item, sizeof(item), "    vstore%c(vload%c(0, (__global uint *)(gbuf + goffset)), 0, (__local uint *)(lbuf + loffset));\n", dType[4], dType[4]);
+			snprintf(item, sizeof(item), "      vstore%c(vload%c(0, (__global uint *)(gbuf + goffset)), 0, (__local uint *)(lbuf + loffset));\n", dType[4], dType[4]);
 		}
 		else {
-			snprintf(item, sizeof(item), "    *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
+			snprintf(item, sizeof(item), "      *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
 		}
 		code += item;
+		code += "    }\n";
 		// get configuration for extra load
 		int dWidth = LMWidthRemain >> dTypeShift;
 		int dHeight = LMHeight;
@@ -124,13 +127,16 @@ int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int 
 			, LMWidth, dTypeShift, (WGWidth << LMdivWGWidthShift)
 			, gyoffset, dTypeShift, (WGWidth << LMdivWGWidthShift) - gxoffset, LMHeight);
 		code += item;
+		snprintf(item, sizeof(item), "      if (goffset > -%d && goffset < %d) {\n", bufferOffset, bufferSize);
+		code += item;
 		if (use_vload) {
-			snprintf(item, sizeof(item), "      vstore%c(vload%c(0, (__global uint *)(gbuf + goffset)), 0, (__local uint *)(lbuf + loffset));\n", dType[4], dType[4]);
+			snprintf(item, sizeof(item), "        vstore%c(vload%c(0, (__global uint *)(gbuf + goffset)), 0, (__local uint *)(lbuf + loffset));\n", dType[4], dType[4]);
 		}
 		else {
-			snprintf(item, sizeof(item), "      *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
+			snprintf(item, sizeof(item), "        *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
 		}
 		code += item;
+		code += "      }\n";
 		code += "    }\n";
 	}
 	else {
@@ -146,13 +152,16 @@ int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int 
 					, WGHeight, LMWidth, WGHeight);
 				code += item;
 			}
+			snprintf(item, sizeof(item), "    if (goffset > -%d && goffset < %d) {\n", bufferOffset, bufferSize);
+			code += item;
 			if (use_vload) {
-				snprintf(item, sizeof(item), "    vstore%c(vload%c(0, (__global uint *)(gbuf + goffset)), 0, (__local uint *)(lbuf + loffset));\n", dType[4], dType[4]);
+				snprintf(item, sizeof(item), "      vstore%c(vload%c(0, (__global uint *)(gbuf + goffset)), 0, (__local uint *)(lbuf + loffset));\n", dType[4], dType[4]);
 			}
 			else {
-				snprintf(item, sizeof(item), "    *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
+				snprintf(item, sizeof(item), "      *(__local %s *)(lbuf + loffset) = *(__global %s *)(gbuf + goffset);\n", dType, dType);
 			}
 			code += item;
+			code += "    }\n";
 			if (dGroups > 1) {
 				if (y > 0) {
 					code +=
@@ -170,13 +179,16 @@ int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int 
 						"    goffset_t += %d;\n" // WGWidth << dTypeShift
 						, WGWidth << dTypeShift, WGWidth << dTypeShift);
 					code += item;
+					snprintf(item, sizeof(item), "    if (goffset_t > -%d && goffset_t < %d) {\n", bufferOffset, bufferSize);
+					code += item;
 					if (use_vload) {
-						snprintf(item, sizeof(item), "    vstore%c(vload%c(0, (__global uint *)(gbuf + goffset_t)), 0, (__local uint *)(lbuf + loffset_t));\n", dType[4], dType[4]);
+						snprintf(item, sizeof(item), "      vstore%c(vload%c(0, (__global uint *)(gbuf + goffset_t)), 0, (__local uint *)(lbuf + loffset_t));\n", dType[4], dType[4]);
 					}
 					else {
-						snprintf(item, sizeof(item), "    *(__local %s *)(lbuf + loffset_t) = *(__global %s *)(gbuf + goffset_t);\n", dType, dType);
+						snprintf(item, sizeof(item), "      *(__local %s *)(lbuf + loffset_t) = *(__global %s *)(gbuf + goffset_t);\n", dType, dType);
 					}
 					code += item;
+					code += "    }\n";
 				}
 			}
 			if ((LMHeight - y) < WGHeight) {
@@ -224,13 +236,16 @@ int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int 
 					snprintf(item, sizeof(item), "   if (ry < %d) {\n", dHeight);
 					code += item;
 				}
+				snprintf(item, sizeof(item), "    if ((goffset + ry * gstride + (rx << %d)) > -%d && (goffset + ry * gstride + (rx << %d)) < %d) {\n", dTypeShift, bufferOffset, dTypeShift, bufferSize);
+				code += item;
 				if (use_vload) {
-					snprintf(item, sizeof(item), "    vstore%c(vload%c(0, (__global uint *)(gbuf + goffset + ry * gstride + (rx << %d))), 0, (__local uint *)(lbufptr + ry * %d + (rx << %d)));\n", dType[4], dType[4], dTypeShift, LMWidth, dTypeShift);
+					snprintf(item, sizeof(item), "      vstore%c(vload%c(0, (__global uint *)(gbuf + goffset + ry * gstride + (rx << %d))), 0, (__local uint *)(lbufptr + ry * %d + (rx << %d)));\n", dType[4], dType[4], dTypeShift, LMWidth, dTypeShift);
 				}
 				else {
-					snprintf(item, sizeof(item), "    *(__local %s *)(lbufptr + ry * %d + (rx << %d)) = *(__global %s *)(gbuf + goffset + ry * gstride + (rx << %d));\n", dType, LMWidth, dTypeShift, dType, dTypeShift);
+					snprintf(item, sizeof(item), "      *(__local %s *)(lbufptr + ry * %d + (rx << %d)) = *(__global %s *)(gbuf + goffset + ry * gstride + (rx << %d));\n", dType, LMWidth, dTypeShift, dType, dTypeShift);
 				}
 				code += item;
+				code += "    }\n";
 				if ((dSize - dCount) < (WGWidth * WGHeight)) {
 					code += "   }\n";
 				}

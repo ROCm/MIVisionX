@@ -206,26 +206,22 @@ static vx_status VX_CALLBACK validateNormalize(vx_node node, const vx_reference 
 }
 
 static vx_status VX_CALLBACK processNormalize(vx_node node, const vx_reference *parameters, vx_uint32 num) {
-    RppStatus rpp_status = RPP_SUCCESS;
-    vx_status return_status = VX_SUCCESS;
     NormalizeLocalData *data = NULL;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshNormalize(node, parameters, num, data);
+    vx_status status = refreshNormalize(node, parameters, num, data);
+    if (status != VX_SUCCESS) return status;
 #if RPP_AUDIO
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return_status = VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
-        rpp_status = rppt_normalize_gpu(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->axis_mask, data->pMean, data->pStddev, data->computeMeanAndStdDev, data->scale, data->shift, data->pSrcRoi, data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+#if ENABLE_HIP
+    RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+#else
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
+    RppBackend backend = RPP_HOST_BACKEND;
 #endif
-    }
-    if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_normalize_host(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->axis_mask, data->pMean, data->pStddev, data->computeMeanAndStdDev, data->scale, data->shift, data->pSrcRoi, data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-    }
+    RppStatus rpp_status = rppt_normalize(data->pSrc, data->pSrcGenericDesc, data->pDst, data->pDstGenericDesc, data->axis_mask, data->pMean, data->pStddev, data->computeMeanAndStdDev, data->scale, data->shift, data->pSrcRoi, data->handle->rppHandle, backend);
+    return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
-    return return_status;
+    return VX_SUCCESS;
 }
 
 static vx_status VX_CALLBACK initializeNormalize(vx_node node, const vx_reference *parameters, vx_uint32 num) {

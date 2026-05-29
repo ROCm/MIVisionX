@@ -338,33 +338,47 @@ int HafCpu_NonLinearFilter_DATA_DATADATA
                 vx_int32 sstride = src_addr.stride_y;
                 vx_int32 dstride = dst_addr.stride_y;
 
+                // Precompute, per active tap, the row-relative byte offset
+                // (dyo[i]*sstride + dxo[i]). This is invariant across x, so the
+                // inner SIMD/scalar loops can load from (src_p + y*sstride + tapOff[i] + x)
+                // without the per-load row-stride multiply the original code paid.
+                vx_int32 tapOff[9];
+                for (vx_int32 i = 0; i < active_count; i++)
+                    tapOff[i] = dyo[i] * sstride + dxo[i];
+
                 for (y = iy0; y < iy1; y++)
                 {
                     vx_uint8 *drow = dst_p + y * dstride;
+                    const vx_uint8 *srow = src_p + (vx_int32)y * sstride;
+                    // Hoist the per-tap base row pointers out of the x loop and into
+                    // registers. The previous code stored every tap into a vals[]
+                    // array indexed by a runtime trip count (active_count), which
+                    // forced the array to the stack and serialized the loads; pinning
+                    // the taps to named pointers lets the compiler keep them resident
+                    // and is what makes the cross/box median match the dedicated
+                    // Median3x3 kernel's throughput.
+                    const vx_uint8 *t0 = srow + tapOff[0];
+                    const vx_uint8 *t1 = srow + tapOff[1];
+                    const vx_uint8 *t2 = srow + tapOff[2];
+                    const vx_uint8 *t3 = (active_count > 3) ? srow + tapOff[3] : t0;
+                    const vx_uint8 *t4 = (active_count > 4) ? srow + tapOff[4] : t0;
+                    const vx_uint8 *t5 = (active_count > 5) ? srow + tapOff[5] : t0;
+                    const vx_uint8 *t6 = (active_count > 6) ? srow + tapOff[6] : t0;
+                    const vx_uint8 *t7 = (active_count > 7) ? srow + tapOff[7] : t0;
+                    const vx_uint8 *t8 = (active_count > 8) ? srow + tapOff[8] : t0;
                     x = ix0;
 #if USE_AVX
                     // AVX2 chunks of 32 bytes.
                     for (; x + 32 <= ix1; x += 32)
                     {
-                        __m256i vals[9];
-                        for (vx_int32 i = 0; i < active_count; i++)
-                        {
-                            vals[i] = _mm256_loadu_si256((const __m256i *)(src_p + ((vx_int32)y + dyo[i]) * sstride + (vx_int32)x + dxo[i]));
-                        }
                         __m256i result;
-                        if (func == VX_NONLINEAR_FILTER_MIN)
+                        if (func == VX_NONLINEAR_FILTER_MEDIAN && active_count == 5)
                         {
-                            result = vals[0];
-                            for (vx_int32 i = 1; i < active_count; i++) result = _mm256_min_epu8(result, vals[i]);
-                        }
-                        else if (func == VX_NONLINEAR_FILTER_MAX)
-                        {
-                            result = vals[0];
-                            for (vx_int32 i = 1; i < active_count; i++) result = _mm256_max_epu8(result, vals[i]);
-                        }
-                        else if (active_count == 5)
-                        {
-                            __m256i a = vals[0], b = vals[1], c = vals[2], d = vals[3], e = vals[4];
+                            __m256i a = _mm256_loadu_si256((const __m256i *)(t0 + x));
+                            __m256i b = _mm256_loadu_si256((const __m256i *)(t1 + x));
+                            __m256i c = _mm256_loadu_si256((const __m256i *)(t2 + x));
+                            __m256i d = _mm256_loadu_si256((const __m256i *)(t3 + x));
+                            __m256i e = _mm256_loadu_si256((const __m256i *)(t4 + x));
                             __m256i ab_lo = _mm256_min_epu8(a, b);
                             __m256i ab_hi = _mm256_max_epu8(a, b);
                             __m256i cd_lo = _mm256_min_epu8(c, d);
@@ -375,11 +389,17 @@ int HafCpu_NonLinearFilter_DATA_DATADATA
                             __m256i hi = _mm256_max_epu8(rl, ru);
                             result = _mm256_max_epu8(lo, _mm256_min_epu8(hi, e));
                         }
-                        else // active_count == 9, median 3x3 box
+                        else if (func == VX_NONLINEAR_FILTER_MEDIAN) // active_count == 9, median 3x3 box
                         {
-                            __m256i a0 = vals[0], a1 = vals[1], a2 = vals[2];
-                            __m256i a3 = vals[3], a4 = vals[4], a5 = vals[5];
-                            __m256i a6 = vals[6], a7 = vals[7], a8 = vals[8];
+                            __m256i a0 = _mm256_loadu_si256((const __m256i *)(t0 + x));
+                            __m256i a1 = _mm256_loadu_si256((const __m256i *)(t1 + x));
+                            __m256i a2 = _mm256_loadu_si256((const __m256i *)(t2 + x));
+                            __m256i a3 = _mm256_loadu_si256((const __m256i *)(t3 + x));
+                            __m256i a4 = _mm256_loadu_si256((const __m256i *)(t4 + x));
+                            __m256i a5 = _mm256_loadu_si256((const __m256i *)(t5 + x));
+                            __m256i a6 = _mm256_loadu_si256((const __m256i *)(t6 + x));
+                            __m256i a7 = _mm256_loadu_si256((const __m256i *)(t7 + x));
+                            __m256i a8 = _mm256_loadu_si256((const __m256i *)(t8 + x));
                             #define MFCS256(p1, p2) { __m256i mn = _mm256_min_epu8((p1),(p2)); __m256i mx = _mm256_max_epu8((p1),(p2)); (p1) = mn; (p2) = mx; }
                             MFCS256(a1, a2); MFCS256(a4, a5); MFCS256(a7, a8);
                             MFCS256(a0, a1); MFCS256(a3, a4); MFCS256(a6, a7);
@@ -391,32 +411,30 @@ int HafCpu_NonLinearFilter_DATA_DATADATA
                             #undef MFCS256
                             result = a4;
                         }
+                        else // MIN / MAX: accumulate directly, no array spill.
+                        {
+                            result = _mm256_loadu_si256((const __m256i *)(t0 + x));
+                            for (vx_int32 i = 1; i < active_count; i++)
+                            {
+                                __m256i v = _mm256_loadu_si256((const __m256i *)(srow + tapOff[i] + x));
+                                result = (func == VX_NONLINEAR_FILTER_MIN) ? _mm256_min_epu8(result, v) : _mm256_max_epu8(result, v);
+                            }
+                        }
                         _mm256_storeu_si256((__m256i *)(drow + x), result);
                     }
 #endif
                     // SSE chunks of 16 bytes for the remainder.
                     for (; x + 16 <= ix1; x += 16)
                     {
-                        __m128i vals[9];
-                        for (vx_int32 i = 0; i < active_count; i++)
-                        {
-                            vals[i] = _mm_loadu_si128((const __m128i *)(src_p + ((vx_int32)y + dyo[i]) * sstride + (vx_int32)x + dxo[i]));
-                        }
                         __m128i result;
-                        if (func == VX_NONLINEAR_FILTER_MIN)
-                        {
-                            result = vals[0];
-                            for (vx_int32 i = 1; i < active_count; i++) result = _mm_min_epu8(result, vals[i]);
-                        }
-                        else if (func == VX_NONLINEAR_FILTER_MAX)
-                        {
-                            result = vals[0];
-                            for (vx_int32 i = 1; i < active_count; i++) result = _mm_max_epu8(result, vals[i]);
-                        }
-                        else if (active_count == 5)
+                        if (func == VX_NONLINEAR_FILTER_MEDIAN && active_count == 5)
                         {
                             // Median-of-5 via 10 SIMD min/max ops.
-                            __m128i a = vals[0], b = vals[1], c = vals[2], d = vals[3], e = vals[4];
+                            __m128i a = _mm_loadu_si128((const __m128i *)(t0 + x));
+                            __m128i b = _mm_loadu_si128((const __m128i *)(t1 + x));
+                            __m128i c = _mm_loadu_si128((const __m128i *)(t2 + x));
+                            __m128i d = _mm_loadu_si128((const __m128i *)(t3 + x));
+                            __m128i e = _mm_loadu_si128((const __m128i *)(t4 + x));
                             __m128i ab_lo = _mm_min_epu8(a, b);
                             __m128i ab_hi = _mm_max_epu8(a, b);
                             __m128i cd_lo = _mm_min_epu8(c, d);
@@ -427,11 +445,17 @@ int HafCpu_NonLinearFilter_DATA_DATADATA
                             __m128i hi = _mm_max_epu8(rl, ru);
                             result = _mm_max_epu8(lo, _mm_min_epu8(hi, e));
                         }
-                        else // active_count == 9, median 3x3 box
+                        else if (func == VX_NONLINEAR_FILTER_MEDIAN) // active_count == 9, median 3x3 box
                         {
-                            __m128i a0 = vals[0], a1 = vals[1], a2 = vals[2];
-                            __m128i a3 = vals[3], a4 = vals[4], a5 = vals[5];
-                            __m128i a6 = vals[6], a7 = vals[7], a8 = vals[8];
+                            __m128i a0 = _mm_loadu_si128((const __m128i *)(t0 + x));
+                            __m128i a1 = _mm_loadu_si128((const __m128i *)(t1 + x));
+                            __m128i a2 = _mm_loadu_si128((const __m128i *)(t2 + x));
+                            __m128i a3 = _mm_loadu_si128((const __m128i *)(t3 + x));
+                            __m128i a4 = _mm_loadu_si128((const __m128i *)(t4 + x));
+                            __m128i a5 = _mm_loadu_si128((const __m128i *)(t5 + x));
+                            __m128i a6 = _mm_loadu_si128((const __m128i *)(t6 + x));
+                            __m128i a7 = _mm_loadu_si128((const __m128i *)(t7 + x));
+                            __m128i a8 = _mm_loadu_si128((const __m128i *)(t8 + x));
                             #define MFCS(p1, p2) { __m128i mn = _mm_min_epu8((p1),(p2)); __m128i mx = _mm_max_epu8((p1),(p2)); (p1) = mn; (p2) = mx; }
                             MFCS(a1, a2); MFCS(a4, a5); MFCS(a7, a8);
                             MFCS(a0, a1); MFCS(a3, a4); MFCS(a6, a7);
@@ -443,6 +467,15 @@ int HafCpu_NonLinearFilter_DATA_DATADATA
                             #undef MFCS
                             result = a4;
                         }
+                        else // MIN / MAX
+                        {
+                            result = _mm_loadu_si128((const __m128i *)(t0 + x));
+                            for (vx_int32 i = 1; i < active_count; i++)
+                            {
+                                __m128i v = _mm_loadu_si128((const __m128i *)(srow + tapOff[i] + x));
+                                result = (func == VX_NONLINEAR_FILTER_MIN) ? _mm_min_epu8(result, v) : _mm_max_epu8(result, v);
+                            }
+                        }
                         _mm_storeu_si128((__m128i *)(drow + x), result);
                     }
                     // Scalar tail for interior columns past the SIMD chunks.
@@ -450,7 +483,7 @@ int HafCpu_NonLinearFilter_DATA_DATADATA
                     {
                         vx_uint8 sv[9];
                         for (vx_int32 i = 0; i < active_count; i++)
-                            sv[i] = src_p[((vx_int32)y + dyo[i]) * sstride + (vx_int32)x + dxo[i]];
+                            sv[i] = srow[tapOff[i] + (vx_int32)x];
                         vx_uint8 r;
                         if (func == VX_NONLINEAR_FILTER_MIN)
                         {

@@ -358,8 +358,8 @@ int HafCpu_NonLinearFilter_DATA_DATADATA
                     // and is what makes the cross/box median match the dedicated
                     // Median3x3 kernel's throughput.
                     const vx_uint8 *t0 = srow + tapOff[0];
-                    const vx_uint8 *t1 = srow + tapOff[1];
-                    const vx_uint8 *t2 = srow + tapOff[2];
+                    const vx_uint8 *t1 = (active_count > 1) ? srow + tapOff[1] : t0;
+                    const vx_uint8 *t2 = (active_count > 2) ? srow + tapOff[2] : t0;
                     const vx_uint8 *t3 = (active_count > 3) ? srow + tapOff[3] : t0;
                     const vx_uint8 *t4 = (active_count > 4) ? srow + tapOff[4] : t0;
                     const vx_uint8 *t5 = (active_count > 5) ? srow + tapOff[5] : t0;

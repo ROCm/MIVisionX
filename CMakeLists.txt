@@ -196,8 +196,8 @@ if("${BACKEND}" STREQUAL "HIP")
     set(OPTIONAL_GPU_TARGETS "gfx1250")
     if(HAS_ROCM_CHECK_TARGET_IDS)
         rocm_check_target_ids(OPTIONAL_GPU_TARGETS_AVAILABLE TARGETS ${OPTIONAL_GPU_TARGETS})
-    else() # if we don't have rocm_check_target_ids, just assume the targets are available
-        set(OPTIONAL_GPU_TARGETS_AVAILABLE "${OPTIONAL_GPU_TARGETS}")
+    else() # if we don't have rocm_check_target_ids, keep optional targets out of the default list
+      set(OPTIONAL_GPU_TARGETS_AVAILABLE "")
     endif()
     set(DEFAULT_GPU_TARGETS "gfx908;gfx90a;gfx942;gfx1030;gfx1031;gfx1032;gfx1100;gfx1101;gfx1151;gfx1102;gfx950;gfx1200;gfx1201;${OPTIONAL_GPU_TARGETS_AVAILABLE}")
   endif()

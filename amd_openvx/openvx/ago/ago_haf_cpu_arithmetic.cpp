@@ -8872,17 +8872,49 @@ int HafCpu_MinMaxLoc_DATA_U8DATA_Loc_MinMax_Count_MinMax
 	*pDstMaxValue = globalMax;
 
 #if USE_AVX
-	__m256i minVal_ymm = _mm256_set1_epi8((char)globalMin);
-	__m256i maxVal_ymm = _mm256_set1_epi8((char)globalMax);
-	int minCount = 0, maxCount = 0;
-	bool minListNotFull = (minCount < (int)capacityOfMinLocList);
-	bool maxListNotFull = (maxCount < (int)capacityOfMaxLocList);
+	const __m256i minVal_ymm = _mm256_set1_epi8((char)globalMin);
+	const __m256i maxVal_ymm = _mm256_set1_epi8((char)globalMax);
+	const __m256i zero = _mm256_setzero_si256();
+	vx_int64 minCount = 0, maxCount = 0;
+	bool minListNotFull = (0 < (int)capacityOfMinLocList);
+	bool maxListNotFull = (0 < (int)capacityOfMaxLocList);
 	vx_coordinates2d_t loc;
 
 	for (int height = 0; height < (int)srcHeight; height++)
 	{
 		unsigned char *pLocalSrc = (unsigned char *)pSrcImage;
 		int width = 0;
+
+		// Fast path: both location lists are already full, so all that remains
+		// is to tally the per-value occurrence counts. Counting via psadbw on
+		// the 0xFF compare masks (each match contributes 255 to the lane sums)
+		// keeps the whole loop in the vector domain — no vpmovmskb -> popcnt
+		// round-trip through a GPR — so it runs at memory bandwidth. The
+		// detailed location-recording loop below is only needed until the lists
+		// fill (the very first matching chunk for the common capacity-1 case).
+		if (!minListNotFull && !maxListNotFull)
+		{
+			__m256i minAcc = zero, maxAcc = zero;
+			for (; width + 32 <= (int)srcWidth; width += 32, pLocalSrc += 32)
+			{
+				__m256i pixels = _mm256_loadu_si256((__m256i *)pLocalSrc);
+				minAcc = _mm256_add_epi64(minAcc, _mm256_sad_epu8(_mm256_cmpeq_epi8(pixels, minVal_ymm), zero));
+				maxAcc = _mm256_add_epi64(maxAcc, _mm256_sad_epu8(_mm256_cmpeq_epi8(pixels, maxVal_ymm), zero));
+			}
+			vx_uint64 minLanes[4], maxLanes[4];
+			_mm256_storeu_si256((__m256i *)minLanes, minAcc);
+			_mm256_storeu_si256((__m256i *)maxLanes, maxAcc);
+			minCount += (vx_int64)((minLanes[0] + minLanes[1] + minLanes[2] + minLanes[3]) / 255u);
+			maxCount += (vx_int64)((maxLanes[0] + maxLanes[1] + maxLanes[2] + maxLanes[3]) / 255u);
+			for (; width < (int)srcWidth; width++, pLocalSrc++)
+			{
+				if (*pLocalSrc == globalMin) minCount++;
+				if (*pLocalSrc == globalMax) maxCount++;
+			}
+			pSrcImage += srcImageStrideInBytes;
+			continue;
+		}
+
 		for (; width + 32 <= (int)srcWidth; width += 32, pLocalSrc += 32)
 		{
 			__m256i pixels = _mm256_loadu_si256((__m256i *)pLocalSrc);
@@ -8893,7 +8925,7 @@ int HafCpu_MinMaxLoc_DATA_U8DATA_Loc_MinMax_Count_MinMax
 			uint32_t maxMask = (uint32_t)_mm256_movemask_epi8(_mm256_cmpeq_epi8(pixels, maxVal_ymm));
 			int minHits = HafCpu_PopCount32(minMask);
 			int maxHits = HafCpu_PopCount32(maxMask);
-			int oldMinCount = minCount;
+			vx_int64 oldMinCount = minCount;
 			while (minMask && minListNotFull)
 			{
 				int bit = agoCtz32(minMask);
@@ -8906,7 +8938,7 @@ int HafCpu_MinMaxLoc_DATA_U8DATA_Loc_MinMax_Count_MinMax
 			}
 			minCount = oldMinCount + minHits;
 			minListNotFull = (minCount < (int)capacityOfMinLocList);
-			int oldMaxCount = maxCount;
+			vx_int64 oldMaxCount = maxCount;
 			while (maxMask && maxListNotFull)
 			{
 				int bit = agoCtz32(maxMask);
@@ -8948,8 +8980,8 @@ int HafCpu_MinMaxLoc_DATA_U8DATA_Loc_MinMax_Count_MinMax
 		pSrcImage += srcImageStrideInBytes;
 	}
 
-	*pMinLocCount = (vx_int32)minCount;
-	*pMaxLocCount = (vx_int32)maxCount;
+	*pMinLocCount = (vx_uint32)minCount;
+	*pMaxLocCount = (vx_uint32)maxCount;
 	return AGO_SUCCESS;
 #else
 	// Search for the min and the max values in the source image

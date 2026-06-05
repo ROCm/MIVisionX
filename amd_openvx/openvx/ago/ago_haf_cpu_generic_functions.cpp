@@ -1368,6 +1368,201 @@ static void HafCpu_PyramidUp_Gaussian5x5_Subtract_U8(
     }
 }
 
+// Fused PyramidUp (5x5 Gaussian, replicate border) + saturating add:
+//   recon[y,x] = saturate(upsampled_s16[y,x] + laplacian_s16[y,x])
+// where upsampled_s16 = HafCpu_PyramidUp_Gaussian5x5(fill_u8 -> S16, dst size = laplacian size),
+// using the exact (sum >> 8) << 2 spec formula the upsampleImage fast path already
+// emits. This is the reconstruction counterpart of HafCpu_PyramidUp_Gaussian5x5_Subtract_U8
+// and lets LaplacianReconstruct avoid the per-level immediate-mode vxuAdd graph
+// (build/verify/execute/teardown) plus the scalar ownCopyImage that made it ~38x
+// slower than OpenCV.
+//
+// `fill` is the (already U8-saturated) lower-resolution level. `lap` is the S16
+// laplacian level at the destination resolution. When `out_is_s16` the result is
+// written as S16 saturated to [INT16_MIN, INT16_MAX] (final output image is S16);
+// otherwise it is written as U8 saturated to [0, 255] (intermediate levels feed the
+// next upsample as U8, exactly as the legacy path saturated the S16 sum back to U8
+// before the next upsampleImage call, and the final U8 output image).
+static void HafCpu_PyramidUp_Gaussian5x5_Add(
+    const vx_uint8 *fill, vx_int32 fillStride, vx_int32 srcW, vx_int32 srcH,
+    const vx_int16 *lap, vx_int32 lapStride,
+    void *dst, vx_int32 dstStride, vx_int32 dstW, vx_int32 dstH,
+    bool out_is_s16)
+{
+    // Vertical buffer (same layout as HafCpu_PyramidUp_Gaussian5x5_U8).
+    std::vector<vx_int16> Vbuf((size_t)srcW + 18);
+    vx_int16 *V = Vbuf.data();
+
+    const __m128i zero128 = _mm_setzero_si128();
+    const __m128i mul6_128 = _mm_set1_epi16(6);
+#if USE_AVX
+    const __m256i zero256 = _mm256_setzero_si256();
+    const __m256i mul6_256 = _mm256_set1_epi16(6);
+#endif
+
+    for (vx_int32 y = 0; y < dstH; y++)
+    {
+        bool y_even = (y & 1) == 0;
+        vx_int32 fy = y >> 1;
+        vx_int32 fy_top = fy - 1;
+        vx_int32 fy_mid = fy;
+        vx_int32 fy_bot = fy + 1;
+        if (fy_top < 0) fy_top = 0;
+        if (fy_mid >= srcH) fy_mid = srcH - 1;
+        if (fy_bot >= srcH) fy_bot = srcH - 1;
+        const vx_uint8 *rm = y_even ? (fill + (size_t)fy_top * fillStride) : nullptr;
+        const vx_uint8 *r0 = (fill + (size_t)fy_mid * fillStride);
+        const vx_uint8 *rp = (fill + (size_t)fy_bot * fillStride);
+
+        vx_int32 fx = 0;
+        if (y_even)
+        {
+#if USE_AVX
+            for (; fx + 32 <= srcW; fx += 32)
+            {
+                __m256i a = rm ? _mm256_loadu_si256((const __m256i *)(rm + fx)) : zero256;
+                __m256i b = r0 ? _mm256_loadu_si256((const __m256i *)(r0 + fx)) : zero256;
+                __m256i c = rp ? _mm256_loadu_si256((const __m256i *)(rp + fx)) : zero256;
+                __m256i a_lo = _mm256_unpacklo_epi8(a, zero256);
+                __m256i a_hi = _mm256_unpackhi_epi8(a, zero256);
+                __m256i b_lo = _mm256_unpacklo_epi8(b, zero256);
+                __m256i b_hi = _mm256_unpackhi_epi8(b, zero256);
+                __m256i c_lo = _mm256_unpacklo_epi8(c, zero256);
+                __m256i c_hi = _mm256_unpackhi_epi8(c, zero256);
+                __m256i vlo = _mm256_add_epi16(_mm256_add_epi16(a_lo, c_lo), _mm256_mullo_epi16(b_lo, mul6_256));
+                __m256i vhi = _mm256_add_epi16(_mm256_add_epi16(a_hi, c_hi), _mm256_mullo_epi16(b_hi, mul6_256));
+                __m256i out_lo = _mm256_permute2x128_si256(vlo, vhi, 0x20);
+                __m256i out_hi = _mm256_permute2x128_si256(vlo, vhi, 0x31);
+                _mm256_storeu_si256((__m256i *)(V + 1 + fx), out_lo);
+                _mm256_storeu_si256((__m256i *)(V + 1 + fx + 16), out_hi);
+            }
+#endif
+            for (; fx + 16 <= srcW; fx += 16)
+            {
+                __m128i a = rm ? _mm_loadu_si128((const __m128i *)(rm + fx)) : zero128;
+                __m128i b = r0 ? _mm_loadu_si128((const __m128i *)(r0 + fx)) : zero128;
+                __m128i c = rp ? _mm_loadu_si128((const __m128i *)(rp + fx)) : zero128;
+                __m128i a_lo = _mm_unpacklo_epi8(a, zero128);
+                __m128i a_hi = _mm_unpackhi_epi8(a, zero128);
+                __m128i b_lo = _mm_unpacklo_epi8(b, zero128);
+                __m128i b_hi = _mm_unpackhi_epi8(b, zero128);
+                __m128i c_lo = _mm_unpacklo_epi8(c, zero128);
+                __m128i c_hi = _mm_unpackhi_epi8(c, zero128);
+                __m128i vlo = _mm_add_epi16(_mm_add_epi16(a_lo, c_lo), _mm_mullo_epi16(b_lo, mul6_128));
+                __m128i vhi = _mm_add_epi16(_mm_add_epi16(a_hi, c_hi), _mm_mullo_epi16(b_hi, mul6_128));
+                _mm_storeu_si128((__m128i *)(V + 1 + fx), vlo);
+                _mm_storeu_si128((__m128i *)(V + 1 + fx + 8), vhi);
+            }
+            for (; fx < srcW; fx++)
+            {
+                vx_int16 av = rm ? rm[fx] : 0;
+                vx_int16 bv = r0 ? r0[fx] : 0;
+                vx_int16 cv = rp ? rp[fx] : 0;
+                V[1 + fx] = (vx_int16)(av + 6 * bv + cv);
+            }
+        }
+        else
+        {
+#if USE_AVX
+            for (; fx + 32 <= srcW; fx += 32)
+            {
+                __m256i b = r0 ? _mm256_loadu_si256((const __m256i *)(r0 + fx)) : zero256;
+                __m256i c = rp ? _mm256_loadu_si256((const __m256i *)(rp + fx)) : zero256;
+                __m256i b_lo = _mm256_unpacklo_epi8(b, zero256);
+                __m256i b_hi = _mm256_unpackhi_epi8(b, zero256);
+                __m256i c_lo = _mm256_unpacklo_epi8(c, zero256);
+                __m256i c_hi = _mm256_unpackhi_epi8(c, zero256);
+                __m256i vlo = _mm256_slli_epi16(_mm256_add_epi16(b_lo, c_lo), 2);
+                __m256i vhi = _mm256_slli_epi16(_mm256_add_epi16(b_hi, c_hi), 2);
+                __m256i out_lo = _mm256_permute2x128_si256(vlo, vhi, 0x20);
+                __m256i out_hi = _mm256_permute2x128_si256(vlo, vhi, 0x31);
+                _mm256_storeu_si256((__m256i *)(V + 1 + fx), out_lo);
+                _mm256_storeu_si256((__m256i *)(V + 1 + fx + 16), out_hi);
+            }
+#endif
+            for (; fx + 16 <= srcW; fx += 16)
+            {
+                __m128i b = r0 ? _mm_loadu_si128((const __m128i *)(r0 + fx)) : zero128;
+                __m128i c = rp ? _mm_loadu_si128((const __m128i *)(rp + fx)) : zero128;
+                __m128i b_lo = _mm_unpacklo_epi8(b, zero128);
+                __m128i b_hi = _mm_unpackhi_epi8(b, zero128);
+                __m128i c_lo = _mm_unpacklo_epi8(c, zero128);
+                __m128i c_hi = _mm_unpackhi_epi8(c, zero128);
+                __m128i vlo = _mm_slli_epi16(_mm_add_epi16(b_lo, c_lo), 2);
+                __m128i vhi = _mm_slli_epi16(_mm_add_epi16(b_hi, c_hi), 2);
+                _mm_storeu_si128((__m128i *)(V + 1 + fx), vlo);
+                _mm_storeu_si128((__m128i *)(V + 1 + fx + 8), vhi);
+            }
+            for (; fx < srcW; fx++)
+            {
+                vx_int16 bv = r0 ? r0[fx] : 0;
+                vx_int16 cv = rp ? rp[fx] : 0;
+                V[1 + fx] = (vx_int16)(4 * (bv + cv));
+            }
+        }
+        V[0] = V[1];                       // left replicate
+        V[srcW + 1] = V[srcW];             // right replicate (CTS reference INSERT_VALUES_X)
+        V[srcW + 2] = V[srcW];
+        for (int i = 3; i < 18; i++) V[srcW + i] = V[srcW];
+
+        // Horizontal pass + add laplacian, at 128-bit (8 source cols -> 16 dst) granularity.
+        const vx_int16 *lrow = (const vx_int16 *)((const vx_uint8 *)lap + (size_t)y * lapStride);
+        vx_uint8 *drow8 = (vx_uint8 *)dst + (size_t)y * dstStride;
+        vx_int16 *drow16 = (vx_int16 *)((vx_uint8 *)dst + (size_t)y * dstStride);
+        fx = 0;
+        vx_int32 fx_max = (srcW >= 8) ? srcW - 8 : 0;
+        for (; fx <= fx_max && 2*fx + 16 <= dstW; fx += 8)
+        {
+            __m128i v_left   = _mm_loadu_si128((const __m128i *)(V + fx));
+            __m128i v_center = _mm_loadu_si128((const __m128i *)(V + fx + 1));
+            __m128i v_right  = _mm_loadu_si128((const __m128i *)(V + fx + 2));
+            __m128i h_even = _mm_add_epi16(_mm_add_epi16(v_left, v_right), _mm_mullo_epi16(v_center, mul6_128));
+            __m128i h_odd  = _mm_slli_epi16(_mm_add_epi16(v_center, v_right), 2);
+            __m128i out_even = _mm_slli_epi16(_mm_srai_epi16(h_even, 8), 2);
+            __m128i out_odd  = _mm_slli_epi16(_mm_srai_epi16(h_odd, 8), 2);
+            __m128i up_lo = _mm_unpacklo_epi16(out_even, out_odd);  // dst[2fx .. 2fx+7]
+            __m128i up_hi = _mm_unpackhi_epi16(out_even, out_odd);  // dst[2fx+8 .. 2fx+15]
+            __m128i lap_lo = _mm_loadu_si128((const __m128i *)(lrow + 2*fx));
+            __m128i lap_hi = _mm_loadu_si128((const __m128i *)(lrow + 2*fx + 8));
+            __m128i sum_lo = _mm_adds_epi16(up_lo, lap_lo);  // saturate to s16
+            __m128i sum_hi = _mm_adds_epi16(up_hi, lap_hi);
+            if (out_is_s16)
+            {
+                _mm_storeu_si128((__m128i *)(drow16 + 2*fx),     sum_lo);
+                _mm_storeu_si128((__m128i *)(drow16 + 2*fx + 8), sum_hi);
+            }
+            else
+            {
+                __m128i packed = _mm_packus_epi16(sum_lo, sum_hi); // saturate to u8
+                _mm_storeu_si128((__m128i *)(drow8 + 2*fx), packed);
+            }
+        }
+        for (vx_int32 x = 2*fx; x < dstW; x++)
+        {
+            vx_int32 fxx = x >> 1;
+            vx_int32 H = ((x & 1) == 0)
+                ? (V[fxx] + 6 * V[fxx + 1] + V[fxx + 2])
+                : (4 * (V[fxx + 1] + V[fxx + 2]));
+            vx_int32 dv = (H >> 8) << 2;
+            vx_int32 sum = dv + (vx_int32)lrow[x];
+            // Saturate to s16 first (matches the SATURATE policy vxuAdd applied to the
+            // S16 intermediate), then narrow to u8 when the destination is U8.
+            if (sum > INT16_MAX) sum = INT16_MAX;
+            else if (sum < INT16_MIN) sum = INT16_MIN;
+            if (out_is_s16)
+            {
+                drow16[x] = (vx_int16)sum;
+            }
+            else
+            {
+                if (sum > 255) sum = 255;
+                else if (sum < 0) sum = 0;
+                drow8[x] = (vx_uint8)sum;
+            }
+        }
+    }
+}
+
 static vx_status upsampleImage(vx_context context, vx_uint32 width, vx_uint32 height, vx_image filling, vx_convolution conv, vx_image upsample, vx_border_t *border)
 {
     vx_status status = VX_SUCCESS;
@@ -1998,9 +2193,14 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
 
 #define VX_SCALE_PYRAMID_DOUBLE (2.0f)
 
-int HafCpu_LaplacianReconstruct_DATA_DATA_DATA
+// Legacy reference path retained as a safety fallback when the fast direct
+// path's preconditions are not met (unexpected formats, non-HALF pyramid
+// scale, GPU affinity, map/stride failures). Avoid using for hot benchmark
+// cases: each level builds/verifies/executes/tears-down an immediate-mode
+// vxuAdd graph and runs the scalar ownCopyImage copies.
+static int HafCpu_LaplacianReconstruct_Legacy
     (
-        vx_node node, 
+        vx_node node,
         vx_pyramid laplacian,
         vx_image input,
         vx_image output
@@ -2080,5 +2280,257 @@ int HafCpu_LaplacianReconstruct_DATA_DATA_DATA
     status |= vxReleaseConvolution(&conv);
     status |= vxReleaseScalar(&spolicy);
     
+    return status;
+}
+
+int HafCpu_LaplacianReconstruct_DATA_DATA_DATA
+    (
+        vx_node node,
+        vx_pyramid laplacian,
+        vx_image input,
+        vx_image output
+    )
+{
+    vx_status status = VX_SUCCESS;
+
+    vx_size levels = 1;
+    vx_uint32 in_w = 0, in_h = 0;
+    vx_df_image in_format = 0, out_format = 0, lap_format = 0;
+    vx_float32 lap_scale = 0.f;
+
+    status |= vxQueryImage(input, VX_IMAGE_WIDTH, &in_w, sizeof(in_w));
+    status |= vxQueryImage(input, VX_IMAGE_HEIGHT, &in_h, sizeof(in_h));
+    status |= vxQueryImage(input, VX_IMAGE_FORMAT, &in_format, sizeof(in_format));
+    status |= vxQueryImage(output, VX_IMAGE_FORMAT, &out_format, sizeof(out_format));
+    status |= vxQueryPyramid(laplacian, VX_PYRAMID_LEVELS, &levels, sizeof(levels));
+    status |= vxQueryPyramid(laplacian, VX_PYRAMID_FORMAT, &lap_format, sizeof(lap_format));
+    status |= vxQueryPyramid(laplacian, VX_PYRAMID_SCALE, &lap_scale, sizeof(lap_scale));
+
+    // Direct CPU path preconditions: U8/S16 input, S16 laplacian, U8/S16 output,
+    // HALF-scale pyramid (so each reconstruct step upsamples by 2x). Anything
+    // else routes to the legacy immediate-mode graph path.
+    if (status != VX_SUCCESS || levels < 1 ||
+        (in_format != VX_DF_IMAGE_U8 && in_format != VX_DF_IMAGE_S16) ||
+        lap_format != VX_DF_IMAGE_S16 ||
+        (out_format != VX_DF_IMAGE_U8 && out_format != VX_DF_IMAGE_S16) ||
+        lap_scale != VX_SCALE_PYRAMID_HALF)
+    {
+        return HafCpu_LaplacianReconstruct_Legacy(node, laplacian, input, output);
+    }
+
+    // GPU-affinity fallback: mirror HafCpu_LaplacianPyramid_DATA_DATA_DATA so the
+    // reference path and implementation run gaussian/upsample on the same device
+    // (the CTS reference's vxuAdd / upsample would otherwise execute on GPU on a
+    // HIP/OCL build and disagree with the CPU SIMD primitive at edge pixels).
+    {
+        AgoNode * agoNode = (AgoNode *)node;
+        AgoData * inputData = (AgoData *)input;
+        bool gpu_path_required = false;
+#if ENABLE_OPENCL || ENABLE_HIP
+        gpu_path_required = true;
+        char envBuf[64];
+        if (agoGetEnvironmentVariable("AGO_DEFAULT_TARGET", envBuf, sizeof(envBuf)) &&
+            !strcmp(envBuf, "CPU"))
+        {
+            gpu_path_required = false;
+        }
+        if (agoNode && agoNode->ref.context &&
+            agoNode->ref.context->attr_affinity.device_type == AGO_TARGET_AFFINITY_CPU)
+        {
+            gpu_path_required = false;
+        }
+#else
+        if (agoNode && agoNode->ref.context &&
+            agoNode->ref.context->attr_affinity.device_type == AGO_TARGET_AFFINITY_GPU)
+        {
+            gpu_path_required = true;
+        }
+#endif
+#if ENABLE_OPENCL
+        if (inputData && inputData->opencl_buffer) gpu_path_required = true;
+#endif
+#if ENABLE_HIP
+        if (inputData && inputData->hip_memory) gpu_path_required = true;
+#endif
+        (void)inputData;
+        (void)agoNode;
+        if (gpu_path_required)
+        {
+            return HafCpu_LaplacianReconstruct_Legacy(node, laplacian, input, output);
+        }
+    }
+
+    // The reconstruct walks the laplacian pyramid from the deepest level
+    // (index levels-1, smallest) up to level 0 (largest = output resolution).
+    // Step `lev` upsamples the running level by 2x and adds laplacian level
+    // (levels-1-lev). We drive each step's destination dimensions from the
+    // actual laplacian level image so ceil-rounding always matches the stored
+    // pyramid (and bail to legacy on any map/stride surprise).
+    std::vector<vx_uint8 *> cptr(levels + 1, nullptr);   // U8 working buffers, index by "src" level
+    std::vector<vx_int32> cstride(levels + 1, 0);
+    std::vector<void *> cowned(levels + 1, nullptr);
+    auto release_owned = [&]() {
+        for (vx_size i = 0; i <= levels; i++) {
+            if (cowned[i]) { free(cowned[i]); cowned[i] = nullptr; }
+        }
+    };
+
+    // Allocate the deepest U8 working buffer (holds the saturated input) and one
+    // U8 buffer per intermediate reconstructed level (levels 1..levels-1). The
+    // final level writes straight into the output image, so it needs no owned
+    // buffer. Index convention: buf[k] holds the reconstructed/input level whose
+    // resolution feeds the upsample producing laplacian level (k-1).
+    //   buf[levels] = saturate_u8(input)            (smallest)
+    //   buf[k]      = reconstructed laplacian level k (1 <= k <= levels-1)
+    // Sizes come from the laplacian level dims; buf[levels] uses the input dims.
+    {
+        vx_int32 stride = (vx_int32)((in_w + 15) & ~15);
+        size_t bytes = (size_t)stride * (in_h ? in_h : 1);
+        void *p = nullptr;
+        if (posix_memalign(&p, 64, bytes) != 0 || !p)
+        {
+            release_owned();
+            return HafCpu_LaplacianReconstruct_Legacy(node, laplacian, input, output);
+        }
+        memset(p, 0, bytes);
+        cowned[levels] = p;
+        cptr[levels] = (vx_uint8 *)p;
+        cstride[levels] = stride;
+    }
+
+    // Saturate-copy the deepest input image into buf[levels] as U8 (matches the
+    // legacy path saturating the S16 `filling` to U8 inside upsampleImage).
+    {
+        vx_rectangle_t r_in;
+        vxGetValidRegionImage(input, &r_in);
+        vx_imagepatch_addressing_t a_in = VX_IMAGEPATCH_ADDR_INIT;
+        vx_map_id m_in = 0;
+        void *b_in = nullptr;
+        vx_status st = vxMapImagePatch(input, &r_in, 0, &m_in, &a_in, &b_in,
+                                       VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
+        if (st != VX_SUCCESS)
+        {
+            release_owned();
+            return HafCpu_LaplacianReconstruct_Legacy(node, laplacian, input, output);
+        }
+        vx_uint32 cw = (a_in.dim_x < in_w) ? a_in.dim_x : in_w;
+        vx_uint32 ch = (a_in.dim_y < in_h) ? a_in.dim_y : in_h;
+        vx_uint8 *dst_p = cptr[levels];
+        if (in_format == VX_DF_IMAGE_U8)
+        {
+            const vx_uint8 *src_p = (const vx_uint8 *)b_in;
+            for (vx_uint32 r = 0; r < ch; r++)
+                memcpy(dst_p + (size_t)r * cstride[levels],
+                       src_p + (size_t)r * a_in.stride_y, cw);
+        }
+        else // S16 input -> saturate to U8
+        {
+            for (vx_uint32 r = 0; r < ch; r++)
+            {
+                const vx_int16 *src_p = (const vx_int16 *)((const vx_uint8 *)b_in + (size_t)r * a_in.stride_y);
+                vx_uint8 *drow = dst_p + (size_t)r * cstride[levels];
+                for (vx_uint32 c = 0; c < cw; c++)
+                {
+                    vx_int32 v = src_p[c];
+                    drow[c] = (vx_uint8)((v < 0) ? 0 : ((v > 255) ? 255 : v));
+                }
+            }
+        }
+        vxUnmapImagePatch(input, m_in);
+    }
+
+    vx_int32 src_w = (vx_int32)in_w;
+    vx_int32 src_h = (vx_int32)in_h;
+    vx_size cur_idx = levels;
+
+    for (vx_size lev = 0; lev < levels; lev++)
+    {
+        vx_uint32 idx = (vx_uint32)((levels - 1) - lev);   // laplacian level for this step
+        bool is_final = (idx == 0);
+
+        vx_image lap_img = vxGetPyramidLevel(laplacian, idx);
+        vx_rectangle_t r_lap;
+        vxGetValidRegionImage(lap_img, &r_lap);
+        vx_imagepatch_addressing_t a_lap = VX_IMAGEPATCH_ADDR_INIT;
+        vx_map_id m_lap = 0;
+        void *b_lap = nullptr;
+        vx_status st = vxMapImagePatch(lap_img, &r_lap, 0, &m_lap, &a_lap, &b_lap,
+                                       VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
+        if (st != VX_SUCCESS || a_lap.stride_x != 2)
+        {
+            if (st == VX_SUCCESS) vxUnmapImagePatch(lap_img, m_lap);
+            vxReleaseImage(&lap_img);
+            release_owned();
+            return HafCpu_LaplacianReconstruct_Legacy(node, laplacian, input, output);
+        }
+        vx_int32 dst_w = (vx_int32)a_lap.dim_x;
+        vx_int32 dst_h = (vx_int32)a_lap.dim_y;
+
+        if (is_final)
+        {
+            // Write the reconstructed full-resolution level straight into output.
+            vx_rectangle_t r_out;
+            vxGetValidRegionImage(output, &r_out);
+            vx_imagepatch_addressing_t a_out = VX_IMAGEPATCH_ADDR_INIT;
+            vx_map_id m_out = 0;
+            void *b_out = nullptr;
+            vx_status sto = vxMapImagePatch(output, &r_out, 0, &m_out, &a_out, &b_out,
+                                            VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
+            bool out_is_s16 = (out_format == VX_DF_IMAGE_S16);
+            if (sto != VX_SUCCESS ||
+                a_out.stride_x != (out_is_s16 ? 2 : 1))
+            {
+                if (sto == VX_SUCCESS) vxUnmapImagePatch(output, m_out);
+                vxUnmapImagePatch(lap_img, m_lap);
+                vxReleaseImage(&lap_img);
+                release_owned();
+                return HafCpu_LaplacianReconstruct_Legacy(node, laplacian, input, output);
+            }
+            // Guard against the reconstruct node's floor-based output meta being
+            // smaller than the (ceil-based) laplacian level 0: never write past
+            // the mapped output region. Matches the legacy ownCopyImage, which
+            // copies only the overlapping valid region.
+            vx_int32 ow = (vx_int32)a_out.dim_x, oh = (vx_int32)a_out.dim_y;
+            if (dst_w > ow) dst_w = ow;
+            if (dst_h > oh) dst_h = oh;
+            HafCpu_PyramidUp_Gaussian5x5_Add(
+                cptr[cur_idx], cstride[cur_idx], src_w, src_h,
+                (const vx_int16 *)b_lap, a_lap.stride_y,
+                b_out, a_out.stride_y, dst_w, dst_h,
+                out_is_s16);
+            vxUnmapImagePatch(output, m_out);
+        }
+        else
+        {
+            // Allocate this level's U8 working buffer and reconstruct into it.
+            vx_int32 stride = (vx_int32)((dst_w + 15) & ~15);
+            size_t bytes = (size_t)stride * (dst_h ? dst_h : 1);
+            void *p = nullptr;
+            if (posix_memalign(&p, 64, bytes) != 0 || !p)
+            {
+                vxUnmapImagePatch(lap_img, m_lap);
+                vxReleaseImage(&lap_img);
+                release_owned();
+                return HafCpu_LaplacianReconstruct_Legacy(node, laplacian, input, output);
+            }
+            memset(p, 0, bytes);
+            cowned[idx] = p;
+            cptr[idx] = (vx_uint8 *)p;
+            cstride[idx] = stride;
+            HafCpu_PyramidUp_Gaussian5x5_Add(
+                cptr[cur_idx], cstride[cur_idx], src_w, src_h,
+                (const vx_int16 *)b_lap, a_lap.stride_y,
+                cptr[idx], cstride[idx], dst_w, dst_h,
+                false);
+            cur_idx = idx;
+            src_w = dst_w;
+            src_h = dst_h;
+        }
+
+        vxUnmapImagePatch(lap_img, m_lap);
+        vxReleaseImage(&lap_img);
+    }
+
+    release_owned();
     return status;
 }

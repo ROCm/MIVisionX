@@ -748,23 +748,48 @@ jobs:
   #   2. `--threads 1` pin on both binaries so OpenCV's TBB/OpenMP default
   #      doesn't silently turn this into "1-thread OpenVX vs n-thread OpenCV".
   #      MIVisionX's AGO CPU path is single-threaded per kernel anyway.
-  #   3. `--feature-set vision` (or `vision,framework` on the OpenVX side) at
-  #      FHD × 20 iterations × 5 warmup. opencv-mark deliberately doesn't
-  #      implement the `framework` feature set (OpenCV has no graph framework
-  #      analogue), and `compare_reports.py` silently drops non-overlapping
-  #      benchmarks, so framework rows simply don't appear in the OpenCV
-  #      comparison.
-  #   4. `--dump-outputs` from both binaries feeds `cross_verify_outputs.py`
-  #      to prove numerical equivalence — the speedup numbers below are
-  #      only credible if OpenCV and MIVisionX agree at the pixel level.
-  #   5. `ci_pairwise_summary.py` renders the GitHub Actions step summary
-  #      (TL;DR speedup matrix + grouped headline tables + collapsed
-  #      per-kernel detail). Same shape and helper as the upstream CI.
+  #   3. An explicit `--kernel "$PARITY_KERNELS"` filter (see the job `env`
+  #      below) runs exactly the 42 OpenVX vision kernels that have a 1:1
+  #      OpenCV equivalent, at FHD × 20 iterations × 5 warmup. This is
+  #      upstream's getVisionParityKernels() set (41) plus LaplacianReconstruct
+  #      — which TOT openvx-mark added to the vision feature set (42/42) and
+  #      ships on both binaries, but hasn't yet folded into the `--vision-parity`
+  #      flag. `compare_reports.py` joins the two reports on matching kernel
+  #      names, so the speedup table maps all 42 vision kernels.
+  #   4. `.github/scripts/benchmark_summary.py` renders the GitHub Actions
+  #      step summary as the headline: a one-sentence verdict ("AMD OpenVX is
+  #      Nx faster than OpenCV"), an at-a-glance facts table, per-category
+  #      speedups, top wins, any kernels where OpenCV wins, and a collapsed
+  #      full 42-kernel table. `compare_reports.py` still runs to produce the
+  #      rich md/csv detail uploaded as the `benchmark-comparison` artifact.
+  #   5. `--dump-outputs` from both binaries feeds `cross_verify_outputs.py`,
+  #      rendered as a collapsed appendix below the headline — it proves the
+  #      speedups are honest (both impls emit the same pixels), so the timing
+  #      numbers are only credible because OpenCV and MIVisionX agree.
   # ===========================================================================
 
   benchmark:
     name: Release OpenVX vs OpenCV benchmark
     runs-on: ubuntu-24.04
+    env:
+      # The 42 OpenVX vision kernels we compare apples-to-apples against
+      # OpenCV — one row per kernel on each binary. This is upstream
+      # openvx-mark's getVisionParityKernels() set (41) PLUS
+      # LaplacianReconstruct.
+      #
+      # TOT openvx-mark promoted LaplacianReconstruct into the vision
+      # feature set (vision is now 42/42 conformant) and ships a 1:1
+      # benchmark for it on BOTH openvx-mark and opencv-mark, but it has
+      # not yet been added to the hardcoded `--vision-parity` flag (still
+      # 41). Driving both binaries with an explicit `--kernel` filter keeps
+      # this CI authoritative at 42 regardless of that upstream flag lag, so
+      # the speedup summary maps every one of the 42 vision kernels.
+      #
+      # Names use the exact benchmark-case names both binaries register
+      # (incl. the canonical variant rows: ColorConvert_RGB2IYUV,
+      # ScaleImage_Half, Threshold_Binary). Keep in sync with upstream's
+      # getVisionParityKernels() in include/benchmark_config.h.
+      PARITY_KERNELS: "And,Or,Xor,Not,AbsDiff,Add,Subtract,Multiply,Box3x3,Gaussian3x3,Median3x3,Erode3x3,Dilate3x3,Sobel3x3,CustomConvolution,NonLinearFilter,ColorConvert_RGB2IYUV,ChannelExtract,ChannelCombine,ConvertDepth,ScaleImage_Half,WarpAffine,WarpPerspective,Remap,Histogram,EqualizeHist,MeanStdDev,MinMaxLoc,IntegralImage,GaussianPyramid,LaplacianPyramid,LaplacianReconstruct,HalfScaleGaussian,CannyEdgeDetector,HarrisCorners,FastCorners,OpticalFlowPyrLK,Magnitude,Phase,TableLookup,Threshold_Binary,WeightedAverage"
     needs:
       - build
       - baseline
@@ -833,38 +858,82 @@ jobs:
           ./openvx-mark --validate-timing
           ./opencv-mark/opencv-mark --validate-timing
 
-      - name: Bench MIVisionX (vision-parity, FHD × 20, single-threaded)
+      - name: Bench MIVisionX (42 vision kernels, FHD × 20, single-threaded)
         run: |
           cd ${{ github.workspace }}/openvx-mark/build
           export LD_LIBRARY_PATH=${{ github.workspace }}/artifacts/build/lib
-          # `--vision-parity` runs exactly the 41 OpenVX vision kernels that
-          # have a 1:1 OpenCV equivalent — apples-to-apples per-kernel rows
-          # across both binaries. Warmup uses the same iteration count as the
-          # full bench so the second `--warmup 5` JIT/cache warmup matters.
+          # Explicit `--kernel "$PARITY_KERNELS"` runs exactly the 42 OpenVX
+          # vision kernels that have a 1:1 OpenCV equivalent — apples-to-apples
+          # per-kernel rows across both binaries (supersedes the upstream
+          # `--vision-parity` flag, which still hardcodes only 41 and omits
+          # LaplacianReconstruct). `--skip-pipelines` matches the parity
+          # semantics (graph mode is the default). Warmup uses the same kernel
+          # set so the second `--warmup 5` JIT/cache warmup matters.
           ./openvx-mark --resolution FHD --iterations 5 --warmup 0 --threads 1 \
-            --vision-parity --output-dir /tmp/warmup-mivisionx-throwaway \
+            --kernel "$PARITY_KERNELS" --skip-pipelines \
+            --output-dir /tmp/warmup-mivisionx-throwaway \
             >/dev/null 2>&1 || true
-          ./openvx-mark --vision-parity \
+          ./openvx-mark --kernel "$PARITY_KERNELS" --skip-pipelines \
             --resolution FHD --iterations 20 --warmup 5 --threads 1 \
             --output-dir results-mivisionx
           # Sentinel-kernel dump for downstream cross_verify_outputs.py.
           # Runs the kernel set ONCE (no timing, no warmup) so it's cheap.
           ./openvx-mark --dump-outputs dump-mivisionx --seed 42
 
-      - name: Bench OpenCV (vision-parity, FHD × 20, single-threaded)
+      - name: Bench OpenCV (42 vision kernels, FHD × 20, single-threaded)
         run: |
           cd ${{ github.workspace }}/openvx-mark/build
+          # Same explicit 42-kernel set as the MIVisionX side so the two
+          # reports join 1:1 in the pairwise comparison below.
           # `--threads 1` calls cv::setNumThreads(1) and sets OMP_NUM_THREADS=1
           # for any OpenMP-using OpenCV code path. Without this OpenCV would
           # grab nproc threads via TBB by default and silently get an unfair
           # parallelism boost vs single-threaded MIVisionX.
           ./opencv-mark/opencv-mark --resolution FHD --iterations 5 --warmup 0 --threads 1 \
-            --vision-parity --output-dir /tmp/warmup-opencv-throwaway \
+            --kernel "$PARITY_KERNELS" --skip-pipelines \
+            --output-dir /tmp/warmup-opencv-throwaway \
             >/dev/null 2>&1 || true
-          ./opencv-mark/opencv-mark --vision-parity \
+          ./opencv-mark/opencv-mark --kernel "$PARITY_KERNELS" --skip-pipelines \
             --resolution FHD --iterations 20 --warmup 5 --threads 1 \
             --output-dir results-opencv
           ./opencv-mark/opencv-mark --dump-outputs dump-opencv --seed 42
+
+      - name: Summarize speedup (AMD OpenVX vs OpenCV, 42 vision kernels)
+        if: always()
+        run: |
+          set -euo pipefail
+          cd ${{ github.workspace }}/openvx-mark
+          OPENVX=build/results-mivisionx/benchmark_results.json
+          OPENCV=build/results-opencv/benchmark_results.json
+          if [ ! -f "$OPENVX" ] || [ ! -f "$OPENCV" ]; then
+            {
+              echo "# AMD OpenVX vs OpenCV — vision kernel speedup (CPU / host backend)"
+              echo ""
+              echo "_Missing benchmark results — cannot render the speedup summary._"
+              echo "- AMD OpenVX results: $([ -f "$OPENVX" ] && echo found || echo missing)"
+              echo "- OpenCV results: $([ -f "$OPENCV" ] && echo found || echo missing)"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          mkdir -p comparisons
+          # Rich per-kernel detail report (md + csv) — kept for the uploaded
+          # `benchmark-comparison` artifact. speedup = throughput(arg2)/throughput(arg1),
+          # so OpenCV first + MIVisionX second reads as "MIVisionX over OpenCV".
+          python3 scripts/compare_reports.py "$OPENCV" "$OPENVX" \
+            --output comparisons/mivisionx-over-opencv
+
+          # Intuitive, plain-English step summary: a one-sentence verdict, an
+          # at-a-glance facts table, per-category speedups, top wins, any
+          # kernels where OpenCV wins, and a collapsed full 42-kernel table.
+          # Leads the job summary so a reviewer sees the bottom line first.
+          # (Replaces the upstream ci_pairwise_summary.py N×N matrix, which is
+          # confusing for this single MIVisionX-vs-OpenCV pair.)
+          python3 ${{ github.workspace }}/.github/scripts/benchmark_summary.py \
+            "$OPENVX" "$OPENCV" \
+            --candidate-label "AMD OpenVX (MIVisionX)" \
+            --baseline-label "OpenCV" \
+            --expected-kernels 42 \
+            --summary-out "$GITHUB_STEP_SUMMARY"
 
       - name: Cross-impl numerical verification (OpenCV ↔ MIVisionX)
         if: always()
@@ -874,23 +943,30 @@ jobs:
           OPENCV_DUMP=build/dump-opencv
           VX_DUMP=build/dump-mivisionx
           mkdir -p comparisons
+          # Rendered as a collapsed appendix below the speedup headline: it's
+          # the proof the speedups are honest (same pixels out of both impls),
+          # not the headline a reviewer reads first.
           {
             echo ""
             echo "---"
             echo ""
-            echo "## Cross-impl numerical verification (OpenCV ↔ MIVisionX)"
+            echo "<details><summary><b>Numerical verification</b> (OpenCV ↔ MIVisionX) — proof the speedups are honest</summary>"
             echo ""
             echo "Sentinel kernel suite (no timing, no warmup) dumped by"
             echo "\`--dump-outputs\` on each binary; \`scripts/cross_verify_outputs.py\`"
             echo "loads both dumps and computes max-abs-diff + PSNR + exact-%"
             echo "per kernel against per-kernel tolerance rules. Proves the"
-            echo "timing rows below are honest apples-to-apples and not"
+            echo "speedup table above is honest apples-to-apples and not"
             echo "\"OpenCV is faster because it's silently computing the"
             echo "wrong thing\"."
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"
           if [ ! -d "$OPENCV_DUMP" ] || [ ! -d "$VX_DUMP" ]; then
-            echo "_Skipped — dump directory missing ($VX_DUMP or $OPENCV_DUMP)._" >> "$GITHUB_STEP_SUMMARY"
+            {
+              echo "_Skipped — dump directory missing ($VX_DUMP or $OPENCV_DUMP)._"
+              echo ""
+              echo "</details>"
+            } >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           set +e
@@ -901,53 +977,13 @@ jobs:
             >> "$GITHUB_STEP_SUMMARY"
           rc=$?
           set -e
+          {
+            echo ""
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
           if [ "$rc" -ne 0 ]; then
             echo "::warning::Cross-impl verification flagged ≥1 divergence — see job summary"
           fi
-
-      - name: Pairwise comparison (MIVisionX over OpenCV)
-        if: always()
-        run: |
-          set -euo pipefail
-          cd ${{ github.workspace }}/openvx-mark
-          OPENVX=build/results-mivisionx/benchmark_results.json
-          OPENCV=build/results-opencv/benchmark_results.json
-          if [ ! -f "$OPENVX" ] || [ ! -f "$OPENCV" ]; then
-            echo "_Missing benchmark results for comparison._" >> "$GITHUB_STEP_SUMMARY"
-            echo "OpenVX results: $([ -f "$OPENVX" ] && echo 'found' || echo 'missing')"
-            echo "OpenCV results: $([ -f "$OPENCV" ] && echo 'found' || echo 'missing')"
-            exit 0
-          fi
-          mkdir -p comparisons
-          # Per-kernel detail report — speedup = throughput(arg2) / throughput(arg1),
-          # so passing OpenCV first and MIVisionX second reads as "MIVisionX over
-          # OpenCV" (>1.00x means MIVisionX wins). This .md is referenced by
-          # ci_pairwise_summary.py's <details> block.
-          python3 scripts/compare_reports.py "$OPENCV" "$OPENVX" \
-            --output comparisons/mivisionx-over-opencv
-
-          # Render organized step summary: TL;DR matrix + grouped headline
-          # table + collapsed per-kernel detail. Same renderer as the upstream
-          # openvx-mark CI uses for its 6-pair MIVisionX/Khronos/rustVX/OpenCV
-          # matrix; here it's invoked with a single pair.
-          cat > /tmp/pairwise-config.json <<'JSON'
-          {
-            "reports": {
-              "mivisionx": {"label": "MIVisionX (AMD OpenVX, this PR)", "path": "build/results-mivisionx/benchmark_results.json"},
-              "opencv":    {"label": "OpenCV",                          "path": "build/results-opencv/benchmark_results.json"}
-            },
-            "groups": [
-              {
-                "title":  "OpenVX-vs-OpenCV — does adopting MIVisionX pay off vs cv::?",
-                "intent": "Speedup reads as `MIVisionX / OpenCV`. Values >1.00x mean adopting MIVisionX OpenVX pays off vs writing the equivalent directly in OpenCV at the same runner / threading policy. Both binaries are built from the upstream openvx-mark v1.1+ source tree (so JSON schema, timer, and stats infrastructure are identical) and pinned to `--threads 1` so OpenCV's TBB default doesn't silently turn this into 1-thread vs n-thread.",
-                "pairs":  [["mivisionx", "opencv"]]
-              }
-            ],
-            "detail_dir": "comparisons"
-          }
-          JSON
-          python3 scripts/ci_pairwise_summary.py --config /tmp/pairwise-config.json \
-            >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload per-impl benchmark results
         if: always()

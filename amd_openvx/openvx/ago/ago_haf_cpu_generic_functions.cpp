@@ -2408,8 +2408,15 @@ int HafCpu_LaplacianReconstruct_DATA_DATA_DATA
         void *b_in = nullptr;
         vx_status st = vxMapImagePatch(input, &r_in, 0, &m_in, &a_in, &b_in,
                                        VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
-        if (st != VX_SUCCESS)
+        // The U8 memcpy / S16 src_p[c] indexing below assumes tightly packed
+        // pixels (stride_x == element size, step_x/step_y == 1). Mirror the
+        // LaplacianPyramid fast path and bail to legacy on any non-standard
+        // layout so a strided/sub-sampled input view never reads wrong pixels.
+        vx_int32 expected_in_stride_x = (in_format == VX_DF_IMAGE_U8) ? 1 : 2;
+        if (st != VX_SUCCESS || a_in.stride_x != expected_in_stride_x ||
+            a_in.step_x != 1 || a_in.step_y != 1)
         {
+            if (st == VX_SUCCESS) vxUnmapImagePatch(input, m_in);
             release_owned();
             return HafCpu_LaplacianReconstruct_Legacy(node, laplacian, input, output);
         }
@@ -2456,7 +2463,8 @@ int HafCpu_LaplacianReconstruct_DATA_DATA_DATA
         void *b_lap = nullptr;
         vx_status st = vxMapImagePatch(lap_img, &r_lap, 0, &m_lap, &a_lap, &b_lap,
                                        VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
-        if (st != VX_SUCCESS || a_lap.stride_x != 2)
+        if (st != VX_SUCCESS || a_lap.stride_x != 2 ||
+            a_lap.step_x != 1 || a_lap.step_y != 1)
         {
             if (st == VX_SUCCESS) vxUnmapImagePatch(lap_img, m_lap);
             vxReleaseImage(&lap_img);
@@ -2478,7 +2486,8 @@ int HafCpu_LaplacianReconstruct_DATA_DATA_DATA
                                             VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
             bool out_is_s16 = (out_format == VX_DF_IMAGE_S16);
             if (sto != VX_SUCCESS ||
-                a_out.stride_x != (out_is_s16 ? 2 : 1))
+                a_out.stride_x != (out_is_s16 ? 2 : 1) ||
+                a_out.step_x != 1 || a_out.step_y != 1)
             {
                 if (sto == VX_SUCCESS) vxUnmapImagePatch(output, m_out);
                 vxUnmapImagePatch(lap_img, m_lap);

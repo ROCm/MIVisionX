@@ -772,7 +772,7 @@ __global__ void __attribute__((visibility("default")))
 Hip_WarpAffine_U8_U8_Nearest(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
     const uchar *pSrcImage, uint srcImageStrideInBytes,
-    uint srcImageBufferSize, d_affine_matrix_t *affineMatrix) {
+    uint srcImageBufferSize, const d_affine_matrix_t *__restrict__ affineMatrix) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -783,52 +783,61 @@ Hip_WarpAffine_U8_U8_Nearest(uint dstWidth, uint dstHeight,
 
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
+    // Cache the affine matrix in registers once (uniform across all threads) to
+    // avoid repeated global-memory loads on every pixel of the 8-wide output.
+    const float m00 = affineMatrix->m[0][0];
+    const float m01 = affineMatrix->m[0][1];
+    const float m10 = affineMatrix->m[1][0];
+    const float m11 = affineMatrix->m[1][1];
+    const float m20 = affineMatrix->m[2][0];
+    const float m21 = affineMatrix->m[2][1];
+
     uint2 dst = (uint2)0;
     float sx, sy;
     float dx = (float)x;
     float dy = (float)y;
-    sx = fmaf(dy, affineMatrix->m[1][0], affineMatrix->m[2][0]);
-    sx = fmaf(dx, affineMatrix->m[0][0], sx);
-    sy = fmaf(dy, affineMatrix->m[1][1], affineMatrix->m[2][1]);
-    sy = fmaf(dx, affineMatrix->m[0][1], sy);
+    sx = fmaf(dy, m10, m20);
+    sx = fmaf(dx, m00, sx);
+    sy = fmaf(dy, m11, m21);
+    sy = fmaf(dx, m01, sy);
 
     uint srcIdx = hip_mad24(srcImageStrideInBytes, (uint)sy, (uint)sx);
     if (srcIdx < srcImageBufferSize)
         dst.x = pSrcImage[srcIdx];
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     srcIdx = hip_mad24(srcImageStrideInBytes, (uint)sy, (uint)sx);
     if (srcIdx < srcImageBufferSize)
         dst.x |= pSrcImage[srcIdx] << 8;
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     srcIdx = hip_mad24(srcImageStrideInBytes, (uint)sy, (uint)sx);
     if (srcIdx < srcImageBufferSize)
         dst.x |= pSrcImage[srcIdx] << 16;
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     srcIdx = hip_mad24(srcImageStrideInBytes, (uint)sy, (uint)sx);
     if (srcIdx < srcImageBufferSize)
         dst.x |= pSrcImage[srcIdx] << 24;
 
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
 
     srcIdx = hip_mad24(srcImageStrideInBytes, (uint)sy, (uint)sx);
     if (srcIdx < srcImageBufferSize)
         dst.y  = pSrcImage[srcIdx];
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     srcIdx = hip_mad24(srcImageStrideInBytes, (uint)sy, (uint)sx);
     if (srcIdx < srcImageBufferSize)
         dst.y |= pSrcImage[srcIdx] << 8;
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     srcIdx = hip_mad24(srcImageStrideInBytes, (uint)sy, (uint)sx);
     if (srcIdx < srcImageBufferSize)
         dst.y |= pSrcImage[srcIdx] << 16;
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     srcIdx = hip_mad24(srcImageStrideInBytes, (uint)sy, (uint)sx);
     if (srcIdx < srcImageBufferSize)
         dst.y |= pSrcImage[srcIdx] << 24;
@@ -857,7 +866,7 @@ __global__ void __attribute__((visibility("default")))
 Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
     const uchar *pSrcImage, uint srcImageStrideInBytes,
-    d_affine_matrix_t *affineMatrix, uint borderValue, vx_rectangle_t rect_valid) {
+    const d_affine_matrix_t *__restrict__ affineMatrix, uint borderValue, vx_rectangle_t rect_valid) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -868,15 +877,23 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
 
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
+    // Cache the affine matrix in registers once (uniform across all threads).
+    const float m00 = affineMatrix->m[0][0];
+    const float m01 = affineMatrix->m[0][1];
+    const float m10 = affineMatrix->m[1][0];
+    const float m11 = affineMatrix->m[1][1];
+    const float m20 = affineMatrix->m[2][0];
+    const float m21 = affineMatrix->m[2][1];
+
     uint2 dst;
     float sx, sy;
     uint mask, v;
     float dx = (float)x;
     float dy = (float)y;
-    sx = fmaf(dy, affineMatrix->m[1][0], affineMatrix->m[2][0]);
-    sx = fmaf(dx, affineMatrix->m[0][0], sx);
-    sy = fmaf(dy, affineMatrix->m[1][1], affineMatrix->m[2][1]);
-    sy = fmaf(dx, affineMatrix->m[0][1], sy);
+    sx = fmaf(dy, m10, m20);
+    sx = fmaf(dx, m00, sx);
+    sy = fmaf(dy, m11, m21);
+    sy = fmaf(dx, m01, sy);
 
 	uint vl = rect_valid.start_x;
 	uint vr = rect_valid.end_x;
@@ -896,8 +913,8 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     v = HIPSELECT(borderValue, v, mask);
     dst.x = v;
 
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     x = (uint)(int)sx;
     y = (uint)(int)sy;
     mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31;
@@ -908,8 +925,8 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     v = HIPSELECT(borderValue, v, mask);
     dst.x |= v << 8;
 
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     x = (uint)(int)sx;
     y = (uint)(int)sy;
     mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31;
@@ -920,8 +937,8 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     v = HIPSELECT(borderValue, v, mask);
     dst.x |= v << 16;
 
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     x = (uint)(int)sx;
     y = (uint)(int)sy;
     mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31;
@@ -932,8 +949,8 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     v = HIPSELECT(borderValue, v, mask);
     dst.x |= v << 24;
 
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     x = (uint)(int)sx;
     y = (uint)(int)sy;
 
@@ -945,8 +962,8 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     v = HIPSELECT(borderValue, v, mask);
     dst.y = v;
 
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     x = (uint)(int)sx;
     y = (uint)(int)sy;
     mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31;
@@ -957,8 +974,8 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     v = HIPSELECT(borderValue, v, mask);
     dst.y |= v << 8;
 
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     x = (uint)(int)sx;
     y = (uint)(int)sy;
     mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31;
@@ -969,8 +986,8 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     v = HIPSELECT(borderValue, v, mask);
     dst.y |= v << 16;
 
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     x = (uint)(int)sx;
     y = (uint)(int)sy;
     mask = ((int)((x - vl) | (vr - 1 - x) | (y - vt) | (vb - 1 - y))) >> 31;
@@ -1006,7 +1023,7 @@ __global__ void __attribute__((visibility("default")))
 Hip_WarpAffine_U8_U8_Bilinear(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
     const uchar *pSrcImage, uint srcImageStrideInBytes,
-    uint srcImageBufferSize, d_affine_matrix_t *affineMatrix) {
+    uint srcImageBufferSize, const d_affine_matrix_t *__restrict__ affineMatrix) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -1017,40 +1034,48 @@ Hip_WarpAffine_U8_U8_Bilinear(uint dstWidth, uint dstHeight,
 
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
+    // Cache the affine matrix in registers once (uniform across all threads).
+    const float m00 = affineMatrix->m[0][0];
+    const float m01 = affineMatrix->m[0][1];
+    const float m10 = affineMatrix->m[1][0];
+    const float m11 = affineMatrix->m[1][1];
+    const float m20 = affineMatrix->m[2][0];
+    const float m21 = affineMatrix->m[2][1];
+
     uint2 dst;
     float4 f;
     float sx, sy;
     float dx = (float)x;
     float dy = (float)y;
-    sx = fmaf(dy, affineMatrix->m[1][0], affineMatrix->m[2][0]);
-    sx = fmaf(dx, affineMatrix->m[0][0], sx);
-    sy = fmaf(dy, affineMatrix->m[1][1], affineMatrix->m[2][1]);
-    sy = fmaf(dx, affineMatrix->m[0][1], sy);
+    sx = fmaf(dy, m10, m20);
+    sx = fmaf(dx, m00, sx);
+    sy = fmaf(dy, m11, m21);
+    sy = fmaf(dx, m01, sy);
 
     f.x = hip_bilinear_sample_FXY(pSrcImage, srcImageBufferSize, srcImageStrideInBytes, sx, sy);
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     f.y = hip_bilinear_sample_FXY(pSrcImage, srcImageBufferSize, srcImageStrideInBytes, sx, sy);
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     f.z = hip_bilinear_sample_FXY(pSrcImage, srcImageBufferSize, srcImageStrideInBytes, sx, sy);
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     f.w = hip_bilinear_sample_FXY(pSrcImage, srcImageBufferSize, srcImageStrideInBytes, sx, sy);
     dst.x = hip_pack(f);
 
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
 
     f.x = hip_bilinear_sample_FXY(pSrcImage, srcImageBufferSize, srcImageStrideInBytes, sx, sy);
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     f.y = hip_bilinear_sample_FXY(pSrcImage, srcImageBufferSize, srcImageStrideInBytes, sx, sy);
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     f.z = hip_bilinear_sample_FXY(pSrcImage, srcImageBufferSize, srcImageStrideInBytes, sx, sy);
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     f.w = hip_bilinear_sample_FXY(pSrcImage, srcImageBufferSize, srcImageStrideInBytes, sx, sy);
     dst.y = hip_pack(f);
 
@@ -1079,7 +1104,7 @@ __global__ void __attribute__((visibility("default")))
 Hip_WarpAffine_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
     const uchar *pSrcImage, uint srcImageStrideInBytes,
-    d_affine_matrix_t *affineMatrix, uint borderValue) {
+    const d_affine_matrix_t *__restrict__ affineMatrix, uint borderValue) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -1090,40 +1115,48 @@ Hip_WarpAffine_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
 
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
+    // Cache the affine matrix in registers once (uniform across all threads).
+    const float m00 = affineMatrix->m[0][0];
+    const float m01 = affineMatrix->m[0][1];
+    const float m10 = affineMatrix->m[1][0];
+    const float m11 = affineMatrix->m[1][1];
+    const float m20 = affineMatrix->m[2][0];
+    const float m21 = affineMatrix->m[2][1];
+
     uint2 dst;
     float4 f;
     float sx, sy;
     float dx = (float)x;
     float dy = (float)y;
-    sx = fmaf(dy, affineMatrix->m[1][0], affineMatrix->m[2][0]);
-    sx = fmaf(dx, affineMatrix->m[0][0], sx);
-    sy = fmaf(dy, affineMatrix->m[1][1], affineMatrix->m[2][1]);
-    sy = fmaf(dx, affineMatrix->m[0][1], sy);
+    sx = fmaf(dy, m10, m20);
+    sx = fmaf(dx, m00, sx);
+    sy = fmaf(dy, m11, m21);
+    sy = fmaf(dx, m01, sy);
 
     f.x = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     f.y = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     f.z = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     f.w = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
     dst.x = hip_pack(f);
 
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
 
     f.x = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     f.y = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     f.z = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
-    sx += affineMatrix->m[0][0];
-    sy += affineMatrix->m[0][1];
+    sx += m00;
+    sy += m01;
     f.w = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
     dst.y = hip_pack(f);
 

@@ -1001,7 +1001,7 @@ int HafCpu_HarrisMergeSortAndPick_XY_HVC
 	}
 	const vx_int32 * span = spanBuf.data();
 
-	// Non max supression: each non-zero center zeros every weaker neighbor inside the
+	// Non max suppression: each non-zero center zeros every weaker neighbor inside the
 	// euclidean disk of "min_distance". Output is identical to the scalar version; the
 	// inner zeroing pass over each disk row is SIMD-widened (andnot(n<Vc, n) keeps n when
 	// n>=Vc, writes 0 otherwise).

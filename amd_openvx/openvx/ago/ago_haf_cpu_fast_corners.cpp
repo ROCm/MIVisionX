@@ -457,8 +457,10 @@ int HafCpu_FastCorners_XY_U8_NoSupression
 	
 	pSrcImage += (srcStride * 3) + 3;													// Leave first three rows and start from the third pixel
 
-	int alignedWidth = (int)(srcWidth - 6) & ~7;
-	int postfixWidth = (int)(srcWidth - 6) & 7;
+	int innerWidth = (int)srcWidth - 6;					// signed: avoid unsigned underflow for small widths
+	if (innerWidth < 0) innerWidth = 0;
+	int alignedWidth = innerWidth & ~7;
+	int postfixWidth = innerWidth & 7;
 
 	// Generate offsets for C code if necessary
 	int neighbor_offset[16] = { 0 };
@@ -618,8 +620,10 @@ int HafCpu_FastCorners_XY_U8_Supression
 
 	pSrcImage += (srcStride * 3) + 3;														// Leave first three rows and start from the third pixel
 
-	int alignedWidth = (int)(srcWidth - 6) & ~7;
-	int postfixWidth = (int)(srcWidth - 6) & 7;
+	int innerWidth = (int)srcWidth - 6;					// signed: avoid unsigned underflow for small widths
+	if (innerWidth < 0) innerWidth = 0;
+	int alignedWidth = innerWidth & ~7;
+	int postfixWidth = innerWidth & 7;
 
 	// Generate offsets for C code if necessary
 	int neighbor_offset[16] = { 0 };

@@ -455,10 +455,10 @@ int HafCpu_FastCorners_XY_U8_NoSupression
 	vx_uint32 cornerCount = 0;
 	short t = (short)floorf(strength_threshold);
 	
-	pSrcImage += (srcStride * 3);														// Leave first three rows
+	pSrcImage += (srcStride * 3) + 3;													// Leave first three rows and start from the third pixel
 
-	int alignedWidth = (int)srcWidth & ~7;
-	int postfixWidth = (int)srcWidth & 7;
+	int alignedWidth = (int)(srcWidth - 6) & ~7;
+	int postfixWidth = (int)(srcWidth - 6) & 7;
 
 	// Generate offsets for C code if necessary
 	int neighbor_offset[16] = { 0 };
@@ -468,7 +468,7 @@ int HafCpu_FastCorners_XY_U8_NoSupression
 	for (int height = 0; height < (int)(srcHeight - 6); height++)
 	{
 		pLocalSrc = (unsigned char *) pSrcImage;
-		int width = 0;
+		int width = 3;
 		
 		for (int x = 0; x < (alignedWidth >> 3); x++)
 		{

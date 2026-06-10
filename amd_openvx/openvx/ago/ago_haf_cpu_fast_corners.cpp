@@ -465,8 +465,6 @@ int HafCpu_FastCorners_XY_U8_NoSupression
 	if (postfixWidth)
 		generateOffset(srcStride, neighbor_offset);
 
-	__m128i zeromask = _mm_setzero_si128();
-
 	for (int height = 0; height < (int)(srcHeight - 6); height++)
 	{
 		pLocalSrc = (unsigned char *) pSrcImage;
@@ -477,54 +475,60 @@ int HafCpu_FastCorners_XY_U8_NoSupression
 			__m128i rowMinus3, rowMinus2, rowMinus1, row, rowPlus1, rowPlus2, rowPlus3;
 			__m128i thresh = _mm_set1_epi16(t);
 
-			// Check for early escape based on pixels 1 and 9 around the candidate
+			// Load all 7 rows in their final form for the boundary shuffles below
+			// (same byte offsets the dataFastCornersPixelMaskAll table expects).
 			rowMinus3 = _mm_loadu_si128((__m128i *)(pLocalSrc - 3 * srcStride - 1));
-			rowMinus2 = _mm_srli_si128(rowMinus3, 1);									// row - 3: Pixels 0..7 in lower 7 bytes
-			rowMinus2 = _mm_cvtepu8_epi16(rowMinus2);
-
-			row = _mm_loadu_si128((__m128i *)(pLocalSrc - 3));
-			rowMinus1 = _mm_srli_si128(row, 3);											// row: Pixels 0..7 in lower 7 bytes
-			rowMinus1 = _mm_cvtepu8_epi16(rowMinus1);
-
-			rowPlus3 = _mm_loadu_si128((__m128i *)(pLocalSrc + 3 * srcStride - 1));
-			rowPlus2 = _mm_srli_si128(rowPlus3, 1);										// row + 3: Pixels 0..7 in lower 7 bytes
-			rowPlus2 = _mm_cvtepu8_epi16(rowPlus2);
-
-			rowPlus1 = _mm_loadu_si128((__m128i *)(pLocalSrc + srcStride - 3));
-
-			rowMinus2 = _mm_sub_epi16(rowMinus2, rowMinus1);
-			rowMinus2 = _mm_abs_epi16(rowMinus2);
-			rowPlus2 = _mm_sub_epi16(rowPlus2, rowMinus1);
-			rowPlus2 = _mm_abs_epi16(rowPlus2);
-
-			rowMinus2 = _mm_cmplt_epi16(rowMinus2, thresh);								// Check if pixel 0 is less than 't' different from the candidate
-			rowPlus2 = _mm_cmplt_epi16(rowPlus2, thresh);								// Check if pixel 0 is less than 't' different from the candidate
-
-			int maskSkip = _mm_movemask_epi8(rowMinus2);
-			maskSkip &= _mm_movemask_epi8(rowPlus2);									// 1 if both 0 and 8 are within 't' of the candidate pixel
-
-			// Check for early escape based on pixels 12 and 4 around the candidate
-			rowMinus2 = _mm_cvtepu8_epi16(row);
-			rowPlus2 = _mm_srli_si128(row, 6);
-			rowPlus2 = _mm_cvtepu8_epi16(rowPlus2);
-
-			rowMinus2 = _mm_sub_epi16(rowMinus2, rowMinus1);
-			rowMinus2 = _mm_abs_epi16(rowMinus2);
-			rowPlus2 = _mm_sub_epi16(rowPlus2, rowMinus1);
-			rowPlus2 = _mm_abs_epi16(rowPlus2);
-
-			rowMinus1 = _mm_loadu_si128((__m128i *)(pLocalSrc - srcStride - 3));
-
-			rowMinus2 = _mm_cmplt_epi16(rowMinus2, thresh);								// Check if pixel 0 is less than 't' different from the candidate
-			rowPlus2 = _mm_cmplt_epi16(rowPlus2, thresh);								// Check if pixel 0 is less than 't' different from the candidate
-
-			int maskSkip1 = _mm_movemask_epi8(rowMinus2);
 			rowMinus2 = _mm_loadu_si128((__m128i *)(pLocalSrc - (srcStride + srcStride) - 2));
+			rowMinus1 = _mm_loadu_si128((__m128i *)(pLocalSrc - srcStride - 3));
+			row       = _mm_loadu_si128((__m128i *)(pLocalSrc - 3));
+			rowPlus1  = _mm_loadu_si128((__m128i *)(pLocalSrc + srcStride - 3));
+			rowPlus2  = _mm_loadu_si128((__m128i *)(pLocalSrc + (srcStride + srcStride) - 2));
+			rowPlus3  = _mm_loadu_si128((__m128i *)(pLocalSrc + 3 * srcStride - 1));
 
-			maskSkip1 &= _mm_movemask_epi8(rowPlus2);									// 1 if both 0 and 8 are within 't' of the candidate pixel
-			rowPlus2 = _mm_loadu_si128((__m128i *)(pLocalSrc + (srcStride + srcStride) - 2));
-
-			maskSkip |= maskSkip1;
+			// FAST-9 antipodal-pair pre-filter (see the suppression variant for the
+			// full rationale). For a 9-pixel contiguous bright (or dark) arc to
+			// exist, every diametrically opposite boundary pair (k, k+8) must
+			// contain at least one arc member, so a necessary corner condition is
+			// that all 8 opposite pairs have >=1 member brighter than p+t (resp.
+			// darker than p-t). This is far tighter than a single axial-pair check
+			// and rejects the vast majority of non-corner candidates on noisy
+			// input, yet never rejects a true corner -- the emitted corners are
+			// unchanged. All 8 candidate columns are tested at once: each boundary
+			// position is a fixed (dy,dx) offset, so 8 consecutive candidates read
+			// 8 consecutive bytes there (one 64-bit load widened to 16-bit lanes).
+			const unsigned char * pc = pLocalSrc;
+			__m128i cand   = _mm_cvtepu8_epi16(_mm_loadl_epi64((const __m128i *)pc));
+			__m128i cand_p = _mm_add_epi16(cand, thresh);
+			__m128i cand_m = _mm_sub_epi16(cand, thresh);
+#define FAST9_LOADK(dy, dx) _mm_cvtepu8_epi16(_mm_loadl_epi64((const __m128i *)(pc + (dy) * srcStride + (dx))))
+			__m128i q0  = FAST9_LOADK(-3,  0), q8  = FAST9_LOADK( 3,  0);
+			__m128i q1  = FAST9_LOADK(-3,  1), q9  = FAST9_LOADK( 3, -1);
+			__m128i q2  = FAST9_LOADK(-2,  2), q10 = FAST9_LOADK( 2, -2);
+			__m128i q3  = FAST9_LOADK(-1,  3), q11 = FAST9_LOADK( 1, -3);
+			__m128i q4  = FAST9_LOADK( 0,  3), q12 = FAST9_LOADK( 0, -3);
+			__m128i q5  = FAST9_LOADK( 1,  3), q13 = FAST9_LOADK(-1, -3);
+			__m128i q6  = FAST9_LOADK( 2,  2), q14 = FAST9_LOADK(-2, -2);
+			__m128i q7  = FAST9_LOADK( 3,  1), q15 = FAST9_LOADK(-3, -1);
+#undef FAST9_LOADK
+			__m128i bp = _mm_or_si128(_mm_cmpgt_epi16(q0, cand_p), _mm_cmpgt_epi16(q8,  cand_p));
+			bp = _mm_and_si128(bp, _mm_or_si128(_mm_cmpgt_epi16(q1, cand_p), _mm_cmpgt_epi16(q9,  cand_p)));
+			bp = _mm_and_si128(bp, _mm_or_si128(_mm_cmpgt_epi16(q2, cand_p), _mm_cmpgt_epi16(q10, cand_p)));
+			bp = _mm_and_si128(bp, _mm_or_si128(_mm_cmpgt_epi16(q3, cand_p), _mm_cmpgt_epi16(q11, cand_p)));
+			bp = _mm_and_si128(bp, _mm_or_si128(_mm_cmpgt_epi16(q4, cand_p), _mm_cmpgt_epi16(q12, cand_p)));
+			bp = _mm_and_si128(bp, _mm_or_si128(_mm_cmpgt_epi16(q5, cand_p), _mm_cmpgt_epi16(q13, cand_p)));
+			bp = _mm_and_si128(bp, _mm_or_si128(_mm_cmpgt_epi16(q6, cand_p), _mm_cmpgt_epi16(q14, cand_p)));
+			bp = _mm_and_si128(bp, _mm_or_si128(_mm_cmpgt_epi16(q7, cand_p), _mm_cmpgt_epi16(q15, cand_p)));
+			__m128i dp = _mm_or_si128(_mm_cmpgt_epi16(cand_m, q0), _mm_cmpgt_epi16(cand_m, q8));
+			dp = _mm_and_si128(dp, _mm_or_si128(_mm_cmpgt_epi16(cand_m, q1), _mm_cmpgt_epi16(cand_m, q9)));
+			dp = _mm_and_si128(dp, _mm_or_si128(_mm_cmpgt_epi16(cand_m, q2), _mm_cmpgt_epi16(cand_m, q10)));
+			dp = _mm_and_si128(dp, _mm_or_si128(_mm_cmpgt_epi16(cand_m, q3), _mm_cmpgt_epi16(cand_m, q11)));
+			dp = _mm_and_si128(dp, _mm_or_si128(_mm_cmpgt_epi16(cand_m, q4), _mm_cmpgt_epi16(cand_m, q12)));
+			dp = _mm_and_si128(dp, _mm_or_si128(_mm_cmpgt_epi16(cand_m, q5), _mm_cmpgt_epi16(cand_m, q13)));
+			dp = _mm_and_si128(dp, _mm_or_si128(_mm_cmpgt_epi16(cand_m, q6), _mm_cmpgt_epi16(cand_m, q14)));
+			dp = _mm_and_si128(dp, _mm_or_si128(_mm_cmpgt_epi16(cand_m, q7), _mm_cmpgt_epi16(cand_m, q15)));
+			__m128i pass = _mm_or_si128(bp, dp);
+			int passMask = _mm_movemask_epi8(pass);
+			int maskSkip = (~passMask) & 0xFFFF;
 
 			// Check for corners in the eight pixels.
 			// Use precomputed position-dependent masks to avoid per-iteration row shifts.
@@ -643,42 +647,56 @@ int HafCpu_FastCorners_XY_U8_Supression
 			rowPlus2  = _mm_loadu_si128((__m128i *)(pLocalSrc + (srcStride + srcStride) - 2));
 			rowPlus3  = _mm_loadu_si128((__m128i *)(pLocalSrc + 3 * srcStride - 1));
 
-			// FAST-9 adjacent-cardinal-pair pre-filter. A 9-pixel contiguous arc
-			// of brighter (or darker) pixels around the 16-pixel boundary must
-			// always contain at least one pair of adjacent cardinal points
-			// {(p1,p5),(p5,p9),(p9,p13),(p13,p1)} that are all brighter (or all
-			// darker). Conversely, if no adjacent cardinal pair satisfies the
-			// polarity-aware test, the candidate cannot be a FAST-9 corner. This
-			// is strictly tighter than the original 2-of-2 axial-pair check
-			// (it also rejects cases where a single bright/dark and an opposing
-			// dark/bright neighbour would have slipped through).
-			__m128i cand   = _mm_cvtepu8_epi16(_mm_loadl_epi64((const __m128i *)(pLocalSrc)));
+			// FAST-9 antipodal-pair pre-filter. For a 9-pixel contiguous arc of
+			// brighter (or darker) boundary pixels to exist, every diametrically
+			// opposite pair (k, k+8) must contain at least one member of the arc:
+			// the two members of such a pair are 8 positions apart on the 16-pixel
+			// circle, and a contiguous run of 9 (> 8) cannot avoid both. Hence a
+			// necessary condition for a corner is that for ALL 8 opposite pairs at
+			// least one member is brighter than p+t (resp. darker than p-t). This
+			// is the same necessary condition OpenCV uses and is far tighter than a
+			// single adjacent-cardinal-pair test, rejecting the vast majority of
+			// non-corner candidates on noisy/textured input before the per-pixel
+			// strength computation runs. Crucially it never rejects a true corner,
+			// so the emitted corner set and strengths are unchanged.
+			//
+			// All 8 candidates in columns [x..x+7] are processed at once: each
+			// boundary position is a fixed (dy,dx) offset from the candidate, so
+			// 8 consecutive candidate columns read 8 consecutive bytes at that
+			// offset (a single 64-bit load widened to eight 16-bit lanes).
+			const unsigned char * pc = pLocalSrc;
+			__m128i cand   = _mm_cvtepu8_epi16(_mm_loadl_epi64((const __m128i *)pc));
 			__m128i cand_p = _mm_add_epi16(cand, thresh);
 			__m128i cand_m = _mm_sub_epi16(cand, thresh);
-			// Boundary pixel candidates for 8 candidates at columns [x..x+7]. The
-			// rows were loaded with a -1 byte offset for rowMinus3/rowPlus3 and a
-			// -3 byte offset for `row`, so the candidate column is at byte 1
-			// (rowMinus3/rowPlus3) / byte 3 (row). Byte 0 of `row` is left-3,
-			// byte 6 of `row` is right+3.
-			__m128i p1  = _mm_cvtepu8_epi16(_mm_srli_si128(rowMinus3, 1));  // top:    (x, y-3)
-			__m128i p9  = _mm_cvtepu8_epi16(_mm_srli_si128(rowPlus3, 1));   // bottom: (x, y+3)
-			__m128i p5  = _mm_cvtepu8_epi16(_mm_srli_si128(row, 6));        // right:  (x+3, y)
-			__m128i p13 = _mm_cvtepu8_epi16(row);                            // left:   (x-3, y)
-			__m128i b1  = _mm_cmpgt_epi16(p1,  cand_p);
-			__m128i b5  = _mm_cmpgt_epi16(p5,  cand_p);
-			__m128i b9  = _mm_cmpgt_epi16(p9,  cand_p);
-			__m128i b13 = _mm_cmpgt_epi16(p13, cand_p);
-			__m128i d1  = _mm_cmpgt_epi16(cand_m, p1);
-			__m128i d5  = _mm_cmpgt_epi16(cand_m, p5);
-			__m128i d9  = _mm_cmpgt_epi16(cand_m, p9);
-			__m128i d13 = _mm_cmpgt_epi16(cand_m, p13);
-			__m128i pair_b = _mm_or_si128(
-				_mm_or_si128(_mm_and_si128(b1,  b5),  _mm_and_si128(b5,  b9)),
-				_mm_or_si128(_mm_and_si128(b9,  b13), _mm_and_si128(b13, b1)));
-			__m128i pair_d = _mm_or_si128(
-				_mm_or_si128(_mm_and_si128(d1,  d5),  _mm_and_si128(d5,  d9)),
-				_mm_or_si128(_mm_and_si128(d9,  d13), _mm_and_si128(d13, d1)));
-			__m128i pass = _mm_or_si128(pair_b, pair_d);
+#define FAST9_LOADK(dy, dx) _mm_cvtepu8_epi16(_mm_loadl_epi64((const __m128i *)(pc + (dy) * srcStride + (dx))))
+			__m128i q0  = FAST9_LOADK(-3,  0), q8  = FAST9_LOADK( 3,  0);
+			__m128i q1  = FAST9_LOADK(-3,  1), q9  = FAST9_LOADK( 3, -1);
+			__m128i q2  = FAST9_LOADK(-2,  2), q10 = FAST9_LOADK( 2, -2);
+			__m128i q3  = FAST9_LOADK(-1,  3), q11 = FAST9_LOADK( 1, -3);
+			__m128i q4  = FAST9_LOADK( 0,  3), q12 = FAST9_LOADK( 0, -3);
+			__m128i q5  = FAST9_LOADK( 1,  3), q13 = FAST9_LOADK(-1, -3);
+			__m128i q6  = FAST9_LOADK( 2,  2), q14 = FAST9_LOADK(-2, -2);
+			__m128i q7  = FAST9_LOADK( 3,  1), q15 = FAST9_LOADK(-3, -1);
+#undef FAST9_LOADK
+			// Brighter: AND over the 8 opposite pairs of (q[k] > p+t) OR (q[k+8] > p+t).
+			__m128i bp = _mm_or_si128(_mm_cmpgt_epi16(q0, cand_p), _mm_cmpgt_epi16(q8,  cand_p));
+			bp = _mm_and_si128(bp, _mm_or_si128(_mm_cmpgt_epi16(q1, cand_p), _mm_cmpgt_epi16(q9,  cand_p)));
+			bp = _mm_and_si128(bp, _mm_or_si128(_mm_cmpgt_epi16(q2, cand_p), _mm_cmpgt_epi16(q10, cand_p)));
+			bp = _mm_and_si128(bp, _mm_or_si128(_mm_cmpgt_epi16(q3, cand_p), _mm_cmpgt_epi16(q11, cand_p)));
+			bp = _mm_and_si128(bp, _mm_or_si128(_mm_cmpgt_epi16(q4, cand_p), _mm_cmpgt_epi16(q12, cand_p)));
+			bp = _mm_and_si128(bp, _mm_or_si128(_mm_cmpgt_epi16(q5, cand_p), _mm_cmpgt_epi16(q13, cand_p)));
+			bp = _mm_and_si128(bp, _mm_or_si128(_mm_cmpgt_epi16(q6, cand_p), _mm_cmpgt_epi16(q14, cand_p)));
+			bp = _mm_and_si128(bp, _mm_or_si128(_mm_cmpgt_epi16(q7, cand_p), _mm_cmpgt_epi16(q15, cand_p)));
+			// Darker: AND over the 8 opposite pairs of (q[k] < p-t) OR (q[k+8] < p-t).
+			__m128i dp = _mm_or_si128(_mm_cmpgt_epi16(cand_m, q0), _mm_cmpgt_epi16(cand_m, q8));
+			dp = _mm_and_si128(dp, _mm_or_si128(_mm_cmpgt_epi16(cand_m, q1), _mm_cmpgt_epi16(cand_m, q9)));
+			dp = _mm_and_si128(dp, _mm_or_si128(_mm_cmpgt_epi16(cand_m, q2), _mm_cmpgt_epi16(cand_m, q10)));
+			dp = _mm_and_si128(dp, _mm_or_si128(_mm_cmpgt_epi16(cand_m, q3), _mm_cmpgt_epi16(cand_m, q11)));
+			dp = _mm_and_si128(dp, _mm_or_si128(_mm_cmpgt_epi16(cand_m, q4), _mm_cmpgt_epi16(cand_m, q12)));
+			dp = _mm_and_si128(dp, _mm_or_si128(_mm_cmpgt_epi16(cand_m, q5), _mm_cmpgt_epi16(cand_m, q13)));
+			dp = _mm_and_si128(dp, _mm_or_si128(_mm_cmpgt_epi16(cand_m, q6), _mm_cmpgt_epi16(cand_m, q14)));
+			dp = _mm_and_si128(dp, _mm_or_si128(_mm_cmpgt_epi16(cand_m, q7), _mm_cmpgt_epi16(cand_m, q15)));
+			__m128i pass = _mm_or_si128(bp, dp);
 			// `pass` lanes are 0xFFFF if the candidate may be a corner, else 0x0000.
 			// `_mm_movemask_epi8` yields a 16-bit mask with two bits per lane,
 			// matching the original `maskSkip` packing (bit pair set => keep), so

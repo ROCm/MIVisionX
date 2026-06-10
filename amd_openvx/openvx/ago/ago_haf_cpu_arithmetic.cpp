@@ -10338,8 +10338,8 @@ int HafCpu_Phase_U8_S16S16
 			__m256 c2Lo = _mm256_mul_ps(cLo, cLo);
 			__m256 c2Hi = _mm256_mul_ps(cHi, cHi);
 
-			__m256 polyLo = _mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(p7, c2Lo), p5), c2Lo), p3), c2Lo), p1), cLo);
-			__m256 polyHi = _mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(p7, c2Hi), p5), c2Hi), p3), c2Hi), p1), cHi);
+			__m256 polyLo = _mm256_mul_ps(_mm256_fmadd_ps(_mm256_fmadd_ps(_mm256_fmadd_ps(c2Lo, p7, p5), c2Lo, p3), c2Lo, p1), cLo);
+			__m256 polyHi = _mm256_mul_ps(_mm256_fmadd_ps(_mm256_fmadd_ps(_mm256_fmadd_ps(c2Hi, p7, p5), c2Hi, p3), c2Hi, p1), cHi);
 
 			__m256 angleLo = _mm256_blendv_ps(_mm256_sub_ps(ninety, polyLo), polyLo, useXLo);
 			__m256 angleHi = _mm256_blendv_ps(_mm256_sub_ps(ninety, polyHi), polyHi, useXHi);
@@ -10353,8 +10353,8 @@ int HafCpu_Phase_U8_S16S16
 			angleLo = _mm256_blendv_ps(angleLo, _mm256_sub_ps(threeSixty, angleLo), gyNegLo);
 			angleHi = _mm256_blendv_ps(angleHi, _mm256_sub_ps(threeSixty, angleHi), gyNegHi);
 
-			__m256i pLo = _mm256_cvttps_epi32(_mm256_add_ps(_mm256_mul_ps(angleLo, scale), half));
-			__m256i pHi = _mm256_cvttps_epi32(_mm256_add_ps(_mm256_mul_ps(angleHi, scale), half));
+			__m256i pLo = _mm256_cvttps_epi32(_mm256_fmadd_ps(angleLo, scale, half));
+			__m256i pHi = _mm256_cvttps_epi32(_mm256_fmadd_ps(angleHi, scale, half));
 			__m256i packed = _mm256_packs_epi32(pLo, pHi);
 			packed = _mm256_permute4x64_epi64(packed, 0xd8);
 			__m128i lo16 = _mm256_castsi256_si128(packed);
@@ -10372,14 +10372,14 @@ int HafCpu_Phase_U8_S16S16
 			__m256 mx = _mm256_max_ps(ax, ay);
 			__m256 c = _mm256_div_ps(mn, _mm256_add_ps(mx, eps));
 			__m256 c2 = _mm256_mul_ps(c, c);
-			__m256 poly = _mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(p7, c2), p5), c2), p3), c2), p1), c);
+			__m256 poly = _mm256_mul_ps(_mm256_fmadd_ps(_mm256_fmadd_ps(_mm256_fmadd_ps(c2, p7, p5), c2, p3), c2, p1), c);
 			__m256 angle = _mm256_blendv_ps(_mm256_sub_ps(ninety, poly), poly, useX);
 
 			__m256 gxNeg = _mm256_castsi256_ps(_mm256_cmpgt_epi32(zero32, gx32));
 			__m256 gyNeg = _mm256_castsi256_ps(_mm256_cmpgt_epi32(zero32, gy32));
 			angle = _mm256_blendv_ps(angle, _mm256_sub_ps(oneEighty, angle), gxNeg);
 			angle = _mm256_blendv_ps(angle, _mm256_sub_ps(threeSixty, angle), gyNeg);
-			__m256i phase32 = _mm256_cvttps_epi32(_mm256_add_ps(_mm256_mul_ps(angle, scale), half));
+			__m256i phase32 = _mm256_cvttps_epi32(_mm256_fmadd_ps(angle, scale, half));
 			__m128i phase16 = _mm_packs_epi32(_mm256_castsi256_si128(phase32), _mm256_extracti128_si256(phase32, 1));
 			__m128i phase8 = _mm_packus_epi16(phase16, phase16);
 			_mm_storel_epi64((__m128i *)(pdst + x), phase8);

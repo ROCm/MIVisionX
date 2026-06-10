@@ -455,19 +455,27 @@ int HafCpu_FastCorners_XY_U8_NoSupression
 	vx_uint32 cornerCount = 0;
 	short t = (short)floorf(strength_threshold);
 	
-	pSrcImage += (srcStride * 3) + 3;													// Leave first three rows and start from the third pixel
-
 	int innerWidth = (int)srcWidth - 6;					// signed: avoid unsigned underflow for small widths
 	if (innerWidth < 0) innerWidth = 0;
+	int innerHeight = (int)srcHeight - 6;				// signed: avoid unsigned underflow for small heights
+	if (innerHeight < 0) innerHeight = 0;
 	int alignedWidth = innerWidth & ~7;
 	int postfixWidth = innerWidth & 7;
+
+	if ((innerWidth == 0) || (innerHeight == 0))
+	{
+		*pDstCornerCount = 0;
+		return AGO_SUCCESS;
+	}
 
 	// Generate offsets for C code if necessary
 	int neighbor_offset[16] = { 0 };
 	if (postfixWidth)
 		generateOffset(srcStride, neighbor_offset);
 
-	for (int height = 0; height < (int)(srcHeight - 6); height++)
+	pSrcImage += (srcStride * 3) + 3;													// Leave first three rows and start from the third pixel
+
+	for (int height = 0; height < innerHeight; height++)
 	{
 		pLocalSrc = (unsigned char *) pSrcImage;
 		int width = 3;
@@ -618,10 +626,10 @@ int HafCpu_FastCorners_XY_U8_Supression
 	vx_uint32 cornerCount = 0;
 	short t = (short)floorf(strength_threshold);
 
-	pSrcImage += (srcStride * 3) + 3;														// Leave first three rows and start from the third pixel
-
 	int innerWidth = (int)srcWidth - 6;					// signed: avoid unsigned underflow for small widths
 	if (innerWidth < 0) innerWidth = 0;
+	int innerHeight = (int)srcHeight - 6;				// signed: avoid unsigned underflow for small heights
+	if (innerHeight < 0) innerHeight = 0;
 	int alignedWidth = innerWidth & ~7;
 	int postfixWidth = innerWidth & 7;
 
@@ -632,7 +640,15 @@ int HafCpu_FastCorners_XY_U8_Supression
 
 	memset(pScratch, 0, sizeof(vx_uint8) * srcWidth * srcHeight);
 
-	for (int height = 0; height < (int)(srcHeight - 6); height++)
+	if ((innerWidth == 0) || (innerHeight == 0))
+	{
+		*pDstCornerCount = 0;
+		return AGO_SUCCESS;
+	}
+
+	pSrcImage += (srcStride * 3) + 3;														// Leave first three rows and start from the third pixel
+
+	for (int height = 0; height < innerHeight; height++)
 	{
 		pLocalSrc = (unsigned char *)pSrcImage;
 		int width = 3;
@@ -748,11 +764,11 @@ int HafCpu_FastCorners_XY_U8_Supression
 		pSrcImage += srcStride;
 	}
 
-	// Non-max supression
+	// Non-max suppression
 	pScratch += (3 * srcWidth + 3);
 	cornerCount = 0;
-	const int nmsW = (int)srcWidth - 6;
-	for (int height = 0; height < int(srcHeight - 6); height++)
+	const int nmsW = innerWidth;
+	for (int height = 0; height < innerHeight; height++)
 	{
 		int width = 0;
 #if USE_AVX

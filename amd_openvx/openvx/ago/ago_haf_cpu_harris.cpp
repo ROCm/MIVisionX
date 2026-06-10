@@ -24,6 +24,7 @@ THE SOFTWARE.
 #include "ago_internal.h"
 
 #include <vector>
+#include <algorithm>
 
 typedef struct {
 	vx_float32 GxGx;
@@ -980,66 +981,112 @@ int HafCpu_HarrisMergeSortAndPick_XY_HVC
 		vx_float32        min_distance
 	)
 {
-	vx_float32      * pLocalSrc;
 	vx_float32      * pSrcVc_NMS = pSrcVc;
 	vx_int32 radius = (vx_int32) min_distance;
+	if (radius < 0) radius = 0;
+	const vx_int32 r2 = radius * radius;
+	const vx_int32 W = (vx_int32)srcWidth;
+	const vx_int32 H = (vx_int32)srcHeight;
 
-	// Non max supression
-	for (vx_int32 y = 0; y < (vx_int32)srcHeight; y++)
+	// Precompute, for each vertical offset dy in [0, radius], the horizontal half-span
+	// of the euclidean disk: the largest |dx| with dy*dy + dx*dx <= r2. This removes the
+	// per-neighbor distance test from the inner loop (the original tested every cell of
+	// the bounding box) so each disk row becomes a contiguous segment we can vectorize.
+	std::vector<vx_int32> spanBuf((size_t)radius + 1);
+	for (vx_int32 dy = 0; dy <= radius; dy++)
 	{
-		pLocalSrc = pSrcVc_NMS;
-		for (vx_int32 x = 0; x < (vx_int32)srcWidth; x++)
+		vx_int32 s = 0;
+		while ((dy * dy + (s + 1) * (s + 1)) <= r2) s++;
+		spanBuf[(size_t)dy] = s;
+	}
+	const vx_int32 * span = spanBuf.data();
+
+	// Non max supression: each non-zero center zeros every weaker neighbor inside the
+	// euclidean disk of "min_distance". Output is identical to the scalar version; the
+	// inner zeroing pass over each disk row is SIMD-widened (andnot(n<Vc, n) keeps n when
+	// n>=Vc, writes 0 otherwise).
+	for (vx_int32 y = 0; y < H; y++)
+	{
+		vx_float32 * pRow = pSrcVc_NMS;
+		for (vx_int32 x = 0; x < W; x++)
 		{
-			vx_float32 Vc = *pLocalSrc;
-			if (Vc)
+			vx_float32 Vc = pRow[x];
+			if (Vc != 0.0f)
 			{
-				
-				for (vx_int32 i = max(y - radius, 0); i <= min(y + radius, (vx_int32) srcHeight - 1); i++)
+				vx_int32 iLo = max(y - radius, 0);
+				vx_int32 iHi = min(y + radius, H - 1);
+				for (vx_int32 i = iLo; i <= iHi; i++)
 				{
-					for (vx_int32 j = max(x - radius, 0); j <= min(x + radius, (vx_int32) srcWidth - 1); j++)
+					vx_int32 dy = i - y;
+					vx_int32 sp = span[(dy < 0) ? -dy : dy];
+					vx_int32 jLo = max(x - sp, 0);
+					vx_int32 jHi = min(x + sp, W - 1);
+					vx_float32 * row = (vx_float32 *)((char *)pRow + dy * (vx_int32)srcVcStrideInBytes);
+					vx_int32 j = jLo;
+#if USE_AVX
+					const __m256 vc8 = _mm256_set1_ps(Vc);
+					for (; j + 8 <= jHi + 1; j += 8)
 					{
-						if ((vx_float32)((y-i)*(y-i)) + (vx_float32)((x-j)*(x-j)) <= radius*radius)
-						{
-							vx_float32 * neighbor = (vx_float32 *)(((char *)pLocalSrc) + (i - y) * (vx_int32)srcVcStrideInBytes + (j - x) * sizeof(vx_float32));
-							if (*neighbor < Vc)
-								*neighbor = 0;
-						}
+						__m256 n = _mm256_loadu_ps(row + j);
+						__m256 lt = _mm256_cmp_ps(n, vc8, _CMP_LT_OQ);
+						_mm256_storeu_ps(row + j, _mm256_andnot_ps(lt, n));
+					}
+#endif
+					const __m128 vc4 = _mm_set1_ps(Vc);
+					for (; j + 4 <= jHi + 1; j += 4)
+					{
+						__m128 n = _mm_loadu_ps(row + j);
+						__m128 lt = _mm_cmplt_ps(n, vc4);
+						_mm_storeu_ps(row + j, _mm_andnot_ps(lt, n));
+					}
+					for (; j <= jHi; j++)
+					{
+						if (row[j] < Vc)
+							row[j] = 0.0f;
 					}
 				}
 			}
-			pLocalSrc++;
 		}
-
 		pSrcVc_NMS = (vx_float32 *)((char *)pSrcVc_NMS + srcVcStrideInBytes);
 	}	
 
-	// Populate the sorted list
-	vx_keypoint_t cand;
-	vx_uint32 numCorners = 0;
-	
+	// Collect surviving corners in raster order, then sort the stored subset by
+	// strength (descending). The previous implementation kept the list ordered via
+	// an insertion sort that shifted up to O(n) elements per insert -> O(n^2) total.
+	// The goodFeaturesToTrack-style "collect then std::sort" is O(n log n) and
+	// produces the same corner set; the full survivor count is reported separately.
+	vx_uint32 numCorners = 0;			// total survivors (may exceed capacity)
+	vx_uint32 stored = 0;				// number actually written to dstCorner
+
 	for (vx_uint32 y = 0; y < srcHeight; y++)
 	{
-		pLocalSrc = pSrcVc;
+		vx_float32 * pLocalSrc = pSrcVc;
 		for (vx_uint32 x = 0; x < srcWidth; x++)
 		{
-			if (*pLocalSrc)
+			vx_float32 s = *pLocalSrc;
+			if (s)
 			{
-				cand.x = x;
-				cand.y = y;
-				cand.strength = *pLocalSrc;
-				cand.scale = 0;
-				cand.orientation = 0;
-				cand.error = 0;
-				cand.tracking_status = 1;
-				if (numCorners < capacityOfDstCorner)
-					AddToTheSortedKeypointList(capacityOfDstCorner, dstCorner, &numCorners, cand);
-				else
-					numCorners++;
+				if (stored < capacityOfDstCorner)
+				{
+					vx_keypoint_t & kp = dstCorner[stored];
+					kp.x = (vx_int32)x;
+					kp.y = (vx_int32)y;
+					kp.strength = s;
+					kp.scale = 0;
+					kp.orientation = 0;
+					kp.error = 0;
+					kp.tracking_status = 1;
+					stored++;
+				}
+				numCorners++;
 			}
 			pLocalSrc++;
 		}
 		pSrcVc = (vx_float32 *)((char *)pSrcVc + srcVcStrideInBytes);
 	}
+
+	std::sort(dstCorner, dstCorner + stored,
+		[](const vx_keypoint_t & a, const vx_keypoint_t & b) { return a.strength > b.strength; });
 
 	*pDstCornerCount = numCorners;
 

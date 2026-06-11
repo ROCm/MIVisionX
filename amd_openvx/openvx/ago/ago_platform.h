@@ -132,6 +132,7 @@ typedef struct {
 	bool sse42;
 	bool avx;
 	bool avx2;
+	bool fma;
 	bool bmi2;
 	bool avx512f;
 	bool avx512bw;

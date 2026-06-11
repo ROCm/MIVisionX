@@ -62,7 +62,7 @@ static uint64_t agoXgetbv(uint32_t index)
 #pragma comment(lib, "OpenCL.lib")
 #endif
 
-// Mirror the USE_AVX / USE_BMI2 compile-time switches from ago_internal.h
+// Mirror the USE_AVX / USE_FMA / USE_BMI2 compile-time switches from ago_internal.h
 // so the hardware-support check below can reflect the *actual* minimum ISA
 // emitted by this binary. Both ago_internal.h and the block here use the
 // same `#ifndef … #define … 1 … #endif` guard, so a single
@@ -71,6 +71,9 @@ static uint64_t agoXgetbv(uint32_t index)
 // is included down below in the !_WIN32 section).
 #ifndef USE_AVX
 #define USE_AVX 1
+#endif
+#ifndef USE_FMA
+#define USE_FMA 1
 #endif
 #ifndef USE_BMI2
 #define USE_BMI2 1
@@ -82,8 +85,8 @@ bool agoIsCpuHardwareSupported()
 	// instruction set the binary was compiled to emit. Previously this
 	// only checked SSE4.2, so on a SSE4.2-only Nehalem-class CPU we
 	// would happily create a vx_context and then SIGILL on the first
-	// AVX2 kernel invocation. With USE_AVX/USE_BMI2 enabled at compile
-	// time, the corresponding runtime feature bits are now hard
+	// AVX2 kernel invocation. With USE_AVX/USE_FMA/USE_BMI2 enabled at
+	// compile time, the corresponding runtime feature bits are now hard
 	// preconditions. f.avx2 already AND-folds the OSXSAVE/XCR0 check
 	// in agoGetCpuFeatures() so an OS that disabled AVX state save also
 	// correctly fails this gate.
@@ -91,6 +94,9 @@ bool agoIsCpuHardwareSupported()
 	if (!f.sse42) return false;
 #if USE_AVX
 	if (!f.avx2) return false;
+#endif
+#if USE_FMA
+	if (!f.fma) return false;
 #endif
 #if USE_BMI2
 	if (!f.bmi2) return false;
@@ -113,11 +119,15 @@ const ago_cpu_features_t & agoGetCpuFeatures()
 			agoCpuid(CPUInfo, 1, 0);
 			f.sse42 = (CPUInfo[2] & (1 << 20)) != 0;
 			bool cpuAvx = (CPUInfo[2] & (1 << 28)) != 0;
+			bool cpuFma = (CPUInfo[2] & (1 << 12)) != 0;
 			bool osxsave = (CPUInfo[2] & (1 << 27)) != 0;
 			if (cpuAvx && osxsave) {
 				uint64_t xcr0 = agoXgetbv(0);
 				osAvx = (xcr0 & 0x6) == 0x6;
 				f.avx = osAvx;
+				// FMA3 operates on YMM registers, so it requires the same
+				// OS AVX-state-save support as AVX itself.
+				f.fma = osAvx && cpuFma;
 			}
 		}
 

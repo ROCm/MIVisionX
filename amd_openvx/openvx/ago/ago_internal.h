@@ -56,6 +56,11 @@ THE SOFTWARE.
 #define USE_AVX 1
 #endif
 
+// Flag to enable FMA3 (fused multiply-add) instructions in primitives
+#ifndef USE_FMA
+#define USE_FMA 1
+#endif
+
 // AGO configuration
 #define USE_AGO_CANNY_SOBEL_SUPP_THRESHOLD    0 // 0:seperate-sobel-and-nonmaxsupression 1:combine-sobel-and-nonmaxsupression
 #define AGO_MEMORY_ALLOC_EXTRA_PADDING       64 // extra bytes to the left and right of buffer allocations

@@ -10282,8 +10282,9 @@ vx_int16      Gy
 #if USE_AVX
 // Fused multiply-add (a*b + c) with a non-FMA fallback so the AVX phase path
 // still compiles when the binary is built without FMA3 (USE_FMA=0). When
-// USE_FMA=1 the build adds -mfma and the runtime CPU gate in ago_platform.cpp
-// requires the FMA bit, so emitting _mm256_fmadd_ps here is safe.
+// USE_FMA=1 the build enables FMA instruction generation and the runtime CPU
+// gate in ago_platform.cpp requires the FMA bit, so emitting _mm256_fmadd_ps
+// here is safe.
 static inline __m256 HafCpu_FmaddAvx(__m256 a, __m256 b, __m256 c)
 {
 #if USE_FMA

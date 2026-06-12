@@ -3844,6 +3844,46 @@ int HafCpu_Threshold_U8_U8_Binary
 		vx_uint8      threshold
 	)
 {
+#if USE_AVX
+	const __m256i offset = _mm256_set1_epi8((char)0x80);
+	__m256i thresh = _mm256_set1_epi8((char)threshold);
+	thresh = _mm256_xor_si256(thresh, offset);
+
+	for (vx_uint32 height = 0; height < dstHeight; height++)
+	{
+		vx_uint8 *pLocalSrc = pSrcImage;
+		vx_uint8 *pLocalDst = pDstImage;
+		vx_uint32 width = 0;
+
+		for (; width + 128 <= dstWidth; width += 128)
+		{
+			__m256i p0 = _mm256_xor_si256(_mm256_loadu_si256((const __m256i *)(pLocalSrc + width)), offset);
+			__m256i p1 = _mm256_xor_si256(_mm256_loadu_si256((const __m256i *)(pLocalSrc + width + 32)), offset);
+			__m256i p2 = _mm256_xor_si256(_mm256_loadu_si256((const __m256i *)(pLocalSrc + width + 64)), offset);
+			__m256i p3 = _mm256_xor_si256(_mm256_loadu_si256((const __m256i *)(pLocalSrc + width + 96)), offset);
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width), _mm256_cmpgt_epi8(p0, thresh));
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width + 32), _mm256_cmpgt_epi8(p1, thresh));
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width + 64), _mm256_cmpgt_epi8(p2, thresh));
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width + 96), _mm256_cmpgt_epi8(p3, thresh));
+		}
+
+		for (; width + 32 <= dstWidth; width += 32)
+		{
+			__m256i pixels = _mm256_xor_si256(_mm256_loadu_si256((const __m256i *)(pLocalSrc + width)), offset);
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width), _mm256_cmpgt_epi8(pixels, thresh));
+		}
+
+		for (; width < dstWidth; width++)
+		{
+			vx_uint8 pix = pLocalSrc[width];
+			pLocalDst[width] = (pix > threshold) ? (vx_uint8)255 : 0;
+		}
+
+		pSrcImage += srcImageStrideInBytes;
+		pDstImage += dstImageStrideInBytes;
+	}
+	return AGO_SUCCESS;
+#else
 	bool useAligned = ((((intptr_t)pSrcImage | (intptr_t)pDstImage) & 0xF) == 0) ? true : false;
 
 	__m128i *pLocalSrc_xmm, *pLocalDst_xmm;
@@ -3913,6 +3953,7 @@ int HafCpu_Threshold_U8_U8_Binary
 		}
 	}
 	return AGO_SUCCESS;
+#endif
 }
 
 int HafCpu_Threshold_U8_U8_Range
@@ -4452,6 +4493,47 @@ int HafCpu_ThresholdNot_U8_U8_Binary
 		vx_uint8      threshold
 	)
 {
+#if USE_AVX
+	const __m256i ones = _mm256_cmpeq_epi32(_mm256_setzero_si256(), _mm256_setzero_si256());
+	const __m256i offset = _mm256_set1_epi8((char)0x80);
+	__m256i thresh = _mm256_set1_epi8((char)threshold);
+	thresh = _mm256_xor_si256(thresh, offset);
+
+	for (vx_uint32 height = 0; height < dstHeight; height++)
+	{
+		vx_uint8 *pLocalSrc = pSrcImage;
+		vx_uint8 *pLocalDst = pDstImage;
+		vx_uint32 width = 0;
+
+		for (; width + 128 <= dstWidth; width += 128)
+		{
+			__m256i p0 = _mm256_xor_si256(_mm256_loadu_si256((const __m256i *)(pLocalSrc + width)), offset);
+			__m256i p1 = _mm256_xor_si256(_mm256_loadu_si256((const __m256i *)(pLocalSrc + width + 32)), offset);
+			__m256i p2 = _mm256_xor_si256(_mm256_loadu_si256((const __m256i *)(pLocalSrc + width + 64)), offset);
+			__m256i p3 = _mm256_xor_si256(_mm256_loadu_si256((const __m256i *)(pLocalSrc + width + 96)), offset);
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width), _mm256_andnot_si256(_mm256_cmpgt_epi8(p0, thresh), ones));
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width + 32), _mm256_andnot_si256(_mm256_cmpgt_epi8(p1, thresh), ones));
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width + 64), _mm256_andnot_si256(_mm256_cmpgt_epi8(p2, thresh), ones));
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width + 96), _mm256_andnot_si256(_mm256_cmpgt_epi8(p3, thresh), ones));
+		}
+
+		for (; width + 32 <= dstWidth; width += 32)
+		{
+			__m256i pixels = _mm256_xor_si256(_mm256_loadu_si256((const __m256i *)(pLocalSrc + width)), offset);
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width), _mm256_andnot_si256(_mm256_cmpgt_epi8(pixels, thresh), ones));
+		}
+
+		for (; width < dstWidth; width++)
+		{
+			vx_uint8 pix = pLocalSrc[width];
+			pLocalDst[width] = (pix > threshold) ? 0 : (vx_uint8)255;
+		}
+
+		pSrcImage += srcImageStrideInBytes;
+		pDstImage += dstImageStrideInBytes;
+	}
+	return AGO_SUCCESS;
+#else
 	bool useAligned = ((((intptr_t)pSrcImage | (intptr_t)pDstImage) & 0xF) == 0) ? true : false;
 
 	__m128i *pLocalSrc_xmm, *pLocalDst_xmm;
@@ -4521,6 +4603,7 @@ int HafCpu_ThresholdNot_U8_U8_Binary
 	}
 	
 	return AGO_SUCCESS;
+#endif
 }
 
 int HafCpu_ThresholdNot_U8_U8_Range
@@ -5064,6 +5147,41 @@ int HafCpu_Lut_U8_U8
 		}
 		return AGO_SUCCESS;
 	}
+
+	__m256i lutTable[16];
+	for (int i = 0; i < 16; i++)
+		lutTable[i] = _mm256_broadcastsi128_si256(_mm_loadu_si128((const __m128i *)(pLut + i * 16)));
+
+	const __m256i nibbleMask = _mm256_set1_epi8((char)0x0F);
+	for (vx_uint32 height = 0; height < dstHeight; height++)
+	{
+		vx_uint8 *pLocalSrc = pSrcImage;
+		vx_uint8 *pLocalDst = pDstImage;
+		vx_uint32 width = 0;
+
+		for (; width + 32 <= dstWidth; width += 32)
+		{
+			__m256i pixels = _mm256_loadu_si256((const __m256i *)(pLocalSrc + width));
+			__m256i lo = _mm256_and_si256(pixels, nibbleMask);
+			__m256i hi = _mm256_and_si256(_mm256_srli_epi16(pixels, 4), nibbleMask);
+			__m256i result = _mm256_setzero_si256();
+
+			for (int i = 0; i < 16; i++)
+			{
+				__m256i values = _mm256_shuffle_epi8(lutTable[i], lo);
+				__m256i match = _mm256_cmpeq_epi8(hi, _mm256_set1_epi8((char)i));
+				result = _mm256_blendv_epi8(result, values, match);
+			}
+			_mm256_storeu_si256((__m256i *)(pLocalDst + width), result);
+		}
+
+		for (; width < dstWidth; width++)
+			pLocalDst[width] = pLut[pLocalSrc[width]];
+
+		pSrcImage += srcImageStrideInBytes;
+		pDstImage += dstImageStrideInBytes;
+	}
+	return AGO_SUCCESS;
 #endif
 	int prefixWidth = intptr_t(pDstImage) & 15;
 	prefixWidth = (prefixWidth == 0) ? 0 : (16 - prefixWidth);
@@ -7783,7 +7901,7 @@ int HafCpu_HistogramMerge_DATA_DATA
 		__m128i sum1 = _mm_setzero_si128();
 		__m128i sum2 = _mm_setzero_si128();
 		for (unsigned int i = 0; i < numPartitions; i++){
-			__m128i *phist = (__m128i *)&pPartSrcHist[i];
+			__m128i *phist = (__m128i *)pPartSrcHist[i];
 			pixels1 = _mm_load_si128(&phist[(n >> 2)]);
 			pixels2 = _mm_load_si128(&phist[(n >> 2)+1]);
 			sum1 = _mm_add_epi32(sum1, pixels1);

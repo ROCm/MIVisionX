@@ -293,6 +293,34 @@ int HafCpu_NonLinearFilter_DATA_DATADATA
             vxAlterRectangle(&rect, (vx_int32)rx0, (vx_int32)ry0, -(vx_int32)rx1, -(vx_int32)ry1);
         }
 
+        if (format == VX_DF_IMAGE_U8 && mtype == VX_TYPE_UINT8 &&
+            func == VX_NONLINEAR_FILTER_MEDIAN &&
+            border->mode == VX_BORDER_UNDEFINED &&
+            mcols == 3 && mrows == 3 && origin.x == 1 && origin.y == 1 &&
+            src_addr.stride_x == 1 && dst_addr.stride_x == 1 &&
+            src_addr.dim_x >= 3 && src_addr.dim_y >= 3)
+        {
+            bool all_ones = true;
+            for (vx_int32 i = 0; i < 9; i++)
+            {
+                if (!m[i])
+                {
+                    all_ones = false;
+                    break;
+                }
+            }
+            if (all_ones)
+            {
+                status |= HafCpu_Median_U8_U8_3x3(
+                    src_addr.dim_x - 2, src_addr.dim_y - 2,
+                    (vx_uint8 *)dst_base + dst_addr.stride_y + 1, dst_addr.stride_y,
+                    (vx_uint8 *)src_base + src_addr.stride_y + 1, src_addr.stride_y);
+                status |= vxCommitImagePatch(src, NULL, 0, &src_addr, src_base);
+                status |= vxCommitImagePatch(dst, &rect, 0, &dst_addr, dst_base);
+                return status;
+            }
+        }
+
         // SIMD fast path: 3x3 mask, U8 image, REPLICATE or UNDEFINED border.
         // Median over 5 elements (e.g., cross) is computed with 10 SIMD min/max ops;
         // median over 9 (3x3 box) uses the same sort network as HafCpu_Median_U8_U8_3x3.

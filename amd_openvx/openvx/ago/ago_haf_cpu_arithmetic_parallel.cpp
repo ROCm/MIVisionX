@@ -54,7 +54,7 @@ typedef struct {
     int postfixWidth;
 } Add_U8_Args_t;
 
-// Row processing function for Add
+// Row processing function for Add with streaming stores
 static void Add_U8_Row_AVX(vx_uint32 start_y, vx_uint32 end_y, void* user_data) {
     Add_U8_Args_t* a = (Add_U8_Args_t*)user_data;
     
@@ -77,7 +77,8 @@ static void Add_U8_Row_AVX(vx_uint32 start_y, vx_uint32 end_y, void* user_data) 
                 pixels1 = _mm256_load_si256(pLocalSrc1_ymm++);
                 pixels2 = _mm256_load_si256(pLocalSrc2_ymm++);
                 pixels1 = _mm256_add_epi8(pixels1, pixels2);
-                _mm256_store_si256(pLocalDst_ymm++, pixels1);
+                // Use streaming store to bypass cache
+                _mm256_stream_si256(pLocalDst_ymm++, pixels1);
             }
         } else {
             pLocalSrc1_ymm = (__m256i*) pSrc1_row;
@@ -88,7 +89,8 @@ static void Add_U8_Row_AVX(vx_uint32 start_y, vx_uint32 end_y, void* user_data) 
                 pixels1 = _mm256_loadu_si256(pLocalSrc1_ymm++);
                 pixels2 = _mm256_loadu_si256(pLocalSrc2_ymm++);
                 pixels1 = _mm256_add_epi8(pixels1, pixels2);
-                _mm256_storeu_si256(pLocalDst_ymm++, pixels1);
+                // Use streaming store to bypass cache
+                _mm256_stream_si256(pLocalDst_ymm++, pixels1);
             }
         }
         
@@ -107,6 +109,9 @@ static void Add_U8_Row_AVX(vx_uint32 start_y, vx_uint32 end_y, void* user_data) 
         pSrc2_row += a->srcImage2StrideInBytes;
         pDst_row += a->dstImageStrideInBytes;
     }
+    
+    // Memory fence to ensure all streaming stores complete
+    _mm_sfence();
 }
 
 #endif // USE_AVX
@@ -214,7 +219,8 @@ static void Subtract_U8_Row_AVX(vx_uint32 start_y, vx_uint32 end_y, void* user_d
                 pixels1 = _mm256_load_si256(pLocalSrc1_ymm++);
                 pixels2 = _mm256_load_si256(pLocalSrc2_ymm++);
                 pixels1 = _mm256_sub_epi8(pixels1, pixels2);
-                _mm256_store_si256(pLocalDst_ymm++, pixels1);
+                // Use streaming store to bypass cache
+                _mm256_stream_si256(pLocalDst_ymm++, pixels1);
             }
         } else {
             pLocalSrc1_ymm = (__m256i*) pSrc1_row;
@@ -225,7 +231,8 @@ static void Subtract_U8_Row_AVX(vx_uint32 start_y, vx_uint32 end_y, void* user_d
                 pixels1 = _mm256_loadu_si256(pLocalSrc1_ymm++);
                 pixels2 = _mm256_loadu_si256(pLocalSrc2_ymm++);
                 pixels1 = _mm256_sub_epi8(pixels1, pixels2);
-                _mm256_storeu_si256(pLocalDst_ymm++, pixels1);
+                // Use streaming store to bypass cache
+                _mm256_stream_si256(pLocalDst_ymm++, pixels1);
             }
         }
         
@@ -243,6 +250,9 @@ static void Subtract_U8_Row_AVX(vx_uint32 start_y, vx_uint32 end_y, void* user_d
         pSrc2_row += a->srcImage2StrideInBytes;
         pDst_row += a->dstImageStrideInBytes;
     }
+    
+    // Memory fence to ensure all streaming stores complete
+    _mm_sfence();
 }
 
 #endif // USE_AVX

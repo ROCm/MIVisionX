@@ -43,6 +43,7 @@ list(APPEND SOURCES
     ago/ago_drama_remove.cpp
     ago/ago_haf_cpu.cpp
     ago/ago_haf_cpu_arithmetic.cpp
+    ago/ago_haf_cpu_arithmetic_parallel.cpp
     ago/ago_haf_cpu_canny.cpp
     ago/ago_haf_cpu_ch_extract_combine.cpp
     ago/ago_haf_cpu_color_convert.cpp
@@ -76,6 +77,21 @@ add_library(openvx SHARED ${SOURCES})
 add_library(vxu SHARED api/vxu.cpp ago/ago_platform.cpp)
 set(ENABLE_OPENCL 0)
 set(ENABLE_HIP 0)
+set(ENABLE_OPENMP 0)
+
+# OpenMP Support
+option(ENABLE_OPENMP "Enable OpenMP multi-threading" ON)
+if(ENABLE_OPENMP)
+    find_package(OpenMP)
+    if(OpenMP_CXX_FOUND)
+        set(ENABLE_OPENMP 1)
+        message("-- ${Green}AMD OpenVX -- OpenMP multi-threading enabled${ColourReset}")
+        message("-- ${Blue}OpenMP Flags: ${OpenMP_CXX_FLAGS}${ColourReset}")
+    else()
+        set(ENABLE_OPENMP 0)
+        message("-- ${Red}WARNING: OpenMP not found -- multi-threading disabled${ColourReset}")
+    endif()
+endif()
 
 # Backend Specific Settings
 if (GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
@@ -114,8 +130,15 @@ endif()
 
 target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=${ENABLE_OPENCL})
 target_compile_definitions(openvx PUBLIC ENABLE_HIP=${ENABLE_HIP})
+target_compile_definitions(openvx PUBLIC USE_OPENMP=${ENABLE_OPENMP})
 target_compile_definitions(vxu PUBLIC ENABLE_OPENCL=${ENABLE_OPENCL})
 target_compile_definitions(vxu PUBLIC ENABLE_HIP=${ENABLE_HIP})
+target_compile_definitions(vxu PUBLIC USE_OPENMP=${ENABLE_OPENMP})
+
+if(ENABLE_OPENMP AND OpenMP_CXX_FOUND)
+    target_compile_options(openvx PRIVATE ${OpenMP_CXX_FLAGS})
+    target_link_libraries(openvx ${OpenMP_CXX_LIBRARIES})
+endif()
 target_link_libraries(vxu openvx)
 
 set_target_properties(openvx PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
@@ -175,6 +198,9 @@ else()
     target_compile_definitions(openvx PRIVATE USE_AVX=1)
     target_compile_definitions(openvx PRIVATE USE_FMA=1)
     target_compile_definitions(openvx PRIVATE USE_BMI2=1)
+    if(ENABLE_OPENMP AND OpenMP_CXX_FOUND)
+        target_compile_options(openvx PRIVATE ${OpenMP_CXX_FLAGS})
+    endif()
     if(NOT APPLE)
         target_link_libraries(openvx dl m)
     endif()

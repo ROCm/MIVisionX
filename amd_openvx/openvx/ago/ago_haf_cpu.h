@@ -334,6 +334,38 @@ int HafCpu_ColorDepth_S16_U8
 		vx_uint32     srcImageStrideInBytes,
 		vx_int32      shift
 	);
+int HafCpu_Add_U8_U8U8_Wrap_OpenMP
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage1,
+		vx_uint32     srcImage1StrideInBytes,
+		vx_uint8    * pSrcImage2,
+		vx_uint32     srcImage2StrideInBytes
+	);
+int HafCpu_Sub_U8_U8U8_Wrap_OpenMP
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage1,
+		vx_uint32     srcImage1StrideInBytes,
+		vx_uint8    * pSrcImage2,
+		vx_uint32     srcImage2StrideInBytes
+	);
+int HafCpu_Box_U8_U8_3x3_OpenMP
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes,
+		vx_uint8    * pScratch
+	);
 int HafCpu_Add_U8_U8U8_Wrap
 	(
 		vx_uint32     dstWidth,

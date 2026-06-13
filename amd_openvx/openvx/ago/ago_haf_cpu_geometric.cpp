@@ -2738,9 +2738,20 @@ ago_scale_matrix_t * matrix
 	} 
 	else if (matrix->xscale == 2.0f && matrix->yscale == 2.0f)
 	{
+		// 2x2 box-average down-scale (ScaleImage Area, half). For each dst pixel
+		// out = (a + b + c + d + 2) >> 2 over the source 2x2 block. The even/odd
+		// byte split (mask low byte + shift high byte) sums the two horizontal
+		// neighbours per 16-bit lane; the two rows are then added. AVX2 handles
+		// 16 dst pixels per step, SSE the next 8, scalar the final tail (the old
+		// SSE-only loop silently dropped any trailing pixels when dstWidth was
+		// not a multiple of 8).
 		__m128i zero = _mm_setzero_si128();
 		__m128i delta2 = _mm_set1_epi16(2);
 		__m128i masklow = _mm_set1_epi16(0x00ff);
+#if USE_AVX
+		__m256i delta2_256 = _mm256_set1_epi16(2);
+		__m256i masklow_256 = _mm256_set1_epi16(0x00ff);
+#endif
 		vx_uint8 *pSrcB = pSrcImage + (srcHeight - 2)*srcImageStrideInBytes;
 		// 2x2 image scaling
 		for (unsigned int y = 0; y < dstHeight; y++)
@@ -2750,7 +2761,23 @@ ago_scale_matrix_t * matrix
 			if (S0 > pSrcB) S0 = pSrcB;
 			vx_uint8 *S1 = S0 + srcImageStrideInBytes;
 			vx_uint8 *D = pDstImage;
-			for (unsigned int dx = 0; dx <= dstWidth - 8; dx += 8, S0 += 16, S1 += 16, D += 8)
+			unsigned int dx = 0;
+#if USE_AVX
+			for (; dx + 16 <= dstWidth; dx += 16, S0 += 32, S1 += 32, D += 16)
+			{
+				__m256i r0 = _mm256_loadu_si256((const __m256i*)S0);
+				__m256i r1 = _mm256_loadu_si256((const __m256i*)S1);
+				__m256i a0 = _mm256_add_epi16(_mm256_srli_epi16(r0, 8), _mm256_and_si256(r0, masklow_256));
+				__m256i a1 = _mm256_add_epi16(_mm256_srli_epi16(r1, 8), _mm256_and_si256(r1, masklow_256));
+				__m256i ss = _mm256_add_epi16(_mm256_add_epi16(a0, a1), delta2_256);
+				ss = _mm256_srli_epi16(ss, 2);
+				__m256i packed = _mm256_packus_epi16(ss, ss);				// per-lane: low 8 bytes valid
+				__m128i lo = _mm256_castsi256_si128(packed);				// dst pixels 0..7
+				__m128i hi = _mm256_extracti128_si256(packed, 1);			// dst pixels 8..15
+				_mm_storeu_si128((__m128i*)D, _mm_unpacklo_epi64(lo, hi));
+			}
+#endif
+			for (; dx + 8 <= dstWidth; dx += 8, S0 += 16, S1 += 16, D += 8)
 			{
 				__m128i r0 = _mm_loadu_si128((const __m128i*)S0);
 				__m128i r1 = _mm_loadu_si128((const __m128i*)S1);
@@ -2761,6 +2788,11 @@ ago_scale_matrix_t * matrix
 				s0 = _mm_packus_epi16(_mm_srli_epi16(s0, 2), zero);
 
 				_mm_storel_epi64((__m128i*)D, s0);
+			}
+			for (; dx < dstWidth; dx++, S0 += 2, S1 += 2, D++)
+			{
+				int sum = (int)S0[0] + (int)S0[1] + (int)S1[0] + (int)S1[1] + 2;
+				*D = (vx_uint8)(sum >> 2);
 			}
 			pDstImage += dstImageStrideInBytes;
 		}

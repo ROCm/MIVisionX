@@ -2948,6 +2948,70 @@ int HafCpu_SobelMagnitude_S16_U8_3x3
 	return AGO_SUCCESS;
 }
 
+#if USE_AVX
+// Shared AVX2 inner loop for the S16-output / U8-source MxN convolution.
+// Processes the aligned span in chunks of 32 destination pixels. Mirrors the
+// proven HafCpu_Convolve_U8_U8_3xN AVX2 kernel (mullo/mulhi_epi16 to build
+// full-width s32 partial products at 1-cycle throughput) but writes signed
+// 16-bit results and uses the SAME logical right shift as the SSE S16 path so
+// the AVX and SSE remainders agree bit-for-bit. `halfWidth` is the horizontal
+// tap radius (1 for 3xN, 2 for 5xN, ...). Advances pDst / pSrc and returns the
+// number of pixels consumed (always a multiple of 32).
+static inline int HafCpu_ConvolveRow_S16_U8_AVX2(
+		short *&pDst, const unsigned char *&pSrc, int alignedWidth,
+		const short *convMatrix, int numConvCoeffs, int halfWidth,
+		int rowLimit, int srcStride, int shift)
+{
+	int width32 = alignedWidth >> 5;
+	int consumed = width32 << 5;
+	while (width32--)
+	{
+		const short *pConv = convMatrix + numConvCoeffs - 1;
+		__m256i acc0 = _mm256_setzero_si256();
+		__m256i acc1 = _mm256_setzero_si256();
+		__m256i acc2 = _mm256_setzero_si256();
+		__m256i acc3 = _mm256_setzero_si256();
+
+		for (int y = -rowLimit; y <= rowLimit; y++)
+		{
+			int offset = y * srcStride;
+			for (int xoff = -halfWidth; xoff <= halfWidth; xoff++)
+			{
+				__m256i src32 = _mm256_loadu_si256((const __m256i *)(pSrc + offset + xoff));
+				__m256i src_lo16 = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(src32));
+				__m256i src_hi16 = _mm256_cvtepu8_epi16(_mm256_extracti128_si256(src32, 1));
+				__m256i cv = _mm256_set1_epi16((short)(*pConv--));
+				__m256i lo_l = _mm256_mullo_epi16(src_lo16, cv);
+				__m256i lo_h = _mm256_mulhi_epi16(src_lo16, cv);
+				__m256i hi_l = _mm256_mullo_epi16(src_hi16, cv);
+				__m256i hi_h = _mm256_mulhi_epi16(src_hi16, cv);
+				// In-lane unpack reconstructs sequential s32 products per 128-bit lane.
+				acc0 = _mm256_add_epi32(acc0, _mm256_unpacklo_epi16(lo_l, lo_h));
+				acc1 = _mm256_add_epi32(acc1, _mm256_unpackhi_epi16(lo_l, lo_h));
+				acc2 = _mm256_add_epi32(acc2, _mm256_unpacklo_epi16(hi_l, hi_h));
+				acc3 = _mm256_add_epi32(acc3, _mm256_unpackhi_epi16(hi_l, hi_h));
+			}
+		}
+
+		acc0 = _mm256_srli_epi32(acc0, shift);
+		acc1 = _mm256_srli_epi32(acc1, shift);
+		acc2 = _mm256_srli_epi32(acc2, shift);
+		acc3 = _mm256_srli_epi32(acc3, shift);
+
+		// In-lane packs_epi32 yields pixels 0..15 (s16_lo) and 16..31 (s16_hi)
+		// already in sequential order, so each half stores directly.
+		__m256i s16_lo = _mm256_packs_epi32(acc0, acc1);
+		__m256i s16_hi = _mm256_packs_epi32(acc2, acc3);
+		_mm256_storeu_si256((__m256i *)pDst, s16_lo);
+		_mm256_storeu_si256((__m256i *)(pDst + 16), s16_hi);
+
+		pDst += 32;
+		pSrc += 32;
+	}
+	return consumed;
+}
+#endif
+
 int HafCpu_Convolve_S16_U8_3xN
 	(
 		vx_uint32     dstWidth,
@@ -3002,7 +3066,19 @@ int HafCpu_Convolve_S16_U8_3xN
 		}
 
 		pLocalDst_xmm = (__m128i *) pLocalDst;
-		int width = (int)(alignedWidth >> 4);							// Each loop processess 16 pixels
+		int remainingWidth = alignedWidth;
+#if USE_AVX
+		{
+			short *pDstAvx = (short *)pLocalDst_xmm;
+			const unsigned char *pSrcAvx = pLocalSrc;
+			int consumed = HafCpu_ConvolveRow_S16_U8_AVX2(pDstAvx, pSrcAvx, remainingWidth,
+				convMatrix, numConvCoeffs, 1, rowLimit, srcStride, shift);
+			remainingWidth -= consumed;
+			pLocalDst_xmm = (__m128i *)pDstAvx;
+			pLocalSrc = (unsigned char *)pSrcAvx;
+		}
+#endif
+		int width = remainingWidth >> 4;								// Each loop processess 16 pixels
 		while (width)
 		{
 			pLocalConvMat = convMatrix + numConvCoeffs - 1;
@@ -3433,7 +3509,19 @@ int HafCpu_Convolve_S16_U8_5xN
 		}
 
 		pLocalDst_xmm = (__m128i *) pLocalDst;
-		int width = (int)(alignedWidth >> 4);							// Each loop processess 16 pixels
+		int remainingWidth = alignedWidth;
+#if USE_AVX
+		{
+			short *pDstAvx = (short *)pLocalDst_xmm;
+			const unsigned char *pSrcAvx = pLocalSrc;
+			int consumed = HafCpu_ConvolveRow_S16_U8_AVX2(pDstAvx, pSrcAvx, remainingWidth,
+				convMatrix, numConvCoeffs, 2, rowLimit, srcStride, shift);
+			remainingWidth -= consumed;
+			pLocalDst_xmm = (__m128i *)pDstAvx;
+			pLocalSrc = (unsigned char *)pSrcAvx;
+		}
+#endif
+		int width = remainingWidth >> 4;								// Each loop processess 16 pixels
 		while (width)
 		{
 			pLocalConvMat = convMatrix + numConvCoeffs - 1;
@@ -3697,7 +3785,19 @@ int HafCpu_Convolve_S16_U8_7xN
 		}
 
 		pLocalDst_xmm = (__m128i *) pLocalDst;
-		int width = (int)(alignedWidth >> 4);							// Each loop processess 16 pixels
+		int remainingWidth = alignedWidth;
+#if USE_AVX
+		{
+			short *pDstAvx = (short *)pLocalDst_xmm;
+			const unsigned char *pSrcAvx = pLocalSrc;
+			int consumed = HafCpu_ConvolveRow_S16_U8_AVX2(pDstAvx, pSrcAvx, remainingWidth,
+				convMatrix, numConvCoeffs, 3, rowLimit, srcStride, shift);
+			remainingWidth -= consumed;
+			pLocalDst_xmm = (__m128i *)pDstAvx;
+			pLocalSrc = (unsigned char *)pSrcAvx;
+		}
+#endif
+		int width = remainingWidth >> 4;								// Each loop processess 16 pixels
 		while (width)
 		{
 			pLocalConvMat = convMatrix + numConvCoeffs - 1;
@@ -3961,7 +4061,19 @@ int HafCpu_Convolve_S16_U8_9xN
 		}
 
 		pLocalDst_xmm = (__m128i *) pLocalDst;
-		int width = (int)(alignedWidth >> 4);							// Each loop processess 16 pixels
+		int remainingWidth = alignedWidth;
+#if USE_AVX
+		{
+			short *pDstAvx = (short *)pLocalDst_xmm;
+			const unsigned char *pSrcAvx = pLocalSrc;
+			int consumed = HafCpu_ConvolveRow_S16_U8_AVX2(pDstAvx, pSrcAvx, remainingWidth,
+				convMatrix, numConvCoeffs, 4, rowLimit, srcStride, shift);
+			remainingWidth -= consumed;
+			pLocalDst_xmm = (__m128i *)pDstAvx;
+			pLocalSrc = (unsigned char *)pSrcAvx;
+		}
+#endif
+		int width = remainingWidth >> 4;								// Each loop processess 16 pixels
 		while (width)
 		{
 			pLocalConvMat = convMatrix + numConvCoeffs - 1;

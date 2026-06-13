@@ -24,6 +24,7 @@ THE SOFTWARE.
 #include "ago_internal.h"
 #include "ago_kernel_api.h"
 #include "ago_haf_gpu.h"
+#include "ago_parallel.h"
 
 #if ENABLE_HIP
 #include "../hipvx/hip_host_decls.h"
@@ -4467,8 +4468,17 @@ int agoKernel_Add_U8_U8U8_Wrap(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_Add_U8_U8U8_Wrap(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
-            status = VX_FAILURE;
+#if USE_OPENMP
+        if (AgoShouldUseThreading(oImg->u.img.height, oImg->u.img.width)) {
+            if (HafCpu_Add_U8_U8U8_Wrap_OpenMP(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+                status = VX_FAILURE;
+            }
+        } else
+#endif
+        {
+            if (HafCpu_Add_U8_U8U8_Wrap(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+                status = VX_FAILURE;
+            }
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {

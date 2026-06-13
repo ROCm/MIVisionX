@@ -258,7 +258,7 @@ int HafCpu_Subtract_U8_U8U8_Wrap_OpenMP(
     vx_uint32     srcImage2StrideInBytes
 ) {
     if (!AgoShouldUseThreading(dstHeight, dstWidth)) {
-        return HafCpu_Subtract_U8_U8U8_Wrap(dstWidth, dstHeight, pDstImage, dstImageStrideInBytes,
+        return HafCpu_Sub_U8_U8U8_Wrap(dstWidth, dstHeight, pDstImage, dstImageStrideInBytes,
                                             pSrcImage1, srcImage1StrideInBytes,
                                             pSrcImage2, srcImage2StrideInBytes);
     }

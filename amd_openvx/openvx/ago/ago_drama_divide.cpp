@@ -1951,12 +1951,41 @@ int agoDramaDivideWeightedAverageNode(AgoNodeList * nodeList, AgoNode * anode)
 int agoDramaDivideNonLinearFilterNode(AgoNodeList * nodeList, AgoNode * anode)
 {
 	// sanity checks
+	if (anode->paramCount != 4) return -1;
 	SANITY_CHECK_DATA_TYPE(anode->paramList[0], VX_TYPE_SCALAR);
 	SANITY_CHECK_DATA_TYPE(anode->paramList[1], VX_TYPE_IMAGE);
 	SANITY_CHECK_DATA_TYPE(anode->paramList[2], VX_TYPE_MATRIX);
 	SANITY_CHECK_DATA_TYPE(anode->paramList[3], VX_TYPE_IMAGE);
 	// save parameters
 	AgoData * paramList[AGO_MAX_PARAMS]; memcpy(paramList, anode->paramList, sizeof(paramList));
+	if (paramList[0]->u.scalar.u.e == VX_NONLINEAR_FILTER_MEDIAN &&
+		paramList[1]->u.img.format == VX_DF_IMAGE_U8 &&
+		paramList[3]->u.img.format == VX_DF_IMAGE_U8 &&
+		paramList[2]->u.mat.type == VX_TYPE_UINT8 &&
+		paramList[2]->u.mat.columns == 3 &&
+		paramList[2]->u.mat.rows == 3 &&
+		paramList[2]->u.mat.origin.x == 1 &&
+		paramList[2]->u.mat.origin.y == 1 &&
+		anode->attr_border_mode.mode == VX_BORDER_MODE_UNDEFINED)
+	{
+		bool allTapsEnabled = true;
+		const vx_uint8 * mask = paramList[2]->buffer;
+		for (int i = 0; i < 9; i++)
+		{
+			if (!mask[i])
+			{
+				allTapsEnabled = false;
+				break;
+			}
+		}
+		if (allTapsEnabled)
+		{
+			anode->paramList[0] = paramList[3];
+			anode->paramList[1] = paramList[1];
+			anode->paramCount = 2;
+			return agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_MEDIAN_U8_U8_3x3);
+		}
+	}
 	anode->paramList[0] = paramList[3];
 	anode->paramList[1] = paramList[0];
 	anode->paramList[2] = paramList[1];

@@ -3029,8 +3029,17 @@ int agoKernel_Not_U8_U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
-        if (HafCpu_Not_U8_U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes)) {
-            status = VX_FAILURE;
+#if USE_OPENMP
+        if (AgoShouldUseThreading(oImg->u.img.height, oImg->u.img.width)) {
+            if (HafCpu_Not_U8_U8_OpenMP(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes)) {
+                status = VX_FAILURE;
+            }
+        } else
+#endif
+        {
+            if (HafCpu_Not_U8_U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes)) {
+                status = VX_FAILURE;
+            }
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -5112,8 +5121,17 @@ int agoKernel_And_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_And_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
-            status = VX_FAILURE;
+#if USE_OPENMP
+        if (AgoShouldUseThreading(oImg->u.img.height, oImg->u.img.width)) {
+            if (HafCpu_And_U8_U8U8_OpenMP(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+                status = VX_FAILURE;
+            }
+        } else
+#endif
+        {
+            if (HafCpu_And_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+                status = VX_FAILURE;
+            }
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -5676,8 +5694,17 @@ int agoKernel_Or_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_Or_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
-            status = VX_FAILURE;
+#if USE_OPENMP
+        if (AgoShouldUseThreading(oImg->u.img.height, oImg->u.img.width)) {
+            if (HafCpu_Or_U8_U8U8_OpenMP(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+                status = VX_FAILURE;
+            }
+        } else
+#endif
+        {
+            if (HafCpu_Or_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+                status = VX_FAILURE;
+            }
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -6240,8 +6267,17 @@ int agoKernel_Xor_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_Xor_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
-            status = VX_FAILURE;
+#if USE_OPENMP
+        if (AgoShouldUseThreading(oImg->u.img.height, oImg->u.img.width)) {
+            if (HafCpu_Xor_U8_U8U8_OpenMP(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+                status = VX_FAILURE;
+            }
+        } else
+#endif
+        {
+            if (HafCpu_Xor_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+                status = VX_FAILURE;
+            }
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {

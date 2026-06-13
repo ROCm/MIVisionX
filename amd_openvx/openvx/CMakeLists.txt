@@ -54,6 +54,7 @@ list(APPEND SOURCES
     ago/ago_haf_cpu_harris.cpp
     ago/ago_haf_cpu_histogram.cpp
     ago/ago_haf_cpu_logical.cpp
+    ago/ago_haf_cpu_logical_parallel.cpp
     ago/ago_haf_cpu_opticalflow.cpp
     ago/ago_haf_cpu_pyramid.cpp
     ago/ago_haf_gpu_common.cpp

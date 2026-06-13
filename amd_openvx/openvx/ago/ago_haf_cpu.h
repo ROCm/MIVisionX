@@ -130,6 +130,15 @@ int HafCpu_Not_U8_U8
 		vx_uint8    * pSrcImage,
 		vx_uint32     srcImageStrideInBytes
 	);
+int HafCpu_Not_U8_U8_OpenMP
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes
+	);
 int HafCpu_Not_U8_U1
 	(
 		vx_uint32     dstWidth,
@@ -469,6 +478,17 @@ int HafCpu_And_U8_U8U8
 		vx_uint8    * pSrcImage2,
 		vx_uint32     srcImage2StrideInBytes
 	);
+int HafCpu_And_U8_U8U8_OpenMP
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage1,
+		vx_uint32     srcImage1StrideInBytes,
+		vx_uint8    * pSrcImage2,
+		vx_uint32     srcImage2StrideInBytes
+	);
 int HafCpu_And_U8_U8U1
 	(
 		vx_uint32     dstWidth,
@@ -535,6 +555,17 @@ int HafCpu_Or_U8_U8U8
 		vx_uint8    * pSrcImage2,
 		vx_uint32     srcImage2StrideInBytes
 	);
+int HafCpu_Or_U8_U8U8_OpenMP
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage1,
+		vx_uint32     srcImage1StrideInBytes,
+		vx_uint8    * pSrcImage2,
+		vx_uint32     srcImage2StrideInBytes
+	);
 int HafCpu_Or_U8_U8U1
 	(
 		vx_uint32     dstWidth,
@@ -591,6 +622,17 @@ int HafCpu_Or_U1_U1U1
 		vx_uint32     srcImage2StrideInBytes
 	);
 int HafCpu_Xor_U8_U8U8
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage1,
+		vx_uint32     srcImage1StrideInBytes,
+		vx_uint8    * pSrcImage2,
+		vx_uint32     srcImage2StrideInBytes
+	);
+int HafCpu_Xor_U8_U8U8_OpenMP
 	(
 		vx_uint32     dstWidth,
 		vx_uint32     dstHeight,

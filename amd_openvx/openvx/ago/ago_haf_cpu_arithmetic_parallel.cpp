@@ -247,7 +247,7 @@ static void Subtract_U8_Row_AVX(vx_uint32 start_y, vx_uint32 end_y, void* user_d
 
 #endif // USE_AVX
 
-int HafCpu_Subtract_U8_U8U8_Wrap_OpenMP(
+int HafCpu_Sub_U8_U8U8_Wrap_OpenMP(
     vx_uint32     dstWidth,
     vx_uint32     dstHeight,
     vx_uint8    * pDstImage,

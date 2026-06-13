@@ -4627,8 +4627,17 @@ int agoKernel_Sub_U8_U8U8_Wrap(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_Sub_U8_U8U8_Wrap(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
-            status = VX_FAILURE;
+#if USE_OPENMP
+        if (AgoShouldUseThreading(oImg->u.img.height, oImg->u.img.width)) {
+            if (HafCpu_Sub_U8_U8U8_Wrap_OpenMP(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+                status = VX_FAILURE;
+            }
+        } else
+#endif
+        {
+            if (HafCpu_Sub_U8_U8U8_Wrap(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+                status = VX_FAILURE;
+            }
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -15047,9 +15056,20 @@ int agoKernel_Box_U8_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
-        if (HafCpu_Box_U8_U8_3x3(oImg->u.img.width, oImg->u.img.height - 2, oImg->buffer + oImg->u.img.stride_in_bytes, oImg->u.img.stride_in_bytes,
-            iImg->buffer + iImg->u.img.stride_in_bytes, iImg->u.img.stride_in_bytes, node->localDataPtr)) {
-            status = VX_FAILURE;
+#if USE_OPENMP
+        if (AgoShouldUseThreading(oImg->u.img.height, oImg->u.img.width)) {
+            // Note: OpenMP version uses simpler implementation without horizontal pass optimization
+            if (HafCpu_Box_U8_U8_3x3_OpenMP(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
+                iImg->buffer, iImg->u.img.stride_in_bytes, node->localDataPtr)) {
+                status = VX_FAILURE;
+            }
+        } else
+#endif
+        {
+            if (HafCpu_Box_U8_U8_3x3(oImg->u.img.width, oImg->u.img.height - 2, oImg->buffer + oImg->u.img.stride_in_bytes, oImg->u.img.stride_in_bytes,
+                iImg->buffer + iImg->u.img.stride_in_bytes, iImg->u.img.stride_in_bytes, node->localDataPtr)) {
+                status = VX_FAILURE;
+            }
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {

@@ -137,7 +137,7 @@ jobs:
             canny channel_extract color_convert accumulate
             graph graph_api tensor_api data_objects user_kernel
             tensor_advanced threshold_query graph_import vxu_api
-            coverage_boost
+            coverage_boost vision_coverage
           )
           for test_dir in "${API_TESTS[@]}"; do
             echo "::group::Building ${test_dir}"
@@ -676,6 +676,7 @@ jobs:
             "graph_import:openvx_graph_import_api"
             "vxu_api:openvx_vxu_api"
             "coverage_boost:openvx_coverage_boost"
+            "vision_coverage:openvx_vision_coverage"
           )
           for entry in "${API_EXECUTABLES[@]}"; do
             dir="${entry%%:*}"
@@ -728,6 +729,41 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: profraw-gdf-tests
+          path: profraw/
+          if-no-files-found: ignore
+
+  vision-tests:
+    name: Vision node tests
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run parametrized vision node tests
+        run: |
+          mkdir -p profraw
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib
+          export AGO_DEFAULT_TARGET=CPU
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_%p.profraw
+          chmod +x install/bin/runvx
+          # Sweep a default frame size plus two small edge-case sizes so the
+          # per-node validation / dispatch branches (which the CTS does not
+          # exercise) are covered.
+          python3 tests/vision_tests/runVisionTests.py \
+            --runvx_directory ${{ github.workspace }}/install/bin --num_frames 10
+          python3 tests/vision_tests/runVisionTests.py \
+            --runvx_directory ${{ github.workspace }}/install/bin --num_frames 10 --width 5 --height 3
+          python3 tests/vision_tests/runVisionTests.py \
+            --runvx_directory ${{ github.workspace }}/install/bin --num_frames 10 --width 10 --height 10
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-vision-tests
           path: profraw/
           if-no-files-found: ignore
 
@@ -1044,6 +1080,7 @@ jobs:
       - vision-pyramid
       - api-tests
       - gdf-tests
+      - vision-tests
     steps:
       - uses: actions/checkout@v4
 

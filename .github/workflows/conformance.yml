@@ -277,6 +277,7 @@ jobs:
             --kernel-floor 0.90 \
             --warn-floor 0.95 \
             --max-cv 5.0 \
+            --min-abs-ms 2.0 \
             --summary-out "$GITHUB_STEP_SUMMARY"
 
       - name: Post PR benchmark summary

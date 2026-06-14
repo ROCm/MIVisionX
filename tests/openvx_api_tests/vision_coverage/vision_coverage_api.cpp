@@ -354,6 +354,122 @@ static void test_error_paths(vx_context ctx)
     vxReleaseImage(&img);
 }
 
+// ---------------------------------------------------------------------------
+// Node validation error arms: build nodes with deliberately invalid
+// formats/dimensions and verify, to exercise the "return VX_ERROR_*" branches
+// inside each kernel's validate callback (ago_kernel_api.cpp).
+// ---------------------------------------------------------------------------
+static void verify_expect_fail(const char *label, vx_graph g)
+{
+    vx_status s = vxVerifyGraph(g);
+    printf("  [%s] %s verify -> %d\n", s != VX_SUCCESS ? "ok-neg" : "warn", label, s);
+}
+
+static void test_node_validation_errors(vx_context ctx)
+{
+    printf("\n=== Node validation error arms (invalid inputs) ===\n");
+
+    // Binary arithmetic with mismatched/invalid formats
+    struct { vx_df_image a, b, o; const char *d; } bad_arith[] = {
+        { VX_DF_IMAGE_U8,  VX_DF_IMAGE_U8,  VX_DF_IMAGE_RGB, "Add bad-out RGB" },
+        { VX_DF_IMAGE_RGB, VX_DF_IMAGE_U8,  VX_DF_IMAGE_U8,  "Add bad-in RGB" },
+        { VX_DF_IMAGE_U8,  VX_DF_IMAGE_S16, VX_DF_IMAGE_U8,  "Add U8+S16->U8" },
+    };
+    for (auto &c : bad_arith) {
+        vx_graph g = vxCreateGraph(ctx);
+        vx_image a = vxCreateImage(ctx, 32, 32, c.a);
+        vx_image b = vxCreateImage(ctx, 32, 32, c.b);
+        vx_image o = vxCreateImage(ctx, 32, 32, c.o);
+        vx_node n = vxAddNode(g, a, b, VX_CONVERT_POLICY_WRAP, o);
+        verify_expect_fail(c.d, g);
+        vxReleaseNode(&n); vxReleaseImage(&o); vxReleaseImage(&b); vxReleaseImage(&a);
+        vxReleaseGraph(&g);
+    }
+
+    // Mismatched dimensions on a simple node
+    {
+        vx_graph g = vxCreateGraph(ctx);
+        vx_image a = vxCreateImage(ctx, 32, 32, VX_DF_IMAGE_U8);
+        vx_image b = vxCreateImage(ctx, 16, 16, VX_DF_IMAGE_U8);
+        vx_image o = vxCreateImage(ctx, 32, 32, VX_DF_IMAGE_U8);
+        vx_node n = vxAndNode(g, a, b, o);
+        verify_expect_fail("And mismatched-dims", g);
+        vxReleaseNode(&n); vxReleaseImage(&o); vxReleaseImage(&b); vxReleaseImage(&a);
+        vxReleaseGraph(&g);
+    }
+
+    // Filters with invalid input format (expect U8)
+    auto bad_filter = [&](const char *d, vx_node (*mk)(vx_graph, vx_image, vx_image)) {
+        vx_graph g = vxCreateGraph(ctx);
+        vx_image in = vxCreateImage(ctx, 32, 32, VX_DF_IMAGE_RGB);   // wrong
+        vx_image out = vxCreateImage(ctx, 32, 32, VX_DF_IMAGE_U8);
+        vx_node n = mk(g, in, out);
+        verify_expect_fail(d, g);
+        vxReleaseNode(&n); vxReleaseImage(&out); vxReleaseImage(&in);
+        vxReleaseGraph(&g);
+    };
+    bad_filter("Box3x3 bad-in", vxBox3x3Node);
+    bad_filter("Gaussian3x3 bad-in", vxGaussian3x3Node);
+    bad_filter("Median3x3 bad-in", vxMedian3x3Node);
+    bad_filter("Dilate3x3 bad-in", vxDilate3x3Node);
+    bad_filter("Erode3x3 bad-in", vxErode3x3Node);
+    bad_filter("Not bad-in", vxNotNode);
+
+    // Color convert with an unsupported conversion
+    {
+        vx_graph g = vxCreateGraph(ctx);
+        vx_image in = vxCreateImage(ctx, 32, 32, VX_DF_IMAGE_U8);    // not a color src
+        vx_image out = vxCreateImage(ctx, 32, 32, VX_DF_IMAGE_RGB);
+        vx_node n = vxColorConvertNode(g, in, out);
+        verify_expect_fail("ColorConvert U8->RGB (invalid)", g);
+        vxReleaseNode(&n); vxReleaseImage(&out); vxReleaseImage(&in);
+        vxReleaseGraph(&g);
+    }
+
+    // Channel extract from a single-plane image (invalid)
+    {
+        vx_graph g = vxCreateGraph(ctx);
+        vx_image in = vxCreateImage(ctx, 32, 32, VX_DF_IMAGE_U8);
+        vx_image out = vxCreateImage(ctx, 32, 32, VX_DF_IMAGE_U8);
+        vx_node n = vxChannelExtractNode(g, in, VX_CHANNEL_R, out);
+        verify_expect_fail("ChannelExtract U8 R (invalid)", g);
+        vxReleaseNode(&n); vxReleaseImage(&out); vxReleaseImage(&in);
+        vxReleaseGraph(&g);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Object create/query variants (exercise per-type switch arms).
+// ---------------------------------------------------------------------------
+static void test_object_variants(vx_context ctx)
+{
+    printf("\n=== Object create/query variants ===\n");
+
+    // Scalars of every primitive type
+    vx_enum stypes[] = { VX_TYPE_CHAR, VX_TYPE_INT8, VX_TYPE_UINT8, VX_TYPE_INT16,
+                         VX_TYPE_UINT16, VX_TYPE_INT32, VX_TYPE_UINT32,
+                         VX_TYPE_INT64, VX_TYPE_UINT64, VX_TYPE_FLOAT32,
+                         VX_TYPE_FLOAT64, VX_TYPE_ENUM, VX_TYPE_SIZE, VX_TYPE_BOOL };
+    for (vx_enum st : stypes) {
+        vx_uint64 zero = 0;
+        vx_scalar sc = vxCreateScalar(ctx, st, &zero);
+        if (vxGetStatus((vx_reference)sc) == VX_SUCCESS) {
+            vx_enum t = 0;
+            vxQueryScalar(sc, VX_SCALAR_TYPE, &t, sizeof(t));
+            vxReleaseScalar(&sc);
+        }
+    }
+    printf("  [ok] scalar type variants\n");
+
+    // Matrix of supported types
+    vx_enum mtypes[] = { VX_TYPE_INT32, VX_TYPE_FLOAT32, VX_TYPE_UINT8 };
+    for (vx_enum mt : mtypes) {
+        vx_matrix m = vxCreateMatrix(ctx, mt, 3, 3);
+        if (vxGetStatus((vx_reference)m) == VX_SUCCESS) vxReleaseMatrix(&m);
+    }
+    printf("  [ok] matrix type variants\n");
+}
+
 int main()
 {
     printf("Vision Coverage API Test\n");
@@ -373,6 +489,8 @@ int main()
     test_optical_flow(ctx);
     test_remap(ctx);
     test_error_paths(ctx);
+    test_node_validation_errors(ctx);
+    test_object_variants(ctx);
 
     vxReleaseContext(&ctx);
 

@@ -1,0 +1,4 @@
+# agoKernel_ScaleImage_U8_U8_Bilinear (exact 2x upscale fast path: interleaveStore/firstColScalar/tailScalar + BlendU8_1_3/3_1)
+data input_1 = uniform-image:640,480,U008,125
+data output_1 = image:1280,960,U008
+node org.khronos.openvx.scale_image input_1 output_1 !BILINEAR

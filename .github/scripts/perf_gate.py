@@ -114,6 +114,8 @@ def _classify(
     *,
     kernel_floor: float,
     warn_floor: float,
+    gate_eligible: bool = True,
+    min_abs_ms: float = 0.0,
 ) -> KernelVerdict:
     if main.mps <= 0 or pr.mps <= 0:
         return KernelVerdict(
@@ -121,11 +123,26 @@ def _classify(
             main=main,
             pr=pr,
             ratio=0.0,
-            status="fail",
-            reason="zero throughput",
+            status="fail" if gate_eligible else "warn",
+            reason="zero throughput" + (
+                "" if gate_eligible
+                else f" (warn-only: under {min_abs_ms:.1f}ms, too fast to gate)"
+            ),
         )
     ratio = pr.mps / main.mps
     if ratio < kernel_floor:
+        if not gate_eligible:
+            return KernelVerdict(
+                key=main.key,
+                main=main,
+                pr=pr,
+                ratio=ratio,
+                status="warn",
+                reason=(f"PR/main = {ratio:.3f}x < kernel floor {kernel_floor:.3f}x, "
+                        f"but warn-only: runtime under {min_abs_ms:.1f}ms "
+                        f"(main={main.sustained_ms:.3f}ms pr={pr.sustained_ms:.3f}ms) "
+                        f"-- too fast to gate reliably (layout/alignment noise)"),
+            )
         return KernelVerdict(
             key=main.key,
             main=main,
@@ -229,6 +246,7 @@ def _render(
     kernel_floor: float,
     warn_floor: float,
     max_cv: float,
+    min_abs_ms: float,
     overall_pass: bool,
     main_system: dict | None = None,
     pr_system: dict | None = None,
@@ -274,6 +292,11 @@ def _render(
                  f"Soft warn for any kernel slower than {(1 - warn_floor) * 100:.1f}%. |")
     lines.append(f"| Max CV%         | {max_cv:.1f}% | "
                  f"Kernels with run-to-run CV above this are skipped. |")
+    if min_abs_ms > 0:
+        lines.append(f"| Min abs time    | {min_abs_ms:.1f}ms | "
+                     f"Kernels faster than this on both sides are **warn-only** (still "
+                     f"shown and in the geomean, but cannot hard-fail) -- too short to "
+                     f"gate reliably (code-layout/alignment noise dominates). |")
     lines.append("")
 
     fails = [v for v in verdicts if v.status == "fail"]
@@ -388,6 +411,13 @@ def main(argv: list[str]) -> int:
                         "kernels in [-10%%, -5%%); below 5%% is treated as noise)")
     p.add_argument("--max-cv", type=float, default=5.0,
                    help="Skip kernels whose CV%% exceeds this threshold (default 5.0)")
+    p.add_argument("--min-abs-ms", type=float, default=0.0,
+                   help="Skip (do not hard-gate) kernels whose runtime on both sides is "
+                        "below this many milliseconds. Sub-millisecond kernels cannot be "
+                        "compared reliably across two separately-linked binaries on a "
+                        "shared runner: an unrelated code-size change shifts a hot loop's "
+                        "instruction alignment and produces deterministic >10%% swings that "
+                        "have nothing to do with the algorithm. Default 0 = disabled.")
     p.add_argument("--summary-out", default=None,
                    help="Append the markdown verdict to this file (e.g. $GITHUB_STEP_SUMMARY)")
     p.add_argument("--skip-name", action="append", default=[],
@@ -424,10 +454,21 @@ def main(argv: list[str]) -> int:
             ))
             continue
 
+        # Kernels too fast to measure reliably across two separately-linked
+        # binaries (sub-ms hot loops are dominated by code-layout/alignment
+        # noise) stay visible and counted in the geomean, but can only ever
+        # warn -- never hard-fail the gate.
+        gate_eligible = not (
+            args.min_abs_ms > 0
+            and max(m.sustained_ms, r.sustained_ms) < args.min_abs_ms
+        )
+
         verdicts.append(_classify(
             m, r,
             kernel_floor=args.kernel_floor,
             warn_floor=args.warn_floor,
+            gate_eligible=gate_eligible,
+            min_abs_ms=args.min_abs_ms,
         ))
 
     for key in sorted(set(main_rows) - set(pr_rows)):
@@ -459,6 +500,7 @@ def main(argv: list[str]) -> int:
         main_system=main_system,
         pr_system=pr_system,
         max_cv=args.max_cv,
+        min_abs_ms=args.min_abs_ms,
         overall_pass=overall_pass,
     )
 

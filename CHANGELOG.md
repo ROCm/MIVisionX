@@ -4,15 +4,21 @@
 
 The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/doxygen/html/index.html)
 
-## (Unreleased) MIVisionX 3.6.0
+## MIVisionX 3.6.0
 
 ### Added
 *  Added the `PythonFunction` extension to VX_RPP
 *  Added unified `rppt_*()` function with `RppBackend` parameter for vx_rpp extensions to support runtime backend selection
+*  CI - CPU (host backend) performance regression gate comparing PR vs main per-kernel and by geometric mean
+*  CI - AMD OpenVX vs OpenCV per-kernel CPU benchmark summary with a +/- 5% parity band
+*  Tests - Expanded CPU coverage with additional GDF graphs (Histogram, MinMaxLoc, ScaleImage) and a vision-coverage OpenVX API test
 
 ### Removed
 *  Removed the batchPD extensions from VX_RPP
 *  Removed separate `rppt_*_host()` and `rppt_*_gpu()` function calls for vx_rpp extensions
+
+### Optimizations
+*  OpenVX (host backend) - Optimized the S16-to-U8 range threshold kernel (`HafCpu_Threshold_U8_S16_Range`) with an AVX2 (256-bit) code path
 
 ### Changed
 *  Updated vx_rpp extension for Gaussian Filter

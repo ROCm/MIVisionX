@@ -37,6 +37,11 @@ import sys
 from dataclasses import dataclass
 
 
+# Kernels whose speedup is within +/- this fraction of 1.00x are considered at
+# parity with the baseline (the difference is within run-to-run measurement
+# noise), not a real win or loss.
+_PARITY_BAND = 0.05
+
 # Canonical category display order (anything unknown is appended, sorted).
 _CATEGORY_ORDER = [
     "pixelwise", "filters", "color", "geometric",
@@ -188,8 +193,12 @@ def render(
     speedups = [p.speedup for p in pairs]
     geomean = _geomean(speedups)
     median = sorted(speedups)[len(speedups) // 2]
-    wins = [p for p in pairs if p.speedup > 1.0]
-    losses = [p for p in pairs if p.speedup < 1.0]
+    # Parity band: within +/- _PARITY_BAND of 1.00x is a tie, not a win/loss.
+    win_thresh = 1.0 + _PARITY_BAND
+    loss_thresh = 1.0 - _PARITY_BAND
+    wins = [p for p in pairs if p.speedup > win_thresh]
+    losses = [p for p in pairs if p.speedup < loss_thresh]
+    parity = [p for p in pairs if loss_thresh <= p.speedup <= win_thresh]
     best = max(pairs, key=lambda p: p.speedup)
     worst = min(pairs, key=lambda p: p.speedup)
     total = len(pairs)
@@ -218,8 +227,18 @@ def render(
     out.write("| Backend | **CPU / host only** (no GPU) |\n")
     out.write(f"| Average speedup (geomean) | **{_fmt_speedup(geomean)}** |\n")
     out.write(f"| Median speedup | {_fmt_speedup(median)} |\n")
-    out.write(f"| Kernels where {cand_label} wins | {len(wins)} / {total} |\n")
-    out.write(f"| Kernels where {base_label} wins | {len(losses)} / {total} |\n")
+    out.write(
+        f"| Kernels where {cand_label} wins (> +{_PARITY_BAND * 100:.0f}%) "
+        f"| {len(wins)} / {total} |\n"
+    )
+    out.write(
+        f"| Kernels at parity (+/- {_PARITY_BAND * 100:.0f}%) "
+        f"| {len(parity)} / {total} |\n"
+    )
+    out.write(
+        f"| Kernels where {base_label} wins (> {_PARITY_BAND * 100:.0f}% slower) "
+        f"| {len(losses)} / {total} |\n"
+    )
     out.write(
         f"| Biggest win | `{best.name}` — {_fmt_speedup(best.speedup)} |\n"
     )
@@ -272,9 +291,13 @@ def render(
         worst_first = sorted(losses, key=lambda p: p.speedup)
         out.write(f"## Where {base_label} is faster ({len(losses)})\n\n")
         out.write(
-            f"> {base_label} edges ahead on these kernels. The `{base_label} "
-            f"advantage` column shows how much faster {base_label} is "
-            f"(= 1 ÷ speedup).\n\n"
+            f"> Only kernels where {cand_label} is **more than "
+            f"{_PARITY_BAND * 100:.0f}% slower** than {base_label} "
+            f"(speedup < {loss_thresh:.2f}x) are listed here. Anything within "
+            f"+/- {_PARITY_BAND * 100:.0f}% of 1.00x is treated as **parity** "
+            f"(within measurement noise) and is not counted as a loss. The "
+            f"`{base_label} advantage` column shows how much faster "
+            f"{base_label} is (= 1 ÷ speedup).\n\n"
         )
         out.write(
             f"| Kernel | {cand_label} MP/s | {base_label} MP/s | Speedup | "

@@ -315,6 +315,19 @@ add_test(
 )
 set_property(TEST openvx_coverage_boost PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
 
+# 11_k - vision_coverage - vision feature coverage API test
+add_test(
+  NAME
+    openvx_vision_coverage
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/vision_coverage"
+                              "${CMAKE_CURRENT_BINARY_DIR}/vision_coverage"
+            --build-generator "${CMAKE_GENERATOR}"
+            --test-command "openvx_vision_coverage"
+)
+set_property(TEST openvx_vision_coverage PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+
 # 12 - canny - vision graph force to CPU
 add_test(NAME openvx_canny_CPU 
               COMMAND openvx_canny 

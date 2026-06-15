@@ -4373,14 +4373,55 @@ int HafCpu_Threshold_U8_S16_Range
 		vx_int16      upper
 	)
 {
-	// SSE in-range threshold on signed 16-bit source -> U8 mask. The previous
-	// implementation was a flat scalar loop (its old SSE code was disabled and
-	// also ignored row strides). This version is row-stride correct and emits
-	// 16 results per iteration:
+	// In-range threshold on signed 16-bit source -> U8 mask:
 	//   out of range  =  (pix > upper) | (pix < lower)            (s16 cmpgt)
-	//   in range mask =  cmpeq(out_of_range, 0)                   (0xFFFF / 0)
-	// Masking with 0x00FF before packus_epi16 yields the 0xFF / 0x00 bytes
-	// (a raw 0xFFFF would saturate to 0x00 under packus).
+	//   in range byte =  0xFF where in range, else 0x00
+	// The previous implementation was a flat scalar loop; on AVX2 builds the
+	// compiler auto-vectorizes that scalar loop to 256-bit, which outruns a
+	// hand-written 128-bit SSE version. This path is therefore explicitly
+	// 256-bit wide (32 results / iteration) and row-stride correct.
+#if USE_AVX
+	const __m256i vUpper   = _mm256_set1_epi16((short)upper);
+	const __m256i vLower   = _mm256_set1_epi16((short)lower);
+	const __m256i vLowByte = _mm256_set1_epi16((short)0x00FF);
+
+	for (int height = 0; height < (int)dstHeight; height++)
+	{
+		vx_int16 *pLocalSrc = (vx_int16 *)((vx_uint8 *)pSrcImage + (size_t)height * srcImageStrideInBytes);
+		vx_uint8 *pLocalDst = pDstImage + (size_t)height * dstImageStrideInBytes;
+		int width = 0;
+		for (; width + 32 <= (int)dstWidth; width += 32)
+		{
+			__m256i p0 = _mm256_loadu_si256((const __m256i *)pLocalSrc);
+			__m256i p1 = _mm256_loadu_si256((const __m256i *)(pLocalSrc + 16));
+			__m256i oor0 = _mm256_or_si256(_mm256_cmpgt_epi16(p0, vUpper), _mm256_cmpgt_epi16(vLower, p0));
+			__m256i oor1 = _mm256_or_si256(_mm256_cmpgt_epi16(p1, vUpper), _mm256_cmpgt_epi16(vLower, p1));
+			__m256i in0 = _mm256_andnot_si256(oor0, vLowByte);	// (~oor) & 0x00FF
+			__m256i in1 = _mm256_andnot_si256(oor1, vLowByte);
+			__m128i b0 = _mm_packus_epi16(_mm256_castsi256_si128(in0), _mm256_extracti128_si256(in0, 1));
+			__m128i b1 = _mm_packus_epi16(_mm256_castsi256_si128(in1), _mm256_extracti128_si256(in1, 1));
+			_mm_storeu_si128((__m128i *)pLocalDst, b0);
+			_mm_storeu_si128((__m128i *)(pLocalDst + 16), b1);
+			pLocalSrc += 32;
+			pLocalDst += 32;
+		}
+		for (; width + 16 <= (int)dstWidth; width += 16)
+		{
+			__m256i p0 = _mm256_loadu_si256((const __m256i *)pLocalSrc);
+			__m256i oor0 = _mm256_or_si256(_mm256_cmpgt_epi16(p0, vUpper), _mm256_cmpgt_epi16(vLower, p0));
+			__m256i in0 = _mm256_andnot_si256(oor0, vLowByte);
+			__m128i b0 = _mm_packus_epi16(_mm256_castsi256_si128(in0), _mm256_extracti128_si256(in0, 1));
+			_mm_storeu_si128((__m128i *)pLocalDst, b0);
+			pLocalSrc += 16;
+			pLocalDst += 16;
+		}
+		for (; width < (int)dstWidth; width++)
+		{
+			vx_int16 pix = *pLocalSrc++;
+			*pLocalDst++ = ((pix > upper) || (pix < lower)) ? 0 : (vx_uint8)255;
+		}
+	}
+#else
 	const __m128i vUpper   = _mm_set1_epi16((short)upper);
 	const __m128i vLower   = _mm_set1_epi16((short)lower);
 	const __m128i vZero    = _mm_setzero_si128();
@@ -4410,6 +4451,7 @@ int HafCpu_Threshold_U8_S16_Range
 			*pLocalDst++ = ((pix > upper) || (pix < lower)) ? 0 : (vx_uint8)255;
 		}
 	}
+#endif
 	return AGO_SUCCESS;
 }
 

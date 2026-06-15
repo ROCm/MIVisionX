@@ -112,10 +112,9 @@ int HafCpu_ScaleGaussianHalf_U8_U8_5x5
 	unsigned short * r3 = (unsigned short *)(pScratch + 3 * alignedDstStride);
 	unsigned short * r4 = (unsigned short *)(pScratch + 4 * alignedDstStride);
 
-	int prefixWidth = intptr_t(pDstImage) & 15;
-	prefixWidth = (prefixWidth == 0) ? 0 : (16 - prefixWidth);
-	int postfixWidth = ((int)dstWidth - prefixWidth) & 15;
-	int alignedWidth = (int)dstWidth - prefixWidth - postfixWidth;
+	int prefixWidth = 0;
+	int postfixWidth = (int)dstWidth & 15;
+	int alignedWidth = (int)dstWidth - postfixWidth;
 	int srcRowOffset = sampleFirstRow ? 0 : srcImageStrideInBytes;
 	int srcColOffset = sampleFirstColumn ? 0 : 1;
 
@@ -244,7 +243,7 @@ int HafCpu_ScaleGaussianHalf_U8_U8_5x5
 			pixels_plus1L = _mm_srli_epi16(pixels_plus1L, 8);											// Divide by 256
 
 			pixels_plus1L = _mm_packus_epi16(pixels_plus1L, pixels_plus1H);
-			_mm_store_si128((__m128i *)pLocalDst, pixels_plus1L);
+			_mm_storeu_si128((__m128i *)pLocalDst, pixels_plus1L);
 
 			pLocalSrc += 32;
 			pLocalSrc_NextRow += 32;

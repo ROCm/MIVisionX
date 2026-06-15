@@ -1510,17 +1510,53 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->ref.type = VX_TYPE_THRESHOLD;
         const char *s = strstr(desc, ","); if (!s) return -1;
         char thresh_type[64];
-        //char data_type[64];
-        uint32_t input_format, output_format;
         memcpy(thresh_type, desc, s - desc); thresh_type[s - desc] = 0;
-        s = strstr(s, ",");
-        input_format = stoi(s+1);
-        s = strstr(s+1, ",");
-        output_format = stoi(s+1);
         data->u.thr.thresh_type = agoName2Enum(thresh_type);
-        //data->u.thr.data_type = agoName2Enum(data_type);
-        data->u.thr.input_format = (vx_df_image)input_format;
-        data->u.thr.output_format = (vx_df_image)output_format;
+        s++;
+        const char *init = strchr(s, ':');
+        const char *next = strchr(s, ',');
+        if (next && (!init || next < init)) {
+            char *end = nullptr;
+            unsigned long input_format = strtoul(s, &end, 10);
+            if (end != next) return -1;
+            unsigned long output_format = strtoul(next + 1, &end, 10);
+            if (end == next + 1 || (*end && *end != ':' && *end != ',')) return -1;
+            data->u.thr.input_format = (vx_df_image)input_format;
+            data->u.thr.output_format = (vx_df_image)output_format;
+        }
+        else {
+            char data_type[64];
+            strncpy(data_type, s, sizeof(data_type) - 1);
+            data_type[sizeof(data_type) - 1] = 0;
+            char *init_pos = strchr(data_type, ':');
+            if (init_pos) *init_pos = 0;
+            data->u.thr.data_type = agoName2Enum(data_type);
+            if (data->u.thr.data_type == VX_TYPE_UINT8 || data->u.thr.data_type == VX_TYPE_INT8 || data->u.thr.data_type == VX_TYPE_BOOL) {
+                data->u.thr.input_format = VX_DF_IMAGE_U8;
+                data->u.thr.output_format = (data->u.thr.data_type == VX_TYPE_BOOL) ? VX_DF_IMAGE_U1 : VX_DF_IMAGE_U8;
+            }
+            else if (data->u.thr.data_type == VX_TYPE_INT16) {
+                data->u.thr.input_format = VX_DF_IMAGE_S16;
+                data->u.thr.output_format = VX_DF_IMAGE_U8;
+            }
+            else if (data->u.thr.data_type == VX_TYPE_UINT16) {
+                data->u.thr.input_format = VX_DF_IMAGE_U16;
+                data->u.thr.output_format = VX_DF_IMAGE_U8;
+            }
+            else if (data->u.thr.data_type == VX_TYPE_INT32) {
+                data->u.thr.input_format = VX_DF_IMAGE_S32;
+                data->u.thr.output_format = VX_DF_IMAGE_U8;
+            }
+            else if (data->u.thr.data_type == VX_TYPE_UINT32) {
+                data->u.thr.input_format = VX_DF_IMAGE_U32;
+                data->u.thr.output_format = VX_DF_IMAGE_U8;
+            }
+        }
+        if (!data->u.thr.data_type) {
+            if (data->u.thr.output_format == VX_DF_IMAGE_U1) data->u.thr.data_type = VX_TYPE_BOOL;
+            else if (data->u.thr.input_format == VX_DF_IMAGE_S16) data->u.thr.data_type = VX_TYPE_INT16;
+            else data->u.thr.data_type = VX_TYPE_UINT8;
+        }
 
         if (!data->u.thr.thresh_type || !data->u.thr.input_format || !data->u.thr.output_format) return -1;
         /*if (data->u.thr.data_type != VX_TYPE_UINT8 && data->u.thr.data_type != VX_TYPE_UINT16 && data->u.thr.data_type != VX_TYPE_INT16) {

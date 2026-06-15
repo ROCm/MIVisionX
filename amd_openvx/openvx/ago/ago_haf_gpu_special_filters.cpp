@@ -612,14 +612,14 @@ int HafGpu_NonLinearFilter_3x3_ANY_U1(AgoNode * node)
 		int op = (node->akernel->id == VX_KERNEL_AMD_DILATE_U8_U1_3x3 || node->akernel->id == VX_KERNEL_AMD_DILATE_U1_U1_3x3) ? '|' : '&';
 		snprintf(item, sizeof(item),
 			OPENCL_FORMAT(
-			"  x = (x >> 3) - 1;\n"
+			"  x = x >> 3;\n"
 			"  p += y * %d + x;\n" // stride
 			"  __global uchar *p0 = p - %d;\n" // stride
 			"  __global uchar *p1 = p;\n"
 			"  __global uchar *p2 = p + %d;\n" // stride
-			"  uint L0 = (uint)p0[0] | ((uint)p0[1] << 8) | ((uint)p0[2] << 16) | ((uint)p0[3] << 24);\n"
-			"  uint L1 = (uint)p1[0] | ((uint)p1[1] << 8) | ((uint)p1[2] << 16) | ((uint)p1[3] << 24);\n"
-			"  uint L2 = (uint)p2[0] | ((uint)p2[1] << 8) | ((uint)p2[2] << 16) | ((uint)p2[3] << 24);\n"
+			"  uint L0 = (uint)p0[-1] | ((uint)p0[0] << 8) | ((uint)p0[1] << 16) | ((uint)p0[2] << 24);\n"
+			"  uint L1 = (uint)p1[-1] | ((uint)p1[0] << 8) | ((uint)p1[1] << 16) | ((uint)p1[2] << 24);\n"
+			"  uint L2 = (uint)p2[-1] | ((uint)p2[0] << 8) | ((uint)p2[1] << 16) | ((uint)p2[2] << 24);\n"
 			"  L0 = L0 %c (L0 >> 1) %c (L0 << 1);\n" // op, op
 			"  L1 = L1 %c (L1 >> 1) %c (L1 << 1);\n" // op, op
 			"  L2 = L2 %c (L2 >> 1) %c (L2 << 1);\n" // op, op

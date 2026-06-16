@@ -611,14 +611,15 @@ int HafGpu_NonLinearFilter_3x3_ANY_U1(AgoNode * node)
 		node->akernel->id == VX_KERNEL_AMD_ERODE_U1_U1_3x3) {
 		int op = (node->akernel->id == VX_KERNEL_AMD_DILATE_U8_U1_3x3 || node->akernel->id == VX_KERNEL_AMD_DILATE_U1_U1_3x3) ? '|' : '&';
 		snprintf(item, sizeof(item),
-			// TBD: this code segment uses risky 32-bit loads without 32-bit alignment
-			//      it works great on our hardware though it doesn't follow OpenCL rules
 			OPENCL_FORMAT(
-			"  x = (x >> 3) - 1;\n"
+			"  x = x >> 3;\n"
 			"  p += y * %d + x;\n" // stride
-			"  uint L0 = *(__global uint *)&p[-%d];\n" //  stride
-			"  uint L1 = *(__global uint *) p;\n"
-			"  uint L2 = *(__global uint *)&p[%d];\n" //  stride
+			"  __global uchar *p0 = p - %d;\n" // stride
+			"  __global uchar *p1 = p;\n"
+			"  __global uchar *p2 = p + %d;\n" // stride
+			"  uint L0 = (uint)p0[-1] | ((uint)p0[0] << 8) | ((uint)p0[1] << 16) | ((uint)p0[2] << 24);\n"
+			"  uint L1 = (uint)p1[-1] | ((uint)p1[0] << 8) | ((uint)p1[1] << 16) | ((uint)p1[2] << 24);\n"
+			"  uint L2 = (uint)p2[-1] | ((uint)p2[0] << 8) | ((uint)p2[1] << 16) | ((uint)p2[2] << 24);\n"
 			"  L0 = L0 %c (L0 >> 1) %c (L0 << 1);\n" // op, op
 			"  L1 = L1 %c (L1 >> 1) %c (L1 << 1);\n" // op, op
 			"  L2 = L2 %c (L2 >> 1) %c (L2 << 1);\n" // op, op

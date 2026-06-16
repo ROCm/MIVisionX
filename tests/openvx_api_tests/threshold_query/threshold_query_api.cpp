@@ -52,36 +52,38 @@ THE SOFTWARE.
 } while(0)
 
 // ---------------------------------------------------------------------------
-// Test 1: vxCreateThresholdForImage with various format combinations
-// Note: The deprecated vxCreateThreshold() has a known stoi bug in this
-//       codebase (enum name passed where numeric image format expected),
-//       so we use vxCreateThresholdForImage() which is the 1.3 API.
+// Test 1: vxCreateThreshold deprecated API coverage
 // ---------------------------------------------------------------------------
 static int test_vxCreateThreshold_deprecated(vx_context context) {
     int errors = 0;
-    printf("\n=== Test 1: vxCreateThresholdForImage (various formats) ===\n");
+    printf("\n=== Test 1: vxCreateThreshold (deprecated API) ===\n");
 
-    // Binary threshold: U8 input, U8 output
-    vx_threshold thr_u8 = vxCreateThresholdForImage(context, VX_THRESHOLD_TYPE_BINARY, VX_DF_IMAGE_U8, VX_DF_IMAGE_U8);
-    CHECK_NOT_NULL(thr_u8, "vxCreateThresholdForImage(BINARY, U8, U8)");
+    vx_threshold thr_u8 = vxCreateThreshold(context, VX_THRESHOLD_TYPE_BINARY, VX_TYPE_UINT8);
+    CHECK_NOT_NULL(thr_u8, "vxCreateThreshold(BINARY, UINT8)");
 
-    // Range threshold: S16 input, U8 output
-    vx_threshold thr_s16 = vxCreateThresholdForImage(context, VX_THRESHOLD_TYPE_RANGE, VX_DF_IMAGE_S16, VX_DF_IMAGE_U8);
-    CHECK_NOT_NULL(thr_s16, "vxCreateThresholdForImage(RANGE, S16, U8)");
+    if (thr_u8) {
+        vx_enum data_type = 0;
+        CHECK_STATUS(vxQueryThreshold(thr_u8, VX_THRESHOLD_ATTRIBUTE_DATA_TYPE, &data_type, sizeof(data_type)));
+        if (data_type != VX_TYPE_UINT8) {
+            printf("  FAIL: Expected UINT8 data type, got 0x%08x\n", data_type);
+            errors++;
+        }
+    }
 
-    // Binary threshold: U8 input, U1 output
-    vx_threshold thr_u1 = vxCreateThresholdForImage(context, VX_THRESHOLD_TYPE_BINARY, VX_DF_IMAGE_U8, VX_DF_IMAGE_U1);
-    CHECK_NOT_NULL(thr_u1, "vxCreateThresholdForImage(BINARY, U8, U1)");
+    vx_threshold thr_s16 = vxCreateThreshold(context, VX_THRESHOLD_TYPE_RANGE, VX_TYPE_INT16);
+    CHECK_NOT_NULL(thr_s16, "vxCreateThreshold(RANGE, INT16)");
 
-    // Range threshold: U8 input, U8 output
-    vx_threshold thr_range_u8 = vxCreateThresholdForImage(context, VX_THRESHOLD_TYPE_RANGE, VX_DF_IMAGE_U8, VX_DF_IMAGE_U8);
-    CHECK_NOT_NULL(thr_range_u8, "vxCreateThresholdForImage(RANGE, U8, U8)");
+    if (thr_s16) {
+        vx_enum data_type = 0;
+        CHECK_STATUS(vxQueryThreshold(thr_s16, VX_THRESHOLD_ATTRIBUTE_DATA_TYPE, &data_type, sizeof(data_type)));
+        if (data_type != VX_TYPE_INT16) {
+            printf("  FAIL: Expected INT16 data type, got 0x%08x\n", data_type);
+            errors++;
+        }
+    }
 
-    // Release all thresholds
-    if (thr_u8)       CHECK_STATUS(vxReleaseThreshold(&thr_u8));
-    if (thr_s16)      CHECK_STATUS(vxReleaseThreshold(&thr_s16));
-    if (thr_u1)       CHECK_STATUS(vxReleaseThreshold(&thr_u1));
-    if (thr_range_u8) CHECK_STATUS(vxReleaseThreshold(&thr_range_u8));
+    if (thr_u8)  CHECK_STATUS(vxReleaseThreshold(&thr_u8));
+    if (thr_s16) CHECK_STATUS(vxReleaseThreshold(&thr_s16));
 
     return errors;
 }

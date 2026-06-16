@@ -3403,7 +3403,9 @@ AgoContext::AgoContext()
     memset(&immediate_border_mode, 0, sizeof(immediate_border_mode));
     memset(&extensions, 0, sizeof(extensions));
 #if ENABLE_OPENCL
-    memset(&opencl_extensions, 0, sizeof(opencl_extensions));
+    // NOTE: opencl_extensions is a std::string and is already default-constructed
+    //       to empty; memset() on it corrupts the object (UB) and breaks OpenCL
+    //       context init for every graph, so it must NOT be memset here.
     memset(&opencl_device_list, 0, sizeof(opencl_device_list));
     memset(&opencl_build_options, 0, sizeof(opencl_build_options));
 #endif

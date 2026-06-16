@@ -1,0 +1,7 @@
+# agoKernel_MinMaxLoc_DATA_U8DATA_Loc_None_Count_MinMax
+data inter_luma = uniform-image:1280,720,U008,125
+data output_minval = scalar:UINT8,0
+data output_maxval = scalar:UINT8,0
+data output_mincount = scalar:UINT32,0
+data output_maxcount = scalar:UINT32,0
+node org.khronos.openvx.minmaxloc inter_luma output_minval output_maxval NULL NULL output_mincount output_maxcount

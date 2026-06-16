@@ -19451,24 +19451,25 @@ int agoKernel_WarpPerspective_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd
 #if ENABLE_OPENCL
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
         status = VX_SUCCESS;
+        agoCodeGenOpenCL_SampleWithConstBorder(node->opencl_code);
         char textBuffer[4096];
         snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, ago_perspective_matrix_t matrix)\n"
             "{\n"
             "  U8x8 rv;\n"
-            "  float sx, sy, sz, isz;\n"
+            "  float sx, sy, sz, isz; uint v;\n"
             "  float dx = (float)x, dy = (float)y;\n"
             "  sx = mad(dy, matrix.M[1][0], matrix.M[2][0]); sx = mad(dx, matrix.M[0][0], sx);\n"
             "  sy = mad(dy, matrix.M[1][1], matrix.M[2][1]); sy = mad(dx, matrix.M[0][1], sy);\n"
             "  sz = mad(dy, matrix.M[1][2], matrix.M[2][2]); sz = mad(dx, matrix.M[0][2], sz);\n"
-            "  isz = 1.0f / sz; rv.s0 = p[(int)mad24(stride, (uint)(sy*isz), (uint)(sx*isz))];\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s0 |= p[(int)mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 8;\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s0 |= p[(int)mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 16;\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s0 |= p[(int)mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 24;\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s1  = p[(int)mad24(stride, (uint)(sy*isz), (uint)(sx*isz))];\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s1 |= p[(int)mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 8;\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s1 |= p[(int)mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 16;\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; rv.s1 |= p[(int)mad24(stride, (uint)(sy*isz), (uint)(sx*isz))] << 24;\n"
+            "  isz = 1.0f / sz; v = SampleWithConstBorder(p, (int)(sx*isz), (int)(sy*isz), width, height, stride, 0); rv.s0 = v;\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; v = SampleWithConstBorder(p, (int)(sx*isz), (int)(sy*isz), width, height, stride, 0); rv.s0 |= v << 8;\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; v = SampleWithConstBorder(p, (int)(sx*isz), (int)(sy*isz), width, height, stride, 0); rv.s0 |= v << 16;\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; v = SampleWithConstBorder(p, (int)(sx*isz), (int)(sy*isz), width, height, stride, 0); rv.s0 |= v << 24;\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; v = SampleWithConstBorder(p, (int)(sx*isz), (int)(sy*isz), width, height, stride, 0); rv.s1 = v;\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; v = SampleWithConstBorder(p, (int)(sx*isz), (int)(sy*isz), width, height, stride, 0); rv.s1 |= v << 8;\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; v = SampleWithConstBorder(p, (int)(sx*isz), (int)(sy*isz), width, height, stride, 0); rv.s1 |= v << 16;\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; v = SampleWithConstBorder(p, (int)(sx*isz), (int)(sy*isz), width, height, stride, 0); rv.s1 |= v << 24;\n"
             "  *r = rv;\n"
             "}\n"
             ), node->opencl_name);
@@ -19661,8 +19662,10 @@ int agoKernel_WarpPerspective_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cm
 #if ENABLE_OPENCL
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
         status = VX_SUCCESS;
+        agoCodeGenOpenCL_SampleWithConstBorder(node->opencl_code);
         agoCodeGenOpenCL_BilinearSample(node->opencl_code);
-        agoCodeGenOpenCL_BilinearSampleFXY(node->opencl_code);
+        agoCodeGenOpenCL_BilinearSampleWithConstBorder(node->opencl_code);
+        agoCodeGenOpenCL_BilinearSampleFXYConstant(node->opencl_code);
         char textBuffer[4096];
         snprintf(textBuffer, sizeof(textBuffer), OPENCL_FORMAT(
             "void %s(U8x8 * r, uint x, uint y, __global uchar * p, uint stride, uint width, uint height, ago_perspective_matrix_t matrix)\n"
@@ -19673,15 +19676,15 @@ int agoKernel_WarpPerspective_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cm
             "  sx = mad(dy, matrix.M[1][0], matrix.M[2][0]); sx = mad(dx, matrix.M[0][0], sx);\n"
             "  sy = mad(dy, matrix.M[1][1], matrix.M[2][1]); sy = mad(dx, matrix.M[0][1], sy);\n"
             "  sz = mad(dy, matrix.M[1][2], matrix.M[2][2]); sz = mad(dx, matrix.M[0][2], sz);\n"
-            "  isz = 1.0f / sz; f.s0 = BilinearSampleFXY(p, stride, sx*isz, sy*isz);\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; f.s1 = BilinearSampleFXY(p, stride, sx*isz, sy*isz);\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; f.s2 = BilinearSampleFXY(p, stride, sx*isz, sy*isz);\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; f.s3 = BilinearSampleFXY(p, stride, sx*isz, sy*isz);\n"
+            "  isz = 1.0f / sz; f.s0 = BilinearSampleFXYConstant(p, stride, width, height, sx*isz, sy*isz, 0);\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; f.s1 = BilinearSampleFXYConstant(p, stride, width, height, sx*isz, sy*isz, 0);\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; f.s2 = BilinearSampleFXYConstant(p, stride, width, height, sx*isz, sy*isz, 0);\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; f.s3 = BilinearSampleFXYConstant(p, stride, width, height, sx*isz, sy*isz, 0);\n"
             "  rv.s0 = amd_pack(f);\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; f.s0 = BilinearSampleFXY(p, stride, sx*isz, sy*isz);\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; f.s1 = BilinearSampleFXY(p, stride, sx*isz, sy*isz);\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; f.s2 = BilinearSampleFXY(p, stride, sx*isz, sy*isz);\n"
-            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; f.s3 = BilinearSampleFXY(p, stride, sx*isz, sy*isz);\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; f.s0 = BilinearSampleFXYConstant(p, stride, width, height, sx*isz, sy*isz, 0);\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; f.s1 = BilinearSampleFXYConstant(p, stride, width, height, sx*isz, sy*isz, 0);\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; f.s2 = BilinearSampleFXYConstant(p, stride, width, height, sx*isz, sy*isz, 0);\n"
+            "  sx += matrix.M[0][0]; sy += matrix.M[0][1]; sz += matrix.M[0][2]; isz = 1.0f / sz; f.s3 = BilinearSampleFXYConstant(p, stride, width, height, sx*isz, sy*isz, 0);\n"
             "  rv.s1 = amd_pack(f);\n"
             "  *r = rv;\n"
             "}\n"

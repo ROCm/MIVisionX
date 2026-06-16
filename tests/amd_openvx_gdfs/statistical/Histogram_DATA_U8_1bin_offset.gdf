@@ -1,0 +1,4 @@
+# agoKernel_Histogram_DATA_U8 (HafCpu_Histogram1Threshold_DATA_U8: binCount==1, offset path)
+data input_1 = uniform-image:1280,720,U008,90
+data output_hist = distribution:1,128,128
+node org.khronos.openvx.histogram input_1 output_hist

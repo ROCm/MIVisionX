@@ -45,7 +45,7 @@ set(MIVISIONX_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(MIVISIONX_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 ## MIVisionX package version
-set(VERSION "3.5.0")
+set(VERSION "3.6.0")
 
 # Set Project Version and Language
 project(mivisionx VERSION ${VERSION} LANGUAGES CXX)

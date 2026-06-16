@@ -142,6 +142,29 @@ def resolve_cts_dir(directory_arg: str) -> Path:
     return (base / "mivisionx-conformance").resolve()
 
 
+def path_is_relative_to(path: Path, parent: Path) -> bool:
+    """Return True when *path* is inside *parent* (or equal to it)."""
+    try:
+        path.relative_to(parent)
+        return True
+    except ValueError:
+        return False
+
+
+def move_cwd_out_of_cts_dir(cts_dir: Path, source_root: Path) -> None:
+    """Avoid deleting the process current directory during conformance cleanup."""
+    try:
+        cwd = Path.cwd().resolve()
+    except FileNotFoundError:
+        os.chdir(source_root)
+        log.info("Current working directory no longer exists; switched to %s", source_root)
+        return
+
+    if path_is_relative_to(cwd, cts_dir):
+        os.chdir(source_root)
+        log.info("Current working directory is inside %s; switched to %s", cts_dir, source_root)
+
+
 # ---------------------------------------------------------------------------
 # Subprocess wrappers
 # ---------------------------------------------------------------------------
@@ -536,6 +559,7 @@ def main() -> int:
 
     cts_dir = resolve_cts_dir(args.directory)
     source_root = (Path(__file__).resolve().parent / ".." / "..").resolve()
+    move_cwd_out_of_cts_dir(cts_dir, source_root)
 
     # -- Clean previous run ---------------------------------------------------
     if cts_dir.exists() and not args.no_clean:
@@ -580,14 +604,13 @@ def main() -> int:
     platform_name = sanitize_filename(platform.platform())
     file_dtstr = datetime.now().strftime("%Y%m%d")
     report_filename = f"system_info_report_{platform_name}_{file_dtstr}.md"
-    report_path = Path(report_filename).resolve()
+    report_path = cts_dir / report_filename
     write_system_report(
         report_path,
         backend_type=backend_type,
         openvx_lib_dirs=openvx_lib_dirs,
         lib_type=lib_type,
     )
-    shutil.copy2(report_path, cts_dir / report_path.name)
     print(f"\nSTATUS: Output Report File - {report_path}")
 
     # -- CTS repo + build dirs ------------------------------------------------
@@ -648,7 +671,7 @@ def main() -> int:
                 failures.append("HOST (%s)" % describe_returncode(rc))
             host_data = report_path.read_text(encoding="utf-8")
             cts_log_data = out_md.read_text(encoding="utf-8")
-            Path("HOST_Conformance_Logs.md").write_text(host_data + "\n\n" + cts_log_data, encoding="utf-8")
+            (cts_dir / "HOST_Conformance_Logs.md").write_text(host_data + "\n\n" + cts_log_data, encoding="utf-8")
 
         if backend_type in ("ALL", "OCL"):
             warn_if_missing_cts_module(cts_ocl_build, "test-testmodule")
@@ -668,7 +691,7 @@ def main() -> int:
             combined = ocl_data + "\n\n" + "\n\n".join(
                 p.read_text(encoding="utf-8") for p in md_paths if p.exists()
             )
-            Path("OCL_Conformance_Logs.md").write_text(combined, encoding="utf-8")
+            (cts_dir / "OCL_Conformance_Logs.md").write_text(combined, encoding="utf-8")
 
         if backend_type in ("ALL", "HIP"):
             warn_if_missing_cts_module(cts_hip_build, "test-testmodule")
@@ -688,7 +711,7 @@ def main() -> int:
             combined = hip_data + "\n\n" + "\n\n".join(
                 p.read_text(encoding="utf-8") for p in md_paths if p.exists()
             )
-            Path("HIP_Conformance_Logs.md").write_text(combined, encoding="utf-8")
+            (cts_dir / "HIP_Conformance_Logs.md").write_text(combined, encoding="utf-8")
 
     if failures:
         log.error("CTS failures: %s", ", ".join(failures))

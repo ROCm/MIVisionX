@@ -474,6 +474,7 @@ int HafCpu_FastCorners_XY_U8_NoSupression
 		generateOffset(srcStride, neighbor_offset);
 
 	pSrcImage += (srcStride * 3) + 3;													// Leave first three rows and start from the third pixel
+	const __m128i thresh = _mm_set1_epi16(t);
 
 	for (int height = 0; height < innerHeight; height++)
 	{
@@ -483,7 +484,6 @@ int HafCpu_FastCorners_XY_U8_NoSupression
 		for (int x = 0; x < (alignedWidth >> 3); x++)
 		{
 			__m128i rowMinus3, rowMinus2, rowMinus1, row, rowPlus1, rowPlus2, rowPlus3;
-			__m128i thresh = _mm_set1_epi16(t);
 
 			// Load all 7 rows in their final form for the boundary shuffles below
 			// (same byte offsets the dataFastCornersPixelMaskAll table expects).
@@ -638,15 +638,16 @@ int HafCpu_FastCorners_XY_U8_Supression
 	if (postfixWidth)
 		generateOffset(srcStride, neighbor_offset);
 
-	memset(pScratch, 0, sizeof(vx_uint8) * srcWidth * srcHeight);
-
 	if ((innerWidth == 0) || (innerHeight == 0))
 	{
 		*pDstCornerCount = 0;
 		return AGO_SUCCESS;
 	}
 
+	memset(pScratch, 0, sizeof(vx_uint8) * srcWidth * srcHeight);
+
 	pSrcImage += (srcStride * 3) + 3;														// Leave first three rows and start from the third pixel
+	const __m128i thresh = _mm_set1_epi16(t);
 
 	for (int height = 0; height < innerHeight; height++)
 	{
@@ -656,7 +657,6 @@ int HafCpu_FastCorners_XY_U8_Supression
 		for (int x = 0; x < (alignedWidth >> 3); x++)
 		{
 			__m128i rowMinus3, rowMinus2, rowMinus1, row, rowPlus1, rowPlus2, rowPlus3;
-			__m128i thresh = _mm_set1_epi16(t);
 
 			// Load all 7 rows in their final form for boundary shuffles.
 			rowMinus3 = _mm_loadu_si128((__m128i *)(pLocalSrc - 3 * srcStride - 1));

@@ -7578,6 +7578,132 @@ int HafCpu_MeanStdDevMerge_DATA_DATA
 	return AGO_SUCCESS;
 }
 
+template <bool addPreviousRow>
+static inline void HafCpu_IntegralImageRow_U32_U8(
+	vx_uint32     dstWidth,
+	vx_uint32   * pDst,
+	const vx_uint32 * pPrev,
+	const vx_uint8 * pSrc)
+{
+	// IntegralImage is computed as a two-step process per row, fused into the
+	// same loop: a 16-byte SIMD in-row prefix sum followed by a column add of
+	// the previous row's accumulated values. The row carry is the cumulative
+	// sum of all earlier source bytes in the row, broadcast as int32.
+	const __m128i zeromask = _mm_setzero_si128();
+	__m128i carry = _mm_setzero_si128();
+	vx_uint32 rowSum = 0;
+	vx_uint32 x = 0;
+
+	// Process two 16-byte chunks per iteration so the loop is wider while
+	// each chunk still uses 128-bit intra-lane shifts for prefix sums.
+	for (; x + 32 <= dstWidth; x += 32)
+	{
+		__m128i bytesA = _mm_loadu_si128((__m128i *)(pSrc + x));
+		__m128i bytesB = _mm_loadu_si128((__m128i *)(pSrc + x + 16));
+
+		__m128i lo0 = _mm_cvtepu8_epi16(bytesA);
+		__m128i hi0 = _mm_unpackhi_epi8(bytesA, zeromask);
+		__m128i lo1 = _mm_cvtepu8_epi16(bytesB);
+		__m128i hi1 = _mm_unpackhi_epi8(bytesB, zeromask);
+
+		lo0 = _mm_add_epi16(lo0, _mm_slli_si128(lo0, 2));
+		lo0 = _mm_add_epi16(lo0, _mm_slli_si128(lo0, 4));
+		lo0 = _mm_add_epi16(lo0, _mm_slli_si128(lo0, 8));
+		hi0 = _mm_add_epi16(hi0, _mm_slli_si128(hi0, 2));
+		hi0 = _mm_add_epi16(hi0, _mm_slli_si128(hi0, 4));
+		hi0 = _mm_add_epi16(hi0, _mm_slli_si128(hi0, 8));
+		hi0 = _mm_add_epi16(hi0, _mm_shuffle_epi32(_mm_shufflehi_epi16(lo0, 0xff), 0xff));
+
+		lo1 = _mm_add_epi16(lo1, _mm_slli_si128(lo1, 2));
+		lo1 = _mm_add_epi16(lo1, _mm_slli_si128(lo1, 4));
+		lo1 = _mm_add_epi16(lo1, _mm_slli_si128(lo1, 8));
+		hi1 = _mm_add_epi16(hi1, _mm_slli_si128(hi1, 2));
+		hi1 = _mm_add_epi16(hi1, _mm_slli_si128(hi1, 4));
+		hi1 = _mm_add_epi16(hi1, _mm_slli_si128(hi1, 8));
+		hi1 = _mm_add_epi16(hi1, _mm_shuffle_epi32(_mm_shufflehi_epi16(lo1, 0xff), 0xff));
+
+		__m128i out0 = _mm_add_epi32(_mm_cvtepu16_epi32(lo0), carry);
+		__m128i out1 = _mm_add_epi32(_mm_unpackhi_epi16(lo0, zeromask), carry);
+		__m128i out2 = _mm_add_epi32(_mm_cvtepu16_epi32(hi0), carry);
+		__m128i out3 = _mm_add_epi32(_mm_unpackhi_epi16(hi0, zeromask), carry);
+
+		vx_uint32 firstChunkSum = (vx_uint32)_mm_extract_epi16(hi0, 7);
+		__m128i carry1 = _mm_add_epi32(carry, _mm_set1_epi32((int)firstChunkSum));
+
+		__m128i out4 = _mm_add_epi32(_mm_cvtepu16_epi32(lo1), carry1);
+		__m128i out5 = _mm_add_epi32(_mm_unpackhi_epi16(lo1, zeromask), carry1);
+		__m128i out6 = _mm_add_epi32(_mm_cvtepu16_epi32(hi1), carry1);
+		__m128i out7 = _mm_add_epi32(_mm_unpackhi_epi16(hi1, zeromask), carry1);
+
+		if constexpr (addPreviousRow)
+		{
+			out0 = _mm_add_epi32(out0, _mm_loadu_si128((__m128i *)(pPrev + x)));
+			out1 = _mm_add_epi32(out1, _mm_loadu_si128((__m128i *)(pPrev + x + 4)));
+			out2 = _mm_add_epi32(out2, _mm_loadu_si128((__m128i *)(pPrev + x + 8)));
+			out3 = _mm_add_epi32(out3, _mm_loadu_si128((__m128i *)(pPrev + x + 12)));
+			out4 = _mm_add_epi32(out4, _mm_loadu_si128((__m128i *)(pPrev + x + 16)));
+			out5 = _mm_add_epi32(out5, _mm_loadu_si128((__m128i *)(pPrev + x + 20)));
+			out6 = _mm_add_epi32(out6, _mm_loadu_si128((__m128i *)(pPrev + x + 24)));
+			out7 = _mm_add_epi32(out7, _mm_loadu_si128((__m128i *)(pPrev + x + 28)));
+		}
+		_mm_storeu_si128((__m128i *)(pDst + x), out0);
+		_mm_storeu_si128((__m128i *)(pDst + x + 4), out1);
+		_mm_storeu_si128((__m128i *)(pDst + x + 8), out2);
+		_mm_storeu_si128((__m128i *)(pDst + x + 12), out3);
+		_mm_storeu_si128((__m128i *)(pDst + x + 16), out4);
+		_mm_storeu_si128((__m128i *)(pDst + x + 20), out5);
+		_mm_storeu_si128((__m128i *)(pDst + x + 24), out6);
+		_mm_storeu_si128((__m128i *)(pDst + x + 28), out7);
+
+		vx_uint32 secondChunkSum = (vx_uint32)_mm_extract_epi16(hi1, 7);
+		rowSum += firstChunkSum + secondChunkSum;
+		carry = _mm_set1_epi32((int)rowSum);
+	}
+
+	for (; x + 16 <= dstWidth; x += 16)
+	{
+		__m128i bytes = _mm_loadu_si128((__m128i *)(pSrc + x));
+		__m128i lo = _mm_cvtepu8_epi16(bytes);
+		__m128i hi = _mm_unpackhi_epi8(bytes, zeromask);
+
+		lo = _mm_add_epi16(lo, _mm_slli_si128(lo, 2));
+		lo = _mm_add_epi16(lo, _mm_slli_si128(lo, 4));
+		lo = _mm_add_epi16(lo, _mm_slli_si128(lo, 8));
+		hi = _mm_add_epi16(hi, _mm_slli_si128(hi, 2));
+		hi = _mm_add_epi16(hi, _mm_slli_si128(hi, 4));
+		hi = _mm_add_epi16(hi, _mm_slli_si128(hi, 8));
+		hi = _mm_add_epi16(hi, _mm_shuffle_epi32(_mm_shufflehi_epi16(lo, 0xff), 0xff));
+
+		__m128i out0 = _mm_add_epi32(_mm_cvtepu16_epi32(lo), carry);
+		__m128i out1 = _mm_add_epi32(_mm_unpackhi_epi16(lo, zeromask), carry);
+		__m128i out2 = _mm_add_epi32(_mm_cvtepu16_epi32(hi), carry);
+		__m128i out3 = _mm_add_epi32(_mm_unpackhi_epi16(hi, zeromask), carry);
+		if constexpr (addPreviousRow)
+		{
+			out0 = _mm_add_epi32(out0, _mm_loadu_si128((__m128i *)(pPrev + x)));
+			out1 = _mm_add_epi32(out1, _mm_loadu_si128((__m128i *)(pPrev + x + 4)));
+			out2 = _mm_add_epi32(out2, _mm_loadu_si128((__m128i *)(pPrev + x + 8)));
+			out3 = _mm_add_epi32(out3, _mm_loadu_si128((__m128i *)(pPrev + x + 12)));
+		}
+		_mm_storeu_si128((__m128i *)(pDst + x), out0);
+		_mm_storeu_si128((__m128i *)(pDst + x + 4), out1);
+		_mm_storeu_si128((__m128i *)(pDst + x + 8), out2);
+		_mm_storeu_si128((__m128i *)(pDst + x + 12), out3);
+
+		rowSum += (vx_uint32)_mm_extract_epi16(hi, 7);
+		carry = _mm_set1_epi32((int)rowSum);
+	}
+
+	for (; x < dstWidth; x++)
+	{
+		rowSum += pSrc[x];
+		if constexpr (addPreviousRow)
+			pDst[x] = rowSum + pPrev[x];
+		else
+			pDst[x] = rowSum;
+	}
+}
+
 int HafCpu_IntegralImage_U32_U8
 (
 	vx_uint32     dstWidth,
@@ -7588,126 +7714,18 @@ int HafCpu_IntegralImage_U32_U8
 	vx_uint32     srcImageStrideInBytes
 )
 {
-	// IntegralImage is computed as a two-step process per row, fused into the
-	// same loop: a 16-byte SIMD in-row prefix sum followed by a column add of
-	// the previous row's accumulated values. The row carry is the cumulative
-	// sum of all earlier source bytes in the row, broadcast as int32.
-	const __m128i zeromask = _mm_setzero_si128();
+	if (!dstHeight)
+		return AGO_SUCCESS;
 
-	for (vx_uint32 y = 0; y < dstHeight; y++)
+	vx_uint32 *pDst = pDstImage;
+	HafCpu_IntegralImageRow_U32_U8<false>(dstWidth, pDst, nullptr, pSrcImage);
+
+	for (vx_uint32 y = 1; y < dstHeight; y++)
 	{
 		vx_uint8 *pSrc = pSrcImage + y * srcImageStrideInBytes;
-		vx_uint32 *pDst = (vx_uint32 *)((vx_uint8 *)pDstImage + y * dstImageStrideInBytes);
-		vx_uint32 *pPrev = y ? (vx_uint32 *)((vx_uint8 *)pDstImage + (y - 1) * dstImageStrideInBytes) : nullptr;
-		__m128i carry = _mm_setzero_si128();
-		vx_uint32 rowSum = 0;
-		vx_uint32 x = 0;
-
-		// Process two 16-byte chunks per iteration so the loop is wider while
-		// each chunk still uses 128-bit intra-lane shifts for prefix sums.
-		for (; x + 32 <= dstWidth; x += 32)
-		{
-			__m128i bytesA = _mm_loadu_si128((__m128i *)(pSrc + x));
-			__m128i bytesB = _mm_loadu_si128((__m128i *)(pSrc + x + 16));
-
-			__m128i lo0 = _mm_cvtepu8_epi16(bytesA);
-			__m128i hi0 = _mm_unpackhi_epi8(bytesA, zeromask);
-			__m128i lo1 = _mm_cvtepu8_epi16(bytesB);
-			__m128i hi1 = _mm_unpackhi_epi8(bytesB, zeromask);
-
-			lo0 = _mm_add_epi16(lo0, _mm_slli_si128(lo0, 2));
-			lo0 = _mm_add_epi16(lo0, _mm_slli_si128(lo0, 4));
-			lo0 = _mm_add_epi16(lo0, _mm_slli_si128(lo0, 8));
-			hi0 = _mm_add_epi16(hi0, _mm_slli_si128(hi0, 2));
-			hi0 = _mm_add_epi16(hi0, _mm_slli_si128(hi0, 4));
-			hi0 = _mm_add_epi16(hi0, _mm_slli_si128(hi0, 8));
-			hi0 = _mm_add_epi16(hi0, _mm_shuffle_epi32(_mm_shufflehi_epi16(lo0, 0xff), 0xff));
-
-			lo1 = _mm_add_epi16(lo1, _mm_slli_si128(lo1, 2));
-			lo1 = _mm_add_epi16(lo1, _mm_slli_si128(lo1, 4));
-			lo1 = _mm_add_epi16(lo1, _mm_slli_si128(lo1, 8));
-			hi1 = _mm_add_epi16(hi1, _mm_slli_si128(hi1, 2));
-			hi1 = _mm_add_epi16(hi1, _mm_slli_si128(hi1, 4));
-			hi1 = _mm_add_epi16(hi1, _mm_slli_si128(hi1, 8));
-			hi1 = _mm_add_epi16(hi1, _mm_shuffle_epi32(_mm_shufflehi_epi16(lo1, 0xff), 0xff));
-
-			__m128i out0 = _mm_add_epi32(_mm_cvtepu16_epi32(lo0), carry);
-			__m128i out1 = _mm_add_epi32(_mm_unpackhi_epi16(lo0, zeromask), carry);
-			__m128i out2 = _mm_add_epi32(_mm_cvtepu16_epi32(hi0), carry);
-			__m128i out3 = _mm_add_epi32(_mm_unpackhi_epi16(hi0, zeromask), carry);
-
-			vx_uint32 firstChunkSum = (vx_uint32)_mm_extract_epi16(hi0, 7);
-			__m128i carry1 = _mm_add_epi32(carry, _mm_set1_epi32((int)firstChunkSum));
-
-			__m128i out4 = _mm_add_epi32(_mm_cvtepu16_epi32(lo1), carry1);
-			__m128i out5 = _mm_add_epi32(_mm_unpackhi_epi16(lo1, zeromask), carry1);
-			__m128i out6 = _mm_add_epi32(_mm_cvtepu16_epi32(hi1), carry1);
-			__m128i out7 = _mm_add_epi32(_mm_unpackhi_epi16(hi1, zeromask), carry1);
-
-			if (pPrev)
-			{
-				out0 = _mm_add_epi32(out0, _mm_loadu_si128((__m128i *)(pPrev + x)));
-				out1 = _mm_add_epi32(out1, _mm_loadu_si128((__m128i *)(pPrev + x + 4)));
-				out2 = _mm_add_epi32(out2, _mm_loadu_si128((__m128i *)(pPrev + x + 8)));
-				out3 = _mm_add_epi32(out3, _mm_loadu_si128((__m128i *)(pPrev + x + 12)));
-				out4 = _mm_add_epi32(out4, _mm_loadu_si128((__m128i *)(pPrev + x + 16)));
-				out5 = _mm_add_epi32(out5, _mm_loadu_si128((__m128i *)(pPrev + x + 20)));
-				out6 = _mm_add_epi32(out6, _mm_loadu_si128((__m128i *)(pPrev + x + 24)));
-				out7 = _mm_add_epi32(out7, _mm_loadu_si128((__m128i *)(pPrev + x + 28)));
-			}
-			_mm_storeu_si128((__m128i *)(pDst + x), out0);
-			_mm_storeu_si128((__m128i *)(pDst + x + 4), out1);
-			_mm_storeu_si128((__m128i *)(pDst + x + 8), out2);
-			_mm_storeu_si128((__m128i *)(pDst + x + 12), out3);
-			_mm_storeu_si128((__m128i *)(pDst + x + 16), out4);
-			_mm_storeu_si128((__m128i *)(pDst + x + 20), out5);
-			_mm_storeu_si128((__m128i *)(pDst + x + 24), out6);
-			_mm_storeu_si128((__m128i *)(pDst + x + 28), out7);
-
-			vx_uint32 secondChunkSum = (vx_uint32)_mm_extract_epi16(hi1, 7);
-			rowSum += firstChunkSum + secondChunkSum;
-			carry = _mm_set1_epi32((int)rowSum);
-		}
-
-		for (; x + 16 <= dstWidth; x += 16)
-		{
-			__m128i bytes = _mm_loadu_si128((__m128i *)(pSrc + x));
-			__m128i lo = _mm_cvtepu8_epi16(bytes);
-			__m128i hi = _mm_unpackhi_epi8(bytes, zeromask);
-
-			lo = _mm_add_epi16(lo, _mm_slli_si128(lo, 2));
-			lo = _mm_add_epi16(lo, _mm_slli_si128(lo, 4));
-			lo = _mm_add_epi16(lo, _mm_slli_si128(lo, 8));
-			hi = _mm_add_epi16(hi, _mm_slli_si128(hi, 2));
-			hi = _mm_add_epi16(hi, _mm_slli_si128(hi, 4));
-			hi = _mm_add_epi16(hi, _mm_slli_si128(hi, 8));
-			hi = _mm_add_epi16(hi, _mm_shuffle_epi32(_mm_shufflehi_epi16(lo, 0xff), 0xff));
-
-			__m128i out0 = _mm_add_epi32(_mm_cvtepu16_epi32(lo), carry);
-			__m128i out1 = _mm_add_epi32(_mm_unpackhi_epi16(lo, zeromask), carry);
-			__m128i out2 = _mm_add_epi32(_mm_cvtepu16_epi32(hi), carry);
-			__m128i out3 = _mm_add_epi32(_mm_unpackhi_epi16(hi, zeromask), carry);
-			if (pPrev)
-			{
-				out0 = _mm_add_epi32(out0, _mm_loadu_si128((__m128i *)(pPrev + x)));
-				out1 = _mm_add_epi32(out1, _mm_loadu_si128((__m128i *)(pPrev + x + 4)));
-				out2 = _mm_add_epi32(out2, _mm_loadu_si128((__m128i *)(pPrev + x + 8)));
-				out3 = _mm_add_epi32(out3, _mm_loadu_si128((__m128i *)(pPrev + x + 12)));
-			}
-			_mm_storeu_si128((__m128i *)(pDst + x), out0);
-			_mm_storeu_si128((__m128i *)(pDst + x + 4), out1);
-			_mm_storeu_si128((__m128i *)(pDst + x + 8), out2);
-			_mm_storeu_si128((__m128i *)(pDst + x + 12), out3);
-
-			rowSum += (vx_uint32)_mm_extract_epi16(hi, 7);
-			carry = _mm_set1_epi32((int)rowSum);
-		}
-
-		for (; x < dstWidth; x++)
-		{
-			rowSum += pSrc[x];
-			pDst[x] = rowSum + (pPrev ? pPrev[x] : 0);
-		}
+		pDst = (vx_uint32 *)((vx_uint8 *)pDstImage + y * dstImageStrideInBytes);
+		vx_uint32 *pPrev = (vx_uint32 *)((vx_uint8 *)pDstImage + (y - 1) * dstImageStrideInBytes);
+		HafCpu_IntegralImageRow_U32_U8<true>(dstWidth, pDst, pPrev, pSrc);
 	}
 	return AGO_SUCCESS;
 }
@@ -10384,6 +10402,7 @@ static inline __m256 HafCpu_FmaddAvx(__m256 a, __m256 b, __m256 c)
 	return _mm256_add_ps(_mm256_mul_ps(a, b), c);
 #endif
 }
+
 #endif
 
 int HafCpu_Phase_U8_S16S16

@@ -1516,13 +1516,29 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         const char *init = strchr(s, ':');
         const char *next = strchr(s, ',');
         if (next && (!init || next < init)) {
-            char *end = nullptr;
-            unsigned long input_format = strtoul(s, &end, 10);
-            if (end != next) return -1;
-            unsigned long output_format = strtoul(next + 1, &end, 10);
-            if (end == next + 1 || (*end && *end != ':' && *end != ',')) return -1;
-            data->u.thr.input_format = (vx_df_image)input_format;
-            data->u.thr.output_format = (vx_df_image)output_format;
+            auto parse_threshold_image_format = [](const char *begin, const char *end) -> vx_df_image {
+                if (end <= begin) return 0;
+                char token[64];
+                size_t length = end - begin;
+                if (length >= sizeof(token)) return 0;
+                memcpy(token, begin, length);
+                token[length] = 0;
+                char *parse_end = nullptr;
+                unsigned long value = strtoul(token, &parse_end, 10);
+                if (parse_end != token && *parse_end == 0) {
+                    return (vx_df_image)value;
+                }
+                if (length == 4) {
+                    return (vx_df_image)VX_DF_IMAGE(token[0], token[1], token[2], token[3]);
+                }
+                return 0;
+            };
+            const char *output_begin = next + 1;
+            const char *output_end = output_begin;
+            while (*output_end && *output_end != ':' && *output_end != ',') output_end++;
+            data->u.thr.input_format = parse_threshold_image_format(s, next);
+            data->u.thr.output_format = parse_threshold_image_format(output_begin, output_end);
+            if (!data->u.thr.input_format || !data->u.thr.output_format) return -1;
         }
         else {
             char data_type[64];

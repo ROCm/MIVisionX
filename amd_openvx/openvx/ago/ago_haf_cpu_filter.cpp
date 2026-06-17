@@ -3033,11 +3033,9 @@ int HafCpu_Convolve_S16_U8_3xN
 	__m128i result0, result1, result2, result3, row, mul, temp0, temp1;
 	__m128i zeromask = _mm_setzero_si128();
 
-	int prefixWidth = intptr_t(pDstImage) & 15;
-	prefixWidth = (prefixWidth == 0) ? 0 : (16 - prefixWidth);
-	prefixWidth >>= 1;														// 2 bytes = 1 pixel
-	int postfixWidth = ((int)dstWidth - prefixWidth) & 15;					// 16 pixels processed at a time in SSE loop
-	int alignedWidth = (int)dstWidth - prefixWidth - postfixWidth;
+	int prefixWidth = 0;
+	int postfixWidth = (int)dstWidth & 15;					// 16 pixels processed at a time in SSE loop
+	int alignedWidth = (int)dstWidth - postfixWidth;
 
 	int height = (int)dstHeight;
 	int srcStride = (int)srcImageStrideInBytes;
@@ -3174,8 +3172,8 @@ int HafCpu_Convolve_S16_U8_3xN
 
 			row = _mm_packs_epi32(result2, result3);
 			temp0 = _mm_packs_epi32(result0, result1);
-			_mm_store_si128(pLocalDst_xmm++, temp0);
-			_mm_store_si128(pLocalDst_xmm++, row);
+			_mm_storeu_si128(pLocalDst_xmm++, temp0);
+			_mm_storeu_si128(pLocalDst_xmm++, row);
 
 			pLocalSrc += 16;
 			width--;
@@ -3226,10 +3224,9 @@ int HafCpu_Convolve_U8_U8_3xN
 	__m128i result0, result1, result2, result3, row, mul, temp0, temp1;
 	__m128i zeromask = _mm_setzero_si128();
 
-	int prefixWidth = intptr_t(pDstImage) & 15;
-	prefixWidth = (prefixWidth == 0) ? 0 : (16 - prefixWidth);
-	int postfixWidth = ((int)dstWidth - prefixWidth) & 15;					// 16 pixels processed at a time in SSE loop
-	int alignedWidth = (int)dstWidth - prefixWidth - postfixWidth;
+	int prefixWidth = 0;
+	int postfixWidth = (int)dstWidth & 15;					// 16 pixels processed at a time in SSE loop
+	int alignedWidth = (int)dstWidth - postfixWidth;
 
 	int height = (int)dstHeight;
 	int srcStride = (int)srcImageStrideInBytes;
@@ -3424,7 +3421,7 @@ int HafCpu_Convolve_U8_U8_3xN
 			row = _mm_packs_epi32(result2, result3);
 			temp0 = _mm_packs_epi32(result0, result1);
 			row = _mm_packus_epi16(temp0, row);
-			_mm_store_si128(pLocalDst_xmm++, row);
+			_mm_storeu_si128(pLocalDst_xmm++, row);
 
 			pLocalSrc += 16;
 			width--;

@@ -1976,13 +1976,12 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
     }
 
     // GPU-affinity fallback: the fast path is CPU-only. Use the legacy graph
-    // path only when this node is actually scheduled for GPU or the input image
-    // already has a live GPU mirror. A HIP/OCL build may default to GPU at the
-    // graph level, but this kernel advertises CPU target support only; after
-    // target selection the node itself is CPU and should still use the fast path.
+    // path only when this node is actually scheduled for GPU. A HIP/OCL build
+    // can allocate GPU mirrors for images even though this kernel advertises
+    // CPU target support only; those mirrors must not force the slow legacy
+    // immediate-mode path.
     {
         AgoNode * agoNode = (AgoNode *)node;
-        AgoData * inputData = (AgoData *)input;
         bool gpu_path_required = false;
 #if ENABLE_OPENCL || ENABLE_HIP
         if (agoNode && agoNode->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU)
@@ -1992,13 +1991,6 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
 #else
         (void)agoNode;
 #endif
-#if ENABLE_OPENCL
-        if (inputData && inputData->opencl_buffer) gpu_path_required = true;
-#endif
-#if ENABLE_HIP
-        if (inputData && inputData->hip_memory) gpu_path_required = true;
-#endif
-        (void)inputData;
         (void)agoNode;
         if (gpu_path_required)
         {

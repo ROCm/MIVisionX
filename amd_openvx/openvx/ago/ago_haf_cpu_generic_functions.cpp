@@ -1975,49 +1975,22 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
         return HafCpu_LaplacianPyramid_Legacy(node, input, laplacian, output);
     }
 
-    // GPU-affinity fallback: when the context is configured for GPU execution
-    // (OpenCL or HIP backend with GPU affinity), the CTS reference path's
-    // vxuGaussianPyramid runs on the GPU and produces gaussian level values
-    // that differ from the CPU ScaleGaussianHalf primitive by a few units at
-    // the very edge pixels (different border-handling rounding between the
-    // GPU kernel and the SIMD CPU kernel). Comparing CPU-computed gaussian
-    // against a GPU-computed reference exceeds the 1-unit tolerance the CTS
-    // LaplacianPyramid tests allow. Route through the legacy graph path so
-    // both reference and implementation run gaussian on the same device.
-    //
-    // Mirrors vxuSetGraphAffinityDefault()/AGO_KERNEL_TARGET_DEFAULT: on
-    // HIP/OpenCL builds the default graph target is GPU unless the user
-    // explicitly forces CPU via AGO_DEFAULT_TARGET=CPU or via context
-    // affinity. Also fall back whenever the input image already has a live
-    // GPU mirror, which is a strong signal that earlier nodes ran on GPU.
+    // GPU-affinity fallback: the fast path is CPU-only. Use the legacy graph
+    // path only when this node is actually scheduled for GPU or the input image
+    // already has a live GPU mirror. A HIP/OCL build may default to GPU at the
+    // graph level, but this kernel advertises CPU target support only; after
+    // target selection the node itself is CPU and should still use the fast path.
     {
         AgoNode * agoNode = (AgoNode *)node;
         AgoData * inputData = (AgoData *)input;
         bool gpu_path_required = false;
 #if ENABLE_OPENCL || ENABLE_HIP
-        // Compile-time default-target on HIP/OCL builds is GPU.
-        gpu_path_required = true;
-        // Honour explicit CPU overrides (env var or context affinity) so that
-        // a HIP/OCL build forced to CPU still benefits from the fast path.
-        char envBuf[64];
-        if (agoGetEnvironmentVariable("AGO_DEFAULT_TARGET", envBuf, sizeof(envBuf)) &&
-            !strcmp(envBuf, "CPU"))
-        {
-            gpu_path_required = false;
-        }
-        if (agoNode && agoNode->ref.context &&
-            agoNode->ref.context->attr_affinity.device_type == AGO_TARGET_AFFINITY_CPU)
-        {
-            gpu_path_required = false;
-        }
-#else
-        // CPU-only build: vxuGaussianPyramid always runs on CPU; safe to use
-        // the fast path unless the user has explicitly forced GPU affinity.
-        if (agoNode && agoNode->ref.context &&
-            agoNode->ref.context->attr_affinity.device_type == AGO_TARGET_AFFINITY_GPU)
+        if (agoNode && agoNode->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU)
         {
             gpu_path_required = true;
         }
+#else
+        (void)agoNode;
 #endif
 #if ENABLE_OPENCL
         if (inputData && inputData->opencl_buffer) gpu_path_required = true;

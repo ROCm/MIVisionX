@@ -1959,18 +1959,20 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
     status |= vxQueryPyramid(laplacian, VX_PYRAMID_LEVELS, &levels, sizeof(levels));
     status |= vxQueryPyramid(laplacian, VX_PYRAMID_FORMAT, &lap_format, sizeof(lap_format));
 
-    // Direct CPU path: U8 input, S16 laplacian, U8 output, HALF-scale pyramid.
+    // Direct CPU path: U8/S16 input, S16 laplacian, matching output,
+    // HALF-scale pyramid.
     // Bypasses vxuGaussianPyramid (which creates/verifies/destroys an internal
     // graph each call) and routes straight to the SSE/AVX2 SIMD primitives,
     // keeping all intermediate gaussian levels in private aligned buffers.
-    if (status != VX_SUCCESS || format != VX_DF_IMAGE_U8 ||
-        lap_format != VX_DF_IMAGE_S16 || out_format != VX_DF_IMAGE_U8)
+    if (status != VX_SUCCESS ||
+        (format != VX_DF_IMAGE_U8 && format != VX_DF_IMAGE_S16) ||
+        lap_format != VX_DF_IMAGE_S16 || out_format != format)
     {
         return HafCpu_LaplacianPyramid_Legacy(node, input, laplacian, output);
     }
     vx_float32 lap_scale = 0.f;
-    vxQueryPyramid(laplacian, VX_PYRAMID_SCALE, &lap_scale, sizeof(lap_scale));
-    if (lap_scale != VX_SCALE_PYRAMID_HALF)
+    status |= vxQueryPyramid(laplacian, VX_PYRAMID_SCALE, &lap_scale, sizeof(lap_scale));
+    if (status != VX_SUCCESS || levels < 1 || lap_scale != VX_SCALE_PYRAMID_HALF)
     {
         return HafCpu_LaplacianPyramid_Legacy(node, input, laplacian, output);
     }
@@ -2010,8 +2012,12 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
     }
 
     // Owned gaussian-pyramid buffers for levels 0..N. Level 0 is a copy of the
-    // input (the byte-for-byte CHANNEL_COPY equivalent that vxuGaussianPyramid
-    // does internally). Owning level 0 is required because the SIMD primitive
+    // input for U8, or a saturated U8 copy for S16. The historical legacy flow
+    // created a U8 gaussian pyramid before subtracting into S16 laplacian
+    // levels; keeping that internal representation lets both U8 and S16 public
+    // forms use the same fused CPU path.
+    //
+    // Owning level 0 is required because the SIMD primitive
     // HafCpu_ScaleGaussianHalf_U8_U8_5x5 issues horizontal loads at
     // srcImage[-1] / srcImage[-2] for the leftmost sampled column (see
     // ago_haf_cpu_pyramid.cpp Horizontal5x5GaussianFilter_C / SSE variants).
@@ -2067,20 +2073,38 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
         vx_status st = vxMapImagePatch(input, &in_rect, 0, &in_map, &in_addr,
                                        &in_base, VX_READ_ONLY,
                                        VX_MEMORY_TYPE_HOST, 0);
-        if (st != VX_SUCCESS || in_addr.stride_x != 1)
+        vx_uint32 expected_stride_x = (format == VX_DF_IMAGE_U8) ? 1 : 2;
+        if (st != VX_SUCCESS || in_addr.stride_x != (vx_int32)expected_stride_x)
         {
             if (st == VX_SUCCESS) vxUnmapImagePatch(input, in_map);
             release_owned();
             return HafCpu_LaplacianPyramid_Legacy(node, input, laplacian, output);
         }
-        const vx_uint8 *src_p = (const vx_uint8 *)in_base;
         vx_uint8 *dst_p = gptr[0];
         vx_uint32 copy_w = (in_addr.dim_x < lw[0]) ? in_addr.dim_x : lw[0];
         vx_uint32 copy_h = (in_addr.dim_y < lh[0]) ? in_addr.dim_y : lh[0];
-        for (vx_uint32 r = 0; r < copy_h; r++)
+        if (format == VX_DF_IMAGE_U8)
         {
-            memcpy(dst_p + (size_t)r * gstride[0],
-                   src_p + (size_t)r * in_addr.stride_y, copy_w);
+            const vx_uint8 *src_p = (const vx_uint8 *)in_base;
+            for (vx_uint32 r = 0; r < copy_h; r++)
+            {
+                memcpy(dst_p + (size_t)r * gstride[0],
+                       src_p + (size_t)r * in_addr.stride_y, copy_w);
+            }
+        }
+        else
+        {
+            const vx_uint8 *src_p = (const vx_uint8 *)in_base;
+            for (vx_uint32 r = 0; r < copy_h; r++)
+            {
+                const vx_int16 *src_row = (const vx_int16 *)(src_p + (size_t)r * in_addr.stride_y);
+                vx_uint8 *dst_row = dst_p + (size_t)r * gstride[0];
+                for (vx_uint32 x = 0; x < copy_w; x++)
+                {
+                    vx_int32 v = src_row[x];
+                    dst_row[x] = (vx_uint8)((v < 0) ? 0 : ((v > 255) ? 255 : v));
+                }
+            }
         }
         vxUnmapImagePatch(input, in_map);
     }
@@ -2161,20 +2185,37 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
         vx_status st = vxMapImagePatch(output, &r_out, 0, &m_out, &a_out,
                                        &b_out, VX_WRITE_ONLY,
                                        VX_MEMORY_TYPE_HOST, 0);
-        if (st != VX_SUCCESS || a_out.stride_x != 1)
+        vx_uint32 expected_stride_x = (out_format == VX_DF_IMAGE_U8) ? 1 : 2;
+        if (st != VX_SUCCESS || a_out.stride_x != (vx_int32)expected_stride_x)
         {
             if (st == VX_SUCCESS) vxUnmapImagePatch(output, m_out);
             release_owned();
             return HafCpu_LaplacianPyramid_Legacy(node, input, laplacian, output);
         }
         vx_uint8 *src_p = gptr[levels];
-        vx_uint8 *dst_p = (vx_uint8 *)b_out;
         vx_uint32 copy_w = (a_out.dim_x < lw[levels]) ? a_out.dim_x : lw[levels];
         vx_uint32 copy_h = (a_out.dim_y < lh[levels]) ? a_out.dim_y : lh[levels];
-        for (vx_uint32 r = 0; r < copy_h; r++)
+        if (out_format == VX_DF_IMAGE_U8)
         {
-            memcpy(dst_p + (size_t)r * a_out.stride_y,
-                   src_p + (size_t)r * gstride[levels], copy_w);
+            vx_uint8 *dst_p = (vx_uint8 *)b_out;
+            for (vx_uint32 r = 0; r < copy_h; r++)
+            {
+                memcpy(dst_p + (size_t)r * a_out.stride_y,
+                       src_p + (size_t)r * gstride[levels], copy_w);
+            }
+        }
+        else
+        {
+            vx_uint8 *dst_p = (vx_uint8 *)b_out;
+            for (vx_uint32 r = 0; r < copy_h; r++)
+            {
+                const vx_uint8 *src_row = src_p + (size_t)r * gstride[levels];
+                vx_int16 *dst_row = (vx_int16 *)(dst_p + (size_t)r * a_out.stride_y);
+                for (vx_uint32 x = 0; x < copy_w; x++)
+                {
+                    dst_row[x] = (vx_int16)src_row[x];
+                }
+            }
         }
         vxUnmapImagePatch(output, m_out);
     }

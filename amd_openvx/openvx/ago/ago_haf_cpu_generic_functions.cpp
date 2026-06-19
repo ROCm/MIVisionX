@@ -1977,24 +1977,49 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
         return HafCpu_LaplacianPyramid_Legacy(node, input, laplacian, output);
     }
 
-    // GPU-affinity fallback: the fast path is CPU-only. Use the legacy graph
-    // path only when this node is actually scheduled for GPU. A HIP/OCL build
-    // can allocate GPU mirrors for images even though this kernel advertises
-    // CPU target support only; those mirrors must not force the slow legacy
-    // immediate-mode path.
+    // GPU-affinity fallback for the U8 public path: on HIP/OCL CTS, the
+    // reference vxuGaussianPyramid can run on GPU and edge pixels differ from
+    // the CPU SIMD Gaussian path by a few units under VX_BORDER_UNDEFINED.
+    // Route U8 through the legacy immediate graph in that case so both sides
+    // use the same backend. Do not apply this to S16 input: the legacy path
+    // creates a U8 Gaussian pyramid and cannot validate S16 input.
     {
         AgoNode * agoNode = (AgoNode *)node;
+        AgoData * inputData = (AgoData *)input;
         bool gpu_path_required = false;
 #if ENABLE_OPENCL || ENABLE_HIP
+        gpu_path_required = true;
+        char envBuf[64];
+        if (agoGetEnvironmentVariable("AGO_DEFAULT_TARGET", envBuf, sizeof(envBuf)) &&
+            !strcmp(envBuf, "CPU"))
+        {
+            gpu_path_required = false;
+        }
+        if (agoNode && agoNode->ref.context &&
+            agoNode->ref.context->attr_affinity.device_type == AGO_TARGET_AFFINITY_CPU)
+        {
+            gpu_path_required = false;
+        }
         if (agoNode && agoNode->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU)
         {
             gpu_path_required = true;
         }
 #else
-        (void)agoNode;
+        if (agoNode && agoNode->ref.context &&
+            agoNode->ref.context->attr_affinity.device_type == AGO_TARGET_AFFINITY_GPU)
+        {
+            gpu_path_required = true;
+        }
 #endif
+#if ENABLE_OPENCL
+        if (inputData && inputData->opencl_buffer) gpu_path_required = true;
+#endif
+#if ENABLE_HIP
+        if (inputData && inputData->hip_memory) gpu_path_required = true;
+#endif
+        (void)inputData;
         (void)agoNode;
-        if (gpu_path_required)
+        if (format == VX_DF_IMAGE_U8 && gpu_path_required)
         {
             return HafCpu_LaplacianPyramid_Legacy(node, input, laplacian, output);
         }

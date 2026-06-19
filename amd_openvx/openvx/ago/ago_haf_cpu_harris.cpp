@@ -825,7 +825,8 @@ int HafCpu_HarrisScore_HVC_HG3_3x3
 	return AGO_SUCCESS;
 }
 
-int HafCpu_HarrisScore_HVC_HG3_5x5
+template<int radius>
+static int HafCpu_HarrisScore_HVC_HG3_NxN
 	(
 		vx_uint32          dstWidth,
 		vx_uint32          dstHeight,
@@ -839,60 +840,107 @@ int HafCpu_HarrisScore_HVC_HG3_5x5
 	)
 {
 	ago_harris_Gxy_t * pSrcGxy = (ago_harris_Gxy_t *)pSrcGxy_;
-	vx_float32 Tc = strength_threshold;
 	vx_int32 srcStride = srcGxyStrideInBytes / sizeof(ago_harris_Gxy_t);
 	vx_int32 dstStride = dstVcStrideInBytes / sizeof(vx_float32);
-	pSrcGxy += (srcStride + srcStride);									// Skip first two rows
-	memset(pDstVc, 0, dstVcStrideInBytes + dstVcStrideInBytes);			// Zero the thresholds of first two rows
-	pDstVc += (dstStride + dstStride);
+	const int width = (int)dstWidth;
+	const int height = (int)dstHeight;
 
-	for (int y = 2; y < (int)dstHeight - 2; y++)
+	for (int y = 0; y < radius; y++)
 	{
-		ago_harris_Gxy_t * pLocalSrc = pSrcGxy;
-		vx_float32  * pLocalDst = pDstVc;
+		memset(pDstVc + (size_t)y * dstStride, 0, dstVcStrideInBytes);
+		memset(pDstVc + (size_t)(height - 1 - y) * dstStride, 0, dstVcStrideInBytes);
+	}
 
-		*pLocalDst = 0;															// First column Vc = 0;
-		pLocalDst++;
-		*pLocalDst = 0;															// Second column Vc = 0;
-		pLocalDst++;
-		pLocalSrc += 2;
+	std::vector<float> colSumBuf((size_t)dstWidth * 4 + 16);
+	float *colSum = colSumBuf.data();
+	auto colSumLoad  = [&](int idx) { return _mm_loadu_ps(colSum + (size_t)idx * 4); };
+	auto colSumStore = [&](int idx, __m128 v) { _mm_storeu_ps(colSum + (size_t)idx * 4, v); };
 
-		for (int x = 2; x < (int)dstWidth - 2; x++)
+	const __m128 invNorm = _mm_set1_ps(1.0f / normalization_factor);
+	const __m128 sens    = _mm_set1_ps(sensitivity);
+	const __m128 Tc_vec  = _mm_set1_ps(strength_threshold);
+
+	for (int y = radius; y < height - radius; y++)
+	{
+		vx_float32 *pLocalDst = pDstVc + (size_t)y * dstStride;
+		memset(pLocalDst, 0, (size_t)radius * sizeof(vx_float32));
+
+		for (int x = 0; x < width; x++)
 		{
-			vx_float32 gx2 = 0;
-			vx_float32 gy2 = 0;
-			vx_float32 gxy2 = 0;
-
-			// Windowing
-			for (int j = -2; j <= 2; j++)
+			vx_float32 gx2 = 0.0f;
+			vx_float32 gxy2 = 0.0f;
+			vx_float32 gy2 = 0.0f;
+			for (int j = -radius; j <= radius; j++)
 			{
-				for (int i = -2; i <= 2; i++)
-				{
-					gx2 += pLocalSrc[j * srcStride + i].GxGx;
-					gxy2 += pLocalSrc[j * srcStride + i].GxGy;
-					gy2 += pLocalSrc[j * srcStride + i].GyGy;
-				}
+				ago_harris_Gxy_t *p = pSrcGxy + (size_t)(y + j) * srcStride + x;
+				gx2 += p->GxGx;
+				gxy2 += p->GxGy;
+				gy2 += p->GyGy;
 			}
-
-			vx_float32 traceA = gx2 + gy2;
-			vx_float32 detA = (gx2 * gy2) - (gxy2 * gxy2);
-			vx_float32 Mc = detA - (sensitivity * traceA * traceA);
-			Mc /= normalization_factor;
-			*pLocalDst = (Mc > Tc) ? Mc : 0;
-
-			pLocalSrc++;
-			pLocalDst++;
+			colSumStore(x, _mm_setr_ps(gx2, gxy2, gy2, 0.0f));
 		}
 
-		*pLocalDst = 0;															// second to last column Vc = 0;
-		pLocalDst++;
-		*pLocalDst = 0;															// last column Vc = 0;
+		int x = radius;
+		for (; x + 4 <= width - radius; x += 4)
+		{
+			__m128 w0 = _mm_setzero_ps();
+			__m128 w1 = _mm_setzero_ps();
+			__m128 w2 = _mm_setzero_ps();
+			__m128 w3 = _mm_setzero_ps();
+			for (int i = -radius; i <= radius; i++)
+			{
+				w0 = _mm_add_ps(w0, colSumLoad(x + i));
+				w1 = _mm_add_ps(w1, colSumLoad(x + i + 1));
+				w2 = _mm_add_ps(w2, colSumLoad(x + i + 2));
+				w3 = _mm_add_ps(w3, colSumLoad(x + i + 3));
+			}
 
-		pSrcGxy += srcStride;
-		pDstVc += dstStride;
+			_MM_TRANSPOSE4_PS(w0, w1, w2, w3);
+			__m128 trace = _mm_add_ps(w0, w2);
+			__m128 det   = _mm_sub_ps(_mm_mul_ps(w0, w2), _mm_mul_ps(w1, w1));
+			__m128 Mc    = _mm_sub_ps(det, _mm_mul_ps(_mm_mul_ps(sens, trace), trace));
+			Mc = _mm_mul_ps(Mc, invNorm);
+			__m128 keep = _mm_cmpgt_ps(Mc, Tc_vec);
+			Mc = _mm_and_ps(Mc, keep);
+			_mm_storeu_ps(pLocalDst + x, Mc);
+		}
+
+		for (; x < width - radius; x++)
+		{
+			__m128 win = _mm_setzero_ps();
+			for (int i = -radius; i <= radius; i++)
+			{
+				win = _mm_add_ps(win, colSumLoad(x + i));
+			}
+			alignas(16) float w[4];
+			_mm_store_ps(w, win);
+			vx_float32 traceA = w[0] + w[2];
+			vx_float32 detA = (w[0] * w[2]) - (w[1] * w[1]);
+			vx_float32 Mc = (detA - sensitivity * traceA * traceA) / normalization_factor;
+			pLocalDst[x] = (Mc > strength_threshold) ? Mc : 0.0f;
+		}
+
+		memset(pLocalDst + width - radius, 0, (size_t)radius * sizeof(vx_float32));
 	}
-	memset(pDstVc, 0, dstVcStrideInBytes + dstVcStrideInBytes);					// Zero the thresholds of last rows
+
 	return AGO_SUCCESS;
+}
+
+int HafCpu_HarrisScore_HVC_HG3_5x5
+	(
+		vx_uint32          dstWidth,
+		vx_uint32          dstHeight,
+		vx_float32       * pDstVc,
+		vx_uint32          dstVcStrideInBytes,
+		vx_float32       * pSrcGxy_,
+		vx_uint32          srcGxyStrideInBytes,
+		vx_float32         sensitivity,
+		vx_float32         strength_threshold,
+		vx_float32		   normalization_factor
+	)
+{
+	return HafCpu_HarrisScore_HVC_HG3_NxN<2>(dstWidth, dstHeight, pDstVc, dstVcStrideInBytes,
+		pSrcGxy_, srcGxyStrideInBytes, sensitivity, strength_threshold, normalization_factor);
 }
 
 int HafCpu_HarrisScore_HVC_HG3_7x7
@@ -908,64 +956,8 @@ int HafCpu_HarrisScore_HVC_HG3_7x7
 		vx_float32		   normalization_factor
 	)
 {
-	ago_harris_Gxy_t * pSrcGxy = (ago_harris_Gxy_t *)pSrcGxy_;
-	vx_float32 Tc = strength_threshold;
-	vx_int32 srcStride = srcGxyStrideInBytes / sizeof(ago_harris_Gxy_t);
-	vx_int32 dstStride = dstVcStrideInBytes / sizeof(vx_float32);
-	pSrcGxy += (srcStride * 3);																// Skip first three rows
-	memset(pDstVc, 0, dstVcStrideInBytes * 3);												// Zero the thresholds of first three rows
-	pDstVc += (dstStride * 3);
-
-	for (int y = 3; y < (int)dstHeight - 3; y++)
-	{
-		ago_harris_Gxy_t * pLocalSrc = pSrcGxy;
-		vx_float32 * pLocalDst = pDstVc;
-
-		*pLocalDst = 0;															// First column Vc = 0;
-		pLocalDst++;
-		*pLocalDst = 0;															// Second column Vc = 0;
-		pLocalDst++;
-		*pLocalDst = 0;															// Third column Vc = 0;
-		pLocalSrc += 3;
-
-		for (int x = 3; x < (int)dstWidth - 3; x++)
-		{
-			vx_float32 gx2 = 0;
-			vx_float32 gy2 = 0;
-			vx_float32 gxy2 = 0;
-
-			// Windowing
-			for (int j = -3; j <= 3; j++)
-			{
-				for (int i = -3; i <= 3; i++)
-				{
-					gx2 += pLocalSrc[j * srcStride + i].GxGx;
-					gxy2 += pLocalSrc[j * srcStride + i].GxGy;
-					gy2 += pLocalSrc[j * srcStride + i].GyGy;
-				}
-			}
-
-			vx_float32 traceA = gx2 + gy2;
-			vx_float32 detA = (gx2 * gy2) - (gxy2 * gxy2);
-			vx_float32 Mc = detA - (sensitivity * traceA * traceA);
-			Mc /= normalization_factor;
-			*pLocalDst = (Mc > Tc) ? Mc : 0;
-
-			pLocalSrc++;
-			pLocalDst++;
-		}
-
-		*pLocalDst = 0;															// third to last column Vc = 0;
-		pLocalDst++;
-		*pLocalDst = 0;															// second to last column Vc = 0;
-		pLocalDst++;
-		*pLocalDst = 0;															// last column Vc = 0;
-
-		pSrcGxy += srcStride;
-		pDstVc += dstStride;
-	}
-	memset(pDstVc, 0, dstVcStrideInBytes * 3);											// Zero the thresholds of last rows
-	return AGO_SUCCESS;
+	return HafCpu_HarrisScore_HVC_HG3_NxN<3>(dstWidth, dstHeight, pDstVc, dstVcStrideInBytes,
+		pSrcGxy_, srcGxyStrideInBytes, sensitivity, strength_threshold, normalization_factor);
 }
 
 int HafCpu_HarrisMergeSortAndPick_XY_HVC

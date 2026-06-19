@@ -45,8 +45,16 @@ endif()
 
 project (openvx_vision_coverage)
 
-include_directories (${ROCM_PATH}/include/mivisionx)
-link_directories    (${ROCM_PATH}/lib)
+if(EXISTS "${ROCM_PATH}/include/mivisionx/VX/vx.h")
+  include_directories(${ROCM_PATH}/include/mivisionx)
+  link_directories(${ROCM_PATH}/lib)
+elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../../amd_openvx/openvx/include/VX/vx.h")
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../amd_openvx/openvx/include)
+  link_directories(${CMAKE_CURRENT_BINARY_DIR}/../../lib)
+else()
+  include_directories(${ROCM_PATH}/include/mivisionx)
+  link_directories(${ROCM_PATH}/lib)
+endif()
 
 add_executable(openvx_vision_coverage vision_coverage_api.cpp)
 target_link_libraries(${PROJECT_NAME} openvx vxu)

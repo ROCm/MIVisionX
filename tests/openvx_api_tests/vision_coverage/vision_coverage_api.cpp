@@ -88,6 +88,21 @@ static void test_laplacian(vx_context ctx)
         vxReleaseGraph(&g);
     }
 
+    // Build: input S16 -> laplacian pyramid (S16) + lowest-res output (S16)
+    {
+        vx_graph g = vxCreateGraph(ctx);
+        vx_image input = vxCreateImage(ctx, W, H, VX_DF_IMAGE_S16);
+        vx_pyramid lap = vxCreatePyramid(ctx, levels, VX_SCALE_PYRAMID_HALF, W, H, VX_DF_IMAGE_S16);
+        vx_image lowres = vxCreateImage(ctx, W >> levels, H >> levels, VX_DF_IMAGE_S16);
+        vx_node n = vxLaplacianPyramidNode(g, input, lap, lowres);
+        RUN_OK("LaplacianPyramidNode S16 build", verify_process(g));
+        vxReleaseNode(&n);
+        vxReleaseImage(&lowres);
+        vxReleasePyramid(&lap);
+        vxReleaseImage(&input);
+        vxReleaseGraph(&g);
+    }
+
     // Reconstruct: laplacian pyramid (S16) + lowest-res input (U8) -> output U8
     {
         vx_graph g = vxCreateGraph(ctx);

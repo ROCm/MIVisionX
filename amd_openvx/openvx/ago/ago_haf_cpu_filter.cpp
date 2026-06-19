@@ -107,6 +107,95 @@ int HafCpu_Box_U8_U8_3x3
 		vx_uint8    * pScratch
 	)
 {
+#if USE_AVX
+	{
+		unsigned char *pLocalSrc = (unsigned char *)pSrcImage;
+		unsigned char *pLocalDst = (unsigned char *)pDstImage;
+
+		int tmpWidth = (dstWidth + 15) & ~15;
+		vx_uint16 *pPrevRow = (vx_uint16 *)pScratch;
+		vx_uint16 *pCurrRow = ((vx_uint16 *)pScratch) + tmpWidth;
+		vx_uint16 *pNextRow = ((vx_uint16 *)pScratch) + (tmpWidth + tmpWidth);
+		vx_uint16 *pLocalPrevRow = pPrevRow;
+		vx_uint16 *pLocalCurrRow = pCurrRow;
+		vx_uint16 *pLocalNextRow = pNextRow;
+		vx_uint16 *pTemp;
+
+		const __m256i divFactor = _mm256_set1_epi16((short)7282);
+		vx_uint32 x = 0;
+
+		for (; x + 16 <= dstWidth; x += 16, pLocalSrc += 16)
+		{
+			__m256i left = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(pLocalSrc - srcImageStrideInBytes - 1)));
+			__m256i center = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(pLocalSrc - srcImageStrideInBytes)));
+			__m256i right = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(pLocalSrc - srcImageStrideInBytes + 1)));
+			_mm256_storeu_si256((__m256i *)pLocalPrevRow, _mm256_add_epi16(_mm256_add_epi16(left, center), right));
+
+			left = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(pLocalSrc - 1)));
+			center = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)pLocalSrc));
+			right = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(pLocalSrc + 1)));
+			_mm256_storeu_si256((__m256i *)pLocalCurrRow, _mm256_add_epi16(_mm256_add_epi16(left, center), right));
+
+			pLocalPrevRow += 16;
+			pLocalCurrRow += 16;
+		}
+
+		for (; x < dstWidth; x++, pLocalSrc++)
+		{
+			*pLocalPrevRow++ = (vx_uint16)pLocalSrc[-(int)srcImageStrideInBytes - 1] + (vx_uint16)pLocalSrc[-(int)srcImageStrideInBytes] + (vx_uint16)pLocalSrc[-(int)srcImageStrideInBytes + 1];
+			*pLocalCurrRow++ = (vx_uint16)pLocalSrc[-1] + (vx_uint16)pLocalSrc[0] + (vx_uint16)pLocalSrc[1];
+		}
+
+		pLocalPrevRow = pPrevRow;
+		pLocalCurrRow = pCurrRow;
+		pLocalNextRow = pNextRow;
+
+		int height = (int)dstHeight;
+		while (height)
+		{
+			pLocalSrc = (unsigned char *)(pSrcImage + srcImageStrideInBytes);
+			pLocalDst = (unsigned char *)pDstImage;
+
+			x = 0;
+			for (; x + 16 <= dstWidth; x += 16)
+			{
+				__m256i left = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(pLocalSrc + x - 1)));
+				__m256i center = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(pLocalSrc + x)));
+				__m256i right = _mm256_cvtepu8_epi16(_mm_loadu_si128((__m128i *)(pLocalSrc + x + 1)));
+				__m256i next = _mm256_add_epi16(_mm256_add_epi16(left, center), right);
+				_mm256_storeu_si256((__m256i *)(pLocalNextRow + x), next);
+
+				__m256i sum = _mm256_add_epi16(next, _mm256_loadu_si256((__m256i *)(pLocalPrevRow + x)));
+				sum = _mm256_add_epi16(sum, _mm256_loadu_si256((__m256i *)(pLocalCurrRow + x)));
+				sum = _mm256_mulhi_epu16(sum, divFactor);
+				sum = _mm256_packus_epi16(sum, sum);
+				sum = _mm256_permute4x64_epi64(sum, 0x08);
+				_mm_storeu_si128((__m128i *)(pLocalDst + x), _mm256_castsi256_si128(sum));
+			}
+
+			for (; x < dstWidth; x++)
+			{
+				vx_uint16 temp = (vx_uint16)pLocalSrc[x - 1] + (vx_uint16)pLocalSrc[x] + (vx_uint16)pLocalSrc[x + 1];
+				pLocalNextRow[x] = temp;
+				pLocalDst[x] = (vx_uint8)((temp + pLocalPrevRow[x] + pLocalCurrRow[x]) / 9);
+			}
+
+			pTemp = pPrevRow;
+			pPrevRow = pCurrRow;
+			pCurrRow = pNextRow;
+			pNextRow = pTemp;
+
+			pLocalPrevRow = pPrevRow;
+			pLocalCurrRow = pCurrRow;
+			pLocalNextRow = pNextRow;
+
+			pSrcImage += srcImageStrideInBytes;
+			pDstImage += dstImageStrideInBytes;
+			height--;
+		}
+		return AGO_SUCCESS;
+	}
+#endif
 	unsigned char *pLocalSrc = (unsigned char *)pSrcImage;
 	unsigned char *pLocalDst = (unsigned char *)pDstImage;
 	

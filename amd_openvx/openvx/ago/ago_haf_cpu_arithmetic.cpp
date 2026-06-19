@@ -188,6 +188,82 @@ static inline void HafCpu_Mul_S16_S16S16_Sat_Scale1
 #endif
 }
 
+static inline void HafCpu_Mul_S16_S16S16_Sat_Round_Scale255
+(
+	vx_uint32 dstWidth,
+	vx_uint32 dstHeight,
+	vx_int16 *pDstImage,
+	vx_uint32 dstImageStrideInBytes,
+	vx_int16 *pSrcImage1,
+	vx_uint32 srcImage1StrideInBytes,
+	vx_int16 *pSrcImage2,
+	vx_uint32 srcImage2StrideInBytes
+)
+{
+#if USE_AVX
+	const __m256 scale255 = _mm256_set1_ps(1.0f / 255.0f);
+	vx_uint32 alignedWidth = dstWidth & ~15;
+	for (vx_uint32 y = 0; y < dstHeight; y++)
+	{
+		vx_uint32 x = 0;
+		for (; x < alignedWidth; x += 16)
+		{
+			__m256i a = _mm256_loadu_si256((const __m256i *)(pSrcImage1 + x));
+			__m256i b = _mm256_loadu_si256((const __m256i *)(pSrcImage2 + x));
+			__m256i lo16 = _mm256_mullo_epi16(a, b);
+			__m256i hi16 = _mm256_mulhi_epi16(a, b);
+			__m256i prodLo = _mm256_unpacklo_epi16(lo16, hi16);
+			__m256i prodHi = _mm256_unpackhi_epi16(lo16, hi16);
+
+			__m256 f0 = _mm256_mul_ps(_mm256_cvtepi32_ps(prodLo), scale255);
+			__m256 f1 = _mm256_mul_ps(_mm256_cvtepi32_ps(prodHi), scale255);
+
+			__m256i i0 = _mm256_cvtps_epi32(f0);
+			__m256i i1 = _mm256_cvtps_epi32(f1);
+			_mm256_storeu_si256((__m256i *)(pDstImage + x), _mm256_packs_epi32(i0, i1));
+		}
+		for (; x < dstWidth; x++)
+		{
+			float temp = (float)((vx_int32)pSrcImage1[x] * (vx_int32)pSrcImage2[x]) * (1.0f / 255.0f);
+			vx_int32 rounded = _mm_cvtss_si32(_mm_set_ss(temp));
+			pDstImage[x] = (vx_int16)max(min(rounded, (vx_int32)INT16_MAX), (vx_int32)INT16_MIN);
+		}
+		pSrcImage1 += (srcImage1StrideInBytes >> 1);
+		pSrcImage2 += (srcImage2StrideInBytes >> 1);
+		pDstImage += (dstImageStrideInBytes >> 1);
+	}
+#else
+	const __m128 scale255 = _mm_set1_ps(1.0f / 255.0f);
+	vx_uint32 alignedWidth = dstWidth & ~8;
+	for (vx_uint32 y = 0; y < dstHeight; y++)
+	{
+		vx_uint32 x = 0;
+		for (; x < alignedWidth; x += 8)
+		{
+			__m128i a = _mm_loadu_si128((const __m128i *)(pSrcImage1 + x));
+			__m128i b = _mm_loadu_si128((const __m128i *)(pSrcImage2 + x));
+			__m128i lo16 = _mm_mullo_epi16(a, b);
+			__m128i hi16 = _mm_mulhi_epi16(a, b);
+			__m128i prodLo = _mm_unpacklo_epi16(lo16, hi16);
+			__m128i prodHi = _mm_unpackhi_epi16(lo16, hi16);
+
+			__m128 f0 = _mm_mul_ps(_mm_cvtepi32_ps(prodLo), scale255);
+			__m128 f1 = _mm_mul_ps(_mm_cvtepi32_ps(prodHi), scale255);
+			_mm_storeu_si128((__m128i *)(pDstImage + x), _mm_packs_epi32(_mm_cvtps_epi32(f0), _mm_cvtps_epi32(f1)));
+		}
+		for (; x < dstWidth; x++)
+		{
+			float temp = (float)((vx_int32)pSrcImage1[x] * (vx_int32)pSrcImage2[x]) * (1.0f / 255.0f);
+			vx_int32 rounded = _mm_cvtss_si32(_mm_set_ss(temp));
+			pDstImage[x] = (vx_int16)max(min(rounded, (vx_int32)INT16_MAX), (vx_int32)INT16_MIN);
+		}
+		pSrcImage1 += (srcImage1StrideInBytes >> 1);
+		pSrcImage2 += (srcImage2StrideInBytes >> 1);
+		pDstImage += (dstImageStrideInBytes >> 1);
+	}
+#endif
+}
+
 int HafCpu_Add_U8_U8U8_Wrap
 	(
 		vx_uint32     dstWidth,
@@ -7109,7 +7185,6 @@ int HafCpu_Mul_S16_S16S16_Sat_Trunc
 			pSrcImage1, srcImage1StrideInBytes, pSrcImage2, srcImage2StrideInBytes);
 		return AGO_SUCCESS;
 	}
-
 	// do generic floating point calculation
 	__m128i pixels1, pixels2, pixels3, pixels4, temp1, temp2;
 	__m128d  fpels1, fpels2, fpels3, fpels4;
@@ -7237,6 +7312,12 @@ int HafCpu_Mul_S16_S16S16_Sat_Round
 	if (scale == 1.0f)
 	{
 		HafCpu_Mul_S16_S16S16_Sat_Scale1(dstWidth, dstHeight, pDstImage, dstImageStrideInBytes,
+			pSrcImage1, srcImage1StrideInBytes, pSrcImage2, srcImage2StrideInBytes);
+		return AGO_SUCCESS;
+	}
+	if (scale == (1.0f / 255.0f))
+	{
+		HafCpu_Mul_S16_S16S16_Sat_Round_Scale255(dstWidth, dstHeight, pDstImage, dstImageStrideInBytes,
 			pSrcImage1, srcImage1StrideInBytes, pSrcImage2, srcImage2StrideInBytes);
 		return AGO_SUCCESS;
 	}
@@ -7743,6 +7824,23 @@ static inline void HafCpu_IntegralImageRow_U32_U8(
 		__m128i out6 = _mm_add_epi32(_mm_cvtepu16_epi32(hi1), carry1);
 		__m128i out7 = _mm_add_epi32(_mm_unpackhi_epi16(hi1, zeromask), carry1);
 
+#if USE_AVX
+		__m256i out01 = _mm256_inserti128_si256(_mm256_castsi128_si256(out0), out1, 1);
+		__m256i out23 = _mm256_inserti128_si256(_mm256_castsi128_si256(out2), out3, 1);
+		__m256i out45 = _mm256_inserti128_si256(_mm256_castsi128_si256(out4), out5, 1);
+		__m256i out67 = _mm256_inserti128_si256(_mm256_castsi128_si256(out6), out7, 1);
+		if constexpr (addPreviousRow)
+		{
+			out01 = _mm256_add_epi32(out01, _mm256_loadu_si256((__m256i *)(pPrev + x)));
+			out23 = _mm256_add_epi32(out23, _mm256_loadu_si256((__m256i *)(pPrev + x + 8)));
+			out45 = _mm256_add_epi32(out45, _mm256_loadu_si256((__m256i *)(pPrev + x + 16)));
+			out67 = _mm256_add_epi32(out67, _mm256_loadu_si256((__m256i *)(pPrev + x + 24)));
+		}
+		_mm256_storeu_si256((__m256i *)(pDst + x), out01);
+		_mm256_storeu_si256((__m256i *)(pDst + x + 8), out23);
+		_mm256_storeu_si256((__m256i *)(pDst + x + 16), out45);
+		_mm256_storeu_si256((__m256i *)(pDst + x + 24), out67);
+#else
 		if constexpr (addPreviousRow)
 		{
 			out0 = _mm_add_epi32(out0, _mm_loadu_si128((__m128i *)(pPrev + x)));
@@ -7762,6 +7860,7 @@ static inline void HafCpu_IntegralImageRow_U32_U8(
 		_mm_storeu_si128((__m128i *)(pDst + x + 20), out5);
 		_mm_storeu_si128((__m128i *)(pDst + x + 24), out6);
 		_mm_storeu_si128((__m128i *)(pDst + x + 28), out7);
+#endif
 
 		vx_uint32 secondChunkSum = (vx_uint32)_mm_extract_epi16(hi1, 7);
 		rowSum += firstChunkSum + secondChunkSum;

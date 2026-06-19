@@ -185,6 +185,75 @@ static void test_canny(vx_context ctx)
 }
 
 // ---------------------------------------------------------------------------
+// Branch performance regression kernels
+// ---------------------------------------------------------------------------
+static void test_regression_kernel_coverage(vx_context ctx)
+{
+    printf("\n=== Regression kernel coverage ===\n");
+    const vx_uint32 W = 128, H = 128;
+
+    // S16 multiply with scale=1/255, saturate and round-to-nearest exercises
+    // the optimized S16 path used by the benchmark regression case.
+    {
+        vx_graph g = vxCreateGraph(ctx);
+        vx_image a = vxCreateImage(ctx, W, H, VX_DF_IMAGE_S16);
+        vx_image b = vxCreateImage(ctx, W, H, VX_DF_IMAGE_S16);
+        vx_image out = vxCreateImage(ctx, W, H, VX_DF_IMAGE_S16);
+        vx_float32 scale_value = 1.0f / 255.0f;
+        vx_scalar scale = vxCreateScalar(ctx, VX_TYPE_FLOAT32, &scale_value);
+        vx_node n = vxMultiplyNode(g, a, b, scale,
+                                   VX_CONVERT_POLICY_SATURATE,
+                                   VX_ROUND_POLICY_TO_NEAREST_EVEN, out);
+        RUN_OK("Multiply S16 scale=1/255 sat/round", verify_process(g));
+        vxReleaseNode(&n);
+        vxReleaseScalar(&scale);
+        vxReleaseImage(&out);
+        vxReleaseImage(&b);
+        vxReleaseImage(&a);
+        vxReleaseGraph(&g);
+    }
+
+    // IntegralImage exercises the row prefix/previous-row accumulation path.
+    {
+        vx_graph g = vxCreateGraph(ctx);
+        vx_image in = vxCreateImage(ctx, W, H, VX_DF_IMAGE_U8);
+        vx_image out = vxCreateImage(ctx, W, H, VX_DF_IMAGE_U32);
+        vx_node n = vxIntegralImageNode(g, in, out);
+        RUN_OK("IntegralImage U8->U32", verify_process(g));
+        vxReleaseNode(&n);
+        vxReleaseImage(&out);
+        vxReleaseImage(&in);
+        vxReleaseGraph(&g);
+    }
+
+    // Box3x3 and HalfScaleGaussian 1x1 cover the filter/multiscale optimized
+    // paths that were part of the regression work.
+    {
+        vx_graph g = vxCreateGraph(ctx);
+        vx_image in = vxCreateImage(ctx, W, H, VX_DF_IMAGE_U8);
+        vx_image out = vxCreateImage(ctx, W, H, VX_DF_IMAGE_U8);
+        vx_node n = vxBox3x3Node(g, in, out);
+        RUN_OK("Box3x3 U8", verify_process(g));
+        vxReleaseNode(&n);
+        vxReleaseImage(&out);
+        vxReleaseImage(&in);
+        vxReleaseGraph(&g);
+    }
+
+    {
+        vx_graph g = vxCreateGraph(ctx);
+        vx_image in = vxCreateImage(ctx, W, H, VX_DF_IMAGE_U8);
+        vx_image out = vxCreateImage(ctx, W / 2, H / 2, VX_DF_IMAGE_U8);
+        vx_node n = vxHalfScaleGaussianNode(g, in, out, 1);
+        RUN_OK("HalfScaleGaussian 1x1", verify_process(g));
+        vxReleaseNode(&n);
+        vxReleaseImage(&out);
+        vxReleaseImage(&in);
+        vxReleaseGraph(&g);
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Custom non-separable MxN convolution
 // ---------------------------------------------------------------------------
 static void test_convolution(vx_context ctx)
@@ -499,6 +568,7 @@ int main()
     test_laplacian(ctx);
     test_color_convert(ctx);
     test_canny(ctx);
+    test_regression_kernel_coverage(ctx);
     test_convolution(ctx);
     test_harris(ctx);
     test_optical_flow(ctx);

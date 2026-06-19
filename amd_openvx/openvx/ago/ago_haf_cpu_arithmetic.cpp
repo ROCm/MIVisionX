@@ -66,6 +66,128 @@ static inline __m256i HafCpu_WidenAddI32ToI64_AVX2(__m256i acc64, __m256i partsI
 }
 #endif
 
+static inline void HafCpu_Mul_S16_S16S16_Wrap_Scale1
+(
+	vx_uint32 dstWidth,
+	vx_uint32 dstHeight,
+	vx_int16 *pDstImage,
+	vx_uint32 dstImageStrideInBytes,
+	vx_int16 *pSrcImage1,
+	vx_uint32 srcImage1StrideInBytes,
+	vx_int16 *pSrcImage2,
+	vx_uint32 srcImage2StrideInBytes
+)
+{
+#if USE_AVX
+	vx_uint32 alignedWidth = dstWidth & ~31;
+	for (vx_uint32 y = 0; y < dstHeight; y++)
+	{
+		vx_uint32 x = 0;
+		for (; x < alignedWidth; x += 32)
+		{
+			__m256i a0 = _mm256_loadu_si256((const __m256i *)(pSrcImage1 + x));
+			__m256i a1 = _mm256_loadu_si256((const __m256i *)(pSrcImage1 + x + 16));
+			__m256i b0 = _mm256_loadu_si256((const __m256i *)(pSrcImage2 + x));
+			__m256i b1 = _mm256_loadu_si256((const __m256i *)(pSrcImage2 + x + 16));
+			_mm256_storeu_si256((__m256i *)(pDstImage + x), _mm256_mullo_epi16(a0, b0));
+			_mm256_storeu_si256((__m256i *)(pDstImage + x + 16), _mm256_mullo_epi16(a1, b1));
+		}
+		for (; x < dstWidth; x++)
+		{
+			pDstImage[x] = (vx_int16)((vx_int32)pSrcImage1[x] * (vx_int32)pSrcImage2[x]);
+		}
+		pSrcImage1 += (srcImage1StrideInBytes >> 1);
+		pSrcImage2 += (srcImage2StrideInBytes >> 1);
+		pDstImage += (dstImageStrideInBytes >> 1);
+	}
+#else
+	vx_uint32 alignedWidth = dstWidth & ~15;
+	for (vx_uint32 y = 0; y < dstHeight; y++)
+	{
+		vx_uint32 x = 0;
+		for (; x < alignedWidth; x += 16)
+		{
+			__m128i a0 = _mm_loadu_si128((const __m128i *)(pSrcImage1 + x));
+			__m128i a1 = _mm_loadu_si128((const __m128i *)(pSrcImage1 + x + 8));
+			__m128i b0 = _mm_loadu_si128((const __m128i *)(pSrcImage2 + x));
+			__m128i b1 = _mm_loadu_si128((const __m128i *)(pSrcImage2 + x + 8));
+			_mm_storeu_si128((__m128i *)(pDstImage + x), _mm_mullo_epi16(a0, b0));
+			_mm_storeu_si128((__m128i *)(pDstImage + x + 8), _mm_mullo_epi16(a1, b1));
+		}
+		for (; x < dstWidth; x++)
+		{
+			pDstImage[x] = (vx_int16)((vx_int32)pSrcImage1[x] * (vx_int32)pSrcImage2[x]);
+		}
+		pSrcImage1 += (srcImage1StrideInBytes >> 1);
+		pSrcImage2 += (srcImage2StrideInBytes >> 1);
+		pDstImage += (dstImageStrideInBytes >> 1);
+	}
+#endif
+}
+
+static inline void HafCpu_Mul_S16_S16S16_Sat_Scale1
+(
+	vx_uint32 dstWidth,
+	vx_uint32 dstHeight,
+	vx_int16 *pDstImage,
+	vx_uint32 dstImageStrideInBytes,
+	vx_int16 *pSrcImage1,
+	vx_uint32 srcImage1StrideInBytes,
+	vx_int16 *pSrcImage2,
+	vx_uint32 srcImage2StrideInBytes
+)
+{
+#if USE_AVX
+	vx_uint32 alignedWidth = dstWidth & ~15;
+	for (vx_uint32 y = 0; y < dstHeight; y++)
+	{
+		vx_uint32 x = 0;
+		for (; x < alignedWidth; x += 16)
+		{
+			__m256i a = _mm256_loadu_si256((const __m256i *)(pSrcImage1 + x));
+			__m256i b = _mm256_loadu_si256((const __m256i *)(pSrcImage2 + x));
+			__m256i lo16 = _mm256_mullo_epi16(a, b);
+			__m256i hi16 = _mm256_mulhi_epi16(a, b);
+			__m256i prodLo = _mm256_unpacklo_epi16(lo16, hi16);
+			__m256i prodHi = _mm256_unpackhi_epi16(lo16, hi16);
+			_mm256_storeu_si256((__m256i *)(pDstImage + x), _mm256_packs_epi32(prodLo, prodHi));
+		}
+		for (; x < dstWidth; x++)
+		{
+			vx_int32 temp = (vx_int32)pSrcImage1[x] * (vx_int32)pSrcImage2[x];
+			pDstImage[x] = (vx_int16)max(min(temp, (vx_int32)INT16_MAX), (vx_int32)INT16_MIN);
+		}
+		pSrcImage1 += (srcImage1StrideInBytes >> 1);
+		pSrcImage2 += (srcImage2StrideInBytes >> 1);
+		pDstImage += (dstImageStrideInBytes >> 1);
+	}
+#else
+	vx_uint32 alignedWidth = dstWidth & ~7;
+	for (vx_uint32 y = 0; y < dstHeight; y++)
+	{
+		vx_uint32 x = 0;
+		for (; x < alignedWidth; x += 8)
+		{
+			__m128i a = _mm_loadu_si128((const __m128i *)(pSrcImage1 + x));
+			__m128i b = _mm_loadu_si128((const __m128i *)(pSrcImage2 + x));
+			__m128i lo16 = _mm_mullo_epi16(a, b);
+			__m128i hi16 = _mm_mulhi_epi16(a, b);
+			__m128i prodLo = _mm_unpacklo_epi16(lo16, hi16);
+			__m128i prodHi = _mm_unpackhi_epi16(lo16, hi16);
+			_mm_storeu_si128((__m128i *)(pDstImage + x), _mm_packs_epi32(prodLo, prodHi));
+		}
+		for (; x < dstWidth; x++)
+		{
+			vx_int32 temp = (vx_int32)pSrcImage1[x] * (vx_int32)pSrcImage2[x];
+			pDstImage[x] = (vx_int16)max(min(temp, (vx_int32)INT16_MAX), (vx_int32)INT16_MIN);
+		}
+		pSrcImage1 += (srcImage1StrideInBytes >> 1);
+		pSrcImage2 += (srcImage2StrideInBytes >> 1);
+		pDstImage += (dstImageStrideInBytes >> 1);
+	}
+#endif
+}
+
 int HafCpu_Add_U8_U8U8_Wrap
 	(
 		vx_uint32     dstWidth,
@@ -3184,105 +3306,63 @@ int HafCpu_AbsDiff_S16_S16S16_Sat
 		vx_uint32     srcImage2StrideInBytes
 	)
 {
-	bool useAligned = ((((intptr_t)pSrcImage1 | (intptr_t)pSrcImage2 | (intptr_t)pDstImage) & 0xF) == 0) ? true : false;
-
-	__m128i *pLocalSrc1_xmm, *pLocalSrc2_xmm, *pLocalDst_xmm;
-	vx_int16 *pLocalSrc1, *pLocalSrc2, *pLocalDst;
-
-	__m128i pixels1H, pixels1L, pixels2H, pixels2L;
-	__m128i zeromask = _mm_setzero_si128();
-
-	int alignedWidth = dstWidth & ~7;
-	int postfixWidth = dstWidth - alignedWidth;
-
-	if (useAligned)
+#if USE_AVX
+	vx_uint32 alignedWidth = dstWidth & ~31;
+	for (vx_uint32 y = 0; y < dstHeight; y++)
 	{
-		for (int height = 0; height < (int)dstHeight; height++)
+		vx_int16 *pLocalSrc1 = pSrcImage1;
+		vx_int16 *pLocalSrc2 = pSrcImage2;
+		vx_int16 *pLocalDst = pDstImage;
+		vx_uint32 x = 0;
+		for (; x < alignedWidth; x += 32)
 		{
-			pLocalSrc1_xmm = (__m128i*) pSrcImage1;
-			pLocalSrc2_xmm = (__m128i*) pSrcImage2;
-			pLocalDst_xmm = (__m128i*) pDstImage;
-
-			for (int width = 0; width < alignedWidth; width += 8)
-			{
-				pixels1L = _mm_load_si128(pLocalSrc1_xmm++);
-				pixels2L = _mm_load_si128(pLocalSrc2_xmm++);
-
-				pixels1H = _mm_srli_si128(pixels1L, 8);
-				pixels1H = _mm_cvtepi16_epi32(pixels1H);
-				pixels1L = _mm_cvtepi16_epi32(pixels1L);
-				pixels2H = _mm_srli_si128(pixels2L, 8);
-				pixels2H = _mm_cvtepi16_epi32(pixels2H);
-				pixels2L = _mm_cvtepi16_epi32(pixels2L);
-				
-				pixels1H = _mm_sub_epi32(pixels1H, pixels2H);
-				pixels1L = _mm_sub_epi32(pixels1L, pixels2L);
-				pixels1H = _mm_abs_epi32(pixels1H);
-				pixels1L = _mm_abs_epi32(pixels1L);
-				
-				pixels1L = _mm_packs_epi32(pixels1L, pixels1H);
-				_mm_store_si128(pLocalDst_xmm++, pixels1L);
-			}
-
-			pLocalSrc1 = (vx_int16 *)pLocalSrc1_xmm;
-			pLocalSrc2 = (vx_int16 *)pLocalSrc2_xmm;
-			pLocalDst = (vx_int16 *)pLocalDst_xmm;
-
-			for (int width = 0; width < postfixWidth; width++)
-			{
-				vx_int32 temp = (vx_int32) abs((vx_int32) (*pLocalSrc1++) - (vx_int32) (*pLocalSrc2++));
-				*pLocalDst++ =  (vx_int16) max(min(temp, INT16_MAX), INT16_MIN);
-			}
-
-			pSrcImage1 += (srcImage1StrideInBytes >> 1);
-			pSrcImage2 += (srcImage2StrideInBytes >> 1);
-			pDstImage += (dstImageStrideInBytes >> 1);
+			__m256i a0 = _mm256_loadu_si256((const __m256i *)(pLocalSrc1 + x));
+			__m256i a1 = _mm256_loadu_si256((const __m256i *)(pLocalSrc1 + x + 16));
+			__m256i b0 = _mm256_loadu_si256((const __m256i *)(pLocalSrc2 + x));
+			__m256i b1 = _mm256_loadu_si256((const __m256i *)(pLocalSrc2 + x + 16));
+			__m256i d0 = _mm256_max_epi16(_mm256_subs_epi16(a0, b0), _mm256_subs_epi16(b0, a0));
+			__m256i d1 = _mm256_max_epi16(_mm256_subs_epi16(a1, b1), _mm256_subs_epi16(b1, a1));
+			_mm256_storeu_si256((__m256i *)(pLocalDst + x), d0);
+			_mm256_storeu_si256((__m256i *)(pLocalDst + x + 16), d1);
 		}
+		for (; x < dstWidth; x++)
+		{
+			vx_int32 temp = abs((vx_int32)pLocalSrc1[x] - (vx_int32)pLocalSrc2[x]);
+			pLocalDst[x] = (vx_int16)min(temp, INT16_MAX);
+		}
+		pSrcImage1 += (srcImage1StrideInBytes >> 1);
+		pSrcImage2 += (srcImage2StrideInBytes >> 1);
+		pDstImage += (dstImageStrideInBytes >> 1);
 	}
-	else
+#else
+	vx_uint32 alignedWidth = dstWidth & ~15;
+	for (vx_uint32 y = 0; y < dstHeight; y++)
 	{
-		for (int height = 0; height < (int)dstHeight; height++)
+		vx_int16 *pLocalSrc1 = pSrcImage1;
+		vx_int16 *pLocalSrc2 = pSrcImage2;
+		vx_int16 *pLocalDst = pDstImage;
+		vx_uint32 x = 0;
+		for (; x < alignedWidth; x += 16)
 		{
-			pLocalSrc1_xmm = (__m128i*) pSrcImage1;
-			pLocalSrc2_xmm = (__m128i*) pSrcImage2;
-			pLocalDst_xmm = (__m128i*) pDstImage;
-
-			for (int width = 0; width < alignedWidth; width += 8)
-			{
-				pixels1L = _mm_loadu_si128(pLocalSrc1_xmm++);
-				pixels2L = _mm_loadu_si128(pLocalSrc2_xmm++);
-
-				pixels1H = _mm_srli_si128(pixels1L, 8);
-				pixels1H = _mm_cvtepi16_epi32(pixels1H);
-				pixels1L = _mm_cvtepi16_epi32(pixels1L);
-				pixels2H = _mm_srli_si128(pixels2L, 8);
-				pixels2H = _mm_cvtepi16_epi32(pixels2H);
-				pixels2L = _mm_cvtepi16_epi32(pixels2L);
-
-				pixels1H = _mm_sub_epi32(pixels1H, pixels2H);
-				pixels1L = _mm_sub_epi32(pixels1L, pixels2L);
-				pixels1H = _mm_abs_epi32(pixels1H);
-				pixels1L = _mm_abs_epi32(pixels1L);
-
-				pixels1L = _mm_packs_epi32(pixels1L, pixels1H);
-				_mm_storeu_si128(pLocalDst_xmm++, pixels1L);
-			}
-
-			pLocalSrc1 = (vx_int16 *)pLocalSrc1_xmm;
-			pLocalSrc2 = (vx_int16 *)pLocalSrc2_xmm;
-			pLocalDst = (vx_int16 *)pLocalDst_xmm;
-
-			for (int width = 0; width < postfixWidth; width++)
-			{
-				vx_int32 temp = (vx_int32) abs((vx_int32) (*pLocalSrc1++) - (vx_int32) (*pLocalSrc2++));
-				*pLocalDst++ =  (vx_int16) max(min(temp, INT16_MAX), INT16_MIN);	
-			}
-
-			pSrcImage1 += (srcImage1StrideInBytes >> 1);
-			pSrcImage2 += (srcImage2StrideInBytes >> 1);
-			pDstImage += (dstImageStrideInBytes >> 1);
+			__m128i a0 = _mm_loadu_si128((const __m128i *)(pLocalSrc1 + x));
+			__m128i a1 = _mm_loadu_si128((const __m128i *)(pLocalSrc1 + x + 8));
+			__m128i b0 = _mm_loadu_si128((const __m128i *)(pLocalSrc2 + x));
+			__m128i b1 = _mm_loadu_si128((const __m128i *)(pLocalSrc2 + x + 8));
+			__m128i d0 = _mm_max_epi16(_mm_subs_epi16(a0, b0), _mm_subs_epi16(b0, a0));
+			__m128i d1 = _mm_max_epi16(_mm_subs_epi16(a1, b1), _mm_subs_epi16(b1, a1));
+			_mm_storeu_si128((__m128i *)(pLocalDst + x), d0);
+			_mm_storeu_si128((__m128i *)(pLocalDst + x + 8), d1);
 		}
+		for (; x < dstWidth; x++)
+		{
+			vx_int32 temp = abs((vx_int32)pLocalSrc1[x] - (vx_int32)pLocalSrc2[x]);
+			pLocalDst[x] = (vx_int16)min(temp, INT16_MAX);
+		}
+		pSrcImage1 += (srcImage1StrideInBytes >> 1);
+		pSrcImage2 += (srcImage2StrideInBytes >> 1);
+		pDstImage += (dstImageStrideInBytes >> 1);
 	}
+#endif
 	return AGO_SUCCESS;
 }
 
@@ -6727,6 +6807,13 @@ int HafCpu_Mul_S16_S16S16_Wrap_Trunc
 	vx_float32    scale
 )
 {
+	if (scale == 1.0f)
+	{
+		HafCpu_Mul_S16_S16S16_Wrap_Scale1(dstWidth, dstHeight, pDstImage, dstImageStrideInBytes,
+			pSrcImage1, srcImage1StrideInBytes, pSrcImage2, srcImage2StrideInBytes);
+		return AGO_SUCCESS;
+	}
+
 	// do generic floating point calculation
 	__m128i pixels1, pixels2, pixels3, pixels4, mask, temp1, temp2;
 	__m128d  fpels1, fpels2, fpels3, fpels4;
@@ -6869,6 +6956,13 @@ int HafCpu_Mul_S16_S16S16_Wrap_Round
 	vx_float32    scale
 )
 {
+	if (scale == 1.0f)
+	{
+		HafCpu_Mul_S16_S16S16_Wrap_Scale1(dstWidth, dstHeight, pDstImage, dstImageStrideInBytes,
+			pSrcImage1, srcImage1StrideInBytes, pSrcImage2, srcImage2StrideInBytes);
+		return AGO_SUCCESS;
+	}
+
 	// do generic floating point calculation
 	__m128i pixels1, pixels2, pixels3, pixels4, mask, temp1, temp2;
 	__m128d  fpels1, fpels2, fpels3, fpels4;
@@ -7009,6 +7103,13 @@ int HafCpu_Mul_S16_S16S16_Sat_Trunc
 	vx_float32    scale
 )
 {
+	if (scale == 1.0f)
+	{
+		HafCpu_Mul_S16_S16S16_Sat_Scale1(dstWidth, dstHeight, pDstImage, dstImageStrideInBytes,
+			pSrcImage1, srcImage1StrideInBytes, pSrcImage2, srcImage2StrideInBytes);
+		return AGO_SUCCESS;
+	}
+
 	// do generic floating point calculation
 	__m128i pixels1, pixels2, pixels3, pixels4, temp1, temp2;
 	__m128d  fpels1, fpels2, fpels3, fpels4;
@@ -7133,6 +7234,13 @@ int HafCpu_Mul_S16_S16S16_Sat_Round
 	vx_float32    scale
 )
 {
+	if (scale == 1.0f)
+	{
+		HafCpu_Mul_S16_S16S16_Sat_Scale1(dstWidth, dstHeight, pDstImage, dstImageStrideInBytes,
+			pSrcImage1, srcImage1StrideInBytes, pSrcImage2, srcImage2StrideInBytes);
+		return AGO_SUCCESS;
+	}
+
 	// do generic floating point calculation
 	__m128i pixels1, pixels2, pixels3, pixels4, temp1, temp2;
 	__m128d  fpels1, fpels2, fpels3, fpels4;

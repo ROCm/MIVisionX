@@ -1,0 +1,6 @@
+# Exercise S16 Laplacian Pyramid input/output path
+data input = uniform-image:640,480,S016,1024
+data laplacian = pyramid:4,HALF,640,480,S016
+data output = image:40,30,S016
+node org.khronos.openvx.laplacian_pyramid input laplacian output
+

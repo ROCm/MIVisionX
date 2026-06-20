@@ -1907,7 +1907,7 @@ int ovxKernel_HarrisCorners(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
-#if ENABLE_OPENCL
+#if ENABLE_OPENCL || ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;

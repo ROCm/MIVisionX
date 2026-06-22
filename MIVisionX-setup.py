@@ -72,11 +72,7 @@ parser.add_argument('--directory', 	type=str, default='~/mivisionx-deps',
 parser.add_argument('--rocm_path', 	type=str, default='/opt/rocm',
                     help='ROCm Installation Path - optional (default:/opt/rocm) - ROCm Installation Required')
 parser.add_argument('--opencv',    	type=str, default='4.6.0',
-                    help='OpenCV Version - optional (default for non Ubuntu OS:4.6.0)')
-parser.add_argument('--neural_net',	type=str, default='ON',
-                    help='MIVisionX Neural Net Dependency Install - optional (default:ON) [options:ON/OFF]')
-parser.add_argument('--inference',	type=str, default='ON',
-                    help='MIVisionX Neural Net Inference Dependency Install - optional (default:ON) [options:ON/OFF]')
+                    help='OpenCV Version - optional, only used by runvx for image/video display (default for non Ubuntu OS:4.6.0)')
 parser.add_argument('--developer', 	type=str, default='OFF',
                     help='Setup Developer Options - optional (default:OFF) [options:ON/OFF]')
 parser.add_argument('--reinstall', 	type=str, default='OFF',
@@ -87,24 +83,12 @@ args = parser.parse_args()
 
 setupDir = args.directory
 opencvVersion = args.opencv
-neuralNetInstall = args.neural_net.upper()
-inferenceInstall = args.inference.upper()
 developerInstall = args.developer.upper()
 reinstall = args.reinstall.upper()
 backend = args.backend.upper()
 ROCM_PATH = args.rocm_path
 
 # check inputs
-if neuralNetInstall not in ('OFF', 'ON'):
-    error(
-        "ERROR: Neural Net Install Option Not Supported - [Supported Options: OFF or ON]\n")
-    parser.print_help()
-    exit(-1)
-if inferenceInstall not in ('OFF', 'ON'):
-    error(
-        "ERROR: Inference Install Option Not Supported - [Supported Options: OFF or ON]\n")
-    parser.print_help()
-    exit(-1)
 if developerInstall not in ('OFF', 'ON'):
     error(
         "ERROR: Developer Option Not Supported - [Supported Options: OFF or ON]\n")
@@ -139,15 +123,12 @@ else:
         backend = 'CPU'
     else:
         info("STATUS: CPU Backend Install\n")
-    neuralNetInstall = 'OFF'
-    inferenceInstall = 'OFF'
 
 # Setup Directory for Deps
 if setupDir == '~/mivisionx-deps':
     setupDir_deps = setupDir
 else:
     setupDir_deps = setupDir+'/mivisionx-deps'
-modelCompilerDeps = os.path.expanduser('~/.mivisionx-model-compiler-deps')
 
 # setup directory path
 deps_dir = os.path.expanduser(setupDir_deps)
@@ -232,9 +213,6 @@ if reinstall == 'ON':
     if os.path.exists(deps_dir):
         ERROR_CHECK(os.system('sudo rm -rf '+deps_dir))
         info("MIVisionX Setup: Removing Previous Install -- "+deps_dir+"\n")
-    if os.path.exists(modelCompilerDeps):
-        ERROR_CHECK(os.system('sudo rm -rf '+modelCompilerDeps))
-        info("MIVisionX Setup: Removing Previous Inference Install -- "+modelCompilerDeps+"\n")
 
 # common packages
 coreCommonPackages = [
@@ -245,73 +223,13 @@ coreCommonPackages = [
     'inxi'
 ]
 
-neuralNetDebianPackages = [
-    'half',
-    'rocblas-dev',
-    'miopen-hip-dev',
-    'migraphx-dev'
+# float16 support for core OpenVX and the RPP extension
+halfDebianPackages = [
+    'half'
 ]
 
-inferenceDebianPackages = [
-    'python3-dev',
-    'python3-pip'
-]
-
-neuralNetRPMPackages = [
-    'half',
-    'rocblas-devel',
-    'miopen-hip-devel',
-    'migraphx-devel'
-]
-
-inferenceRPMPackages = [
-    'python3-devel',
-    'python3-pip'
-]
-
-# pip3 versions
-pipNumpyVersion = "numpy~=1.23.0"
-pipProtoVersion= "protobuf~=3.12.4"
-pipONNXVersion = "onnx~=1.12.0"
-pipFutureVersion = "future~=1.0.0"
-pipPytzVersion = "pytz~=2022.1"
-pipGoogleVersion = "google~=3.0.0"
-pipNNEFVersion = "nnef~=1.0.7"
-
-# Debian pip3 packages
-if "ubuntu-24" in platformInfo:
-    pipNumpyVersion = "numpy~=2.0.0"
-    pipONNXVersion = "onnx~=1.16.0"
-    pipProtoVersion= "protobuf~=3.20.2"
-
-pip3InferencePackagesDebian = [
-    str(pipFutureVersion),
-    str(pipPytzVersion),
-    str(pipGoogleVersion),
-    str(pipNumpyVersion),
-    str(pipProtoVersion),
-    str(pipONNXVersion),
-    str(pipNNEFVersion)
-]
-
-# RPM pip3 packages
-pipONNXversion = "onnx~=1.11.0"
-if "centos-8" in platformInfo:
-    pipNumpyVersion = "numpy==1.19.5"
-    pipNNEFVersion = "numpy==1.19.5" # TBD: NO NNEF Package for RHEL 8
-if "sles" in platformInfo:
-    pipNumpyVersion = "numpy==1.19.5"
-    pipProtoVersion= "protobuf==3.19.5"
-    pipNNEFVersion = "numpy==1.19.5" # TBD: NO NNEF Package for SLES
-
-pip3InferencePackagesRPM = [
-    str(pipFutureVersion),
-    str(pipPytzVersion),
-    str(pipGoogleVersion),
-    str(pipNumpyVersion),
-    str(pipProtoVersion),
-    str(pipONNXVersion),
-    str(pipNNEFVersion)
+halfRPMPackages = [
+    'half'
 ]
 
 rppDebianPackages = [
@@ -322,16 +240,6 @@ rppDebianPackages = [
 rppRPMPackages = [
     'rpp',
     'rpp-devel'
-]
-
-rocdecodeDebianPackages = [
-    'rocdecode',
-    'rocdecode-dev'
-]
-
-rocdecodeRPMPackages = [
-    'rocdecode',
-    'rocdecode-devel'
 ]
 
 openclDebianPackages = [
@@ -360,33 +268,14 @@ ERROR_CHECK(os.system('sudo '+linuxFlag+' '+linuxSystemInstall +' '+linuxSystemI
 ERROR_CHECK(os.system(sudoValidate))
 # common packages
 install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, coreCommonPackages)
-# HIP Backend support
-if backend == 'HIP':
-    # neural net packages
-    if neuralNetInstall == 'ON':
-        if "ubuntu" in platformInfo:
-            install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, neuralNetDebianPackages)
-        else:
-            install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, neuralNetRPMPackages)
-        # inference
-        if inferenceInstall == 'ON':
-            if "ubuntu" in platformInfo:
-                install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, inferenceDebianPackages)
-                for i in range(len(pip3InferencePackagesDebian)):
-                    ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesDebian[i]))
-            else:
-                install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, inferenceRPMPackages)
-                for i in range(len(pip3InferencePackagesRPM)):
-                    ERROR_CHECK(os.system('pip3 install '+ pip3InferencePackagesRPM[i]))
-    # RPP, rocDecode
+# GPU backend support (HIP or OpenCL) -- float16 + RPP extension
+if backend in ('HIP', 'OCL'):
     if "ubuntu" in platformInfo:
+        install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, halfDebianPackages)
         install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, rppDebianPackages)
-        install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, rocdecodeDebianPackages)
     else:
+        install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, halfRPMPackages)
         install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, rppRPMPackages)
-        
-    if(("mariner" not in platformInfo) and ("ubuntu" not in platformInfo)):
-        install_packages(linuxFlag, linuxSystemInstall, linuxSystemInstall_check, rocdecodeRPMPackages)
 
 # Install OpenCL ICD Loader
 if backend == 'OCL':
@@ -408,23 +297,8 @@ else:
     # Create deps & build folder
     ERROR_CHECK(os.system('mkdir '+deps_dir))
     ERROR_CHECK(os.system('(cd '+deps_dir+'; mkdir build )'))
-    # Install Model Compiler Deps
-    if neuralNetInstall == 'ON' and backend == 'HIP' and inferenceInstall == 'ON':
-        if not os.path.exists(modelCompilerDeps):
-            info("STATUS: Model Compiler Deps Install - " +modelCompilerDeps+"\n")
-            os.makedirs(modelCompilerDeps)
-            if "sles" in platformInfo or "mariner" in platformInfo or "centos-8" in platformInfo:
-                ERROR_CHECK(os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps'))
-                ERROR_CHECK(os.system(
-                        '(cd '+modelCompilerDeps+'/nnef-deps; git clone -b nnef-v1.0.0 https://github.com/KhronosGroup/NNEF-Tools.git)'))
-                ERROR_CHECK(os.system(
-                        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; '+linuxCMake+' ..; make -j$(nproc); sudo make install)'))
-                ERROR_CHECK(os.system(
-                        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)'))
-    else:
-        info("STATUS: MIVisionX Setup: Neural Network only supported with HIP backend and NN turned ON\n")
 
-    # Install OpenCV -- TBD cleanup
+    # Install OpenCV (optional - used by runvx for image/video display)
     ERROR_CHECK(os.system('(cd '+deps_dir+'/build; mkdir OpenCV )'))
     # Install
     if "ubuntu" in platformInfo:

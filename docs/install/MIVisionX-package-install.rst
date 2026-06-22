@@ -15,10 +15,8 @@ Three MIVisionX packages are available on Linux:
 All the required prerequisites are installed when the package installation method is used.
 
 .. note::
-  
-    | The package installation only supports the HIP backend. :doc:`Build and install from source <./MIVisionX-linux-build-and-install>` to use the OpenCL backend. 
-    |
-    | The FFmpeg and OpenCV dev packages must be installed manually on RHEL and SLES.
+
+    The package installation only supports the HIP backend. :doc:`Build and install from source <./MIVisionX-linux-build-and-install>` to use the OpenCL backend.
 
 
 Basic installation

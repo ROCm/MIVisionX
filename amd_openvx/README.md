@@ -30,7 +30,7 @@ AMD OpenVX implements the full [Vision Conformance Feature Set](https://www.khro
 
 ## OpenVX Extensions
 
-AMD OpenVX can be extended with additional modules. See [amd_openvx_extensions](../amd_openvx_extensions/README.md) for all available OpenVX extension modules including neural networks, MIGraphX inference, RPP image augmentation, OpenCV interop, and more.
+AMD OpenVX can be extended with additional modules. See [amd_openvx_extensions](../amd_openvx_extensions/README.md) for the available OpenVX extension module: `amd_rpp`, which provides RPP image/tensor augmentation as OpenVX kernels.
 
 ## Prerequisites
 
@@ -55,12 +55,7 @@ cmake ..
 make -j8
 ```
 
-### Build using Visual Studio
-
-* Install [OpenCV](https://github.com/opencv/opencv/releases) (optional, for RunVX camera capture and image display)
-  + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
-* Use `amd_openvx/amd_openvx.sln` to build for x64 platform
-* If AMD GPU (or OpenCL) is not available, set build flag `ENABLE_OPENCL=0` in `openvx/openvx.vcxproj` and `runvx/runvx.vcxproj`
+On Windows, build with CMake as well (the legacy Visual Studio `.sln`/`.vcxproj` files have been removed). The default Windows backend is `OpenCL`; pass `-DGPU_SUPPORT=OFF` for a CPU-only build. Optionally install [OpenCV](https://github.com/opencv/opencv/releases) (set `OpenCV_DIR` to the `OpenCV/build` folder) to enable RunVX camera capture and image display.
 
 > [!NOTE]
 > AMD GPU HIP backend is not supported on Windows.

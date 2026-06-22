@@ -1,22 +1,6 @@
 # Utilities
 
-MIVisionX has utility applications which could be used by developers to test, quick prototype or develop sample applications.
-
-## [Inference Generator](inference_generator/README.md#inference-generator)
-
-caffe2openvx: Convert a pre-trained CAFFE model into a C library for use by applications.
-
-## [Loom Shell](loom_shell/README.md#radeon-loomshell)
-
-LoomShell is an interpreter that enables stitching 360 degree videos using a script. It provides direct access to Live Stitch API by encapsulating the calls to enable rapid prototyping.
-
-## [mv_deploy](mv_deploy/README.md)
-
-mv_deploy consists of a model-compiler and necessary header/.cpp files which are required to run inference for a specific NeuralNet model. `mv_compile` will be built as part of MIVisionX package installer
-
-## [RunCL](runcl/README.md#amd-runcl)
-
-RunCL is a command-line tool to build, execute, and debug OpenCL programs, with a simple, easy-to-use interface.
+MIVisionX provides a utility application that developers can use to test, quickly prototype, or develop sample applications.
 
 ## [RunVX](runvx/README.md#amd-runvx)
 

@@ -6,7 +6,7 @@
 > [!NOTE]
 > The published documentation is available at [MIVisionX](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/index.html) in an organized, easy-to-read format, with search and a table of contents. The documentation source files reside in the `docs` folder of this repository. As with all ROCm projects, the documentation is open source. For more information on contributing to the documentation, see [Contribute to ROCm documentation](https://rocm.docs.amd.com/en/latest/contribute/contributing.html).
 
-AMD MIVisionX is a comprehensive computer vision and machine intelligence toolkit. It delivers a highly optimized, conformant open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX&trade;</a> and OpenVX&trade; Extensions, along with a neural net model compiler & optimizer supporting <a href="https://onnx.ai/" target="_blank">ONNX</a> and <a href="https://www.khronos.org/nnef" target="_blank">Khronos NNEF&trade;</a> exchange formats. MIVisionX enables rapid prototyping and deployment of optimized computer vision and machine learning inference workloads on a wide range of hardware, including x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
+AMD MIVisionX is a computer vision toolkit built around a highly optimized, conformant open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX&trade; 1.3</a> specification. Starting with the `4.0.0` release, MIVisionX is streamlined to its core: the AMD OpenVX&trade; engine, the AMD RPP OpenVX&trade; extension, and the `RunVX` graph executor. It enables rapid prototyping and execution of optimized computer vision workloads on a wide range of hardware, including x86 CPUs, APUs, and discrete GPUs, with `CPU`, `HIP`, and `OpenCL` backends.
 
 #### Latest release
 
@@ -22,41 +22,23 @@ AMD MIVisionX is a comprehensive computer vision and machine intelligence toolki
 
 ## AMD OpenVX&trade; Extensions
 
-The OpenVX framework provides a mechanism for vendors to add new vision functionality. This project includes the following OpenVX [modules](amd_openvx_extensions/README.md) that extend [amd_openvx](amd_openvx/README.md), the AMD OpenVX&trade; Core Engine.
+The OpenVX framework provides a mechanism for vendors to add new vision functionality. This project includes the following OpenVX [module](amd_openvx_extensions/README.md) that extends [amd_openvx](amd_openvx/README.md), the AMD OpenVX&trade; Core Engine.
 
-<p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/MIVisionX-OpenVX-Extensions.png" /></p>
+* [amd_rpp](amd_openvx_extensions/amd_rpp/README.md): Interface to [ROCm Performance Primitives](https://github.com/ROCm/rpp) (RPP) for image/tensor augmentation via [rocAL](https://github.com/ROCm/rocAL)
 
-* [amd_custom](amd_openvx_extensions/amd_custom/README.md): User-defined custom nodes for OpenVX graphs
-* [amd_loomsl](amd_openvx_extensions/amd_loomsl/README.md): Loom stitching library for live 360-degree video applications
-* [amd_media](amd_openvx_extensions/amd_media/README.md): Video and image encode/decode extension
-* [amd_migraphx](amd_openvx_extensions/amd_migraphx/README.md): <a href="https://github.com/ROCmSoftwarePlatform/AMDMIGraphX#amd-migraphx" target="_blank">AMD MIGraphX</a> integration for end-to-end inference
-* [amd_nn](amd_openvx_extensions/amd_nn/README.md): Neural network extension module
-* [amd_opencv](amd_openvx_extensions/amd_opencv/README.md): OpenCV interop providing OpenCV functions as OpenVX kernels
-* [amd_rpp](amd_openvx_extensions/amd_rpp/README.md): Interface to [ROCm Performance Primitives](https://github.com/ROCm/rpp) (RPP) for image augmentation via [rocAL](https://github.com/ROCm/rocAL)
-* [amd_winml](amd_openvx_extensions/amd_winml/README.md): WinML extension to import ONNX models with pre & post processing for inference on Windows
-
-## Applications
-
-MIVisionX includes several [applications](apps/README.md#applications) built on top of OpenVX modules, serving as prototypes and samples for developers.
-
-<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/MIVisionX-applications.png" /></p>
-
-## Neural network model compiler and optimizer
-
-<p align="center"><img width="80%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/modelCompilerWorkflow.png" /></p>
-
-[Neural net model compiler and optimizer](model_compiler/README.md#neural-net-model-compiler--optimizer) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
-
-## Toolkit
-
-[MIVisionX Toolkit](toolkit/README.md) is a comprehensive set of helpful tools for neural net creation, development, training, and deployment. The Toolkit provides tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework, and deploy on any AMD or 3rd party hardware.
+> [!NOTE]
+> The AMD OpenVX&trade; core engine supports the `CPU`, `HIP`, and `OpenCL` backends. The `amd_rpp` extension supports only the `CPU` and `HIP` backends (RPP has dropped OpenCL support); when the core is built with the `OpenCL` backend, `amd_rpp` is built in CPU-only mode.
 
 ## Utilities
 
-* [loom_shell](utilities/loom_shell/README.md#radeon-loomsh): Interpreter for prototyping 360-degree video stitching applications
-* [mv_deploy](utilities/mv_deploy/README.md): Model compiler and runtime files for neural net inference deployment
-* [RunCL](utilities/runcl/README.md#amd-runcl): Command-line utility to build, execute, and debug OpenCL programs
 * [RunVX](utilities/runvx/README.md#amd-runvx): Command-line utility to execute OpenVX graphs described in GDF text files
+
+## Applications
+
+Sample [applications](apps/README.md#applications) built on AMD OpenVX&trade; and OpenCV (built separately against an installed MIVisionX):
+
+* [bubble_pop](apps/bubble_pop): Creates bubbles and donuts to pop using OpenVX & OpenCV
+* [optical_flow](apps/optical_flow/README.md#openvx-samples): Runs Optical Flow on a video/live stream using an OpenVX graph
 
 ## Prerequisites
 
@@ -89,21 +71,18 @@ MIVisionX includes several [applications](apps/README.md#applications) built on 
 
 ### Libraries
 
-| Package | Minimum Version |
-|---------|----------------|
-| CMake | `3.10` |
-| HIP | - |
-| OpenMP | - |
-| Half | `1.12.0` |
-| MIOpen | - |
-| MIGraphX | - |
-| RPP | `3.1.0` |
-| OpenCV | `3.X` / `4.X` |
-| FFmpeg | `4.4.2` |
-| pkg-config | - |
+| Package | Minimum Version | Notes |
+|---------|----------------|-------|
+| CMake | `3.10` | |
+| HIP | - | required for the `HIP` backend |
+| OpenMP | - | |
+| Half | `1.12.0` | float16 support |
+| RPP | `3.1.0` | required for the `amd_rpp` extension |
+| OpenCV | `3.X` / `4.X` | optional, only used by `RunVX` for image/video display |
+| pkg-config | - | |
 
 ```shell
-sudo apt install cmake hip-dev openmp-extras-dev half miopen-hip-dev migraphx-dev rpp-dev libopencv-dev pkg-config libavcodec-dev libavformat-dev libavutil-dev libswscale-dev
+sudo apt install cmake hip-dev openmp-extras-dev half rpp-dev pkg-config
 ```
 
 > [!IMPORTANT]
@@ -144,7 +123,6 @@ Install MIVisionX runtime, development, and test packages.
 
 > [!IMPORTANT]
 >  * Package install supports `HIP` backend. For OpenCL backend build from source.
->  * `RedHat`/`SLES` requires `OpenCV` & `FFMPEG` development packages manually installed
 
 #### Source install
 
@@ -171,19 +149,22 @@ Run `python MIVisionX-setup.py --help` for all setup options including `--backen
 
 ### Windows
 
-* Windows SDK
-* Visual Studio 2019 or later
+* Windows `10` / `11`
+* Windows SDK + a C++17 toolchain (Visual Studio 2019 or later)
+* [CMake](https://cmake.org/download/) `3.10` or later
 * Install the latest AMD [drivers](https://www.amd.com/en/support)
 * Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
-* Install [OpenCV 3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
-  + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
-  + Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
 
-#### Using Visual Studio
-* Use `MIVisionX.sln` to build for x64 platform
+On Windows, build with CMake (the legacy Visual Studio `.sln`/`.vcxproj` files have been removed). The default Windows backend is `OpenCL`; pass `-DGPU_SUPPORT=OFF` for a CPU-only build.
 
-> [!IMPORTANT]
-> Some modules in MIVisionX are only supported on Linux
+```shell
+git clone https://github.com/ROCm/MIVisionX.git
+cd MIVisionX
+cmake -B build -DGPU_SUPPORT=OFF
+cmake --build build --config Release
+```
+
+Open the generated solution in the `build` folder with Visual Studio, or build directly from the command line as shown above.
 
 ### macOS
 
@@ -200,9 +181,8 @@ macOS [build instructions](https://github.com/ROCm/MIVisionX/wiki/macOS#macos-bu
   + Executables into `/opt/rocm/bin`
   + Libraries into `/opt/rocm/lib`
   + Header files into `/opt/rocm/include/mivisionx`
-  + Apps, & Samples folder into `/opt/rocm/share/mivisionx`
+  + Samples folder into `/opt/rocm/share/mivisionx`
   + Documents folder into `/opt/rocm/share/doc/mivisionx`
-  + Model Compiler, and Toolkit folder into `/opt/rocm/libexec/mivisionx`
 
 #### Verify with sample application
   **Canny Edge Detection**
@@ -231,24 +211,18 @@ ctest -VV
 
 ### Windows
 
-* `MIVisionX.sln` builds the libraries & executables in the folder `MIVisionX/x64`
+* The CMake build produces the libraries & executables under the `build` folder
 * Use `RunVX` to test the build
 
   ```shell
-  ./runvx.exe ADD_PATH_TO/MIVisionX/samples/gdf/skintonedetect.gdf
+  .\runvx.exe ADD_PATH_TO\MIVisionX\samples\gdf\skintonedetect.gdf
   ```
-
-## Docker
-
-MIVisionX provides [Docker images](docker/README.md#mivisionx-docker) for Ubuntu `22.04` to quickly prototype and build applications.
-
-* [Ubuntu 22.04](https://hub.docker.com/repository/docker/mivisionx/ubuntu-22.04)
 
 ## Documentation
 
 * [Published documentation](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/)
 * Build locally: `cd docs && pip3 install -r sphinx/requirements.txt && python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html`
-* Doxygen: `doxygen .Doxyfile`
+* Doxygen API docs: `cd docs/doxygen && doxygen Doxyfile`
 
 ## Technical support
 
@@ -269,11 +243,5 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release.
   + SLES - `15-SP7`
 * ROCm: `7.2.1`
 * RPP - `3.1.0`
-* miopen-hip - `3.4.0`
-* migraphx - `2.13.0`
-* OpenCV - `4.5.4`/`4.6`
-* FFMPEG - `4.4.2`
+* OpenCV - `4.5.4`/`4.6` (optional, RunVX display only)
 * MIVisionX Setup Script - `V4.0.0`
-
-### Known issues
-* Package install on `RedHat`/`SLES` requires manual `OpenCV` and `FFMPEG` development packages installed

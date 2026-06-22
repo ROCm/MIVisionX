@@ -1,4 +1,4 @@
-## C/C++ Samples for OpenVX and OpenVX Extensions
+## C/C++ Samples for OpenVX
 
 MIVisionX Vision Samples in C/C++
 
@@ -12,15 +12,4 @@ cmake .
 make
 ./cannyDetect --image <imageName> 
 ./cannyDetect --live
-```
-
-### Orb Detect
-
-usage:
-
-``` 
-cd opencv_orb/
-cmake .
-make
-./orbDetect
 ```

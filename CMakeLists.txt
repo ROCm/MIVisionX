@@ -45,7 +45,7 @@ set(MIVISIONX_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(MIVISIONX_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 ## MIVisionX package version
-set(VERSION "3.6.0")
+set(VERSION "4.0.0")
 
 # Set Project Version and Language
 project(mivisionx VERSION ${VERSION} LANGUAGES CXX)
@@ -92,10 +92,7 @@ endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 # MIVisionX Default Options
 option(ENHANCED_MESSAGE "MIVisionX Enhanced Message Option"        ON)
-option(NEURAL_NET       "Build MIVisionX with Neural Net Support"  ON)
-option(LOOM             "Build MIVisionX with LOOM Support"        ON)
 option(GPU_SUPPORT      "Build MIVisionX with GPU Support"         ON)
-option(MIGRAPHX         "Build MIVisionX with MIGraphX Support"    OFF)
 option(CODE_COVERAGE    "Build with code coverage instrumentation (gcov/lcov)" OFF)
 
 if(WIN32)
@@ -184,7 +181,6 @@ endif()
 
 # HIP backend defaults
 if("${BACKEND}" STREQUAL "HIP")
-  set(LOOM OFF)
   # Set supported GPU Targets
   if(NOT GPU_TARGETS AND NOT AMDGPU_TARGETS)
     find_package(ROCmCMakeBuildTools QUIET)
@@ -237,10 +233,7 @@ if(NOT DEFINED MIN_DEPS_MODE)
 endif()
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
-message("-- ${Cyan}     -D NEURAL_NET=${NEURAL_NET} [Turn ON/OFF Neural Net Modules (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D LOOM=${LOOM} [Turn ON/OFF LOOM OpenCL Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D GPU_SUPPORT=${GPU_SUPPORT} [Turn ON/OFF GPU support (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D MIGRAPHX=${MIGRAPHX} [Turn ON/OFF MIGraphX Module (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D BACKEND=${BACKEND} [Select MIVisionX Backend [options:CPU/OPENCL/HIP](default:HIP)]${ColourReset}")
 message("-- ${Cyan}     -D MIN_DEPS_MODE=${MIN_DEPS_MODE} [Build MIVisionX with minimum dependencies (default:OFF)]${ColourReset}")
 
@@ -306,12 +299,11 @@ if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
 endif()
 
 # Set the dependent packages
-set(MIVISIONX_RUNTIME_PACKAGE_LIST  "hip-runtime-amd, openmp-extras-runtime, rpp, rocblas, miopen-hip, migraphx")
+set(MIVISIONX_RUNTIME_PACKAGE_LIST  "hip-runtime-amd, openmp-extras-runtime, rpp")
 
 # Set the dev dependent packages
-set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "half, hip-dev, openmp-extras-dev, rpp-dev, rocblas-dev, miopen-hip-dev, migraphx-dev, pkg-config, libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev, libopencv-dev")
-# TBD - Some RPM packages need Fusion Packages - libavcodec-devel, libavformat-devel, libavutil-devel, libswscale-devel, libopencv
-set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "half, hip-devel, openmp-extras-devel, rpp-devel, rocblas-devel, miopen-hip-devel, migraphx-devel, pkg-config")
+set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "half, hip-dev, openmp-extras-dev, rpp-dev, pkg-config")
+set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "half, hip-devel, openmp-extras-devel, rpp-devel, pkg-config")
 
 # Add OS specific dependencies
 if(EXISTS "/etc/os-release")

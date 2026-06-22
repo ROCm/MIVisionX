@@ -50,10 +50,10 @@ message("-- \t${White}rpp_VERSION_MAJOR -- ${rpp_VERSION_MAJOR}${ColourReset}")
 message("-- \t${White}rpp_VERSION_MINOR -- ${rpp_VERSION_MINOR}${ColourReset}")
 message("-- \t${White}rpp_VERSION_PATCH -- ${rpp_VERSION_PATCH}${ColourReset}")
 
-if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
-    find_package(OpenCL REQUIRED)
-elseif(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
-    SET(OpenCL_FOUND FALSE)
+# RPP supports the CPU and HIP backends only (OpenCL backend support has been dropped in RPP).
+# When the MIVisionX core is built with the OpenCL backend, vx_rpp is built in CPU-only mode.
+set(OpenCL_FOUND FALSE)
+if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
     find_package(HIP REQUIRED)
 endif()
@@ -147,16 +147,7 @@ list(APPEND SOURCES
         source/internal_publishKernels.cpp
     )
 
-if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)
-    message("-- ${Green}vx_rpp -- Building with OpenCL${ColourReset}")
-    set(ENABLE_OPENCL 1)
-    set(ENABLE_HIP 0)
-    add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DENABLE_HIP=${ENABLE_HIP} -DRPP_BACKEND_OPENCL=1)
-    include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
-    set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} ${OpenCL_LIBRARIES})
-    add_library(vx_rpp SHARED ${SOURCES})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGPU_SUPPORT=1 -DRPP_BACKEND_OPENCL=1") # Currently used by rpp. To be removed.
-elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
+if (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
     message("-- ${Green}vx_rpp -- Building with HIP${ColourReset}")
     set(ENABLE_OPENCL 0)
     set(ENABLE_HIP 1)

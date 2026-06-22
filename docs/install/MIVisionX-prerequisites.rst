@@ -33,40 +33,23 @@ Building MIVisionX from source on Linux requires CMake Version 3.10 or later, AM
 * OpenMP
 * Threads
 
-When building MIVisionX from source on Linux, the |setup|_ Python script can be used to install prerequisites:
+When building MIVisionX from source on Linux, install the prerequisites with your package manager. On Ubuntu:
 
 .. code-block:: shell
 
-  MIVisionX-setup.py [-h]   [--directory DIRECTORY; default: ~/]
-                            [--opencv OpenCV_VERSION; default: 4.6.0]
-                            [--developer {ON|OFF}; default:OFF]
-                            [--reinstall {ON|OFF}; default:OFF]
-                            [--backend {HIP|OCL|CPU}]
-                            [--rocm_path ROCM_PATH; default: /opt/rocm]
+    sudo apt install cmake hip-dev openmp-extras-dev half rpp-dev pkg-config
 
-| ``directory``: The user home directory.
-| ``opencv``: The OpenCV version to install (optional, only used by RunVX for image/video display).
-| ``developer``: Use the developer options.
-| ``reinstall``: Remove the previous dependency installations and install new dependencies.
-| ``backend``: Specifies the backend to use.
-| ``rocm_path``: The ROCm installation path.
+Use the appropriate package manager (``yum``/``dnf`` or ``zypper``) and equivalent ``-devel`` package names on RHEL and SLES.
 
-.. note::
-
-    libstdc++-12-dev isn't installed by the setup script and must be installed manually on Ubuntu 22.04 only.
-
-
-The following prerequisites are required and are installed with both the Linux package installer and the setup script:
+The following prerequisites are required and are also installed by the Linux package installer:
 
 * `RPP <https://rocm.docs.amd.com/projects/rpp/en/latest/>`_ version 3.1.0 or later (required for the ``amd_rpp`` extension; supports the ``CPU`` and ``HIP`` backends)
 * `The half-precision floating-point library <https://half.sourceforge.net>`_ version 1.12.0 or later
-* `Python3 <https://www.python.org/>`_
 
 The following prerequisite is optional:
 
 * `OpenCV <https://docs.opencv.org/4.6.0/index.html>`_ version 3.x or 4.x, only used by ``RunVX`` for image and video display
 
+.. note::
 
-.. |setup| replace:: ``MIVisionX-setup.py``
-
-.. _setup: https://github.com/ROCm/MIVisionX/blob/develop/MIVisionX-setup.py
+    On Ubuntu 22.04, ``libstdc++-12-dev`` must also be installed manually.

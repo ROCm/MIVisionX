@@ -9,11 +9,11 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 ### Changed
 *  **Breaking change**: MIVisionX has been streamlined to its core components. The toolkit now ships only the AMD OpenVX engine (`amd_openvx`), the AMD RPP OpenVX extension (`amd_openvx_extensions/amd_rpp`), and the `RunVX` graph executor, with continued support for the `CPU`, `HIP`, and `OpenCL` backends.
 *  Windows builds now use CMake; the legacy Visual Studio `.sln`/`.vcxproj` project files have been removed.
-*  `MIVisionX-setup.py` simplified to install only core, RPP, and (optional) RunVX display dependencies.
 
 ### Removed
 *  OpenVX extensions: `amd_nn`, `amd_opencv`, `amd_media`, `amd_migraphx`, `amd_loomsl`, `amd_custom`, `amd_winml`
 *  Utilities: `runcl`, `loom_shell`, `mv_deploy`, `loom_io_media`
+*  The `MIVisionX-setup.py` dependency installer; install the prerequisites (`half`, `rpp-dev`, and optionally OpenCV) directly with your package manager
 *  The neural-net `model_compiler`, the `toolkit`, and the ML/Windows `apps` (the OpenVX + OpenCV `bubble_pop` and `optical_flow` sample apps are retained)
 *  Extension-specific test suites (`neural_network_tests`, `amd_opencv_tests`, `amd_media_tests`, `amd_migraphx_tests`, `zen_dnn_tests`, `opencv_benchmark`) and the corresponding samples
 *  Build options `NEURAL_NET`, `LOOM`, and `MIGRAPHX`, and the legacy `.travis.yml` CI

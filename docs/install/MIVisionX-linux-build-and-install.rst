@@ -18,11 +18,7 @@ MIVisionX on Linux supports both the HIP and OpenCL backends.
 
 MIVisionX is installed in the ROCm installation directory by default. If MIVisionX for both HIP and OpenCL backends will be installed on the system, each version must be installed in its own custom directory and not in the default directory. 
 
-You can choose to use the |setup|_ Python script to install most :doc:`prerequisites <./MIVisionX-prerequisites>`:
-
-.. code:: shell
-
-    python3 MIVisionX-setup.py
+Install the :doc:`prerequisites <./MIVisionX-prerequisites>` with your package manager before building.
 
 To build and install MIVisionX for the HIP backend, create the ``build_hip`` directory under the ``MIVisionX`` root directory. Change directory to ``build_hip``:
 
@@ -66,6 +62,3 @@ If MIVisionX is being built for both the HIP and OpenCL backends, use ``-DCMAKE_
 After installation, the MIVisionX files will be found under ``/opt/rocm/`` unless ``-DCMAKE_INSTALL_PREFIX`` was specified. If ``-DCMAKE_INSTALL_PREFIX`` was specified, the MIVisionX files will be installed under the specified directory.
 
 To make and run tests, use ``make test``.
-
-.. |setup| replace:: ``MIVisionX-setup.py``
-.. _setup: https://github.com/ROCm/MIVisionX/blob/develop/MIVisionX-setup.py

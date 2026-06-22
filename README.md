@@ -126,23 +126,20 @@ Install MIVisionX runtime, development, and test packages.
 
 #### Source install
 
-Use the `MIVisionX-setup.py` script to install all required dependencies, then build from source.
-
-> [!NOTE]
-> Install ROCm before running the setup script. This script only needs to be executed once (rerun after ROCm upgrades).
+Install ROCm first, then install the [prerequisites](#libraries) with your package manager and build from source.
 
 ```shell
+# install prerequisites (Ubuntu shown; use the appropriate package manager for your OS)
+sudo apt install cmake hip-dev openmp-extras-dev half rpp-dev pkg-config
+
 git clone https://github.com/ROCm/MIVisionX.git
 cd MIVisionX
-python MIVisionX-setup.py
 mkdir build-hip && cd build-hip
-cmake ../
+cmake ../                 # default backend is HIP; use -DBACKEND=OCL for OpenCL or -DGPU_SUPPORT=OFF for CPU
 make -j8
 sudo make install
 make test
 ```
-
-Run `python MIVisionX-setup.py --help` for all setup options including `--backend`, `--opencv`, and `--rocm_path`.
 
 * [Test option instructions](https://github.com/ROCm/MIVisionX/wiki/CTest)
 * Instructions for building MIVisionX with [**OPENCL** GPU backend](https://github.com/ROCm/MIVisionX/wiki/OpenCL-Backend)
@@ -244,4 +241,3 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release.
 * ROCm: `7.2.1`
 * RPP - `3.1.0`
 * OpenCV - `4.5.4`/`4.6` (optional, RunVX display only)
-* MIVisionX Setup Script - `V4.0.0`

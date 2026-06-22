@@ -77,7 +77,7 @@ if(rpp_FOUND)
         string(REGEX MATCH "RPP_BACKEND_HIP ([0-9]*)" _ ${RPP_BACKEND_FILE})
         set(RPP_BACKEND_HIP_FOUND ${CMAKE_MATCH_1})
     else()
-        message("-- ${Red}WARNING: ${rpp_INCLUDE_DIR}/rpp/rpp_backend.h file Not Found. please run the setup script to install latest RPP package ${ColourReset}")
+        message("-- ${Red}WARNING: ${rpp_INCLUDE_DIR}/rpp/rpp_backend.h file Not Found. please install the latest RPP package ${ColourReset}")
     endif()
 
     if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND AND RPP_BACKEND_HIP_FOUND)

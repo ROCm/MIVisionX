@@ -640,13 +640,20 @@ static int agoGpuHipDataOutputMarkDirty(AgoGraph * graph, AgoData * data, bool n
 
 static int agoGpuHipDataOutputAtomicSync(AgoGraph * graph, AgoData * data) {
     if (data->ref.type == VX_TYPE_ARRAY) {
-        // update number of items
+        // update number of items and reset it for next use
         int64_t stime = agoGetClockCounter();
         vx_uint32 numItems = 0;
         if (data->hip_memory) {
             hipError_t err = hipMemcpyDtoH((void *)&numItems, data->hip_memory, sizeof(vx_uint32));
             if (err) {
                 agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: hipMemcpyDtoH() for numitems => %d\n", err);
+                return -1;
+            }
+            // reset the counter in GPU memory so the next graph execution starts clean
+            vx_uint32 zero = 0;
+            err = hipMemcpyHtoD(data->hip_memory, (void *)&zero, sizeof(vx_uint32));
+            if (err) {
+                agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: hipMemcpyHtoD() for numitems reset => %d\n", err);
                 return -1;
             }
         }
@@ -662,6 +669,13 @@ static int agoGpuHipDataOutputAtomicSync(AgoGraph * graph, AgoData * data) {
             hipError_t err = hipMemcpyDtoH((void *)&stack, data->hip_memory, sizeof(vx_uint32));
             if (err) {
                 agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: hipMemcpyDtoH() for stacktop => %d\n", err);
+                return -1;
+            }
+            // reset the stacktop counter in GPU memory so the next graph execution starts clean
+            vx_uint32 zero = 0;
+            err = hipMemcpyHtoD(data->hip_memory, (void *)&zero, sizeof(vx_uint32));
+            if (err) {
+                agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: hipMemcpyHtoD() for stacktop reset => %d\n", err);
                 return -1;
             }
         }

@@ -681,6 +681,10 @@ static int agoGpuHipDataOutputAtomicSync(AgoGraph * graph, AgoData * data) {
         }
         int64_t etime = agoGetClockCounter();
         graph->gpu_perf.buffer_read += etime - stime;
+        // clamp stackTop to capacity to prevent reading past the GPU buffer
+        if (stack > data->u.cannystack.count) {
+            stack = data->u.cannystack.count;
+        }
         data->u.cannystack.stackTop = stack;
         if (data->u.cannystack.stackTop > 0) {
             if (data->hip_memory) {
@@ -692,6 +696,19 @@ static int agoGpuHipDataOutputAtomicSync(AgoGraph * graph, AgoData * data) {
             }
             int64_t etime = agoGetClockCounter();
             graph->gpu_perf.buffer_read += etime - stime;
+        }
+        // reset the GPU counter to 0 so the next graph execution starts from a clean stack
+        // (matches the OpenCL path in agoGpuOclDataOutputAtomicSync)
+        if (data->hip_memory) {
+            vx_uint32 zero = 0;
+            stime = agoGetClockCounter();
+            hipError_t err = hipMemcpyHtoD(data->hip_memory, (void *)&zero, sizeof(vx_uint32));
+            if (err) {
+                agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: hipMemcpyHtoD() for stacktop reset => %d\n", err);
+                return -1;
+            }
+            etime = agoGetClockCounter();
+            graph->gpu_perf.buffer_write += etime - stime;
         }
     }
     return 0;

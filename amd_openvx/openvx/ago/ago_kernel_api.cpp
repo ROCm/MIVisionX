@@ -1891,6 +1891,16 @@ int ovxKernel_HarrisCorners(AgoNode * node, AgoKernelCommand cmd)
         node->metaList[6].data.u.arr.capacity = 0;
         node->metaList[7].data.u.scalar.type = VX_TYPE_SIZE;
         status = VX_SUCCESS;
+        // On HIP the HarrisCorners merge stage is CPU-only. Running the
+        // preceding Sobel/Score kernels on the GPU and then reading the score
+        // image back to the CPU for merge/sort is much slower than running the
+        // whole subgraph on the CPU on integrated APUs. Force CPU affinity for
+        // the HarrisCorners subgraph on HIP so all child nodes (Sobel, Score,
+        // NMS, merge) are scheduled on the CPU. Ago will propagate this
+        // affinity to the child nodes created during drama division.
+#if ENABLE_HIP
+        node->attr_affinity.device_type = AGO_KERNEL_FLAG_DEVICE_CPU;
+#endif
         //disable buffer merging for HarrisCorners on both OCL and HIP GPU backends temporarily as a workaround
 #if ENABLE_OPENCL || ENABLE_HIP
     char textBuffer[1024];

@@ -88,12 +88,18 @@ body:
     description: What version(s) of ROCm did you encounter the issue on?
     multiple: true
     options:
-        - ROCm 6.0.0
-        - ROCm 5.7.1
-        - ROCm 5.7.0
-        - ROCm 5.6.0
-        - ROCm 5.5.1
-        - ROCm 5.5.0
+        - ROCm 7.14.x
+        - ROCm 7.13.x
+        - ROCm 7.12.x
+        - ROCm 7.2.x
+        - ROCm 7.1.x
+        - ROCm 7.0.x
+        - ROCm 6.4.x
+        - ROCm 6.3.x
+        - ROCm 6.2.x
+        - ROCm 6.1.x
+        - ROCm 6.0.x
+        - Other
   validations:
     required: true
 - type: dropdown

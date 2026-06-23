@@ -273,8 +273,8 @@ if(ENABLE_ASAN_PACKAGING)
   set(CPACK_RPM_PACKAGE_SUMMARY "AMD MIVisionX address sanitizer libraries")
   set( COMP_TYPE "asan" )
 else()
-  set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit")
-  set(CPACK_RPM_PACKAGE_SUMMARY "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit")
+  set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "AMD MIVisionX is a computer vision toolkit built on AMD OpenVX")
+  set(CPACK_RPM_PACKAGE_SUMMARY "AMD MIVisionX is a computer vision toolkit built on AMD OpenVX")
   set( COMP_TYPE "runtime" )
 endif()
 
@@ -416,20 +416,20 @@ include(CPack)
 
 cpack_add_component(runtime
                   DISPLAY_NAME "MIVisionX Runtime Package"
-                  DESCRIPTION "Computer Vision and ML Inference Toolkit. \
+                  DESCRIPTION "Computer vision toolkit built on AMD OpenVX. \
 MIVisionX libraries and license.txt")
 
 cpack_add_component(dev
                   DISPLAY_NAME "MIVisionX Develop Package"
-                  DESCRIPTION "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit. \
+                  DESCRIPTION "AMD MIVisionX is a computer vision toolkit built on AMD OpenVX. \
 MIVisionX develop package provides MIVisionX libraries, header files, samples, and license.txt")
 
 cpack_add_component(asan
                   DISPLAY_NAME "MIVisionX ASAN Package"
-                  DESCRIPTION "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit. \
+                  DESCRIPTION "AMD MIVisionX is a computer vision toolkit built on AMD OpenVX. \
 MIVisionX ASAN package provides MIVisionX ASAN libraries")
 
 cpack_add_component(test
                   DISPLAY_NAME "MIVisionX Test Package"
-                  DESCRIPTION "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit. \
+                  DESCRIPTION "AMD MIVisionX is a computer vision toolkit built on AMD OpenVX. \
 MIVisionX Test package provides MIVisionX Test Components")

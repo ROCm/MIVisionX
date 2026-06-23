@@ -13,7 +13,7 @@ MIVisionX/
 │       ├── hipvx/                 # HIP GPU backend kernels
 │       └── include/               # Khronos OpenVX 1.3 standard headers (VX/) + AMD extensions
 ├── amd_openvx_extensions/         # OpenVX extension modules
-│   └── amd_rpp/                   # ROCm Performance Primitives extension (CPU/HIP/OpenCL)
+│   └── amd_rpp/                   # ROCm Performance Primitives extension (CPU/HIP; CPU-only with OpenCL core)
 ├── utilities/                     # CLI tools
 │   └── runvx/                     # OpenVX graph executor
 ├── tests/                         # Test suites
@@ -24,7 +24,6 @@ MIVisionX/
 │   └── vx_rpp_tests/              # AMD RPP extension GDF tests
 ├── apps/                          # Sample CV apps (bubble_pop, optical_flow) - OpenVX + OpenCV, built separately
 ├── samples/                       # Sample GDF graphs and c_samples (canny)
-├── docker/                        # Dockerfiles (build, conformance, release)
 ├── cmake/                         # CMake find modules
 ├── docs/                          # Documentation (Sphinx-based)
 ├── .github/workflows/             # GitHub Actions workflows

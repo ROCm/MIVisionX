@@ -15,7 +15,7 @@ Pre-requisites
 * **GPU**: AMD Radeon Graphics [optional]
 
   + Windows: install the latest drivers and OpenCL SDK `download <https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases>`_
-  + Linux: install `ROCm <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/>`_
+  + Linux: install the `ROCm Core SDK <https://rocm.docs.amd.com/en/latest/install/rocm.html>`_ (ROCm ``7.13`` or later)
 
 
 Build Instructions

@@ -37,7 +37,7 @@ AMD OpenVX can be extended with additional modules. See [amd_openvx_extensions](
 * **CPU**: [AMD64](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html)
 * **GPU**: [AMD Radeon&trade; Graphics](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html) [optional]
   + Windows: Install the latest [drivers](https://www.amd.com/en/support) and [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases)
-  + Linux: Install [ROCm](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/amdgpu-install.html)
+  + Linux: Install the [ROCm Core SDK](https://rocm.docs.amd.com/en/latest/install/rocm.html) (ROCm `7.13` or later)
 * **APU**: [AMD Radeon&trade; `Mobile`/`Embedded`](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html) [optional]
 
 ## Build Instructions

@@ -8,5 +8,5 @@ Testing the MIVisionX installation
 
 The MIVisionX installation can be tested using the MIVisionX test suite available from the `MIVisionX github repository <https://github.com/ROCm/MIVisionX/tree/develop/tests>`_.
 
-The repository includes AMD extension tests, core OpenVX tests, smoke tests, library tests, and inference tests.
+The repository includes core OpenVX tests (API, conformance, GDF, and vision tests) and the AMD RPP extension test.
 

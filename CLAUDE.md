@@ -109,9 +109,11 @@ The CTS needs these CMake variables pointing to the pre-built MIVisionX:
 
 ## Dependencies
 
+MIVisionX 4.0+ is built on the **ROCm Core SDK** and requires **ROCm 7.13 or later** (install via the [ROCm install guide](https://rocm.docs.amd.com/en/latest/install/rocm.html), e.g. `amdrocm-core-sdk7.13-gfx<arch>`). The Core SDK provides HIP, OpenCL, `amdclang++`, OpenMP, `half`, and `RPP`.
+
 **Core (CPU-only):** CMake >= 3.10, C++17 compiler, SSE4.2 support
-**HIP backend:** ROCm (hip::host, hip::device)
-**OpenCL backend:** OpenCL libraries/headers
-**amd_rpp extension:** RPP >= 3.1.0 (CPU/HIP/OpenCL)
-**Optional:** Half (float16), OpenCV 3.x/4.x (RunVX display only)
+**HIP backend:** ROCm (hip::host, hip::device) — from the ROCm Core SDK
+**OpenCL backend:** OpenCL libraries/headers — from the ROCm Core SDK
+**amd_rpp extension:** RPP >= 3.1.0 (CPU/HIP; CPU-only with an OpenCL core) — from the ROCm Core SDK
+**Optional:** OpenCV 3.x/4.x (RunVX display only)
 **Linux link libs:** `dl`, `m` (core); `pthread`, `dl`, `m`, `rt` (conformance tests)

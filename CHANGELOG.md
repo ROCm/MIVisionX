@@ -8,6 +8,7 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 
 ### Changed
 *  **Breaking change**: MIVisionX has been streamlined to its core components. The toolkit now ships only the AMD OpenVX engine (`amd_openvx`), the AMD RPP OpenVX extension (`amd_openvx_extensions/amd_rpp`), and the `RunVX` graph executor, with continued support for the `CPU`, `HIP`, and `OpenCL` backends.
+*  MIVisionX is now built on top of the **ROCm Core SDK** and requires **ROCm 7.13 or later**. The Core SDK provides the HIP and OpenCL runtimes, the `amdclang++` compiler, the `half` library, and `RPP`.
 *  Windows builds now use CMake; the legacy Visual Studio `.sln`/`.vcxproj` project files have been removed.
 
 ### Removed

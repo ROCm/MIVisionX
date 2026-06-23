@@ -302,8 +302,8 @@ endif()
 set(MIVISIONX_RUNTIME_PACKAGE_LIST  "hip-runtime-amd, openmp-extras-runtime, rpp")
 
 # Set the dev dependent packages
-set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "half, hip-dev, openmp-extras-dev, rpp-dev, pkg-config")
-set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "half, hip-devel, openmp-extras-devel, rpp-devel, pkg-config")
+set(MIVISIONX_DEBIAN_DEV_PACKAGE_LIST  "half, hip-dev, openmp-extras-dev, rpp-dev")
+set(MIVISIONX_RPM_DEV_PACKAGE_LIST  "half, hip-devel, openmp-extras-devel, rpp-devel")
 
 # Add OS specific dependencies
 if(EXISTS "/etc/os-release")

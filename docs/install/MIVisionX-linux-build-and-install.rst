@@ -6,19 +6,13 @@
 Building and installing MIVisionX on Linux from source code
 *************************************************************
 
-Before building and installing MIVisionX, ensure that ROCm has been installed with the AMDGPU installer and the ``rocm`` usecase:
-
-.. code:: shell
-
-    sudo amdgpu-install --usecase=rocm
+MIVisionX ``4.0`` and later are built on top of the **ROCm Core SDK** and require **ROCm 7.13 or later**. Before building MIVisionX, install the ROCm Core SDK and the remaining build :doc:`prerequisites <./MIVisionX-prerequisites>`. The Core SDK provides the HIP and OpenCL runtimes, the ``amdclang++`` compiler, the ``half`` library, and ``RPP``.
 
 The MIVisionX source code is available from `https://github.com/ROCm/MIVisionX <https://github.com/ROCm/MIVisionX>`_. Use the version of MIVisionX that corresponds to the installed version of ROCm.
 
 MIVisionX on Linux supports both the HIP and OpenCL backends. 
 
 MIVisionX is installed in the ROCm installation directory by default. If MIVisionX for both HIP and OpenCL backends will be installed on the system, each version must be installed in its own custom directory and not in the default directory. 
-
-Install the :doc:`prerequisites <./MIVisionX-prerequisites>` with your package manager before building.
 
 To build and install MIVisionX for the HIP backend, create the ``build_hip`` directory under the ``MIVisionX`` root directory. Change directory to ``build_hip``:
 
@@ -62,3 +56,16 @@ If MIVisionX is being built for both the HIP and OpenCL backends, use ``-DCMAKE_
 After installation, the MIVisionX files will be found under ``/opt/rocm/`` unless ``-DCMAKE_INSTALL_PREFIX`` was specified. If ``-DCMAKE_INSTALL_PREFIX`` was specified, the MIVisionX files will be installed under the specified directory.
 
 To make and run tests, use ``make test``.
+
+CPU-only build
+==============
+
+MIVisionX can be built for the CPU backend without ROCm or an AMD GPU. The ROCm Core SDK is not required for this build; only a C++17 compiler and CMake 3.10 or later are needed. Pass ``-DGPU_SUPPORT=OFF`` to CMake:
+
+.. code:: shell
+
+    mkdir build-cpu
+    cd build-cpu
+    cmake -DGPU_SUPPORT=OFF ../
+    make
+    sudo make install

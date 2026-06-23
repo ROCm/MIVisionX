@@ -6,9 +6,13 @@
 Install MIVisionX using the Linux package installer
 ********************************************************
 
+.. note::
+
+    Prebuilt MIVisionX packages are available for **ROCm 7.2.x and below**. For **ROCm 7.12 and later**, :doc:`build and install from source <./MIVisionX-linux-build-and-install>` on top of the ROCm Core SDK.
+
 Three MIVisionX packages are available on Linux:
 
-| ``mivisionx``: The MIVisionX runtime package. This is the basic rocAL package that only provides dynamic libraries. It must always be installed.
+| ``mivisionx``: The MIVisionX runtime package. It provides the dynamic libraries and executables. It must always be installed.
 | ``mivisionx-dev``: The MIVisionX development package. This package installs a full suite of libraries, header files, and samples. This package needs to be installed to use samples.
 | ``mivisionx-test``: A test package that provides a CTest to verify the installation. 
 

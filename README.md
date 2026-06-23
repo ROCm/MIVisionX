@@ -49,7 +49,7 @@ Sample [applications](apps/README.md#applications) built on AMD OpenVX&trade; an
 * **APU**: [AMD Radeon&trade; `Mobile`/`Embedded`](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html) [optional]
 
 > [!IMPORTANT]
-> Some modules can be built for CPU only. To take advantage of advanced features and modules, we recommend using AMD GPUs or AMD APUs.
+> MIVisionX can be built for CPU only. For GPU acceleration via the `HIP` or `OpenCL` backend, we recommend using AMD GPUs or AMD APUs.
 
 ### Operating Systems
 
@@ -71,18 +71,16 @@ Sample [applications](apps/README.md#applications) built on AMD OpenVX&trade; an
 
 ### Libraries
 
+The **ROCm Core SDK** (ROCm `7.13` or later) provides everything MIVisionX needs to build: the HIP and OpenCL runtimes, the `amdclang++` compiler, OpenMP, the `half` (float16) library, and `RPP` (`3.1.0` or later, used by the `amd_rpp` extension). The remaining dependencies come from your distribution and are optional:
+
 | Package | Minimum Version | Notes |
 |---------|----------------|-------|
-| CMake | `3.10` | |
-| HIP | - | required for the `HIP` backend |
-| OpenMP | - | |
-| Half | `1.12.0` | float16 support |
-| RPP | `3.1.0` | required for the `amd_rpp` extension |
+| CMake | `3.10` | build system (install from your distribution) |
 | OpenCV | `3.X` / `4.X` | optional, only used by `RunVX` for image/video display |
-| pkg-config | - | |
 
 ```shell
-sudo apt install cmake hip-dev openmp-extras-dev half rpp-dev pkg-config
+# CMake from the distribution
+sudo apt install cmake
 ```
 
 > [!IMPORTANT]
@@ -90,13 +88,43 @@ sudo apt install cmake hip-dev openmp-extras-dev half rpp-dev pkg-config
 > * On `Ubuntu 22.04` - Additional package required: `sudo apt install libstdc++-12-dev`
 
 > [!NOTE]
-> All package installs are shown with the `apt` package manager. Use the appropriate package manager for your operating system.
+> * All package installs are shown with the `apt` package manager. Use the appropriate package manager for your operating system.
+> * `RPP` is included with the ROCm Core SDK. On ROCm releases where it is packaged separately, install it from the ROCm repository (for example `amdrpp7.13-*` / `rpp-dev`). Refer to the [ROCm install guide](https://rocm.docs.amd.com/en/latest/install/rocm.html) for exact package names.
 
 ## Installation instructions
 
+> [!IMPORTANT]
+> Choose your installation method based on your environment:
+> 1. **ROCm `7.2.x` or below** — install the prebuilt packages: `sudo apt install mivisionx mivisionx-dev mivisionx-test` (see [package install](#package-install)).
+> 2. **ROCm `7.12` or later** — build MIVisionX from source on top of the ROCm Core SDK (see [source install](#source-install)).
+> 3. **CPU-only** — MIVisionX can be built without ROCm or a GPU by passing `-DGPU_SUPPORT=OFF` (see [source install](#source-install)).
+
 ### Linux
 
-Verify you have [ROCm-supported hardware](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html), then install ROCm `7.0.0` or later with [amdgpu-install](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/amdgpu-install.html) using `--usecase=rocm`.
+MIVisionX `4.0` and later are built on top of the **ROCm Core SDK** and require **ROCm `7.13` or later** for GPU (`HIP`/`OpenCL`) builds. A CPU-only build needs neither ROCm nor a GPU.
+
+#### Install the ROCm Core SDK
+
+Verify you have [ROCm-supported hardware](https://rocm.docs.amd.com/en/latest/compatibility/compatibility-matrix.html), then install the ROCm Core SDK by following [Install AMD ROCm](https://rocm.docs.amd.com/en/latest/install/rocm.html) for your GPU and operating system. The Core SDK provides the HIP and OpenCL runtimes, the `amdclang++` compiler, CMake configuration files, headers, and the `half` library needed to build MIVisionX.
+
+The example below registers the ROCm repository and installs the Core SDK on `Ubuntu 24.04` for a Radeon `gfx1100` GPU (RX 7900 series). Adjust the distribution (`ubuntu2404`/`ubuntu2204`/`debian13`/...), GPU architecture (`gfx110x`, `gfx120x`, `gfx94x`, `gfx950`, ...), and ROCm version (`7.13`) to match your system:
+
+```shell
+# Register the ROCm package repository
+sudo mkdir --parents --mode=0755 /etc/apt/keyrings
+wget https://repo.amd.com/rocm/packages/gpg/rocm.gpg -O - | \
+    gpg --dearmor | sudo tee /etc/apt/keyrings/amdrocm.gpg > /dev/null
+sudo tee /etc/apt/sources.list.d/rocm.list << EOF
+deb [arch=amd64 signed-by=/etc/apt/keyrings/amdrocm.gpg] https://repo.amd.com/rocm/packages/ubuntu2404 stable main
+EOF
+sudo apt update
+
+# Install the ROCm Core SDK for your GPU architecture (gfx110x covers gfx1100/gfx1101/gfx1102)
+sudo apt install amdrocm-core-sdk7.13-gfx110x
+```
+
+> [!NOTE]
+> The ROCm Core SDK installs into `/opt/rocm`. Make sure `amdclang++` (`/opt/rocm/lib/llvm/bin/amdclang++`) and the ROCm CMake config files are available before building MIVisionX.
 
 > [!IMPORTANT]
 > Use **either** [package install](#package-install) **or** [source install](#source-install) as described below.
@@ -122,15 +150,18 @@ Install MIVisionX runtime, development, and test packages.
   ```
 
 > [!IMPORTANT]
->  * Package install supports `HIP` backend. For OpenCL backend build from source.
+>  * The prebuilt MIVisionX packages are available for **ROCm `7.2.x` and below**. For **ROCm `7.12` and later**, use the [source install](#source-install).
+>  * Package install supports the `HIP` backend. For the OpenCL backend, build from source.
 
 #### Source install
 
-Install ROCm first, then install the [prerequisites](#libraries) with your package manager and build from source.
+Use the source build for **ROCm `7.12` and later**, or for a **CPU-only** build.
+
+Install the [ROCm Core SDK](#install-the-rocm-core-sdk) first (it provides HIP, OpenCL, the `amdclang++` compiler, `half`, and `RPP`), add the remaining [prerequisites](#libraries), then build from source.
 
 ```shell
-# install prerequisites (Ubuntu shown; use the appropriate package manager for your OS)
-sudo apt install cmake hip-dev openmp-extras-dev half rpp-dev pkg-config
+# build prerequisite from the distribution (Ubuntu shown; use your OS package manager)
+sudo apt install cmake
 
 git clone https://github.com/ROCm/MIVisionX.git
 cd MIVisionX
@@ -140,6 +171,17 @@ make -j8
 sudo make install
 make test
 ```
+
+> [!NOTE]
+> **CPU-only build (no ROCm or GPU required):** MIVisionX builds without ROCm or an AMD GPU. The ROCm Core SDK is not needed for this path — only a C++17 compiler and CMake:
+> ```shell
+> git clone https://github.com/ROCm/MIVisionX.git
+> cd MIVisionX
+> mkdir build-cpu && cd build-cpu
+> cmake ../ -DGPU_SUPPORT=OFF
+> make -j8
+> sudo make install
+> ```
 
 * [Test option instructions](https://github.com/ROCm/MIVisionX/wiki/CTest)
 * Instructions for building MIVisionX with [**OPENCL** GPU backend](https://github.com/ROCm/MIVisionX/wiki/OpenCL-Backend)
@@ -238,6 +280,6 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release.
   + Ubuntu - `22.04` / `24.04`
   + RedHat - `8` / `9`
   + SLES - `15-SP7`
-* ROCm: `7.2.1`
+* ROCm: `7.13` or later (ROCm Core SDK)
 * RPP - `3.1.0`
 * OpenCV - `4.5.4`/`4.6` (optional, RunVX display only)

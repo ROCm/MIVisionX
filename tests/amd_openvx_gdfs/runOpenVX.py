@@ -79,11 +79,16 @@ MAX_NUM_FRAMES = 10000
 
 
 def get_gdf_files(directory: Path) -> List[str]:
-    """Return sorted list of filenames in *directory*, or [] if missing."""
+    """Return sorted list of ``.gdf`` filenames in *directory*, or [] if missing.
+
+    Only ``.gdf`` files are returned so stray artifacts that may appear in the
+    directory at runtime (for example ``default.profraw`` emitted by a
+    coverage-instrumented ``runvx``) are never mistaken for a GDF test.
+    """
     if not directory.is_dir():
         log.warning("Directory not found: %s", directory)
         return []
-    return sorted(f.name for f in directory.iterdir() if f.is_file())
+    return sorted(f.name for f in directory.iterdir() if f.is_file() and f.suffix == ".gdf")
 
 
 def print_test_list(

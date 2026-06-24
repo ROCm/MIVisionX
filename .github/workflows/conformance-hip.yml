@@ -1,0 +1,1039 @@
+# Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+name: AMD OpenVX CI (HIP)
+
+on:
+  push:
+    branches: [master, main, develop]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+  pull_request:
+    branches: [master, main, develop]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # ROCm is pre-installed on both self-hosted runners.
+  ROCM_PATH: /opt/rocm
+
+# ---------------------------------------------------------------------------
+# Runner assignment
+#
+#   gfx1100  linux-shark39-gfx1100-gpu-rocm-gpu1-1782327370
+#            → Build (release + debug) + Performance (perf-gate)
+#
+#   gfx1030  linux-shark39-gfx1030-gpu-rocm-gpu0-1782340752
+#            → All tests (CTS, API, GDF, vision) + Coverage summary
+#
+# The debug+coverage artifact built on gfx1100 is downloaded by every test
+# job on gfx1030; no GPU-specific binary differences exist because HIP
+# device code is compiled for the installed ROCm target on whichever runner
+# executes the build.
+# ---------------------------------------------------------------------------
+
+jobs:
+  # ===========================================================================
+  # Build Stage — all three builds run on gfx1100 in parallel.
+  # ===========================================================================
+
+  # Release build of the PR (or push) branch — used by perf-gate
+  build-hip:
+    name: Build AMD OpenVX (HIP, Release)
+    runs-on: linux-shark39-gfx1100-gpu-rocm-gpu1-1782327370
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build AMD OpenVX (HIP backend, Release)
+        run: |
+          mkdir build && cd build
+          cmake .. \
+            -DBACKEND=HIP \
+            -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
+            -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++"
+          make -j$(nproc)
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-hip
+          path: |
+            build/lib/
+            amd_openvx/openvx/include/
+          retention-days: 1
+
+  # Release build of the merge-target branch — used by perf-gate (PR only)
+  build-hip-main:
+    name: Build AMD OpenVX (HIP, Release, main)
+    if: github.event_name == 'pull_request'
+    runs-on: linux-shark39-gfx1100-gpu-rocm-gpu1-1782327370
+    steps:
+      - name: Checkout merge target ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0
+
+      - name: Build AMD OpenVX (HIP backend)
+        run: |
+          mkdir build && cd build
+          cmake .. \
+            -DBACKEND=HIP \
+            -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
+            -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++"
+          make -j$(nproc)
+
+      - name: Upload main build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-hip-main
+          path: |
+            build/lib/
+            amd_openvx/openvx/include/
+          retention-days: 1
+
+  # Debug build with LLVM coverage instrumentation — downloaded by gfx1030 test jobs.
+  # amdclang supports -fprofile-instr-generate / -fcoverage-mapping so the
+  # profraw flow is identical to the CPU workflow.
+  build-hip-debug:
+    name: Build AMD OpenVX (HIP, Debug + Coverage)
+    runs-on: linux-shark39-gfx1100-gpu-rocm-gpu1-1782327370
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build and install AMD OpenVX (HIP, Debug + Coverage)
+        env:
+          INSTALL_PREFIX: ${{ github.workspace }}/install
+        run: |
+          mkdir build && cd build
+          cmake .. \
+            -DBACKEND=HIP \
+            -DCODE_COVERAGE=ON \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
+            -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++" \
+            -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX"
+          make -j$(nproc)
+          make install
+
+      - name: Build API tests
+        env:
+          INSTALL_PREFIX: ${{ github.workspace }}/install
+        run: |
+          API_TESTS=(
+            canny channel_extract color_convert accumulate
+            graph graph_api tensor_api data_objects user_kernel
+            tensor_advanced threshold_query graph_import vxu_api
+            coverage_boost vision_coverage
+          )
+          for test_dir in "${API_TESTS[@]}"; do
+            echo "::group::Building ${test_dir}"
+            mkdir -p build/api_tests/${test_dir}
+            cmake -S tests/openvx_api_tests/${test_dir} \
+                  -B build/api_tests/${test_dir} \
+                  -DROCM_PATH="$INSTALL_PREFIX"
+            cmake --build build/api_tests/${test_dir} -j$(nproc)
+            echo "::endgroup::"
+          done
+
+      - name: Clone and build OpenVX CTS
+        env:
+          INSTALL_PREFIX: ${{ github.workspace }}/install
+        run: |
+          git clone --depth 1 -b openvx_1.3 https://github.com/KhronosGroup/OpenVX-cts.git
+          cd OpenVX-cts
+          mkdir -p build && cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENVX_INCLUDES="${{ github.workspace }}/amd_openvx/openvx/include" \
+            -DOPENVX_LIBRARIES="${INSTALL_PREFIX}/lib/libopenvx.so;${INSTALL_PREFIX}/lib/libvxu.so;pthread;dl;m;rt" \
+            -DOPENVX_CONFORMANCE_VISION=ON
+          make -j$(nproc)
+
+      - name: Upload debug build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+          path: |
+            install/
+            build/api_tests/
+            OpenVX-cts/build/bin/vx_test_conformance
+            OpenVX-cts/build/lib/
+            OpenVX-cts/test_data/
+          retention-days: 1
+
+  # ===========================================================================
+  # Performance Stage — gfx1100 only (PR only).
+  # Compares PR vs merge-target on the same GPU runner.
+  # ===========================================================================
+
+  perf-gate-hip:
+    name: Perf gate HIP (PR vs main)
+    if: github.event_name == 'pull_request'
+    runs-on: linux-shark39-gfx1100-gpu-rocm-gpu1-1782327370
+    needs:
+      - build-hip
+      - build-hip-main
+    steps:
+      - name: Checkout repo (for perf_gate.py script)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Download PR build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip
+          path: ${{ github.workspace }}/pr-pkg
+
+      - name: Download main build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-main
+          path: ${{ github.workspace }}/main-pkg
+
+      - name: Clone openvx-mark
+        run: |
+          git clone --depth 1 https://github.com/kiritigowda/openvx-mark.git \
+            ${{ github.workspace }}/openvx-mark
+
+      - name: Build openvx-mark against PR
+        run: |
+          mkdir -p ${{ github.workspace }}/openvx-mark/build-pr
+          cd ${{ github.workspace }}/openvx-mark/build-pr
+          cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
+            -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++" \
+            -DOPENVX_INCLUDES=${{ github.workspace }}/pr-pkg/amd_openvx/openvx/include \
+            -DOPENVX_LIB_DIR=${{ github.workspace }}/pr-pkg/build/lib \
+            ..
+          cmake --build . -j$(nproc)
+
+      - name: Build openvx-mark against main
+        run: |
+          mkdir -p ${{ github.workspace }}/openvx-mark/build-main
+          cd ${{ github.workspace }}/openvx-mark/build-main
+          cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
+            -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++" \
+            -DOPENVX_INCLUDES=${{ github.workspace }}/main-pkg/amd_openvx/openvx/include \
+            -DOPENVX_LIB_DIR=${{ github.workspace }}/main-pkg/build/lib \
+            ..
+          cmake --build . -j$(nproc)
+
+      - name: Bench PR (warmup + measure)
+        run: |
+          cd ${{ github.workspace }}/openvx-mark/build-pr
+          export LD_LIBRARY_PATH=${{ github.workspace }}/pr-pkg/build/lib:${ROCM_PATH}/lib
+          export AGO_DEFAULT_TARGET=GPU
+          ./openvx-mark --validate-timing
+          ./openvx-mark --resolution FHD --iterations 5 --warmup 0 --threads 1 \
+            --output-dir /tmp/warmup-pr-throwaway >/dev/null 2>&1 || true
+          ./openvx-mark --resolution FHD --iterations 20 --warmup 5 --threads 1
+
+      - name: Bench main (warmup + measure)
+        run: |
+          cd ${{ github.workspace }}/openvx-mark/build-main
+          export LD_LIBRARY_PATH=${{ github.workspace }}/main-pkg/build/lib:${ROCM_PATH}/lib
+          export AGO_DEFAULT_TARGET=GPU
+          ./openvx-mark --validate-timing
+          ./openvx-mark --resolution FHD --iterations 5 --warmup 0 --threads 1 \
+            --output-dir /tmp/warmup-main-throwaway >/dev/null 2>&1 || true
+          ./openvx-mark --resolution FHD --iterations 20 --warmup 5 --threads 1
+
+      - name: Run perf gate
+        run: |
+          set -euo pipefail
+          PR=${{ github.workspace }}/openvx-mark/build-pr/benchmark_results/benchmark_results.json
+          MAIN=${{ github.workspace }}/openvx-mark/build-main/benchmark_results/benchmark_results.json
+          if [ ! -f "$PR" ] || [ ! -f "$MAIN" ]; then
+            echo "::error::Missing benchmark JSONs (PR=$PR, MAIN=$MAIN)."
+            ls -la "$(dirname "$PR")" "$(dirname "$MAIN")" 2>/dev/null || true
+            exit 1
+          fi
+
+          python3 ${{ github.workspace }}/.github/scripts/perf_gate.py \
+            "$MAIN" "$PR" \
+            --geomean-floor 0.95 \
+            --kernel-floor 0.90 \
+            --warn-floor 0.95 \
+            --max-cv 5.0 \
+            --min-abs-ms 2.0 \
+            --summary-out "$GITHUB_STEP_SUMMARY"
+
+      - name: Post PR benchmark summary
+        if: always()
+        run: |
+          PR=${{ github.workspace }}/openvx-mark/build-pr/benchmark_results/benchmark_results.json
+          if [ ! -f "$PR" ]; then
+            echo "_No PR benchmark results found._" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          python3 - "$PR" >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import json, sys
+          with open(sys.argv[1]) as f:
+              report = json.load(f)
+          results = report.get("results", [])
+          if not results:
+              print("_No benchmark results._")
+              sys.exit(0)
+          print()
+          print("---")
+          print("## PR Benchmark Summary (HIP / gfx1100)")
+          print()
+          si = report.get("system", {})
+          if si:
+              print(f'**Runner:** {si.get("cpu_model", "N/A")} '
+                    f'({si.get("cpu_cores", "?")} cores, '
+                    f'{si.get("ram_gb", "?")} GB RAM)')
+              print()
+          print("| Kernel | Mode | Res | MP/s | Median (ms) | CV% | Verified |")
+          print("|:---|---|---|---:|---:|---:|:---:|")
+          for r in sorted(results, key=lambda x: x.get("name", "")):
+              wc = r.get("wall_clock", {}) or {}
+              v = "PASS" if r.get("verified", False) else "FAIL"
+              print(f'| `{r.get("name","")}` '
+                    f'| {r.get("mode","")} '
+                    f'| {r.get("resolution","")} '
+                    f'| {r.get("megapixels_per_sec", 0):.2f} '
+                    f'| {wc.get("median_ms", 0):.3f} '
+                    f'| {wc.get("cv_percent", 0):.2f} '
+                    f'| {v} |')
+          print()
+          PY
+
+      - name: Upload PR benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-gate-hip-results-pr
+          path: ${{ github.workspace }}/openvx-mark/build-pr/benchmark_results/
+          if-no-files-found: ignore
+
+      - name: Upload main benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-gate-hip-results-main
+          path: ${{ github.workspace }}/openvx-mark/build-main/benchmark_results/
+          if-no-files-found: ignore
+
+  # ===========================================================================
+  # Test Stage — all jobs run on gfx1030 against the debug+coverage build.
+  # AGO_DEFAULT_TARGET=GPU routes execution through the HIP backend.
+  # Each job uploads profraw files for the coverage-summary-hip job.
+  # ===========================================================================
+
+  # --- CTS Tests ---
+
+  baseline-hip:
+    name: Baseline (HIP)
+    runs-on: linux-shark39-gfx1030-gpu-rocm-gpu0-1782340752
+    needs: build-hip-debug
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Run baseline tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export AGO_DEFAULT_TARGET=GPU
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/baseline_%p.profraw
+          timeout 300 ./bin/vx_test_conformance --filter="GraphBase.*:Logging.*:SmokeTestBase.*:SmokeTest.*:TargetBase.*:Target.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-baseline
+          path: profraw/
+          if-no-files-found: ignore
+
+  graph-hip:
+    name: Graph (HIP)
+    runs-on: linux-shark39-gfx1030-gpu-rocm-gpu0-1782340752
+    needs: build-hip-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Run graph tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export AGO_DEFAULT_TARGET=GPU
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/graph_%p.profraw
+          timeout 600 ./bin/vx_test_conformance --filter="Graph.*:GraphCallback.*:GraphDelay.*:GraphROI.*:UserNode.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-graph
+          path: profraw/
+          if-no-files-found: ignore
+
+  data-objects-hip:
+    name: Data objects (HIP)
+    runs-on: linux-shark39-gfx1030-gpu-rocm-gpu0-1782340752
+    needs: build-hip-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Run data object tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export AGO_DEFAULT_TARGET=GPU
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/data_objects_%p.profraw
+          timeout 300 ./bin/vx_test_conformance --filter="Scalar.*:Array.*:ObjectArray.*:Matrix.*:Convolution.*:Distribution.*:LUT.*:Histogram.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-data-objects
+          path: profraw/
+          if-no-files-found: ignore
+
+  image-ops-hip:
+    name: Image ops (HIP)
+    runs-on: linux-shark39-gfx1030-gpu-rocm-gpu0-1782340752
+    needs: build-hip-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Run image operation tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export AGO_DEFAULT_TARGET=GPU
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/image_ops_%p.profraw
+          timeout 600 ./bin/vx_test_conformance --filter="Image.*:vxCopyImagePatch.*:vxMapImagePatch.*:vxCreateImageFromChannel.*:vxCopyRemapPatch.*:vxMapRemapPatch.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-image-ops
+          path: profraw/
+          if-no-files-found: ignore
+
+  vision-color-hip:
+    name: Vision color (HIP)
+    runs-on: linux-shark39-gfx1030-gpu-rocm-gpu0-1782340752
+    needs: build-hip-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Run color and channel tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export AGO_DEFAULT_TARGET=GPU
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_color_%p.profraw
+          timeout 300 ./bin/vx_test_conformance --filter="ColorConvert.*:ChannelExtract.*:ChannelCombine.*:vxConvertDepth.*:vxuConvertDepth.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-vision-color
+          path: profraw/
+          if-no-files-found: ignore
+
+  vision-filters-hip:
+    name: Vision filters (HIP)
+    runs-on: linux-shark39-gfx1030-gpu-rocm-gpu0-1782340752
+    needs: build-hip-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Run filter and morphology tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export AGO_DEFAULT_TARGET=GPU
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_filters_%p.profraw
+          timeout 600 ./bin/vx_test_conformance --filter="Box3x3.*:Gaussian3x3.*:Median3x3.*:Dilate3x3.*:Erode3x3.*:Sobel3x3.*:Magnitude.*:Phase.*:NonLinearFilter.*:Convolve.*:EqualizeHistogram.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-vision-filters
+          path: profraw/
+          if-no-files-found: ignore
+
+  vision-arithmetic-hip:
+    name: Vision arithmetic (HIP)
+    runs-on: linux-shark39-gfx1030-gpu-rocm-gpu0-1782340752
+    needs: build-hip-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Run arithmetic and bitwise tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export AGO_DEFAULT_TARGET=GPU
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_arithmetic_%p.profraw
+          timeout 600 ./bin/vx_test_conformance --filter="vxAddSub.*:vxuAddSub.*:vxMultiply.*:vxuMultiply.*:vxBinOp8u.*:vxuBinOp8u.*:vxBinOp16s.*:vxuBinOp16s.*:vxBinOp1u.*:vxuBinOp1u.*:vxNot.*:vxuNot.*:WeightedAverage.*:Threshold.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-vision-arithmetic
+          path: profraw/
+          if-no-files-found: ignore
+
+  vision-geometric-hip:
+    name: Vision geometric (HIP)
+    runs-on: linux-shark39-gfx1030-gpu-rocm-gpu0-1782340752
+    needs: build-hip-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Run geometric transform tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export AGO_DEFAULT_TARGET=GPU
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_geometric_%p.profraw
+          timeout 600 ./bin/vx_test_conformance --filter="Scale.*:WarpAffine.*:WarpPerspective.*:Remap.*:HalfScaleGaussian.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-vision-geometric
+          path: profraw/
+          if-no-files-found: ignore
+
+  vision-features-hip:
+    name: Vision features (HIP)
+    runs-on: linux-shark39-gfx1030-gpu-rocm-gpu0-1782340752
+    needs: build-hip-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Run feature and edge detection tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export AGO_DEFAULT_TARGET=GPU
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_features_%p.profraw
+          timeout 600 ./bin/vx_test_conformance --filter="HarrisCorners.*:FastCorners.*:vxCanny.*:vxuCanny.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-vision-features
+          path: profraw/
+          if-no-files-found: ignore
+
+  vision-statistics-hip:
+    name: Vision statistics (HIP)
+    runs-on: linux-shark39-gfx1030-gpu-rocm-gpu0-1782340752
+    needs: build-hip-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Run statistics and analysis tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export AGO_DEFAULT_TARGET=GPU
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_statistics_%p.profraw
+          timeout 300 ./bin/vx_test_conformance --filter="MeanStdDev.*:MinMaxLoc.*:Integral.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-vision-statistics
+          path: profraw/
+          if-no-files-found: ignore
+
+  vision-pyramid-hip:
+    name: Vision pyramid (HIP)
+    runs-on: linux-shark39-gfx1030-gpu-rocm-gpu0-1782340752
+    needs: build-hip-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Run pyramid and optical flow tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export AGO_DEFAULT_TARGET=GPU
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_pyramid_%p.profraw
+          timeout 300 ./bin/vx_test_conformance --filter="GaussianPyramid.*:LaplacianPyramid.*:LaplacianReconstruct.*:OptFlowPyrLK.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-vision-pyramid
+          path: profraw/
+          if-no-files-found: ignore
+
+  # --- Local Tests (API + GDF) ---
+
+  api-tests-hip:
+    name: API tests (HIP)
+    runs-on: linux-shark39-gfx1030-gpu-rocm-gpu0-1782340752
+    needs: build-hip-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Run API tests
+        run: |
+          mkdir -p profraw
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib
+          export AGO_DEFAULT_TARGET=GPU
+          export ROCM_PATH=${{ github.workspace }}/install
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/api_%p.profraw
+
+          FAILED_TESTS=()
+          API_EXECUTABLES=(
+            "canny:openvx_canny"
+            "channel_extract:openvx_channel_extract"
+            "color_convert:openvx_color_convert"
+            "accumulate:openvx_accum"
+            "graph:openvx_graph"
+            "graph_api:openvx_graph_api"
+            "tensor_api:openvx_tensor_api"
+            "data_objects:openvx_data_objects_api"
+            "user_kernel:openvx_user_kernel_api"
+            "tensor_advanced:openvx_tensor_advanced_api"
+            "threshold_query:openvx_threshold_query_api"
+            "graph_import:openvx_graph_import_api"
+            "vxu_api:openvx_vxu_api"
+            "coverage_boost:openvx_coverage_boost"
+            "vision_coverage:openvx_vision_coverage"
+          )
+          for entry in "${API_EXECUTABLES[@]}"; do
+            dir="${entry%%:*}"
+            exe="${entry##*:}"
+            echo "::group::Running ${exe}"
+            chmod +x build/api_tests/${dir}/${exe}
+            if ! ./build/api_tests/${dir}/${exe}; then
+              echo "::error::${exe} FAILED"
+              FAILED_TESTS+=("${exe}")
+            fi
+            echo "::endgroup::"
+          done
+          if [ ${#FAILED_TESTS[@]} -ne 0 ]; then
+            echo "::error::The following API tests failed: ${FAILED_TESTS[*]}"
+            exit 1
+          fi
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-api-tests
+          path: profraw/
+          if-no-files-found: ignore
+
+  gdf-tests-hip:
+    name: GDF tests (HIP)
+    runs-on: linux-shark39-gfx1030-gpu-rocm-gpu0-1782340752
+    needs: build-hip-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Run GDF tests
+        run: |
+          mkdir -p profraw
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib
+          export AGO_DEFAULT_TARGET=GPU
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/gdf_%p.profraw
+          chmod +x install/bin/runvx
+          python3 tests/amd_openvx_gdfs/runOpenVX.py \
+            --runvx_directory ${{ github.workspace }}/install/bin \
+            --num_frames 10 \
+            --backend_type HIP \
+            --hidden no
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-gdf-tests
+          path: profraw/
+          if-no-files-found: ignore
+
+  vision-tests-hip:
+    name: Vision node tests (HIP)
+    runs-on: linux-shark39-gfx1030-gpu-rocm-gpu0-1782340752
+    needs: build-hip-debug
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Run parametrized vision node tests
+        run: |
+          mkdir -p profraw
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib
+          export AGO_DEFAULT_TARGET=GPU
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_%p.profraw
+          chmod +x install/bin/runvx
+          python3 tests/vision_tests/runVisionTests.py \
+            --runvx_directory ${{ github.workspace }}/install/bin --num_frames 10
+          python3 tests/vision_tests/runVisionTests.py \
+            --runvx_directory ${{ github.workspace }}/install/bin --num_frames 10 --width 5 --height 3
+          python3 tests/vision_tests/runVisionTests.py \
+            --runvx_directory ${{ github.workspace }}/install/bin --num_frames 10 --width 10 --height 10
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-vision-tests
+          path: profraw/
+          if-no-files-found: ignore
+
+  # ===========================================================================
+  # Coverage Stage — merge profraw from gfx1030 test jobs and generate report.
+  # Runs on gfx1100 since it just processes artifacts (no GPU execution).
+  # Uses ROCm's bundled llvm-profdata / llvm-cov to match the amdclang
+  # toolchain version that emitted the instrumentation.
+  # ===========================================================================
+
+  coverage-summary-hip:
+    name: Code coverage summary (HIP)
+    runs-on: linux-shark39-gfx1100-gpu-rocm-gpu1-1782327370
+    if: always() && needs.build-hip-debug.result == 'success'
+    needs:
+      - build-hip-debug
+      - baseline-hip
+      - graph-hip
+      - data-objects-hip
+      - image-ops-hip
+      - vision-color-hip
+      - vision-filters-hip
+      - vision-arithmetic-hip
+      - vision-geometric-hip
+      - vision-features-hip
+      - vision-statistics-hip
+      - vision-pyramid-hip
+      - api-tests-hip
+      - gdf-tests-hip
+      - vision-tests-hip
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download debug build (for libopenvx.so)
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+
+      - name: Download all HIP profraw artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: profraw-hip-*
+          path: all-profraw
+          merge-multiple: true
+
+      - name: Merge profraw files
+        run: |
+          echo "Profraw files found:"
+          find all-profraw -name '*.profraw' -type f | head -50
+          PROFRAW_COUNT=$(find all-profraw -name '*.profraw' -type f | wc -l)
+          echo "Total profraw files: ${PROFRAW_COUNT}"
+          if [ "$PROFRAW_COUNT" -eq 0 ]; then
+            echo "::error::No profraw files found — no coverage data collected"
+            echo "## Code Coverage (HIP)" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "No profraw files were collected from test jobs." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          find all-profraw -name '*.profraw' -type f -print0 \
+            | xargs -0 "${ROCM_PATH}/llvm/bin/llvm-profdata" merge -sparse -o coverage.profdata
+
+      - name: Generate coverage report
+        run: |
+          LLVM_COV="${ROCM_PATH}/llvm/bin/llvm-cov"
+          LIBOPENVX="${{ github.workspace }}/install/lib/libopenvx.so"
+          PROFDATA="${{ github.workspace }}/coverage.profdata"
+
+          "${LLVM_COV}" report "${LIBOPENVX}" \
+            -instr-profile="${PROFDATA}" \
+            -ignore-filename-regex='(test|conformance)' \
+            | tee coverage_report.txt
+
+          "${LLVM_COV}" export "${LIBOPENVX}" \
+            -instr-profile="${PROFDATA}" \
+            -format=text \
+            -ignore-filename-regex='(test|conformance)' \
+            > coverage.json
+
+          "${LLVM_COV}" export "${LIBOPENVX}" \
+            -instr-profile="${PROFDATA}" \
+            -format=lcov \
+            -ignore-filename-regex='(test|conformance)' \
+            > coverage.lcov
+
+          if ! command -v genhtml &>/dev/null; then
+            sudo apt-get install -y lcov
+          fi
+          GENHTML_EXTRA_ARGS=()
+          if genhtml --version 2>&1 | grep -qE 'LCOV version ([2-9]|[1-9][0-9])'; then
+            GENHTML_EXTRA_ARGS+=(--ignore-errors unmapped)
+          fi
+          genhtml coverage.lcov \
+            --output-directory coverage_html \
+            --branch-coverage \
+            --title "AMD OpenVX Code Coverage (HIP)" \
+            --ignore-errors source \
+            "${GENHTML_EXTRA_ARGS[@]}" \
+            2>&1 || echo "::warning::genhtml had errors"
+
+      - name: Post coverage summary
+        if: always()
+        run: |
+          python3 - "$GITHUB_STEP_SUMMARY" <<'PYEOF'
+          import json, sys, os
+
+          summary_file = sys.argv[1]
+
+          json_path = "coverage.json"
+          text_path = "coverage_report.txt"
+
+          if not os.path.exists(json_path) and not os.path.exists(text_path):
+              with open(summary_file, "a") as f:
+                  f.write("## AMD OpenVX Code Coverage (HIP)\n\n")
+                  f.write("Coverage report generation failed.\n")
+              sys.exit(0)
+
+          if os.path.exists(json_path):
+              with open(json_path) as f:
+                  data = json.load(f)
+
+              totals = data.get("data", [{}])[0].get("totals", {})
+              files = data.get("data", [{}])[0].get("files", [])
+
+              lines = totals.get("lines", {})
+              funcs = totals.get("functions", {})
+              branches = totals.get("branches", {})
+              regions = totals.get("regions", {})
+
+              line_pct = lines.get("percent", 0)
+              func_pct = funcs.get("percent", 0)
+              branch_pct = branches.get("percent", 0)
+              region_pct = regions.get("percent", 0)
+
+              line_covered = lines.get("covered", 0)
+              line_total = lines.get("count", 0)
+              func_covered = funcs.get("covered", 0)
+              func_total = funcs.get("count", 0)
+              branch_covered = branches.get("covered", 0)
+              branch_total = branches.get("count", 0)
+
+              out = []
+
+              out.append("## AMD OpenVX Code Coverage Report (HIP)")
+              out.append("")
+              out.append("### Overall Summary")
+              out.append("")
+              out.append("| Metric | Covered | Total | Coverage |")
+              out.append("|:-------|--------:|------:|---------:|")
+              out.append(f"| Lines | {line_covered:,} | {line_total:,} | **{line_pct:.2f}%** |")
+              out.append(f"| Functions | {func_covered:,} | {func_total:,} | **{func_pct:.2f}%** |")
+              out.append(f"| Branches | {branch_covered:,} | {branch_total:,} | **{branch_pct:.2f}%** |")
+              out.append(f"| Regions | {regions.get('covered', 0):,} | {regions.get('count', 0):,} | **{region_pct:.2f}%** |")
+              out.append("")
+
+              file_data = []
+              for fobj in files:
+                  fname = fobj.get("filename", "")
+                  for prefix in ["/home/runner/work/MIVisionX/MIVisionX/amd_openvx/openvx/",
+                                 "amd_openvx/openvx/"]:
+                      if fname.startswith(prefix):
+                          fname = fname[len(prefix):]
+                          break
+
+                  fl = fobj.get("summary", {}).get("lines", {})
+                  ff = fobj.get("summary", {}).get("functions", {})
+                  fb = fobj.get("summary", {}).get("branches", {})
+
+                  if fl.get("count", 0) == 0 and ff.get("count", 0) == 0:
+                      continue
+
+                  file_data.append({
+                      "name": fname,
+                      "lines_covered": fl.get("covered", 0),
+                      "lines_total": fl.get("count", 0),
+                      "lines_pct": fl.get("percent", 0),
+                      "funcs_covered": ff.get("covered", 0),
+                      "funcs_total": ff.get("count", 0),
+                      "funcs_pct": ff.get("percent", 0),
+                      "branches_covered": fb.get("covered", 0),
+                      "branches_total": fb.get("count", 0),
+                      "branches_pct": fb.get("percent", 0),
+                  })
+
+              file_data.sort(key=lambda x: x["name"])
+
+              groups = {}
+              for fd in file_data:
+                  parts = fd["name"].split("/")
+                  group = parts[0] + "/" if len(parts) > 1 else ""
+                  groups.setdefault(group, []).append(fd)
+
+              out.append("### File Coverage Details")
+              out.append("")
+              out.append("| File | Lines | Line % | Functions | Func % | Branches | Branch % |")
+              out.append("|:-----|------:|-------:|----------:|-------:|---------:|---------:|")
+
+              for group_name in sorted(groups.keys()):
+                  group_files = groups[group_name]
+                  if group_name:
+                      g_lc = sum(f["lines_covered"] for f in group_files)
+                      g_lt = sum(f["lines_total"] for f in group_files)
+                      g_fc = sum(f["funcs_covered"] for f in group_files)
+                      g_ft = sum(f["funcs_total"] for f in group_files)
+                      g_bc = sum(f["branches_covered"] for f in group_files)
+                      g_bt = sum(f["branches_total"] for f in group_files)
+                      g_lp = (g_lc / g_lt * 100) if g_lt > 0 else 0
+                      g_fp = (g_fc / g_ft * 100) if g_ft > 0 else 0
+                      g_bp = (g_bc / g_bt * 100) if g_bt > 0 else 0
+                      out.append(f"| **{group_name}** | **{g_lc}/{g_lt}** | **{g_lp:.1f}%** | **{g_fc}/{g_ft}** | **{g_fp:.1f}%** | **{g_bc}/{g_bt}** | **{g_bp:.1f}%** |")
+
+                  for fd in group_files:
+                      name = fd["name"]
+                      lc, lt, lp = fd["lines_covered"], fd["lines_total"], fd["lines_pct"]
+                      fc, ft, fp = fd["funcs_covered"], fd["funcs_total"], fd["funcs_pct"]
+                      bc, bt, bp = fd["branches_covered"], fd["branches_total"], fd["branches_pct"]
+                      out.append(f"| {name} | {lc}/{lt} | {lp:.1f}% | {fc}/{ft} | {fp:.1f}% | {bc}/{bt} | {bp:.1f}% |")
+
+              out.append("")
+
+              with open(summary_file, "a") as f:
+                  f.write("\n".join(out) + "\n")
+          else:
+              with open(text_path) as f:
+                  report_text = f.read()
+              with open(summary_file, "a") as f:
+                  f.write("## AMD OpenVX Code Coverage Report (HIP)\n\n")
+                  f.write("```\n")
+                  f.write(report_text)
+                  f.write("```\n")
+          PYEOF
+
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-report-hip
+          path: |
+            coverage.profdata
+            coverage_report.txt
+            coverage.json
+            coverage.lcov
+            coverage_html/
+          retention-days: 30
+          if-no-files-found: ignore

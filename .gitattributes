@@ -1,0 +1,26 @@
+# Enforce LF line endings in the repository for text files that must not
+# have CRLF when checked out on Windows (shell scripts, YAML workflows,
+# Python scripts, CMake files).  Binary files are left untouched.
+
+# Default: normalize all text files to LF on commit, leave checkout as-is
+* text=auto eol=lf
+
+# Explicitly LF — these must never get CRLF on any platform
+*.yml        text eol=lf
+*.yaml       text eol=lf
+*.sh         text eol=lf
+*.py         text eol=lf
+CMakeLists.txt text eol=lf
+*.cmake      text eol=lf
+
+# Binary — no newline conversion
+*.png        binary
+*.jpg        binary
+*.jpeg       binary
+*.gif        binary
+*.ico        binary
+*.so         binary
+*.a          binary
+*.o          binary
+*.dll        binary
+*.exe        binary

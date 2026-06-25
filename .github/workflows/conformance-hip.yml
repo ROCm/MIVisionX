@@ -175,8 +175,6 @@ jobs:
         run: rocminfo | grep -E 'Agent|Marketing'
 
       - name: Build and install AMD OpenVX (HIP, Debug + Coverage)
-        env:
-          INSTALL_PREFIX: ${{ github.workspace }}/install
         run: |
           mkdir build && cd build
           cmake .. \
@@ -185,13 +183,11 @@ jobs:
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
             -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++" \
-            -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX"
+            -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/install"
           make -j$(nproc)
           make install
 
       - name: Build API tests
-        env:
-          INSTALL_PREFIX: ${{ github.workspace }}/install
         run: |
           API_TESTS=(
             canny channel_extract color_convert accumulate
@@ -204,14 +200,12 @@ jobs:
             mkdir -p build/api_tests/${test_dir}
             cmake -S tests/openvx_api_tests/${test_dir} \
                   -B build/api_tests/${test_dir} \
-                  -DROCM_PATH="$INSTALL_PREFIX"
+                  -DROCM_PATH="$GITHUB_WORKSPACE/install"
             cmake --build build/api_tests/${test_dir} -j$(nproc)
             echo "::endgroup::"
           done
 
       - name: Clone and build OpenVX CTS
-        env:
-          INSTALL_PREFIX: ${{ github.workspace }}/install
         run: |
           git clone --depth 1 -b openvx_1.3 https://github.com/KhronosGroup/OpenVX-cts.git
           cd OpenVX-cts
@@ -219,8 +213,8 @@ jobs:
           cmake .. \
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-            -DOPENVX_INCLUDES="${{ github.workspace }}/amd_openvx/openvx/include" \
-            -DOPENVX_LIBRARIES="${INSTALL_PREFIX}/lib/libopenvx.so;${INSTALL_PREFIX}/lib/libvxu.so;pthread;dl;m;rt" \
+            -DOPENVX_INCLUDES="$GITHUB_WORKSPACE/amd_openvx/openvx/include" \
+            -DOPENVX_LIBRARIES="$GITHUB_WORKSPACE/install/lib/libopenvx.so;$GITHUB_WORKSPACE/install/lib/libvxu.so;pthread;dl;m;rt" \
             -DOPENVX_CONFORMANCE_VISION=ON
           make -j$(nproc)
 
@@ -277,44 +271,41 @@ jobs:
           name: build-artifacts-hip-main
           path: ${{ github.workspace }}/main-pkg
 
-      - name: Show artifact layout
-        run: find pr-pkg main-pkg -maxdepth 4 | sort
-
       - name: Clone openvx-mark
         run: |
           git clone --depth 1 https://github.com/kiritigowda/openvx-mark.git \
-            ${{ github.workspace }}/openvx-mark
+            $GITHUB_WORKSPACE/openvx-mark
 
       - name: Build openvx-mark against PR
         run: |
-          mkdir -p ${{ github.workspace }}/openvx-mark/build-pr
-          cd ${{ github.workspace }}/openvx-mark/build-pr
+          mkdir -p $GITHUB_WORKSPACE/openvx-mark/build-pr
+          cd $GITHUB_WORKSPACE/openvx-mark/build-pr
           cmake \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
             -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++" \
-            -DOPENVX_INCLUDES=${{ github.workspace }}/pr-pkg/amd_openvx/openvx/include \
-            -DOPENVX_LIB_DIR=${{ github.workspace }}/pr-pkg/build/lib \
+            -DOPENVX_INCLUDES=$GITHUB_WORKSPACE/pr-pkg/amd_openvx/openvx/include \
+            -DOPENVX_LIB_DIR=$GITHUB_WORKSPACE/pr-pkg/build/lib \
             ..
           cmake --build . -j$(nproc)
 
       - name: Build openvx-mark against main
         run: |
-          mkdir -p ${{ github.workspace }}/openvx-mark/build-main
-          cd ${{ github.workspace }}/openvx-mark/build-main
+          mkdir -p $GITHUB_WORKSPACE/openvx-mark/build-main
+          cd $GITHUB_WORKSPACE/openvx-mark/build-main
           cmake \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
             -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++" \
-            -DOPENVX_INCLUDES=${{ github.workspace }}/main-pkg/amd_openvx/openvx/include \
-            -DOPENVX_LIB_DIR=${{ github.workspace }}/main-pkg/build/lib \
+            -DOPENVX_INCLUDES=$GITHUB_WORKSPACE/main-pkg/amd_openvx/openvx/include \
+            -DOPENVX_LIB_DIR=$GITHUB_WORKSPACE/main-pkg/build/lib \
             ..
           cmake --build . -j$(nproc)
 
       - name: Bench PR (warmup + measure)
         run: |
-          cd ${{ github.workspace }}/openvx-mark/build-pr
-          export LD_LIBRARY_PATH=${{ github.workspace }}/pr-pkg/build/lib:${ROCM_PATH}/lib
+          cd $GITHUB_WORKSPACE/openvx-mark/build-pr
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/pr-pkg/build/lib:${ROCM_PATH}/lib
           export AGO_DEFAULT_TARGET=GPU
           ./openvx-mark --validate-timing
           ./openvx-mark --resolution FHD --iterations 5 --warmup 0 --threads 1 \
@@ -323,8 +314,8 @@ jobs:
 
       - name: Bench main (warmup + measure)
         run: |
-          cd ${{ github.workspace }}/openvx-mark/build-main
-          export LD_LIBRARY_PATH=${{ github.workspace }}/main-pkg/build/lib:${ROCM_PATH}/lib
+          cd $GITHUB_WORKSPACE/openvx-mark/build-main
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/main-pkg/build/lib:${ROCM_PATH}/lib
           export AGO_DEFAULT_TARGET=GPU
           ./openvx-mark --validate-timing
           ./openvx-mark --resolution FHD --iterations 5 --warmup 0 --threads 1 \
@@ -334,15 +325,15 @@ jobs:
       - name: Run perf gate
         run: |
           set -euo pipefail
-          PR=${{ github.workspace }}/openvx-mark/build-pr/benchmark_results/benchmark_results.json
-          MAIN=${{ github.workspace }}/openvx-mark/build-main/benchmark_results/benchmark_results.json
+          PR=$GITHUB_WORKSPACE/openvx-mark/build-pr/benchmark_results/benchmark_results.json
+          MAIN=$GITHUB_WORKSPACE/openvx-mark/build-main/benchmark_results/benchmark_results.json
           if [ ! -f "$PR" ] || [ ! -f "$MAIN" ]; then
             echo "::error::Missing benchmark JSONs (PR=$PR, MAIN=$MAIN)."
             ls -la "$(dirname "$PR")" "$(dirname "$MAIN")" 2>/dev/null || true
             exit 1
           fi
 
-          python3 ${{ github.workspace }}/.github/scripts/perf_gate.py \
+          python3 $GITHUB_WORKSPACE/.github/scripts/perf_gate.py \
             "$MAIN" "$PR" \
             --geomean-floor 0.95 \
             --kernel-floor 0.90 \
@@ -354,7 +345,7 @@ jobs:
       - name: Post PR benchmark summary
         if: always()
         run: |
-          PR=${{ github.workspace }}/openvx-mark/build-pr/benchmark_results/benchmark_results.json
+          PR=$GITHUB_WORKSPACE/openvx-mark/build-pr/benchmark_results/benchmark_results.json
           if [ ! -f "$PR" ]; then
             echo "_No PR benchmark results found._" >> "$GITHUB_STEP_SUMMARY"
             exit 0
@@ -436,10 +427,10 @@ jobs:
           mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
-          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export AGO_DEFAULT_TARGET=GPU
-          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/baseline_%p.profraw
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/baseline_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="GraphBase.*:Logging.*:SmokeTestBase.*:SmokeTest.*:TargetBase.*:Target.*"
       - name: Upload profraw
         if: always()
@@ -470,10 +461,10 @@ jobs:
           mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
-          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export AGO_DEFAULT_TARGET=GPU
-          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/graph_%p.profraw
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/graph_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="Graph.*:GraphCallback.*:GraphDelay.*:GraphROI.*:UserNode.*"
       - name: Upload profraw
         if: always()
@@ -504,10 +495,10 @@ jobs:
           mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
-          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export AGO_DEFAULT_TARGET=GPU
-          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/data_objects_%p.profraw
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/data_objects_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="Scalar.*:Array.*:ObjectArray.*:Matrix.*:Convolution.*:Distribution.*:LUT.*:Histogram.*"
       - name: Upload profraw
         if: always()
@@ -538,10 +529,10 @@ jobs:
           mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
-          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export AGO_DEFAULT_TARGET=GPU
-          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/image_ops_%p.profraw
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/image_ops_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="Image.*:vxCopyImagePatch.*:vxMapImagePatch.*:vxCreateImageFromChannel.*:vxCopyRemapPatch.*:vxMapRemapPatch.*"
       - name: Upload profraw
         if: always()
@@ -572,10 +563,10 @@ jobs:
           mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
-          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export AGO_DEFAULT_TARGET=GPU
-          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_color_%p.profraw
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_color_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="ColorConvert.*:ChannelExtract.*:ChannelCombine.*:vxConvertDepth.*:vxuConvertDepth.*"
       - name: Upload profraw
         if: always()
@@ -606,10 +597,10 @@ jobs:
           mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
-          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export AGO_DEFAULT_TARGET=GPU
-          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_filters_%p.profraw
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_filters_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="Box3x3.*:Gaussian3x3.*:Median3x3.*:Dilate3x3.*:Erode3x3.*:Sobel3x3.*:Magnitude.*:Phase.*:NonLinearFilter.*:Convolve.*:EqualizeHistogram.*"
       - name: Upload profraw
         if: always()
@@ -640,10 +631,10 @@ jobs:
           mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
-          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export AGO_DEFAULT_TARGET=GPU
-          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_arithmetic_%p.profraw
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_arithmetic_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="vxAddSub.*:vxuAddSub.*:vxMultiply.*:vxuMultiply.*:vxBinOp8u.*:vxuBinOp8u.*:vxBinOp16s.*:vxuBinOp16s.*:vxBinOp1u.*:vxuBinOp1u.*:vxNot.*:vxuNot.*:WeightedAverage.*:Threshold.*"
       - name: Upload profraw
         if: always()
@@ -674,10 +665,10 @@ jobs:
           mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
-          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export AGO_DEFAULT_TARGET=GPU
-          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_geometric_%p.profraw
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_geometric_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="Scale.*:WarpAffine.*:WarpPerspective.*:Remap.*:HalfScaleGaussian.*"
       - name: Upload profraw
         if: always()
@@ -708,10 +699,10 @@ jobs:
           mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
-          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export AGO_DEFAULT_TARGET=GPU
-          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_features_%p.profraw
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_features_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="HarrisCorners.*:FastCorners.*:vxCanny.*:vxuCanny.*"
       - name: Upload profraw
         if: always()
@@ -742,10 +733,10 @@ jobs:
           mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
-          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export AGO_DEFAULT_TARGET=GPU
-          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_statistics_%p.profraw
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_statistics_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="MeanStdDev.*:MinMaxLoc.*:Integral.*"
       - name: Upload profraw
         if: always()
@@ -776,10 +767,10 @@ jobs:
           mkdir -p profraw
           chmod +x OpenVX-cts/build/bin/vx_test_conformance
           cd OpenVX-cts/build
-          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib:${{ github.workspace }}/OpenVX-cts/build/lib
-          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export AGO_DEFAULT_TARGET=GPU
-          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_pyramid_%p.profraw
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_pyramid_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="GaussianPyramid.*:LaplacianPyramid.*:LaplacianReconstruct.*:OptFlowPyrLK.*"
       - name: Upload profraw
         if: always()
@@ -810,10 +801,10 @@ jobs:
       - name: Run API tests
         run: |
           mkdir -p profraw
-          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib
+          export ROCM_PATH=$GITHUB_WORKSPACE/install
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib
           export AGO_DEFAULT_TARGET=GPU
-          export ROCM_PATH=${{ github.workspace }}/install
-          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/api_%p.profraw
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/api_%p.profraw
 
           FAILED_TESTS=()
           API_EXECUTABLES=(
@@ -879,12 +870,12 @@ jobs:
       - name: Run GDF tests
         run: |
           mkdir -p profraw
-          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib
           export AGO_DEFAULT_TARGET=GPU
-          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/gdf_%p.profraw
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/gdf_%p.profraw
           chmod +x install/bin/runvx
           python3 tests/amd_openvx_gdfs/runOpenVX.py \
-            --runvx_directory ${{ github.workspace }}/install/bin \
+            --runvx_directory $GITHUB_WORKSPACE/install/bin \
             --num_frames 10 \
             --backend_type HIP \
             --hidden no
@@ -919,16 +910,16 @@ jobs:
       - name: Run parametrized vision node tests
         run: |
           mkdir -p profraw
-          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${ROCM_PATH}/lib
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib
           export AGO_DEFAULT_TARGET=GPU
-          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/vision_%p.profraw
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_%p.profraw
           chmod +x install/bin/runvx
           python3 tests/vision_tests/runVisionTests.py \
-            --runvx_directory ${{ github.workspace }}/install/bin --num_frames 10
+            --runvx_directory $GITHUB_WORKSPACE/install/bin --num_frames 10
           python3 tests/vision_tests/runVisionTests.py \
-            --runvx_directory ${{ github.workspace }}/install/bin --num_frames 10 --width 5 --height 3
+            --runvx_directory $GITHUB_WORKSPACE/install/bin --num_frames 10 --width 5 --height 3
           python3 tests/vision_tests/runVisionTests.py \
-            --runvx_directory ${{ github.workspace }}/install/bin --num_frames 10 --width 10 --height 10
+            --runvx_directory $GITHUB_WORKSPACE/install/bin --num_frames 10 --width 10 --height 10
       - name: Upload profraw
         if: always()
         uses: actions/upload-artifact@v4
@@ -1009,8 +1000,8 @@ jobs:
       - name: Generate coverage report
         run: |
           LLVM_COV="${ROCM_PATH}/llvm/bin/llvm-cov"
-          LIBOPENVX="${{ github.workspace }}/install/lib/libopenvx.so"
-          PROFDATA="${{ github.workspace }}/coverage.profdata"
+          LIBOPENVX="$GITHUB_WORKSPACE/install/lib/libopenvx.so"
+          PROFDATA="$GITHUB_WORKSPACE/coverage.profdata"
 
           "${LLVM_COV}" report "${LIBOPENVX}" \
             -instr-profile="${PROFDATA}" \
@@ -1100,7 +1091,8 @@ jobs:
               file_data = []
               for fobj in files:
                   fname = fobj.get("filename", "")
-                  for prefix in ["/home/runner/work/MIVisionX/MIVisionX/amd_openvx/openvx/",
+                  for prefix in ["/__w/MIVisionX/MIVisionX/amd_openvx/openvx/",
+                                 "/home/runner/work/MIVisionX/MIVisionX/amd_openvx/openvx/",
                                  "amd_openvx/openvx/"]:
                       if fname.startswith(prefix):
                           fname = fname[len(prefix):]

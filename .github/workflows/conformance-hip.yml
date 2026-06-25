@@ -34,11 +34,10 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  # ROCm is pre-installed on both self-hosted runners.
   ROCM_PATH: /opt/rocm
 
 # ---------------------------------------------------------------------------
-# Runner assignment
+# Runner & container assignment
 #
 #   gfx1100  linux-shark39-gfx1100-gpu-rocm  (prolense-shark39-gfx1100-scaleset)
 #            → Build (release + debug) + Performance (perf-gate) + Coverage summary
@@ -46,9 +45,23 @@ env:
 #   gfx1030  linux-shark39-gfx1030-gpu-rocm  (prolense-shark39-gfx1030-scaleset)
 #            → All tests (CTS, API, GDF, vision)
 #
-# Scaleset runner labels are used in preference to the per-instance
-# linux-shark39-*-gpu0/gpu1-<id> labels, which change when a runner
-# re-registers and can go Offline without notice.
+# Both runners use controller-mode:docker, meaning each job runs inside an
+# ephemeral Docker container launched by the runner controller.  The
+# container: block below passes the AMD GPU devices and group memberships
+# required for ROCm/HIP execution:
+#
+#   --device /dev/kfd       AMD GPU kernel fusion driver (compute)
+#   --device /dev/dri       DRI render nodes (renderD*)
+#   --group-add video       Traditional GPU group
+#   --group-add render      Required on Ubuntu 20+ for non-root GPU access
+#
+# rocm/dev-ubuntu-24.04 is used because it ships a full ROCm stack
+# (amdclang++, HIP runtime, rocminfo) and rocminfo works correctly in it,
+# unlike rocm/rocm-terminal which has known /dev/kfd permission issues.
+#
+# Build-only jobs that do not execute GPU kernels still use the same image
+# so the amdclang++ toolchain and ROCm headers are available without any
+# extra install step.
 # ---------------------------------------------------------------------------
 
 jobs:
@@ -60,6 +73,9 @@ jobs:
   build-hip:
     name: Build AMD OpenVX (HIP, Release)
     runs-on: linux-shark39-gfx1100-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     steps:
       - uses: actions/checkout@v4
         with:
@@ -88,6 +104,9 @@ jobs:
     name: Build AMD OpenVX (HIP, Release, main)
     if: github.event_name == 'pull_request'
     runs-on: linux-shark39-gfx1100-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     steps:
       - name: Checkout merge target ref
         uses: actions/checkout@v4
@@ -119,6 +138,9 @@ jobs:
   build-hip-debug:
     name: Build AMD OpenVX (HIP, Debug + Coverage)
     runs-on: linux-shark39-gfx1100-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     steps:
       - uses: actions/checkout@v4
         with:
@@ -195,6 +217,9 @@ jobs:
     name: Perf gate HIP (PR vs main)
     if: github.event_name == 'pull_request'
     runs-on: linux-shark39-gfx1100-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs:
       - build-hip
       - build-hip-main
@@ -355,6 +380,9 @@ jobs:
   baseline-hip:
     name: Baseline (HIP)
     runs-on: linux-shark39-gfx1030-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
     steps:
       - uses: actions/checkout@v4
@@ -383,6 +411,9 @@ jobs:
   graph-hip:
     name: Graph (HIP)
     runs-on: linux-shark39-gfx1030-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
     continue-on-error: true
     steps:
@@ -412,6 +443,9 @@ jobs:
   data-objects-hip:
     name: Data objects (HIP)
     runs-on: linux-shark39-gfx1030-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
     continue-on-error: true
     steps:
@@ -441,6 +475,9 @@ jobs:
   image-ops-hip:
     name: Image ops (HIP)
     runs-on: linux-shark39-gfx1030-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
     continue-on-error: true
     steps:
@@ -470,6 +507,9 @@ jobs:
   vision-color-hip:
     name: Vision color (HIP)
     runs-on: linux-shark39-gfx1030-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
     continue-on-error: true
     steps:
@@ -499,6 +539,9 @@ jobs:
   vision-filters-hip:
     name: Vision filters (HIP)
     runs-on: linux-shark39-gfx1030-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
     continue-on-error: true
     steps:
@@ -528,6 +571,9 @@ jobs:
   vision-arithmetic-hip:
     name: Vision arithmetic (HIP)
     runs-on: linux-shark39-gfx1030-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
     continue-on-error: true
     steps:
@@ -557,6 +603,9 @@ jobs:
   vision-geometric-hip:
     name: Vision geometric (HIP)
     runs-on: linux-shark39-gfx1030-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
     continue-on-error: true
     steps:
@@ -586,6 +635,9 @@ jobs:
   vision-features-hip:
     name: Vision features (HIP)
     runs-on: linux-shark39-gfx1030-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
     continue-on-error: true
     steps:
@@ -615,6 +667,9 @@ jobs:
   vision-statistics-hip:
     name: Vision statistics (HIP)
     runs-on: linux-shark39-gfx1030-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
     continue-on-error: true
     steps:
@@ -644,6 +699,9 @@ jobs:
   vision-pyramid-hip:
     name: Vision pyramid (HIP)
     runs-on: linux-shark39-gfx1030-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
     continue-on-error: true
     steps:
@@ -675,6 +733,9 @@ jobs:
   api-tests-hip:
     name: API tests (HIP)
     runs-on: linux-shark39-gfx1030-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
     continue-on-error: true
     steps:
@@ -735,6 +796,9 @@ jobs:
   gdf-tests-hip:
     name: GDF tests (HIP)
     runs-on: linux-shark39-gfx1030-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
     continue-on-error: true
     steps:
@@ -766,6 +830,9 @@ jobs:
   vision-tests-hip:
     name: Vision node tests (HIP)
     runs-on: linux-shark39-gfx1030-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
     continue-on-error: true
     steps:
@@ -805,6 +872,9 @@ jobs:
   coverage-summary-hip:
     name: Code coverage summary (HIP)
     runs-on: linux-shark39-gfx1100-gpu-rocm
+    container:
+      image: rocm/dev-ubuntu-24.04:latest
+      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     if: always() && needs.build-hip-debug.result == 'success'
     needs:
       - build-hip-debug

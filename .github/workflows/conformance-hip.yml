@@ -81,6 +81,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install build dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends build-essential cmake git python3
+
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
+
       - name: Build AMD OpenVX (HIP backend, Release)
         run: |
           mkdir build && cd build
@@ -114,6 +122,14 @@ jobs:
           ref: ${{ github.event.pull_request.base.ref }}
           fetch-depth: 0
 
+      - name: Install build dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends build-essential cmake git python3
+
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
+
       - name: Build AMD OpenVX (HIP backend)
         run: |
           mkdir build && cd build
@@ -145,6 +161,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Install build dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends build-essential cmake git python3
+
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
 
       - name: Build and install AMD OpenVX (HIP, Debug + Coverage)
         env:
@@ -228,6 +252,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
+      - name: Install build dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends build-essential cmake git python3
+
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
 
       - name: Download PR build artifacts
         uses: actions/download-artifact@v4
@@ -390,6 +422,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
       - name: Run baseline tests
         run: |
           mkdir -p profraw
@@ -422,6 +456,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
       - name: Run graph tests
         run: |
           mkdir -p profraw
@@ -454,6 +490,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
       - name: Run data object tests
         run: |
           mkdir -p profraw
@@ -486,6 +524,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
       - name: Run image operation tests
         run: |
           mkdir -p profraw
@@ -518,6 +558,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
       - name: Run color and channel tests
         run: |
           mkdir -p profraw
@@ -550,6 +592,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
       - name: Run filter and morphology tests
         run: |
           mkdir -p profraw
@@ -582,6 +626,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
       - name: Run arithmetic and bitwise tests
         run: |
           mkdir -p profraw
@@ -614,6 +660,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
       - name: Run geometric transform tests
         run: |
           mkdir -p profraw
@@ -646,6 +694,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
       - name: Run feature and edge detection tests
         run: |
           mkdir -p profraw
@@ -678,6 +728,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
       - name: Run statistics and analysis tests
         run: |
           mkdir -p profraw
@@ -710,6 +762,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
       - name: Run pyramid and optical flow tests
         run: |
           mkdir -p profraw
@@ -744,6 +798,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
       - name: Run API tests
         run: |
           mkdir -p profraw
@@ -807,6 +863,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Install python3
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends python3
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
       - name: Run GDF tests
         run: |
           mkdir -p profraw
@@ -841,6 +903,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Install python3
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends python3
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
       - name: Run parametrized vision node tests
         run: |
           mkdir -p profraw
@@ -895,6 +963,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install coverage tools
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends python3 lcov
+
+      - name: Validate ROCm
+        run: rocminfo | grep -E 'Agent|Marketing'
+
       - name: Download debug build (for libopenvx.so)
         uses: actions/download-artifact@v4
         with:
@@ -946,9 +1022,7 @@ jobs:
             -ignore-filename-regex='(test|conformance)' \
             > coverage.lcov
 
-          if ! command -v genhtml &>/dev/null; then
-            sudo apt-get install -y lcov
-          fi
+          # lcov/genhtml installed in the "Install coverage tools" step above
           GENHTML_EXTRA_ARGS=()
           if genhtml --version 2>&1 | grep -qE 'LCOV version ([2-9]|[1-9][0-9])'; then
             GENHTML_EXTRA_ARGS+=(--ignore-errors unmapped)

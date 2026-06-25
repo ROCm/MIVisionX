@@ -1115,8 +1115,12 @@ jobs:
             echo "No profraw files were collected from test jobs." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
-          find all-profraw -name '*.profraw' -type f -print0 \
-            | xargs -0 llvm-profdata merge -sparse -o coverage.profdata
+          find all-profraw -name '*.profraw' -type f > profraw_list.txt
+          llvm-profdata merge \
+            -sparse \
+            --failure-mode=all \
+            -f profraw_list.txt \
+            -o coverage.profdata
 
       - name: Generate coverage report
         run: |

@@ -32,6 +32,10 @@ on:
       - '**/*.md'
       - 'docs/**'
 
+defaults:
+  run:
+    shell: bash
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ROCM_PATH: /opt/rocm
@@ -272,6 +276,9 @@ jobs:
         with:
           name: build-artifacts-hip-main
           path: ${{ github.workspace }}/main-pkg
+
+      - name: Show artifact layout
+        run: find pr-pkg main-pkg -maxdepth 4 | sort
 
       - name: Clone openvx-mark
         run: |

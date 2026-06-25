@@ -43,10 +43,10 @@ env:
 # ---------------------------------------------------------------------------
 # Runner & container assignment
 #
-#   All jobs use the shared label linux-shark39-gpu-rocm which matches both
+#   All jobs use group: linux-shark39-runner-group which contains both
 #   prolense-shark39-gfx1100-scaleset and prolense-shark39-gfx1030-scaleset.
-#   GitHub schedules each job on whichever runner is available first, so CI
-#   is not blocked when one runner is offline or busy.
+#   GitHub schedules each job on whichever scaleset runner is available first,
+#   so CI is not blocked when one runner is offline or busy.
 #
 # Both runners use controller-mode:docker, meaning each job runs inside an
 # ephemeral Docker container launched by the runner controller.  The
@@ -75,7 +75,8 @@ jobs:
   # Release build of the PR (or push) branch — used by perf-gate
   build-hip:
     name: Build AMD OpenVX (HIP, Release)
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -116,7 +117,8 @@ jobs:
   build-hip-main:
     name: Build AMD OpenVX (HIP, Release, main)
     if: github.event_name == 'pull_request'
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -160,7 +162,8 @@ jobs:
   # profraw flow is identical to the CPU workflow.
   build-hip-debug:
     name: Build AMD OpenVX (HIP, Debug + Coverage)
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -243,7 +246,8 @@ jobs:
   perf-gate-hip:
     name: Perf gate HIP (PR vs main)
     if: github.event_name == 'pull_request'
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -420,7 +424,8 @@ jobs:
 
   baseline-hip:
     name: Baseline (HIP)
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -455,7 +460,8 @@ jobs:
 
   graph-hip:
     name: Graph (HIP)
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -491,7 +497,8 @@ jobs:
 
   data-objects-hip:
     name: Data objects (HIP)
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -527,7 +534,8 @@ jobs:
 
   image-ops-hip:
     name: Image ops (HIP)
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -563,7 +571,8 @@ jobs:
 
   vision-color-hip:
     name: Vision color (HIP)
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -599,7 +608,8 @@ jobs:
 
   vision-filters-hip:
     name: Vision filters (HIP)
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -635,7 +645,8 @@ jobs:
 
   vision-arithmetic-hip:
     name: Vision arithmetic (HIP)
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -671,7 +682,8 @@ jobs:
 
   vision-geometric-hip:
     name: Vision geometric (HIP)
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -707,7 +719,8 @@ jobs:
 
   vision-features-hip:
     name: Vision features (HIP)
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -743,7 +756,8 @@ jobs:
 
   vision-statistics-hip:
     name: Vision statistics (HIP)
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -779,7 +793,8 @@ jobs:
 
   vision-pyramid-hip:
     name: Vision pyramid (HIP)
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -817,7 +832,8 @@ jobs:
 
   api-tests-hip:
     name: API tests (HIP)
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -884,7 +900,8 @@ jobs:
 
   gdf-tests-hip:
     name: GDF tests (HIP)
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -926,7 +943,8 @@ jobs:
 
   vision-tests-hip:
     name: Vision node tests (HIP)
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
@@ -976,7 +994,8 @@ jobs:
 
   coverage-summary-hip:
     name: Code coverage summary (HIP)
-    runs-on: linux-shark39-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
       image: rocm/dev-ubuntu-24.04:latest
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render

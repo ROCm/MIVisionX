@@ -374,8 +374,6 @@ int ovxKernel_ColorConvert(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -441,8 +439,6 @@ int ovxKernel_ChannelExtract(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -501,8 +497,6 @@ int ovxKernel_ChannelCombine(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -546,8 +540,6 @@ int ovxKernel_Sobel3x3(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -586,8 +578,6 @@ int ovxKernel_Magnitude(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -625,8 +615,6 @@ int ovxKernel_Phase(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -670,8 +658,6 @@ int ovxKernel_ScaleImage(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -713,8 +699,6 @@ int ovxKernel_TableLookup(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -747,8 +731,6 @@ int ovxKernel_Histogram(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -790,8 +772,6 @@ int ovxKernel_EqualizeHistogram(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -831,8 +811,6 @@ int ovxKernel_AbsDiff(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -871,8 +849,6 @@ int ovxKernel_MeanStdDev(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -914,8 +890,6 @@ int ovxKernel_Threshold(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -953,8 +927,6 @@ int ovxKernel_IntegralImage(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -994,8 +966,6 @@ int ovxKernel_Dilate3x3(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -1033,8 +1003,6 @@ int ovxKernel_Erode3x3(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -1074,8 +1042,6 @@ int ovxKernel_Median3x3(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -1114,8 +1080,6 @@ int ovxKernel_Box3x3(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -1153,8 +1117,6 @@ int ovxKernel_Gaussian3x3(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -1200,8 +1162,6 @@ int ovxKernel_CustomConvolution(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -1253,8 +1213,6 @@ int ovxKernel_GaussianPyramid(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -1286,8 +1244,6 @@ int ovxKernel_Accumulate(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -1325,8 +1281,6 @@ int ovxKernel_AccumulateWeighted(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -1362,8 +1316,6 @@ int ovxKernel_AccumulateSquare(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -1409,8 +1361,6 @@ int ovxKernel_MinMaxLoc(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -1453,8 +1403,6 @@ int ovxKernel_ConvertDepth(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -1515,8 +1463,6 @@ int ovxKernel_CannyEdgeDetector(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -1554,8 +1500,6 @@ int ovxKernel_And(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -1595,8 +1539,6 @@ int ovxKernel_Or(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -1635,8 +1577,6 @@ int ovxKernel_Xor(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -1674,8 +1614,6 @@ int ovxKernel_Not(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -1733,8 +1671,6 @@ int ovxKernel_Multiply(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -1782,8 +1718,6 @@ int ovxKernel_Add(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -1833,8 +1767,6 @@ int ovxKernel_Subtract(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -1879,8 +1811,6 @@ int ovxKernel_WarpAffine(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -1924,8 +1854,6 @@ int ovxKernel_WarpPerspective(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -1991,8 +1919,6 @@ int ovxKernel_HarrisCorners(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -2033,8 +1959,6 @@ int ovxKernel_FastCorners(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -2086,8 +2010,6 @@ int ovxKernel_OpticalFlowPyrLK(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -2135,8 +2057,6 @@ int ovxKernel_Remap(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -2180,8 +2100,6 @@ int ovxKernel_HalfScaleGaussian(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -2214,8 +2132,6 @@ int ovxKernel_Copy(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -2253,8 +2169,6 @@ int ovxKernel_Select(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -2304,8 +2218,6 @@ int ovxKernel_WeightedAverage(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -2347,8 +2259,6 @@ int ovxKernel_NonLinearFilter(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -2449,8 +2359,6 @@ int ovxKernel_LaplacianReconstruct(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
@@ -3061,8 +2969,6 @@ int agoKernel_Set00_U8(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -3110,8 +3016,6 @@ int agoKernel_SetFF_U8(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -3522,8 +3426,6 @@ int agoKernel_Lut_S16_S16(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -4020,8 +3922,6 @@ int agoKernel_ThresholdNot_U8_U8_Binary(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -4079,8 +3979,6 @@ int agoKernel_ThresholdNot_U8_U8_Range(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -4140,8 +4038,6 @@ int agoKernel_ThresholdNot_U1_U8_Binary(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -4199,8 +4095,6 @@ int agoKernel_ThresholdNot_U1_U8_Range(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -4261,8 +4155,6 @@ int agoKernel_ThresholdNot_U8_S16_Binary(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -4320,8 +4212,6 @@ int agoKernel_ThresholdNot_U8_S16_Range(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -6936,8 +6826,6 @@ int agoKernel_Nand_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -6994,8 +6882,6 @@ int agoKernel_Nand_U8_U8U1(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -7051,8 +6937,6 @@ int agoKernel_Nand_U8_U1U8(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -7111,8 +6995,6 @@ int agoKernel_Nand_U8_U1U1(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -7169,8 +7051,6 @@ int agoKernel_Nand_U1_U8U8(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -7225,8 +7105,6 @@ int agoKernel_Nand_U1_U8U1(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -7283,8 +7161,6 @@ int agoKernel_Nand_U1_U1U8(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -7337,8 +7213,6 @@ int agoKernel_Nand_U1_U1U1(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -7393,8 +7267,6 @@ int agoKernel_Nor_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -7451,8 +7323,6 @@ int agoKernel_Nor_U8_U8U1(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -7507,8 +7377,6 @@ int agoKernel_Nor_U8_U1U8(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -7566,8 +7434,6 @@ int agoKernel_Nor_U8_U1U1(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -7622,8 +7488,6 @@ int agoKernel_Nor_U1_U8U8(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -7680,8 +7544,6 @@ int agoKernel_Nor_U1_U8U1(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -7737,8 +7599,6 @@ int agoKernel_Nor_U1_U1U8(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -7792,8 +7652,6 @@ int agoKernel_Nor_U1_U1U1(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -7846,8 +7704,6 @@ int agoKernel_Xnor_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -7904,8 +7760,6 @@ int agoKernel_Xnor_U8_U8U1(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -7960,8 +7814,6 @@ int agoKernel_Xnor_U8_U1U8(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -8019,8 +7871,6 @@ int agoKernel_Xnor_U8_U1U1(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -8073,8 +7923,6 @@ int agoKernel_Xnor_U1_U8U8(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -8131,8 +7979,6 @@ int agoKernel_Xnor_U1_U8U1(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -8188,8 +8034,6 @@ int agoKernel_Xnor_U1_U1U8(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -8242,8 +8086,6 @@ int agoKernel_Xnor_U1_U1U1(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -8389,8 +8231,6 @@ int agoKernel_AccumulateWeighted_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -9058,8 +8898,6 @@ int agoKernel_Accumulate_S16_S16U8_Sat(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -9598,8 +9436,6 @@ int agoKernel_AccumulateSquared_S16_S16U8_Sat(AgoNode * node, AgoKernelCommand c
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -12326,8 +12162,6 @@ int agoKernel_Mul_U24_U24U8_Sat_Round(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
 #if ENABLE_OPENCL
             | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-            | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
             ;
         status = VX_SUCCESS;
@@ -12423,8 +12257,6 @@ int agoKernel_Mul_U32_U32U8_Sat_Round(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
 #if ENABLE_OPENCL
-            | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
             | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
             ;
@@ -14492,8 +14324,6 @@ int agoKernel_ColorConvert_Y_RGB(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -14542,8 +14372,6 @@ int agoKernel_ColorConvert_Y_RGBX(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -14594,8 +14422,6 @@ int agoKernel_ColorConvert_U_RGB(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -14644,8 +14470,6 @@ int agoKernel_ColorConvert_U_RGBX(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -14696,8 +14520,6 @@ int agoKernel_ColorConvert_V_RGB(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -14746,8 +14568,6 @@ int agoKernel_ColorConvert_V_RGBX(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
@@ -14803,8 +14623,6 @@ int agoKernel_ColorConvert_IU_RGB(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
 #if ENABLE_OPENCL
             | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
-#elif ENABLE_HIP
-            | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
 #endif
             ;
         status = VX_SUCCESS;
@@ -14858,8 +14676,6 @@ int agoKernel_ColorConvert_IU_RGBX(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
 #if ENABLE_OPENCL
-            | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
-#elif ENABLE_HIP
             | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
 #endif
             ;
@@ -14915,8 +14731,6 @@ int agoKernel_ColorConvert_IV_RGB(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
 #if ENABLE_OPENCL
             | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
-#elif ENABLE_HIP
-            | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
 #endif
             ;
         status = VX_SUCCESS;
@@ -14970,8 +14784,6 @@ int agoKernel_ColorConvert_IV_RGBX(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
 #if ENABLE_OPENCL
-            | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
-#elif ENABLE_HIP
             | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
 #endif
             ;
@@ -15033,8 +14845,6 @@ int agoKernel_ColorConvert_IUV_RGB(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
 #if ENABLE_OPENCL
-            | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
-#elif ENABLE_HIP
             | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
 #endif
             ;
@@ -15102,8 +14912,6 @@ int agoKernel_ColorConvert_IUV_RGBX(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
 #if ENABLE_OPENCL
             | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
-#elif ENABLE_HIP
-            | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
 #endif
             ;
         status = VX_SUCCESS;
@@ -15163,8 +14971,6 @@ int agoKernel_ColorConvert_UV12_RGB(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
 #if ENABLE_OPENCL
             | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
-#elif ENABLE_HIP
-            | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
 #endif
             ;
         status = VX_SUCCESS;
@@ -15218,8 +15024,6 @@ int agoKernel_ColorConvert_UV12_RGBX(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
 #if ENABLE_OPENCL
-            | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
-#elif ENABLE_HIP
             | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
 #endif
             ;
@@ -15765,8 +15569,6 @@ int agoKernel_ScaleGaussianOrb_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
 #endif
                     ;
         status = VX_SUCCESS;
@@ -16064,8 +15866,6 @@ int agoKernel_LinearFilter_ANY_ANY(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -16141,8 +15941,6 @@ int agoKernel_LinearFilter_ANYx2_ANY(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -16195,8 +15993,6 @@ int agoKernel_SobelMagnitude_S16_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -16247,8 +16043,6 @@ int agoKernel_SobelPhase_U8_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
 #endif
                     ;
@@ -16301,8 +16095,6 @@ int agoKernel_SobelMagnitudePhase_S16U8_U8_3x3(AgoNode * node, AgoKernelCommand 
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
 #endif
                     ;
@@ -16560,8 +16352,6 @@ int agoKernel_Dilate_U1_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -16606,8 +16396,6 @@ int agoKernel_Erode_U1_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
 #endif
                     ;
@@ -16654,8 +16442,6 @@ int agoKernel_Dilate_U1_U1_3x3(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -16700,8 +16486,6 @@ int agoKernel_Erode_U1_U1_3x3(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
 #endif
                     ;
@@ -16748,8 +16532,6 @@ int agoKernel_Dilate_U8_U1_3x3(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
 #endif
                     ;
         status = VX_SUCCESS;
@@ -16794,8 +16576,6 @@ int agoKernel_Erode_U8_U1_3x3(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
-#elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
 #endif
                     ;
@@ -18170,8 +17950,6 @@ int agoKernel_CannySuppThreshold_U8_U16_3x3(AgoNode * node, AgoKernelCommand cmd
         node->target_support_flags = 0
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
-#elif ENABLE_HIP
-                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
 #endif
                     ;
         status = VX_SUCCESS;
@@ -18894,8 +18672,6 @@ int agoKernel_Remap_U24_U24_Bilinear(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
 #if ENABLE_OPENCL
             | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
-#elif ENABLE_HIP
-            | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
 #endif
             ;
         status = VX_SUCCESS;
@@ -19027,8 +18803,6 @@ int agoKernel_Remap_U24_U32_Bilinear(AgoNode * node, AgoKernelCommand cmd)
         node->target_support_flags = 0
 #if ENABLE_OPENCL
             | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
-#elif ENABLE_HIP
-            | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
 #endif
             ;
         status = VX_SUCCESS;
@@ -19157,8 +18931,6 @@ int agoKernel_Remap_U32_U32_Bilinear(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
 #if ENABLE_OPENCL
-            | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
-#elif ENABLE_HIP
             | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
 #endif
             ;
@@ -22552,9 +22324,6 @@ int agoKernel_Copy_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0;
 #if ENABLE_OPENCL
-        if (node->paramList[0]->ref.type == VX_TYPE_TENSOR)
-            node->target_support_flags |= AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL;
-#elif ENABLE_HIP
         if (node->paramList[0]->ref.type == VX_TYPE_TENSOR)
             node->target_support_flags |= AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL;
 #endif

@@ -90,7 +90,9 @@ jobs:
           apt-get install -y --no-install-recommends build-essential cmake git python3
 
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
 
       - name: Build AMD OpenVX (HIP backend, Release)
         run: |
@@ -131,7 +133,9 @@ jobs:
           apt-get install -y --no-install-recommends build-essential cmake git python3
 
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
 
       - name: Build AMD OpenVX (HIP backend)
         run: |
@@ -171,7 +175,9 @@ jobs:
           apt-get install -y --no-install-recommends build-essential cmake git python3
 
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
 
       - name: Build and install AMD OpenVX (HIP, Debug + Coverage)
         run: |
@@ -262,7 +268,9 @@ jobs:
           apt-get install -y --no-install-recommends build-essential cmake git python3
 
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
 
       - name: Download PR build artifacts
         uses: actions/download-artifact@v4
@@ -424,7 +432,9 @@ jobs:
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run baseline tests
         run: |
           mkdir -p profraw
@@ -458,7 +468,9 @@ jobs:
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run graph tests
         run: |
           mkdir -p profraw
@@ -492,7 +504,9 @@ jobs:
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run data object tests
         run: |
           mkdir -p profraw
@@ -526,7 +540,9 @@ jobs:
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run image operation tests
         run: |
           mkdir -p profraw
@@ -560,7 +576,9 @@ jobs:
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run color and channel tests
         run: |
           mkdir -p profraw
@@ -594,7 +612,9 @@ jobs:
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run filter and morphology tests
         run: |
           mkdir -p profraw
@@ -628,7 +648,9 @@ jobs:
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run arithmetic and bitwise tests
         run: |
           mkdir -p profraw
@@ -662,7 +684,9 @@ jobs:
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run geometric transform tests
         run: |
           mkdir -p profraw
@@ -696,7 +720,9 @@ jobs:
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run feature and edge detection tests
         run: |
           mkdir -p profraw
@@ -730,7 +756,9 @@ jobs:
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run statistics and analysis tests
         run: |
           mkdir -p profraw
@@ -764,7 +792,9 @@ jobs:
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run pyramid and optical flow tests
         run: |
           mkdir -p profraw
@@ -800,7 +830,9 @@ jobs:
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run API tests
         run: |
           mkdir -p profraw
@@ -869,7 +901,9 @@ jobs:
           apt-get update -qq
           apt-get install -y --no-install-recommends python3
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run GDF tests
         run: |
           mkdir -p profraw
@@ -909,7 +943,9 @@ jobs:
           apt-get update -qq
           apt-get install -y --no-install-recommends python3
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run parametrized vision node tests
         run: |
           mkdir -p profraw
@@ -970,7 +1006,9 @@ jobs:
           apt-get install -y --no-install-recommends python3 lcov
 
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
 
       - name: Download debug build (for libopenvx.so)
         uses: actions/download-artifact@v4

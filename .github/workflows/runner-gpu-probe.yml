@@ -43,6 +43,8 @@ on:
   workflow_dispatch:
   push:
     branches: [runner-gpu-probe]
+  pull_request:
+    branches: [master, main, develop]
 
 defaults:
   run:

@@ -40,6 +40,14 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ROCM_PATH: /opt/rocm
 
+# Self-hosted GPU runners (gfx1100/gfx1030) are a small shared pool. Cancel
+# superseded runs of the same ref so rapid pushes to a PR don't queue up many
+# full GPU pipelines and starve the runners. Pushes to default branches keep a
+# stable group per ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 # ---------------------------------------------------------------------------
 # Runner & container assignment
 #
@@ -58,9 +66,9 @@ env:
 #   --group-add video       Traditional GPU group
 #   --group-add render      Required on Ubuntu 20+ for non-root GPU access
 #
-# rocm/dev-ubuntu-24.04 is used because it ships a full ROCm stack
-# (amdclang++, HIP runtime, rocminfo) and rocminfo works correctly in it,
-# unlike rocm/rocm-terminal which has known /dev/kfd permission issues.
+# mivisionx/ubuntu-24.04:7.13-gfx1100 is used because it ships a full ROCm
+# 7.13 stack (amdclang++, HIP runtime, rocminfo) preconfigured for gfx1100,
+# and rocminfo works correctly in it.
 #
 # Build-only jobs that do not execute GPU kernels still use the same image
 # so the amdclang++ toolchain and ROCm headers are available without any
@@ -78,7 +86,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     steps:
       - uses: actions/checkout@v4
@@ -120,7 +128,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     steps:
       - name: Checkout merge target ref
@@ -165,7 +173,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     steps:
       - uses: actions/checkout@v4
@@ -249,14 +257,14 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     env:
-      # 42 vision kernels with a stable 1:1 GPU implementation — excludes
+      # 40 vision kernels with a stable 1:1 GPU implementation — excludes
       # LaplacianPyramid / LaplacianReconstruct / LaplacianReconstruct_S16
       # which have a known HIP synchronisation bug causing 200-300ms outliers
       # that would swamp the perf gate CV% and produce false regressions.
-      PARITY_KERNELS: "And,Or,Xor,Not,AbsDiff,Add,Subtract,Multiply,Box3x3,Gaussian3x3,Median3x3,Erode3x3,Dilate3x3,Sobel3x3,CustomConvolution,NonLinearFilter,ColorConvert_RGB2IYUV,ChannelExtract,ChannelCombine,ConvertDepth,ScaleImage_Half,WarpAffine,WarpPerspective,Remap,Histogram,EqualizeHist,MeanStdDev,MinMaxLoc,IntegralImage,GaussianPyramid,LaplacianPyramid,LaplacianReconstruct,HalfScaleGaussian,CannyEdgeDetector,HarrisCorners,FastCorners,OpticalFlowPyrLK,Magnitude,Phase,TableLookup,Threshold_Binary,WeightedAverage"
+      PARITY_KERNELS: "And,Or,Xor,Not,AbsDiff,Add,Subtract,Multiply,Box3x3,Gaussian3x3,Median3x3,Erode3x3,Dilate3x3,Sobel3x3,CustomConvolution,NonLinearFilter,ColorConvert_RGB2IYUV,ChannelExtract,ChannelCombine,ConvertDepth,ScaleImage_Half,WarpAffine,WarpPerspective,Remap,Histogram,EqualizeHist,MeanStdDev,MinMaxLoc,IntegralImage,GaussianPyramid,HalfScaleGaussian,CannyEdgeDetector,HarrisCorners,FastCorners,OpticalFlowPyrLK,Magnitude,Phase,TableLookup,Threshold_Binary,WeightedAverage"
     needs:
       - build-hip
       - build-hip-main
@@ -427,7 +435,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
     steps:
@@ -463,10 +471,9 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Download debug build artifacts
@@ -500,10 +507,9 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Download debug build artifacts
@@ -537,10 +543,9 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Download debug build artifacts
@@ -574,10 +579,9 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Download debug build artifacts
@@ -611,10 +615,9 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Download debug build artifacts
@@ -648,10 +651,9 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Download debug build artifacts
@@ -685,10 +687,9 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Download debug build artifacts
@@ -722,10 +723,9 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Download debug build artifacts
@@ -759,10 +759,9 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Download debug build artifacts
@@ -796,10 +795,9 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Download debug build artifacts
@@ -835,10 +833,9 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Download debug build artifacts
@@ -903,10 +900,9 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Download debug build artifacts
@@ -946,10 +942,9 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     needs: build-hip-debug
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: Download debug build artifacts
@@ -997,7 +992,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
+      image: mivisionx/ubuntu-24.04:7.13-gfx1100
       options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
     if: always() && needs.build-hip-debug.result == 'success'
     needs:

@@ -37,7 +37,6 @@ defaults:
     shell: bash
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ROCM_PATH: /opt/rocm
 
 # Self-hosted GPU runners (gfx1100/gfx1030) are a small shared pool. Cancel
@@ -68,9 +67,10 @@ concurrency:
 # no --group-add video/render is needed (and the mivisionx image lacks the
 # render group name, which would make docker start fail on --group-add render).
 #
-# mivisionx/ubuntu-24.04:7.13-gfx1100 is used because it ships a full ROCm
-# 7.13 stack (amdclang++, HIP runtime, rocminfo) preconfigured for gfx1100,
-# and rocminfo works correctly in it.
+# mivisionx/ubuntu-24.04:rocm-7.13 is used because it ships a full ROCm
+# 7.13 stack (amdclang++, HIP runtime, rocminfo) with device support for all
+# supported GPU archs, so it works on whichever runner the job lands on, and
+# rocminfo works correctly in it.
 #
 # Build-only jobs that do not execute GPU kernels still use the same image
 # so the amdclang++ toolchain and ROCm headers are available without any
@@ -88,10 +88,10 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -115,7 +115,7 @@ jobs:
           make -j$(nproc)
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: build-artifacts-hip
           path: |
@@ -130,11 +130,11 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     steps:
       - name: Checkout merge target ref
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           fetch-depth: 0
@@ -159,7 +159,7 @@ jobs:
           make -j$(nproc)
 
       - name: Upload main build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: build-artifacts-hip-main
           path: |
@@ -175,10 +175,10 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -254,7 +254,7 @@ jobs:
           make -j$(nproc)
 
       - name: Upload debug build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: build-artifacts-hip-debug
           path: |
@@ -276,7 +276,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     env:
       # 40 vision kernels with a stable 1:1 GPU implementation — excludes
@@ -289,7 +289,7 @@ jobs:
       - build-hip-main
     steps:
       - name: Checkout repo (for perf_gate.py script)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
@@ -304,13 +304,13 @@ jobs:
           amd-smi || true
 
       - name: Download PR build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-artifacts-hip
           path: ${{ github.workspace }}/pr-pkg
 
       - name: Download main build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-artifacts-hip-main
           path: ${{ github.workspace }}/main-pkg
@@ -432,7 +432,7 @@ jobs:
 
       - name: Upload PR benchmark results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: perf-gate-hip-results-pr
           path: ${{ github.workspace }}/openvx-mark/build-pr/benchmark_results/
@@ -440,7 +440,7 @@ jobs:
 
       - name: Upload main benchmark results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: perf-gate-hip-results-main
           path: ${{ github.workspace }}/openvx-mark/build-main/benchmark_results/
@@ -459,13 +459,13 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -484,7 +484,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="GraphBase.*:Logging.*:SmokeTestBase.*:SmokeTest.*:TargetBase.*:Target.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: profraw-hip-baseline
           path: profraw/
@@ -495,13 +495,13 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -520,7 +520,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="Graph.*:GraphCallback.*:GraphDelay.*:GraphROI.*:UserNode.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: profraw-hip-graph
           path: profraw/
@@ -531,13 +531,13 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -556,7 +556,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="Scalar.*:Array.*:ObjectArray.*:Matrix.*:Convolution.*:Distribution.*:LUT.*:Histogram.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: profraw-hip-data-objects
           path: profraw/
@@ -567,13 +567,13 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -592,7 +592,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="Image.*:vxCopyImagePatch.*:vxMapImagePatch.*:vxCreateImageFromChannel.*:vxCopyRemapPatch.*:vxMapRemapPatch.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: profraw-hip-image-ops
           path: profraw/
@@ -603,13 +603,13 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -628,7 +628,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="ColorConvert.*:ChannelExtract.*:ChannelCombine.*:vxConvertDepth.*:vxuConvertDepth.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: profraw-hip-vision-color
           path: profraw/
@@ -639,13 +639,13 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -664,7 +664,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="Box3x3.*:Gaussian3x3.*:Median3x3.*:Dilate3x3.*:Erode3x3.*:Sobel3x3.*:Magnitude.*:Phase.*:NonLinearFilter.*:Convolve.*:EqualizeHistogram.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: profraw-hip-vision-filters
           path: profraw/
@@ -675,13 +675,13 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -700,7 +700,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="vxAddSub.*:vxuAddSub.*:vxMultiply.*:vxuMultiply.*:vxBinOp8u.*:vxuBinOp8u.*:vxBinOp16s.*:vxuBinOp16s.*:vxBinOp1u.*:vxuBinOp1u.*:vxNot.*:vxuNot.*:WeightedAverage.*:Threshold.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: profraw-hip-vision-arithmetic
           path: profraw/
@@ -711,13 +711,13 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -736,7 +736,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="Scale.*:WarpAffine.*:WarpPerspective.*:Remap.*:HalfScaleGaussian.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: profraw-hip-vision-geometric
           path: profraw/
@@ -747,13 +747,13 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -772,7 +772,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="HarrisCorners.*:FastCorners.*:vxCanny.*:vxuCanny.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: profraw-hip-vision-features
           path: profraw/
@@ -783,13 +783,13 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -808,7 +808,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="MeanStdDev.*:MinMaxLoc.*:Integral.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: profraw-hip-vision-statistics
           path: profraw/
@@ -819,13 +819,13 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -844,7 +844,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="GaussianPyramid.*:LaplacianPyramid.*:LaplacianReconstruct.*:OptFlowPyrLK.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: profraw-hip-vision-pyramid
           path: profraw/
@@ -857,13 +857,13 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -913,7 +913,7 @@ jobs:
           fi
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: profraw-hip-api-tests
           path: profraw/
@@ -924,13 +924,13 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-artifacts-hip-debug
       - name: Install python3
@@ -955,7 +955,7 @@ jobs:
             --hidden no
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: profraw-hip-gdf-tests
           path: profraw/
@@ -966,13 +966,13 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-artifacts-hip-debug
       - name: Install python3
@@ -998,7 +998,7 @@ jobs:
             --runvx_directory $GITHUB_WORKSPACE/install/bin --num_frames 10 --width 10 --height 10
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: profraw-hip-vision-tests
           path: profraw/
@@ -1016,7 +1016,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:7.13-gfx1100
+      image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     if: always() && needs.build-hip-debug.result == 'success'
     needs:
@@ -1036,7 +1036,7 @@ jobs:
       - gdf-tests-hip
       - vision-tests-hip
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install coverage tools
         run: |
@@ -1049,12 +1049,12 @@ jobs:
           amd-smi || true
 
       - name: Download debug build (for libopenvx.so)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: build-artifacts-hip-debug
 
       - name: Download all HIP profraw artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: profraw-hip-*
           path: all-profraw
@@ -1254,7 +1254,7 @@ jobs:
 
       - name: Upload coverage artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: code-coverage-report-hip
           path: |

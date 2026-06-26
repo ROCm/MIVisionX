@@ -213,12 +213,20 @@ jobs:
             tensor_advanced threshold_query graph_import vxu_api
             coverage_boost vision_coverage
           )
+          # libopenvx.so (HIP backend) has unresolved HIP runtime symbols
+          # (e.g. hipSetDevice@hip_4.2) that must be satisfied by
+          # libamdhip64.so from the real ROCm at ${ROCM_PATH}/lib. The test
+          # CMakeLists only links `openvx`, so append the HIP runtime via
+          # CMAKE_CXX_STANDARD_LIBRARIES — this lands at the END of the link
+          # line (after libopenvx) where single-pass ld can resolve from it.
           for test_dir in "${API_TESTS[@]}"; do
             echo "::group::Building ${test_dir}"
             mkdir -p build/api_tests/${test_dir}
             cmake -S tests/openvx_api_tests/${test_dir} \
                   -B build/api_tests/${test_dir} \
-                  -DROCM_PATH="$GITHUB_WORKSPACE/install"
+                  -DROCM_PATH="$GITHUB_WORKSPACE/install" \
+                  -DCMAKE_STANDARD_LIBRARIES="-L${ROCM_PATH}/lib -lamdhip64" \
+                  -DCMAKE_CXX_STANDARD_LIBRARIES="-L${ROCM_PATH}/lib -lamdhip64"
             cmake --build build/api_tests/${test_dir} -j$(nproc)
             echo "::endgroup::"
           done

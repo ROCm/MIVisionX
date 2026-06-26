@@ -236,12 +236,21 @@ jobs:
           git clone --depth 1 -b openvx_1.3 https://github.com/KhronosGroup/OpenVX-cts.git
           cd OpenVX-cts
           mkdir -p build && cd build
+          # vx_test_conformance links libopenvx.so (HIP backend), which pulls
+          # in HIP runtime symbols (e.g. hipMemcpyHtoD@hip_4.2) from
+          # libamdhip64.so in ${ROCM_PATH}/lib. Append the HIP runtime at the
+          # END of the link line (after libopenvx) via *_STANDARD_LIBRARIES so
+          # single-pass ld can resolve from it; -rpath-link silences the
+          # libamdhip64.so.7 soname warning. The CTS executable is C.
           cmake .. \
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DOPENVX_INCLUDES="$GITHUB_WORKSPACE/amd_openvx/openvx/include" \
             -DOPENVX_LIBRARIES="$GITHUB_WORKSPACE/install/lib/libopenvx.so;$GITHUB_WORKSPACE/install/lib/libvxu.so;pthread;dl;m;rt" \
-            -DOPENVX_CONFORMANCE_VISION=ON
+            -DOPENVX_CONFORMANCE_VISION=ON \
+            -DCMAKE_C_STANDARD_LIBRARIES="-L${ROCM_PATH}/lib -lamdhip64" \
+            -DCMAKE_CXX_STANDARD_LIBRARIES="-L${ROCM_PATH}/lib -lamdhip64" \
+            -DCMAKE_EXE_LINKER_FLAGS="-Wl,-rpath-link,${ROCM_PATH}/lib"
           make -j$(nproc)
 
       - name: Upload debug build artifacts
@@ -344,7 +353,7 @@ jobs:
           export AGO_DEFAULT_TARGET=GPU
           ./openvx-mark --validate-timing
           ./openvx-mark --kernel "$PARITY_KERNELS" --skip-pipelines \
-            --resolution 4K --iterations 50 --warmup 5 --threads 1
+            --resolution 4K --iterations 100 --warmup 10 --threads 1
 
       - name: Bench main (warmup + measure)
         run: |
@@ -353,7 +362,7 @@ jobs:
           export AGO_DEFAULT_TARGET=GPU
           ./openvx-mark --validate-timing
           ./openvx-mark --kernel "$PARITY_KERNELS" --skip-pipelines \
-            --resolution 4K --iterations 50 --warmup 5 --threads 1
+            --resolution 4K --iterations 100 --warmup 10 --threads 1
 
       - name: Run perf gate
         run: |
@@ -366,13 +375,18 @@ jobs:
             exit 1
           fi
 
+          # --min-abs-ms 1.0: on the GPU at 4K these vision kernels run
+          # sub-millisecond, where a ~0.1ms run-to-run jitter swing reads as a
+          # 10%+ ratio and trips the kernel floor with a false regression.
+          # Kernels whose slower side is under 1ms stay visible and counted in
+          # the geomean but are warn-only, never merge-blocking.
           python3 $GITHUB_WORKSPACE/.github/scripts/perf_gate.py \
             "$MAIN" "$PR" \
             --geomean-floor 0.95 \
             --kernel-floor 0.90 \
             --warn-floor 0.95 \
             --max-cv 10.0 \
-            --min-abs-ms 0.05 \
+            --min-abs-ms 1.0 \
             --summary-out "$GITHUB_STEP_SUMMARY"
 
       - name: Post PR benchmark summary

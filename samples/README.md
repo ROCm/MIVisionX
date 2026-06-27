@@ -1,81 +1,59 @@
 # Samples
 
-MIVisionX samples using AMD OpenVX&trade; and the RunVX graph executor. The samples below show how to run computer vision graphs efficiently on target hardware.
+MIVisionX samples demonstrating AMD OpenVX&trade; and the RunVX graph executor.
 
-* [GDF - Graph Description Format Samples](#gdf---graph-description-format)
-* [C/C++ Samples for OpenVX](#cc-samples-for-openvx)
+* [GDF samples](#gdf---graph-description-format) — OpenVX graphs run with RunVX
+* [C/C++ samples](#cc-samples-for-openvx) — OpenVX API usage in C/C++
 
-## GDF - Graph Description Format
+## Setup
 
-MIVisionX samples using [RunVX](../utilities/runvx/README.md#amd-runvx)
+Add MIVisionX to your environment before running any sample:
 
-**Note:**
-
-* To run the samples we need to put MIVisionX executables and libraries into the system path
-
-```
+```shell
 export PATH=$PATH:/opt/rocm/bin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 ```
 
-* To get help on RunVX, use `-h` option
+## GDF - Graph Description Format
 
-```
-runvx -h
-```
+MIVisionX GDF samples using [RunVX](../utilities/runvx/README.md#amd-runvx). Run from the `samples/gdf/` directory.
 
 ### skintonedetect.gdf
 
+Detects skin-tone pixels in an image using color thresholding.
+
 <p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/skinToneDetect_image.PNG" /></p>
 
-usage:
-
-```
+```shell
 runvx gdf/skintonedetect.gdf
 ```
 
 ### canny.gdf
 
+Runs Canny edge detection on a sample image.
+
 <p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/canny_image.PNG" /></p>
 
-usage:
-
-```
+```shell
 runvx gdf/canny.gdf
 ```
 
-### skintonedetect-LIVE.gdf
+### Live camera variants
 
-Using a live camera
-
-usage:
-
-```
+```shell
 runvx -frames:live gdf/skintonedetect-LIVE.gdf
-```
-
-### canny-LIVE.gdf
-
-Using a live camera
-
-usage:
-
-```
 runvx -frames:live gdf/canny-LIVE.gdf
 ```
 
 ## C/C++ Samples for OpenVX
 
-MIVisionX samples in C/C++
+### Canny Edge Detector
 
-### Canny
-
-usage:
-
-```
+```shell
 cd c_samples/canny/
 cmake .
 make
-./cannyDetect --image <imageName>
+
+./cannyDetect --image <path/to/image>
 ./cannyDetect --live
 ```

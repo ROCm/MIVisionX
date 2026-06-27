@@ -11,6 +11,9 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 *  MIVisionX is now built on top of the **ROCm Core SDK** and requires **ROCm 7.13 or later**. The Core SDK provides the HIP and OpenCL runtimes, the `amdclang++` compiler, the `half` library, and `RPP`.
 *  Windows builds now use CMake; the legacy Visual Studio `.sln`/`.vcxproj` project files have been removed.
 
+### Fixed
+*  **HIP Canny/Harris/NonMaxSupp kernels**: out-of-bounds shared-memory reads when the top-left tile of the image falls on the image boundary. All six kernel families (`CannySobel_3x3/5x5/7x7` L1/L2NORM, `CannySuppThreshold_3x3`, `HarrisSobel_3x3/5x5/7x7`, `NonMaxSupp_3x3`) computed a negative byte offset into the source image buffer for threads assigned to the first few rows or leftmost columns, resulting in undefined behavior. Added `goffset >= 0` guards before each halo load to skip the out-of-bounds access and leave the corresponding shared-memory region zeroed.
+
 ### Removed
 *  OpenVX extensions: `amd_nn`, `amd_opencv`, `amd_media`, `amd_migraphx`, `amd_loomsl`, `amd_custom`, `amd_winml`
 *  Utilities: `runcl`, `loom_shell`, `mv_deploy`, `loom_io_media`

@@ -16,9 +16,9 @@ AMD OpenVX can be found in the `MIVisionX GitHub repository <https://github.com/
 
 The AMD OpenVX core engine supports the ``CPU``, ``HIP``, and ``OpenCL`` backends.
 
-In addition to implementing Khronos OpenVX functions and data types, `AMD OpenVX extends OpenVX <https://github.com/ROCm/MIVisionX/tree/develop/amd_openvx_extensions>`_ with the following module:
+MIVisionX ships one `OpenVX extension module <https://github.com/ROCm/MIVisionX/tree/develop/amd_openvx_extensions>`_:
 
-| `amd_rpp <https://github.com/ROCm/MIVisionX/tree/develop/amd_openvx_extensions/amd_rpp>`_: Used to access `ROCm Performance Primitives (RPP) <https://rocm.docs.amd.com/projects/rpp/en/latest/index.html>`_ as OpenVX kernels. The ``amd_rpp`` extension supports the ``CPU`` and ``HIP`` backends only.
+* `amd_rpp <https://github.com/ROCm/MIVisionX/tree/develop/amd_openvx_extensions/amd_rpp>`_: Exposes `ROCm Performance Primitives (RPP) <https://rocm.docs.amd.com/projects/rpp/en/latest/index.html>`_ image and tensor augmentation functions as OpenVX kernels. Supports the ``CPU`` and ``HIP`` backends only.
 
 
 

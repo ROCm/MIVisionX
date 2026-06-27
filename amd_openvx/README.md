@@ -49,10 +49,13 @@ AMD OpenVX is built as part of the [MIVisionX](../README.md) project.
 
 ### Build using CMake
 
+AMD OpenVX is built as part of the top-level MIVisionX project. Run CMake from the **MIVisionX repo root**, not from within `amd_openvx/`:
+
 ```shell
+# From the MIVisionX repo root
 mkdir build && cd build
-cmake ..
-make -j8
+cmake ..          # HIP backend (default on Linux)
+make -j$(nproc)
 ```
 
 On Windows, build with CMake as well (the legacy Visual Studio `.sln`/`.vcxproj` files have been removed). The default Windows backend is `OpenCL`; pass `-DGPU_SUPPORT=OFF` for a CPU-only build. Optionally install [OpenCV](https://github.com/opencv/opencv/releases) (set `OpenCV_DIR` to the `OpenCV/build` folder) to enable RunVX camera capture and image display.
@@ -60,4 +63,4 @@ On Windows, build with CMake as well (the legacy Visual Studio `.sln`/`.vcxproj`
 > [!NOTE]
 > AMD GPU HIP backend is not supported on Windows.
 
-**NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.
+OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

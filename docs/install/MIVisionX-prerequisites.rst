@@ -11,7 +11,7 @@ MIVisionX ``4.0`` and later are built on top of the **ROCm Core SDK** and requir
 .. note::
 
     * **ROCm 7.2.x and below**: install MIVisionX from the prebuilt packages (``mivisionx``, ``mivisionx-dev``, ``mivisionx-test``). See :doc:`./MIVisionX-package-install`.
-    * **ROCm 7.12 and later**: build MIVisionX from source on top of the ROCm Core SDK.
+    * **ROCm 7.13 and later**: build MIVisionX from source on top of the ROCm Core SDK. See :doc:`./MIVisionX-linux-build-and-install`.
     * **CPU-only**: build from source with ``-DGPU_SUPPORT=OFF`` (no ROCm or GPU required).
 
 Install the ROCm Core SDK by following `Install AMD ROCm <https://rocm.docs.amd.com/en/latest/install/rocm.html>`_ for your GPU and operating system. The Core SDK provides the HIP and OpenCL runtimes, the ``amdclang++`` compiler, OpenMP, the ``half`` (float16) library, and ``RPP`` (used by the ``amd_rpp`` extension).

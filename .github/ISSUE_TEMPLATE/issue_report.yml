@@ -85,7 +85,7 @@ body:
 - type: dropdown
   attributes:
     label: ROCm Version
-    description: What version(s) of ROCm did you encounter the issue on?
+    description: What version(s) of ROCm did you encounter the issue on? (MIVisionX 4.0+ requires ROCm 7.13 or later)
     multiple: true
     options:
         - ROCm 7.14.x

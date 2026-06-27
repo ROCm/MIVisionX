@@ -8,35 +8,32 @@
 AMD OpenVX installation
 ******************************************
 
-Pre-requisites
-==============
+AMD OpenVX is built as part of the top-level MIVisionX CMake project. Build MIVisionX to produce ``libopenvx.so`` and ``libvxu.so``.
+
+Prerequisites
+=============
 
 * **CPU**: AMD64
 * **GPU**: AMD Radeon Graphics [optional]
 
-  + Windows: install the latest drivers and OpenCL SDK `download <https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases>`_
-  + Linux: install the `ROCm Core SDK <https://rocm.docs.amd.com/en/latest/install/rocm.html>`_ (ROCm ``7.13`` or later)
+  * Windows: install the latest AMD `drivers <https://www.amd.com/en/support>`_ and the `OpenCL SDK <https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases>`_
+  * Linux: install the `ROCm Core SDK <https://rocm.docs.amd.com/en/latest/install/rocm.html>`_ (ROCm ``7.13`` or later)
 
-
-Build Instructions
-==================
-
-Build this project to generate AMD OpenVX library 
-
-* Refer to `openvx/include/VX <https://github.com/ROCm/MIVisionX/tree/develop/amd_openvx/openvx/include>`_ for Khronos OpenVX standard header files.
-* Refer to `openvx/include/vx_ext_amd.h <https://github.com/ROCm/MIVisionX/tree/develop/amd_openvx/openvx/include/vx_ext_amd.h>`_ for vendor extensions in AMD OpenVX library
+Refer to `openvx/include/VX <https://github.com/ROCm/MIVisionX/tree/develop/amd_openvx/openvx/include>`_ for the Khronos OpenVX standard headers and to `openvx/include/vx_ext_amd.h <https://github.com/ROCm/MIVisionX/tree/develop/amd_openvx/openvx/include/vx_ext_amd.h>`_ for AMD vendor extensions.
 
 .. note::
-  AMD GPU ``HIP`` backend is not supported on Windows. On Windows the default backend is ``OpenCL``.
 
-Build using CMake
-------------------
+    The AMD GPU ``HIP`` backend is not supported on Windows. On Windows the default backend is ``OpenCL``.
 
-* Install CMake 3.10 or later
-* Optionally install `OpenCV <https://github.com/opencv/opencv/releases>`_ to enable the ``RunVX`` tool to support camera capture and image display (set ``OpenCV_DIR`` to the ``OpenCV/build`` folder)
-* Use CMake to configure and generate the build files, then build (pass ``-DGPU_SUPPORT=OFF`` for a CPU-only build)
+Build
+=====
+
+Build from the **MIVisionX repository root**. Optionally install `OpenCV <https://github.com/opencv/opencv/releases>`_ to enable ``RunVX`` camera capture and image display (set ``OpenCV_DIR`` to the ``OpenCV/build`` folder).
 
 .. code-block:: shell
 
-    cmake -B build
+    git clone https://github.com/ROCm/MIVisionX.git
+    cd MIVisionX
+    cmake -B build               # HIP backend (default on Linux); add -DBACKEND=OCL for OpenCL, -DGPU_SUPPORT=OFF for CPU
     cmake --build build --config Release
+    sudo cmake --install build

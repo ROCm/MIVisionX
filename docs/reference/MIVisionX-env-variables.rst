@@ -8,108 +8,92 @@
 MIVisionX environment variables
 ******************************************
 
-This section describes the most important MIVisionX environment variables,
-which are grouped by functionality.
+The following environment variables control the runtime behavior of MIVisionX.
 
-Core OpenVX Configuration
+Core OpenVX configuration
 =========================
-
-The core OpenVX configuration environment variables for MIVisionX are collected in the following table.
 
 .. list-table::
     :header-rows: 1
-    :widths: 70,30
+    :widths: 50 50
 
-    * - **Environment variable**
-      - **Value**
+    * - Environment variable
+      - Values
 
     * - | ``AGO_DEFAULT_TARGET``
         | Sets the default execution target for OpenVX kernels.
-      - | "GPU": Execute kernels on GPU
-        | "CPU": Execute kernels on CPU
-        | Unset: Use library default target
+      - | ``"GPU"``: execute kernels on the GPU
+        | ``"CPU"``: execute kernels on the CPU
+        | Unset: use the library default
 
     * - | ``AGO_BUFFER_MERGE_FLAGS``
-        | Controls buffer merging optimization flags.
-      - | Integer bitmask value
-        | Higher values: More aggressive merging
-        | 0: Disable buffer merging
+        | Controls buffer-merging optimization.
+      - | Integer bitmask
+        | ``0``: disable buffer merging
+        | Higher values enable more aggressive merging
 
     * - | ``AGO_THREAD_CONFIG``
-        | Configures thread usage for CPU execution.
-      - | Integer value (likely number of threads)
-        | 0: Use default threading
-        | Positive integer: Specific thread count
+        | Configures the number of CPU threads used for graph execution.
+      - | ``0``: use the default thread count
+        | Positive integer: use that many threads
 
     * - | ``VX_GRAPH_ATTRIBUTE_AMD_OPTIMIZER_FLAGS``
-        | Sets OpenVX graph optimizer flags for AMD extensions.
-      - | Integer bitmask value
-        | 0: Disable optimizations
-        | Positive values: Enable specific optimizations
+        | Sets graph optimizer flags for AMD extensions.
+      - | Integer bitmask
+        | ``0``: disable optimizations
+        | Positive values enable specific optimizations
 
-GPU and Device Configuration
+GPU and device configuration
 ============================
 
-The GPU and device configuration environment variables for MIVisionX are collected in the following table.
-
 .. list-table::
     :header-rows: 1
-    :widths: 70,30
+    :widths: 50 50
 
-    * - **Environment variable**
-      - **Value**
+    * - Environment variable
+      - Values
 
     * - | ``GPU_ENABLE_WGP_MODE``
-        | Controls Workgroup Processor (WGP) mode on RDNA GPUs that support both CU and WGP modes.
-      - | 0: Disable WGP mode (use CU mode)
-        | 1 or any non-zero: Enable WGP mode (default)
-        | Only applies to GPUs with major version >= 10
+        | Controls Workgroup Processor (WGP) mode on RDNA GPUs that support both CU and WGP modes (GPU major version ≥ 10).
+      - | ``0``: use CU mode
+        | ``1`` (or any non-zero): use WGP mode (default)
 
-OpenCL Configuration
+OpenCL configuration
 ====================
-
-The OpenCL configuration environment variables for MIVisionX are collected in the following table.
 
 .. list-table::
     :header-rows: 1
-    :widths: 70,30
+    :widths: 50 50
 
-    * - **Environment variable**
-      - **Value**
+    * - Environment variable
+      - Values
 
     * - | ``AGO_OPENCL_PLATFORM``
         | Overrides the default OpenCL platform selection.
-      - | String specifying OpenCL platform name
-        | Used to select specific OpenCL implementation
+      - | String — name of the OpenCL platform to use
 
     * - | ``AGO_OPENCL_VERSION_CHECK``
-        | Controls OpenCL version checking behavior.
-      - | String value controlling version validation
-        | May disable or modify version requirements
+        | Controls OpenCL version checking.
+      - | String — set to disable or relax version validation
 
     * - | ``AGO_OPENCL_BUILD_OPTIONS``
-        | Specifies additional OpenCL kernel build options.
-      - | String containing OpenCL compiler flags
-        | Passed to OpenCL kernel compilation
+        | Appends options to the OpenCL kernel compiler invocation.
+      - | String — valid OpenCL compiler flags
 
     * - | ``AGO_OPENCL_DEVICE_INFO``
-        | Controls OpenCL device information reporting.
-      - | String value controlling device info output
-        | Used for debugging device capabilities
+        | Controls OpenCL device information reporting (useful for debugging).
+      - | String — controls the verbosity of device info output
 
-Debugging and Profiling
+Debugging and profiling
 ========================
-
-The debugging and profiling environment variables for MIVisionX are collected in the following table.
 
 .. list-table::
     :header-rows: 1
-    :widths: 70,30
+    :widths: 50 50
 
-    * - **Environment variable**
-      - **Value**
+    * - Environment variable
+      - Values
 
     * - | ``AGO_DUMP_GPU``
-        | Enables GPU kernel dumping for debugging purposes.
-      - | String value enabling GPU kernel dump
-        | Used for analyzing GPU kernel behavior
+        | Dumps compiled GPU kernel source to disk for inspection.
+      - | Set to any non-empty string to enable

@@ -8,7 +8,7 @@ Install MIVisionX using the Linux package installer
 
 .. note::
 
-    Prebuilt MIVisionX packages are available for **ROCm 7.2.x and below**. For **ROCm 7.12 and later**, :doc:`build and install from source <./MIVisionX-linux-build-and-install>` on top of the ROCm Core SDK.
+    Prebuilt MIVisionX packages are available for **ROCm 7.2.x and below**. For **ROCm 7.13 and later**, :doc:`build and install from source <./MIVisionX-linux-build-and-install>` on top of the ROCm Core SDK.
 
 Three MIVisionX packages are available on Linux:
 
@@ -66,7 +66,7 @@ Use the following commands to install ``mivisionx``, ``mivisionx-dev``, and ``mi
 
     .. code:: shell
 
-      sudo yum install mivisionx mivisionx-dev mivisionx-test
+      sudo yum install mivisionx mivisionx-devel mivisionx-test
 
   .. tab-item:: SLES
 
@@ -75,14 +75,10 @@ Use the following commands to install ``mivisionx``, ``mivisionx-dev``, and ``mi
       sudo zypper install mivisionx mivisionx-dev mivisionx-test
 
 
-Th test package will install the ``ctest`` module to test MIVisionX. Use the following steps to test package install:
+The test package installs a ``ctest`` module to verify MIVisionX. Run the following commands to test the installation:
 
 .. code-block:: shell
 
-    mkdir mivisionx-test
-    cd mivisionx-test
+    mkdir mivisionx-test && cd mivisionx-test
     cmake /opt/rocm/share/mivisionx/test/
     ctest -VV
-
-
-

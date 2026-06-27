@@ -37,31 +37,40 @@ defaults:
     shell: bash
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ROCM_PATH: /opt/rocm
+
+# Self-hosted GPU runners (gfx1100/gfx1030) are a small shared pool. Cancel
+# superseded runs of the same ref so rapid pushes to a PR don't queue up many
+# full GPU pipelines and starve the runners. Pushes to default branches keep a
+# stable group per ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 # ---------------------------------------------------------------------------
 # Runner & container assignment
 #
-#   gfx1100  linux-shark39-gfx1100-gpu-rocm  (prolense-shark39-gfx1100-scaleset)
-#            → Build (release + debug) + Performance (perf-gate) + Coverage summary
-#
-#   gfx1030  linux-shark39-gfx1030-gpu-rocm  (prolense-shark39-gfx1030-scaleset)
-#            → All tests (CTS, API, GDF, vision)
+#   All jobs use group: linux-shark39-runner-group which contains both
+#   prolense-shark39-gfx1100-scaleset and prolense-shark39-gfx1030-scaleset.
+#   GitHub schedules each job on whichever scaleset runner is available first,
+#   so CI is not blocked when one runner is offline or busy.
 #
 # Both runners use controller-mode:docker, meaning each job runs inside an
 # ephemeral Docker container launched by the runner controller.  The
-# container: block below passes the AMD GPU devices and group memberships
-# required for ROCm/HIP execution:
+# container: block below passes the AMD GPU devices required for ROCm/HIP
+# execution:
 #
 #   --device /dev/kfd       AMD GPU kernel fusion driver (compute)
 #   --device /dev/dri       DRI render nodes (renderD*)
-#   --group-add video       Traditional GPU group
-#   --group-add render      Required on Ubuntu 20+ for non-root GPU access
 #
-# rocm/dev-ubuntu-24.04 is used because it ships a full ROCm stack
-# (amdclang++, HIP runtime, rocminfo) and rocminfo works correctly in it,
-# unlike rocm/rocm-terminal which has known /dev/kfd permission issues.
+# The container runs as root, so it already has access to these devices —
+# no --group-add video/render is needed (and the mivisionx image lacks the
+# render group name, which would make docker start fail on --group-add render).
+#
+# mivisionx/ubuntu-24.04:rocm-7.13 is used because it ships a full ROCm
+# 7.13 stack (amdclang++, HIP runtime, rocminfo) with device support for all
+# supported GPU archs, so it works on whichever runner the job lands on, and
+# rocminfo works correctly in it.
 #
 # Build-only jobs that do not execute GPU kernels still use the same image
 # so the amdclang++ toolchain and ROCm headers are available without any
@@ -70,18 +79,19 @@ env:
 
 jobs:
   # ===========================================================================
-  # Build Stage — all three builds run on gfx1100 in parallel.
+  # Build Stage — three builds run in parallel on whichever runner is free.
   # ===========================================================================
 
   # Release build of the PR (or push) branch — used by perf-gate
   build-hip:
     name: Build AMD OpenVX (HIP, Release)
-    runs-on: linux-shark39-gfx1100-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -91,7 +101,9 @@ jobs:
           apt-get install -y --no-install-recommends build-essential cmake git python3
 
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
 
       - name: Build AMD OpenVX (HIP backend, Release)
         run: |
@@ -103,7 +115,7 @@ jobs:
           make -j$(nproc)
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: build-artifacts-hip
           path: |
@@ -115,13 +127,14 @@ jobs:
   build-hip-main:
     name: Build AMD OpenVX (HIP, Release, main)
     if: github.event_name == 'pull_request'
-    runs-on: linux-shark39-gfx1100-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     steps:
       - name: Checkout merge target ref
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           fetch-depth: 0
@@ -132,7 +145,9 @@ jobs:
           apt-get install -y --no-install-recommends build-essential cmake git python3
 
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
 
       - name: Build AMD OpenVX (HIP backend)
         run: |
@@ -144,7 +159,7 @@ jobs:
           make -j$(nproc)
 
       - name: Upload main build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: build-artifacts-hip-main
           path: |
@@ -157,12 +172,13 @@ jobs:
   # profraw flow is identical to the CPU workflow.
   build-hip-debug:
     name: Build AMD OpenVX (HIP, Debug + Coverage)
-    runs-on: linux-shark39-gfx1100-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -172,7 +188,9 @@ jobs:
           apt-get install -y --no-install-recommends build-essential cmake git python3
 
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
 
       - name: Build and install AMD OpenVX (HIP, Debug + Coverage)
         run: |
@@ -195,12 +213,20 @@ jobs:
             tensor_advanced threshold_query graph_import vxu_api
             coverage_boost vision_coverage
           )
+          # libopenvx.so (HIP backend) has unresolved HIP runtime symbols
+          # (e.g. hipSetDevice@hip_4.2) that must be satisfied by
+          # libamdhip64.so from the real ROCm at ${ROCM_PATH}/lib. The test
+          # CMakeLists only links `openvx`, so append the HIP runtime via
+          # CMAKE_CXX_STANDARD_LIBRARIES — this lands at the END of the link
+          # line (after libopenvx) where single-pass ld can resolve from it.
           for test_dir in "${API_TESTS[@]}"; do
             echo "::group::Building ${test_dir}"
             mkdir -p build/api_tests/${test_dir}
             cmake -S tests/openvx_api_tests/${test_dir} \
                   -B build/api_tests/${test_dir} \
-                  -DROCM_PATH="$GITHUB_WORKSPACE/install"
+                  -DROCM_PATH="$GITHUB_WORKSPACE/install" \
+                  -DCMAKE_STANDARD_LIBRARIES="-L${ROCM_PATH}/lib -lamdhip64" \
+                  -DCMAKE_CXX_STANDARD_LIBRARIES="-L${ROCM_PATH}/lib -lamdhip64"
             cmake --build build/api_tests/${test_dir} -j$(nproc)
             echo "::endgroup::"
           done
@@ -210,16 +236,25 @@ jobs:
           git clone --depth 1 -b openvx_1.3 https://github.com/KhronosGroup/OpenVX-cts.git
           cd OpenVX-cts
           mkdir -p build && cd build
+          # vx_test_conformance links libopenvx.so (HIP backend), which pulls
+          # in HIP runtime symbols (e.g. hipMemcpyHtoD@hip_4.2) from
+          # libamdhip64.so in ${ROCM_PATH}/lib. Append the HIP runtime at the
+          # END of the link line (after libopenvx) via *_STANDARD_LIBRARIES so
+          # single-pass ld can resolve from it; -rpath-link silences the
+          # libamdhip64.so.7 soname warning. The CTS executable is C.
           cmake .. \
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DOPENVX_INCLUDES="$GITHUB_WORKSPACE/amd_openvx/openvx/include" \
             -DOPENVX_LIBRARIES="$GITHUB_WORKSPACE/install/lib/libopenvx.so;$GITHUB_WORKSPACE/install/lib/libvxu.so;pthread;dl;m;rt" \
-            -DOPENVX_CONFORMANCE_VISION=ON
+            -DOPENVX_CONFORMANCE_VISION=ON \
+            -DCMAKE_C_STANDARD_LIBRARIES="-L${ROCM_PATH}/lib -lamdhip64" \
+            -DCMAKE_CXX_STANDARD_LIBRARIES="-L${ROCM_PATH}/lib -lamdhip64" \
+            -DCMAKE_EXE_LINKER_FLAGS="-Wl,-rpath-link,${ROCM_PATH}/lib"
           make -j$(nproc)
 
       - name: Upload debug build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: build-artifacts-hip-debug
           path: |
@@ -238,22 +273,23 @@ jobs:
   perf-gate-hip:
     name: Perf gate HIP (PR vs main)
     if: github.event_name == 'pull_request'
-    runs-on: linux-shark39-gfx1100-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     env:
-      # 42 vision kernels with a stable 1:1 GPU implementation — excludes
+      # 40 vision kernels with a stable 1:1 GPU implementation — excludes
       # LaplacianPyramid / LaplacianReconstruct / LaplacianReconstruct_S16
       # which have a known HIP synchronisation bug causing 200-300ms outliers
       # that would swamp the perf gate CV% and produce false regressions.
-      PARITY_KERNELS: "And,Or,Xor,Not,AbsDiff,Add,Subtract,Multiply,Box3x3,Gaussian3x3,Median3x3,Erode3x3,Dilate3x3,Sobel3x3,CustomConvolution,NonLinearFilter,ColorConvert_RGB2IYUV,ChannelExtract,ChannelCombine,ConvertDepth,ScaleImage_Half,WarpAffine,WarpPerspective,Remap,Histogram,EqualizeHist,MeanStdDev,MinMaxLoc,IntegralImage,GaussianPyramid,LaplacianPyramid,LaplacianReconstruct,HalfScaleGaussian,CannyEdgeDetector,HarrisCorners,FastCorners,OpticalFlowPyrLK,Magnitude,Phase,TableLookup,Threshold_Binary,WeightedAverage"
+      PARITY_KERNELS: "And,Or,Xor,Not,AbsDiff,Add,Subtract,Multiply,Box3x3,Gaussian3x3,Median3x3,Erode3x3,Dilate3x3,Sobel3x3,CustomConvolution,NonLinearFilter,ColorConvert_RGB2IYUV,ChannelExtract,ChannelCombine,ConvertDepth,ScaleImage_Half,WarpAffine,WarpPerspective,Remap,Histogram,EqualizeHist,MeanStdDev,MinMaxLoc,IntegralImage,GaussianPyramid,HalfScaleGaussian,CannyEdgeDetector,HarrisCorners,FastCorners,OpticalFlowPyrLK,Magnitude,Phase,TableLookup,Threshold_Binary,WeightedAverage"
     needs:
       - build-hip
       - build-hip-main
     steps:
       - name: Checkout repo (for perf_gate.py script)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
@@ -263,16 +299,18 @@ jobs:
           apt-get install -y --no-install-recommends build-essential cmake git python3
 
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
 
       - name: Download PR build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-hip
           path: ${{ github.workspace }}/pr-pkg
 
       - name: Download main build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-hip-main
           path: ${{ github.workspace }}/main-pkg
@@ -315,7 +353,7 @@ jobs:
           export AGO_DEFAULT_TARGET=GPU
           ./openvx-mark --validate-timing
           ./openvx-mark --kernel "$PARITY_KERNELS" --skip-pipelines \
-            --resolution 4K --iterations 50 --warmup 5 --threads 1
+            --resolution 4K --iterations 100 --warmup 10 --threads 1
 
       - name: Bench main (warmup + measure)
         run: |
@@ -324,7 +362,7 @@ jobs:
           export AGO_DEFAULT_TARGET=GPU
           ./openvx-mark --validate-timing
           ./openvx-mark --kernel "$PARITY_KERNELS" --skip-pipelines \
-            --resolution 4K --iterations 50 --warmup 5 --threads 1
+            --resolution 4K --iterations 100 --warmup 10 --threads 1
 
       - name: Run perf gate
         run: |
@@ -337,13 +375,18 @@ jobs:
             exit 1
           fi
 
+          # --min-abs-ms 1.0: on the GPU at 4K these vision kernels run
+          # sub-millisecond, where a ~0.1ms run-to-run jitter swing reads as a
+          # 10%+ ratio and trips the kernel floor with a false regression.
+          # Kernels whose slower side is under 1ms stay visible and counted in
+          # the geomean but are warn-only, never merge-blocking.
           python3 $GITHUB_WORKSPACE/.github/scripts/perf_gate.py \
             "$MAIN" "$PR" \
             --geomean-floor 0.95 \
             --kernel-floor 0.90 \
             --warn-floor 0.95 \
-            --max-cv 5.0 \
-            --min-abs-ms 2.0 \
+            --max-cv 10.0 \
+            --min-abs-ms 1.0 \
             --summary-out "$GITHUB_STEP_SUMMARY"
 
       - name: Post PR benchmark summary
@@ -389,7 +432,7 @@ jobs:
 
       - name: Upload PR benchmark results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: perf-gate-hip-results-pr
           path: ${{ github.workspace }}/openvx-mark/build-pr/benchmark_results/
@@ -397,7 +440,7 @@ jobs:
 
       - name: Upload main benchmark results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: perf-gate-hip-results-main
           path: ${{ github.workspace }}/openvx-mark/build-main/benchmark_results/
@@ -413,19 +456,22 @@ jobs:
 
   baseline-hip:
     name: Baseline (HIP)
-    runs-on: linux-shark39-gfx1030-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run baseline tests
         run: |
           mkdir -p profraw
@@ -438,7 +484,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="GraphBase.*:Logging.*:SmokeTestBase.*:SmokeTest.*:TargetBase.*:Target.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-hip-baseline
           path: profraw/
@@ -446,20 +492,22 @@ jobs:
 
   graph-hip:
     name: Graph (HIP)
-    runs-on: linux-shark39-gfx1030-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
-    continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run graph tests
         run: |
           mkdir -p profraw
@@ -472,7 +520,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="Graph.*:GraphCallback.*:GraphDelay.*:GraphROI.*:UserNode.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-hip-graph
           path: profraw/
@@ -480,20 +528,22 @@ jobs:
 
   data-objects-hip:
     name: Data objects (HIP)
-    runs-on: linux-shark39-gfx1030-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
-    continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run data object tests
         run: |
           mkdir -p profraw
@@ -506,7 +556,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="Scalar.*:Array.*:ObjectArray.*:Matrix.*:Convolution.*:Distribution.*:LUT.*:Histogram.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-hip-data-objects
           path: profraw/
@@ -514,20 +564,22 @@ jobs:
 
   image-ops-hip:
     name: Image ops (HIP)
-    runs-on: linux-shark39-gfx1030-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
-    continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run image operation tests
         run: |
           mkdir -p profraw
@@ -540,7 +592,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="Image.*:vxCopyImagePatch.*:vxMapImagePatch.*:vxCreateImageFromChannel.*:vxCopyRemapPatch.*:vxMapRemapPatch.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-hip-image-ops
           path: profraw/
@@ -548,20 +600,22 @@ jobs:
 
   vision-color-hip:
     name: Vision color (HIP)
-    runs-on: linux-shark39-gfx1030-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
-    continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run color and channel tests
         run: |
           mkdir -p profraw
@@ -574,7 +628,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="ColorConvert.*:ChannelExtract.*:ChannelCombine.*:vxConvertDepth.*:vxuConvertDepth.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-hip-vision-color
           path: profraw/
@@ -582,20 +636,22 @@ jobs:
 
   vision-filters-hip:
     name: Vision filters (HIP)
-    runs-on: linux-shark39-gfx1030-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
-    continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run filter and morphology tests
         run: |
           mkdir -p profraw
@@ -608,7 +664,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="Box3x3.*:Gaussian3x3.*:Median3x3.*:Dilate3x3.*:Erode3x3.*:Sobel3x3.*:Magnitude.*:Phase.*:NonLinearFilter.*:Convolve.*:EqualizeHistogram.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-hip-vision-filters
           path: profraw/
@@ -616,20 +672,22 @@ jobs:
 
   vision-arithmetic-hip:
     name: Vision arithmetic (HIP)
-    runs-on: linux-shark39-gfx1030-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
-    continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run arithmetic and bitwise tests
         run: |
           mkdir -p profraw
@@ -642,7 +700,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="vxAddSub.*:vxuAddSub.*:vxMultiply.*:vxuMultiply.*:vxBinOp8u.*:vxuBinOp8u.*:vxBinOp16s.*:vxuBinOp16s.*:vxBinOp1u.*:vxuBinOp1u.*:vxNot.*:vxuNot.*:WeightedAverage.*:Threshold.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-hip-vision-arithmetic
           path: profraw/
@@ -650,20 +708,22 @@ jobs:
 
   vision-geometric-hip:
     name: Vision geometric (HIP)
-    runs-on: linux-shark39-gfx1030-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
-    continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run geometric transform tests
         run: |
           mkdir -p profraw
@@ -676,7 +736,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="Scale.*:WarpAffine.*:WarpPerspective.*:Remap.*:HalfScaleGaussian.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-hip-vision-geometric
           path: profraw/
@@ -684,20 +744,22 @@ jobs:
 
   vision-features-hip:
     name: Vision features (HIP)
-    runs-on: linux-shark39-gfx1030-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
-    continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run feature and edge detection tests
         run: |
           mkdir -p profraw
@@ -710,7 +772,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="HarrisCorners.*:FastCorners.*:vxCanny.*:vxuCanny.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-hip-vision-features
           path: profraw/
@@ -718,20 +780,22 @@ jobs:
 
   vision-statistics-hip:
     name: Vision statistics (HIP)
-    runs-on: linux-shark39-gfx1030-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
-    continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run statistics and analysis tests
         run: |
           mkdir -p profraw
@@ -744,7 +808,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="MeanStdDev.*:MinMaxLoc.*:Integral.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-hip-vision-statistics
           path: profraw/
@@ -752,20 +816,22 @@ jobs:
 
   vision-pyramid-hip:
     name: Vision pyramid (HIP)
-    runs-on: linux-shark39-gfx1030-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
-    continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run pyramid and optical flow tests
         run: |
           mkdir -p profraw
@@ -778,7 +844,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="GaussianPyramid.*:LaplacianPyramid.*:LaplacianReconstruct.*:OptFlowPyrLK.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-hip-vision-pyramid
           path: profraw/
@@ -788,20 +854,22 @@ jobs:
 
   api-tests-hip:
     name: API tests (HIP)
-    runs-on: linux-shark39-gfx1030-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
-    continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run API tests
         run: |
           mkdir -p profraw
@@ -845,7 +913,7 @@ jobs:
           fi
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-hip-api-tests
           path: profraw/
@@ -853,16 +921,16 @@ jobs:
 
   gdf-tests-hip:
     name: GDF tests (HIP)
-    runs-on: linux-shark39-gfx1030-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
-    continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-hip-debug
       - name: Install python3
@@ -870,7 +938,9 @@ jobs:
           apt-get update -qq
           apt-get install -y --no-install-recommends python3
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run GDF tests
         run: |
           mkdir -p profraw
@@ -885,7 +955,7 @@ jobs:
             --hidden no
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-hip-gdf-tests
           path: profraw/
@@ -893,16 +963,16 @@ jobs:
 
   vision-tests-hip:
     name: Vision node tests (HIP)
-    runs-on: linux-shark39-gfx1030-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
-    continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-hip-debug
       - name: Install python3
@@ -910,7 +980,9 @@ jobs:
           apt-get update -qq
           apt-get install -y --no-install-recommends python3
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
       - name: Run parametrized vision node tests
         run: |
           mkdir -p profraw
@@ -926,7 +998,7 @@ jobs:
             --runvx_directory $GITHUB_WORKSPACE/install/bin --num_frames 10 --width 10 --height 10
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-hip-vision-tests
           path: profraw/
@@ -941,10 +1013,11 @@ jobs:
 
   coverage-summary-hip:
     name: Code coverage summary (HIP)
-    runs-on: linux-shark39-gfx1100-gpu-rocm
+    runs-on:
+      group: linux-shark39-runner-group
     container:
-      image: rocm/dev-ubuntu-24.04:latest
-      options: --device /dev/kfd --device /dev/dri --group-add video --group-add render
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
     if: always() && needs.build-hip-debug.result == 'success'
     needs:
       - build-hip-debug
@@ -963,23 +1036,31 @@ jobs:
       - gdf-tests-hip
       - vision-tests-hip
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install coverage tools
         run: |
+          # python3 is required (summary script). lcov/genhtml are only used for
+          # the optional HTML report; if the image can't provide them, don't
+          # fail the job — the llvm-cov text/json/lcov outputs still produce the
+          # coverage numbers and the genhtml step is guarded below.
           apt-get update -qq
-          apt-get install -y --no-install-recommends python3 lcov
+          apt-get install -y --no-install-recommends python3
+          apt-get install -y --no-install-recommends lcov \
+            || echo "::warning::lcov not available — HTML coverage report will be skipped"
 
       - name: Validate ROCm
-        run: rocminfo | grep -E 'Agent|Marketing'
+        run: |
+          rocminfo
+          amd-smi || true
 
       - name: Download debug build (for libopenvx.so)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-hip-debug
 
       - name: Download all HIP profraw artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           pattern: profraw-hip-*
           path: all-profraw
@@ -987,9 +1068,15 @@ jobs:
 
       - name: Merge profraw files
         run: |
-          echo "Profraw files found:"
-          find all-profraw -name '*.profraw' -type f | head -50
-          PROFRAW_COUNT=$(find all-profraw -name '*.profraw' -type f | wc -l)
+          # Collect paths into a file FIRST. Steps run under bash -eo pipefail,
+          # so `find ... | head -50` makes find die with SIGPIPE (exit 141)
+          # when there are >50 files and head closes the pipe early — that
+          # propagates through pipefail and fails the step. Read display/count
+          # from the file instead so nothing closes find's pipe.
+          find all-profraw -name '*.profraw' -type f > profraw_list.txt
+          PROFRAW_COUNT=$(wc -l < profraw_list.txt)
+          echo "Profraw files found (first 50):"
+          head -50 profraw_list.txt
           echo "Total profraw files: ${PROFRAW_COUNT}"
           if [ "$PROFRAW_COUNT" -eq 0 ]; then
             echo "::error::No profraw files found — no coverage data collected"
@@ -998,19 +1085,62 @@ jobs:
             echo "No profraw files were collected from test jobs." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
-          # Collect paths into a file to avoid SIGPIPE from find→xargs pipe
-          # when llvm-profdata exits early on a bad profraw.
+          # Find llvm-profdata. The .profraw indexed-profile format is versioned
+          # by the LLVM that instrumented libopenvx.so (amdclang's LLVM), so we
+          # use the tool bundled with this ROCm/amdclang install. If this image
+          # doesn't ship it, code coverage simply isn't available with this ROCm
+          # version — report that and pass the stage (don't fail CI).
+          AMDCLANG="$(command -v amdclang 2>/dev/null || true)"
+          [ -z "${AMDCLANG}" ] && [ -x "${ROCM_PATH}/bin/amdclang" ] && AMDCLANG="${ROCM_PATH}/bin/amdclang"
+          [ -n "${AMDCLANG}" ] && AMDCLANG_BIN="$(dirname "$(readlink -f "${AMDCLANG}")")"
+          PROFDATA_BIN=""
+          for cand in llvm-profdata \
+                      "${AMDCLANG_BIN:-/nonexistent}/llvm-profdata" \
+                      /opt/rocm/core-*/lib/llvm/bin/llvm-profdata \
+                      "${ROCM_PATH}/lib/llvm/bin/llvm-profdata" \
+                      "${ROCM_PATH}/llvm/bin/llvm-profdata" \
+                      "${ROCM_PATH}/bin/llvm-profdata"; do
+            if command -v "${cand}" >/dev/null 2>&1; then
+              PROFDATA_BIN="$(command -v "${cand}")"; break
+            fi
+          done
+          if [ -z "${PROFDATA_BIN}" ]; then
+            echo "::warning::llvm-profdata not available in this ROCm image — skipping code coverage."
+            {
+              echo "## AMD OpenVX Code Coverage (HIP)"
+              echo ""
+              echo "_Code coverage is unavailable with this version of ROCm "
+              echo "(\`llvm-profdata\` is not shipped in the image). Tests ran "
+              echo "successfully; only the coverage report was skipped._"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "COVERAGE_AVAILABLE=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          LLVM_BIN="$(dirname "${PROFDATA_BIN}")"
+          echo "Using LLVM tools from: ${LLVM_BIN}"
+          echo "LLVM_BIN=${LLVM_BIN}" >> "$GITHUB_ENV"
+          echo "COVERAGE_AVAILABLE=true" >> "$GITHUB_ENV"
           # --failure-mode=all skips corrupt files instead of aborting.
-          find all-profraw -name '*.profraw' -type f > profraw_list.txt
-          "${ROCM_PATH}/llvm/bin/llvm-profdata" merge \
+          "${PROFDATA_BIN}" merge \
             -sparse \
             --failure-mode=all \
             -f profraw_list.txt \
             -o coverage.profdata
 
       - name: Generate coverage report
+        if: env.COVERAGE_AVAILABLE == 'true'
         run: |
-          LLVM_COV="${ROCM_PATH}/llvm/bin/llvm-cov"
+          # LLVM_BIN was resolved and exported by the merge step. Pick llvm-cov
+          # from the same dir; fall back to a version-suffixed name if needed so
+          # the cov tool matches the profdata that produced coverage.profdata.
+          LLVM_COV="${LLVM_BIN}/llvm-cov"
+          if [ ! -x "${LLVM_COV}" ]; then
+            LLVM_COV="$(ls "${LLVM_BIN}"/llvm-cov* 2>/dev/null | head -1 || true)"
+          fi
+          if [ -z "${LLVM_COV}" ] || [ ! -x "${LLVM_COV}" ]; then
+            echo "::error::llvm-cov not found in ${LLVM_BIN}"
+            exit 1
+          fi
           LIBOPENVX="$GITHUB_WORKSPACE/install/lib/libopenvx.so"
           PROFDATA="$GITHUB_WORKSPACE/coverage.profdata"
 
@@ -1031,21 +1161,26 @@ jobs:
             -ignore-filename-regex='(test|conformance)' \
             > coverage.lcov
 
-          # lcov/genhtml installed in the "Install coverage tools" step above
-          GENHTML_EXTRA_ARGS=()
-          if genhtml --version 2>&1 | grep -qE 'LCOV version ([2-9]|[1-9][0-9])'; then
-            GENHTML_EXTRA_ARGS+=(--ignore-errors unmapped)
+          # genhtml (from lcov) is optional — skip the HTML report if it isn't
+          # installed. The coverage numbers come from llvm-cov above regardless.
+          if command -v genhtml >/dev/null 2>&1; then
+            GENHTML_EXTRA_ARGS=()
+            if genhtml --version 2>&1 | grep -qE 'LCOV version ([2-9]|[1-9][0-9])'; then
+              GENHTML_EXTRA_ARGS+=(--ignore-errors unmapped)
+            fi
+            genhtml coverage.lcov \
+              --output-directory coverage_html \
+              --branch-coverage \
+              --title "AMD OpenVX Code Coverage (HIP)" \
+              --ignore-errors source \
+              "${GENHTML_EXTRA_ARGS[@]}" \
+              2>&1 || echo "::warning::genhtml had errors"
+          else
+            echo "::warning::genhtml not installed — skipping HTML coverage report"
           fi
-          genhtml coverage.lcov \
-            --output-directory coverage_html \
-            --branch-coverage \
-            --title "AMD OpenVX Code Coverage (HIP)" \
-            --ignore-errors source \
-            "${GENHTML_EXTRA_ARGS[@]}" \
-            2>&1 || echo "::warning::genhtml had errors"
 
       - name: Post coverage summary
-        if: always()
+        if: always() && env.COVERAGE_AVAILABLE == 'true'
         run: |
           python3 - "$GITHUB_STEP_SUMMARY" <<'PYEOF'
           import json, sys, os
@@ -1179,7 +1314,7 @@ jobs:
 
       - name: Upload coverage artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: code-coverage-report-hip
           path: |

@@ -15,6 +15,10 @@ amd_opencv_test_results*
 .DS_Store*
 doxygen_output*
 
+# Python bytecode
+__pycache__/
+*.pyc
+
 # documentation artifacts
 _build/
 _images/

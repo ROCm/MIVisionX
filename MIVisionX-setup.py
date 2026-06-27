@@ -549,6 +549,11 @@ Backends:
         default="CPU" if platform.system() in ("Darwin", "Windows") else "HIP",
         help="Target backend to check dependencies for",
     )
+    parser.add_argument(
+        "--directory",
+        default=os.environ.get("MIVISIONX_DEPS_INSTALL_PATH", "~/mivisionx-install"),
+        help="Path to the deps installation"
+    )
     args = parser.parse_args()
 
     rocm_path = Path(args.rocm_path)

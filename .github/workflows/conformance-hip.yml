@@ -1091,8 +1091,19 @@ jobs:
           # of these, then fall back to a filesystem scan. Export both the tool
           # and its bin dir so the report step uses the SAME LLVM build (the
           # profdata format must match the instrumenting toolchain).
+          # The profdata/cov tools must come from the SAME LLVM that emitted the
+          # instrumentation — i.e. the one shipped with amdclang. The most
+          # reliable anchor is amdclang's own bin dir, so resolve that first.
+          # In the mivisionx rocm-7.13 image the LLVM tools ship under TheRock
+          # build tree at .../amd-llvm/llvm/test/tools (NOT a conventional bin/).
+          THEROCK_TOOLS="/root/hostDrive/therock/compiler/amd-llvm/llvm/test/tools"
           PROFDATA_BIN=""
-          for cand in llvm-profdata \
+          AMDCLANG="$(command -v amdclang 2>/dev/null || true)"
+          [ -z "${AMDCLANG}" ] && [ -x "${ROCM_PATH}/bin/amdclang" ] && AMDCLANG="${ROCM_PATH}/bin/amdclang"
+          [ -n "${AMDCLANG}" ] && AMDCLANG_BIN="$(dirname "$(readlink -f "${AMDCLANG}")")"
+          for cand in "${THEROCK_TOOLS}/llvm-profdata" \
+                      llvm-profdata \
+                      "${AMDCLANG_BIN:-/nonexistent}/llvm-profdata" \
                       "${ROCM_PATH}/lib/llvm/bin/llvm-profdata" \
                       "${ROCM_PATH}/llvm/bin/llvm-profdata" \
                       "${ROCM_PATH}/bin/llvm-profdata"; do
@@ -1104,23 +1115,25 @@ jobs:
             PROFDATA_BIN="$(command -v llvm-profdata-18 llvm-profdata-19 llvm-profdata-20 2>/dev/null | head -1 || true)"
           fi
           if [ -z "${PROFDATA_BIN}" ]; then
-            # This image builds LLVM via TheRock; the executables live under a
-            # bin/ dir in that tree (not /opt/rocm). Scan likely roots for an
-            # EXECUTABLE in a bin/ path so we skip source/test-tree hits like
-            # .../llvm/test/tools/llvm-profdata and .../llvm/tools/llvm-cov.
+            # Last resort: scan likely roots for any executable named exactly
+            # llvm-profdata (or version-suffixed). Do NOT exclude test/tools —
+            # this image legitimately ships the binaries there.
             echo "Scanning for llvm-profdata executable..."
-            for root in "${ROCM_PATH}" /root/hostDrive/therock /opt /usr; do
+            for root in /root/hostDrive/therock "${ROCM_PATH}" /opt /usr; do
               [ -d "${root}" ] || continue
               PROFDATA_BIN="$(find "${root}" -type f -executable \
-                                -path '*/bin/llvm-profdata*' 2>/dev/null \
-                              | grep -vE '/(test|tools)/' | head -1 || true)"
+                                \( -name 'llvm-profdata' -o -name 'llvm-profdata-*' \) \
+                              2>/dev/null | head -1 || true)"
               [ -n "${PROFDATA_BIN}" ] && break
             done
           fi
           if [ -z "${PROFDATA_BIN}" ]; then
-            echo "::error::llvm-profdata executable not found in PATH, ${ROCM_PATH}, /root/hostDrive/therock, /opt or /usr."
-            echo "Any matches (incl. non-bin):"
-            find "${ROCM_PATH}" /root/hostDrive/therock /opt /usr -name 'llvm-profdata*' 2>/dev/null | head -20 || true
+            echo "::error::llvm-profdata not found. Diagnostics below:"
+            echo "--- amdclang ---"; echo "${AMDCLANG:-<none>}"
+            echo "--- ls ${THEROCK_TOOLS} ---"; ls "${THEROCK_TOOLS}" 2>/dev/null | grep -iE 'llvm|profdata|cov' || true
+            echo "--- ls ${ROCM_PATH}/bin ---"; ls "${ROCM_PATH}/bin" 2>/dev/null | grep -iE 'llvm|profdata|cov' || true
+            [ -n "${AMDCLANG_BIN:-}" ] && { echo "--- ls amdclang bin (${AMDCLANG_BIN}) ---"; ls "${AMDCLANG_BIN}" 2>/dev/null | grep -iE 'llvm|profdata|cov' || true; }
+            echo "--- any llvm-profdata* under /root/hostDrive/therock ---"; find /root/hostDrive/therock -name 'llvm-profdata*' 2>/dev/null | head -20 || true
             exit 1
           fi
           LLVM_BIN="$(dirname "${PROFDATA_BIN}")"

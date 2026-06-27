@@ -91,7 +91,7 @@ jobs:
       image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -110,12 +110,13 @@ jobs:
           mkdir build && cd build
           cmake .. \
             -DBACKEND=HIP \
+            -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
             -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++"
           make -j$(nproc)
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-hip
           path: |
@@ -134,7 +135,7 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     steps:
       - name: Checkout merge target ref
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           fetch-depth: 0
@@ -154,12 +155,13 @@ jobs:
           mkdir build && cd build
           cmake .. \
             -DBACKEND=HIP \
+            -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
             -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++"
           make -j$(nproc)
 
       - name: Upload main build artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-hip-main
           path: |
@@ -178,7 +180,7 @@ jobs:
       image: mivisionx/ubuntu-24.04:rocm-7.13
       options: --device /dev/kfd --device /dev/dri
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -254,7 +256,7 @@ jobs:
           make -j$(nproc)
 
       - name: Upload debug build artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-hip-debug
           path: |
@@ -289,7 +291,7 @@ jobs:
       - build-hip-main
     steps:
       - name: Checkout repo (for perf_gate.py script)
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
@@ -304,13 +306,13 @@ jobs:
           amd-smi || true
 
       - name: Download PR build artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip
           path: ${{ github.workspace }}/pr-pkg
 
       - name: Download main build artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-main
           path: ${{ github.workspace }}/main-pkg
@@ -432,7 +434,7 @@ jobs:
 
       - name: Upload PR benchmark results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: perf-gate-hip-results-pr
           path: ${{ github.workspace }}/openvx-mark/build-pr/benchmark_results/
@@ -440,7 +442,7 @@ jobs:
 
       - name: Upload main benchmark results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: perf-gate-hip-results-main
           path: ${{ github.workspace }}/openvx-mark/build-main/benchmark_results/
@@ -463,9 +465,9 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -484,7 +486,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="GraphBase.*:Logging.*:SmokeTestBase.*:SmokeTest.*:TargetBase.*:Target.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-baseline
           path: profraw/
@@ -499,9 +501,9 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -520,7 +522,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="Graph.*:GraphCallback.*:GraphDelay.*:GraphROI.*:UserNode.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-graph
           path: profraw/
@@ -535,9 +537,9 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -556,7 +558,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="Scalar.*:Array.*:ObjectArray.*:Matrix.*:Convolution.*:Distribution.*:LUT.*:Histogram.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-data-objects
           path: profraw/
@@ -571,9 +573,9 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -592,7 +594,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="Image.*:vxCopyImagePatch.*:vxMapImagePatch.*:vxCreateImageFromChannel.*:vxCopyRemapPatch.*:vxMapRemapPatch.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-image-ops
           path: profraw/
@@ -607,9 +609,9 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -628,7 +630,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="ColorConvert.*:ChannelExtract.*:ChannelCombine.*:vxConvertDepth.*:vxuConvertDepth.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-color
           path: profraw/
@@ -643,9 +645,9 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -664,7 +666,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="Box3x3.*:Gaussian3x3.*:Median3x3.*:Dilate3x3.*:Erode3x3.*:Sobel3x3.*:Magnitude.*:Phase.*:NonLinearFilter.*:Convolve.*:EqualizeHistogram.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-filters
           path: profraw/
@@ -679,9 +681,9 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -700,7 +702,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="vxAddSub.*:vxuAddSub.*:vxMultiply.*:vxuMultiply.*:vxBinOp8u.*:vxuBinOp8u.*:vxBinOp16s.*:vxuBinOp16s.*:vxBinOp1u.*:vxuBinOp1u.*:vxNot.*:vxuNot.*:WeightedAverage.*:Threshold.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-arithmetic
           path: profraw/
@@ -715,9 +717,9 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -736,7 +738,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="Scale.*:WarpAffine.*:WarpPerspective.*:Remap.*:HalfScaleGaussian.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-geometric
           path: profraw/
@@ -751,9 +753,9 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -772,7 +774,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="HarrisCorners.*:FastCorners.*:vxCanny.*:vxuCanny.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-features
           path: profraw/
@@ -787,9 +789,9 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -808,7 +810,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="MeanStdDev.*:MinMaxLoc.*:Integral.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-statistics
           path: profraw/
@@ -823,9 +825,9 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -844,7 +846,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="GaussianPyramid.*:LaplacianPyramid.*:LaplacianReconstruct.*:OptFlowPyrLK.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-pyramid
           path: profraw/
@@ -861,9 +863,9 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
       - name: Validate ROCm
@@ -873,8 +875,8 @@ jobs:
       - name: Run API tests
         run: |
           mkdir -p profraw
-          export ROCM_PATH=$GITHUB_WORKSPACE/install
-          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib
+          export INSTALL_PATH=$GITHUB_WORKSPACE/install
+          export LD_LIBRARY_PATH=$INSTALL_PATH/lib:${ROCM_PATH}/lib
           export AGO_DEFAULT_TARGET=GPU
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/api_%p.profraw
 
@@ -913,7 +915,7 @@ jobs:
           fi
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-api-tests
           path: profraw/
@@ -928,9 +930,9 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
       - name: Install python3
@@ -955,7 +957,7 @@ jobs:
             --hidden no
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-gdf-tests
           path: profraw/
@@ -970,9 +972,9 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
       - name: Install python3
@@ -998,7 +1000,7 @@ jobs:
             --runvx_directory $GITHUB_WORKSPACE/install/bin --num_frames 10 --width 10 --height 10
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-tests
           path: profraw/
@@ -1036,7 +1038,7 @@ jobs:
       - gdf-tests-hip
       - vision-tests-hip
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
       - name: Install coverage tools
         run: |
@@ -1055,12 +1057,12 @@ jobs:
           amd-smi || true
 
       - name: Download debug build (for libopenvx.so)
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
 
       - name: Download all HIP profraw artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v4
         with:
           pattern: profraw-hip-*
           path: all-profraw
@@ -1314,7 +1316,7 @@ jobs:
 
       - name: Upload coverage artifacts
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: code-coverage-report-hip
           path: |

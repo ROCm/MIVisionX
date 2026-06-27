@@ -72,7 +72,7 @@ Use the following commands to install ``mivisionx``, ``mivisionx-dev``, and ``mi
 
     .. code:: shell
 
-      sudo zypper install mivisionx mivisionx-dev mivisionx-test
+      sudo zypper install mivisionx mivisionx-devel mivisionx-test
 
 
 The test package installs a ``ctest`` module to verify MIVisionX. Run the following commands to test the installation:

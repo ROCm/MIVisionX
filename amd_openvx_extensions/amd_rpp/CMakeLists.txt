@@ -156,9 +156,8 @@ if (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
     link_directories(${HIP_PATH}/lib)
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} hip::host)
     add_library(vx_rpp SHARED ${SOURCES})
-    set_target_properties(openvx PROPERTIES LINKER_LANGUAGE CXX)
-    set_target_properties(openvx PROPERTIES POSITION_INDEPENDENT_CODE ON)
-    # TBD -- CHECK to FIX
+    set_target_properties(vx_rpp PROPERTIES LINKER_LANGUAGE CXX)
+    set_target_properties(vx_rpp PROPERTIES POSITION_INDEPENDENT_CODE ON)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGPU_SUPPORT=1 -DRPP_BACKEND_HIP=1") # Currently used by rpp. To be removed.
 else()
     message("-- ${Green}vx_rpp -- Building with CPU backend${ColourReset}")

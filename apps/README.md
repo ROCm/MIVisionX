@@ -16,6 +16,6 @@ This sample [application](./bubble_pop) creates bubbles and donuts to pop using 
 
 ## Optical Flow
 
-This sample [application](./optical_flow/README.md#openvx-samples) creates an OpenVX graph to run Optical Flow on a video/live stream. It uses <a href="https://en.wikipedia.org/wiki/OpenCV" target="_blank">OpenCV</a> to decode the input video and display the output.
+This sample [application](./optical_flow/README.md) creates an OpenVX graph to run Optical Flow on a video/live stream. It uses <a href="https://en.wikipedia.org/wiki/OpenCV" target="_blank">OpenCV</a> to decode the input video and display the output.
 
 <p align="center"> <img width="60%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/optical_flow_video.gif"> </p>

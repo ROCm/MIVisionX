@@ -12,6 +12,7 @@ If available, this project uses OpenCV for camera capture and image display.
   + Linux: install the [ROCm Core SDK](https://rocm.docs.amd.com/en/latest/install/rocm.html) (ROCm `7.13` or later)
 * OpenCV `3.4+` [optional] — enables camera capture and image/video display
   + Windows: set the `OpenCV_DIR` environment variable to the `OpenCV/build` folder
+* OpenSSL / `libssl-dev` [optional, Linux only] — enables MD5 checksum verification in the `compare` GDF command; a built-in fallback is used when not present (Windows uses `wincrypt.h` automatically)
 
 ## RunVX Usage and GDF Syntax
     runvx.exe [options] <file.gdf> [argument(s)]

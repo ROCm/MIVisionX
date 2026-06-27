@@ -4,9 +4,6 @@
 
 <p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/MIVisionX.png" /></p>
 
-> [!NOTE]
-> The published documentation is available at [MIVisionX](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/index.html) in an organized, easy-to-read format, with search and a table of contents. The documentation source files reside in the `docs` folder of this repository. For more information on contributing to the documentation, see [Contribute to ROCm documentation](https://rocm.docs.amd.com/en/latest/contribute/contributing.html).
-
 AMD MIVisionX is a computer vision toolkit built around a highly optimized, conformant open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX&trade; 1.3</a> specification. As of the `4.0.0` release, MIVisionX ships three components: the [AMD OpenVX&trade;](amd_openvx/README.md) engine, the [AMD RPP](amd_openvx_extensions/amd_rpp/README.md) OpenVX extension, and the [RunVX](utilities/runvx/README.md#amd-runvx) graph executor — across `CPU`, `HIP`, and `OpenCL` backends.
 
 ## AMD OpenVX&trade; Extensions
@@ -58,6 +55,7 @@ The **ROCm Core SDK** (ROCm `7.13` or later) provides everything MIVisionX needs
 |---------|----------------|-------|
 | CMake | `3.10` | install from your distribution: `sudo apt install cmake` |
 | OpenCV | `3.X` / `4.X` | optional — only used by `RunVX` for image/video display |
+| OpenSSL / libcrypto | any | optional, Linux only — enables MD5 checksums in `RunVX` `compare` commands; a built-in fallback is used when absent (Windows uses `wincrypt.h` automatically) |
 
 > [!IMPORTANT]
 > * Required compiler support: `C++17`, `OpenMP`, `Threads`
@@ -167,7 +165,7 @@ cmake --build build --config Release
 macOS [build instructions](https://github.com/ROCm/MIVisionX/wiki/macOS#macos-build-instructions)
 
 > [!IMPORTANT]
-> macOS supports the CPU backend only (`x86` processors).
+> macOS supports the CPU backend only.
 
 ## Verify installation
 

@@ -73,7 +73,6 @@ THE SOFTWARE.
 
 /*! \brief The Neural Network activation functions vx_nn_activation_function_e extension.
  * \ingroup group_amd
- * \ingroup group_amd_nn
  */
 #define VX_NN_ACTIVATION_LEAKY_RELU (VX_ENUM_BASE(VX_ID_AMD, VX_ENUM_NN_ACTIVATION_FUNCTION_TYPE) + 0x9)
 

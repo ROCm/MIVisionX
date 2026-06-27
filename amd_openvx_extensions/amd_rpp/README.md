@@ -21,7 +21,7 @@ vxLoadKernels(context, "vx_rpp");
 | `org.rpp.ColorTemperature` | Color temperature shift |
 | `org.rpp.Contrast` | Contrast adjustment |
 | `org.rpp.Exposure` | Exposure adjustment |
-| `org.rpp.Fisheye` | Fisheye lens distortion |
+| `org.rpp.FishEye` | Fisheye lens distortion |
 | `org.rpp.Flip` | Horizontal/vertical flip |
 | `org.rpp.Fog` | Fog overlay effect |
 | `org.rpp.GammaCorrection` | Gamma correction |
@@ -32,7 +32,7 @@ vxLoadKernels(context, "vx_rpp");
 | `org.rpp.Rain` | Rain overlay effect |
 | `org.rpp.ResizeCrop` | Resize and crop |
 | `org.rpp.Rotate` | Image rotation |
-| `org.rpp.NoiseSnp` | Salt-and-pepper noise |
+| `org.rpp.Noise` | Salt-and-pepper noise |
 | `org.rpp.Snow` | Snow overlay effect |
 | `org.rpp.Vignette` | Vignette effect |
 | `org.rpp.WarpAffine` | Affine warp |

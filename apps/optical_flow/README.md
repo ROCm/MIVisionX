@@ -33,8 +33,8 @@ make
 ./opticalFlow --live <capture-device-id>
 ```
 
-Example using the included sample video:
+Example using the included sample video (adjust the path to where MIVisionX was cloned):
 
 ```shell
-./opticalFlow --video ../../../data/videos/AMD_driving_virtual_20.mp4
+./opticalFlow --video /path/to/MIVisionX/data/videos/AMD_driving_virtual_20.mp4
 ```

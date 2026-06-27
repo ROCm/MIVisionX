@@ -1040,8 +1040,14 @@ jobs:
 
       - name: Install coverage tools
         run: |
+          # python3 is required (summary script). lcov/genhtml are only used for
+          # the optional HTML report; if the image can't provide them, don't
+          # fail the job — the llvm-cov text/json/lcov outputs still produce the
+          # coverage numbers and the genhtml step is guarded below.
           apt-get update -qq
-          apt-get install -y --no-install-recommends python3 lcov
+          apt-get install -y --no-install-recommends python3
+          apt-get install -y --no-install-recommends lcov \
+            || echo "::warning::lcov not available — HTML coverage report will be skipped"
 
       - name: Validate ROCm
         run: |
@@ -1079,21 +1085,49 @@ jobs:
             echo "No profraw files were collected from test jobs." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
-          # The LLVM bin dir moved between ROCm images: older images ship it at
-          # ${ROCM_PATH}/llvm/bin, the mivisionx image at ${ROCM_PATH}/lib/llvm/bin.
-          # Resolve it and export for the report step so both stay in sync.
-          LLVM_BIN=""
-          for d in "${ROCM_PATH}/lib/llvm/bin" "${ROCM_PATH}/llvm/bin"; do
-            if [ -x "${d}/llvm-profdata" ]; then LLVM_BIN="${d}"; break; fi
+          # Locate llvm-profdata. Its directory varies by ROCm image
+          # (${ROCM_PATH}/lib/llvm/bin, ${ROCM_PATH}/llvm/bin), it may be on
+          # PATH, and it may be version-suffixed (llvm-profdata-18). Search all
+          # of these, then fall back to a filesystem scan. Export both the tool
+          # and its bin dir so the report step uses the SAME LLVM build (the
+          # profdata format must match the instrumenting toolchain).
+          PROFDATA_BIN=""
+          for cand in llvm-profdata \
+                      "${ROCM_PATH}/lib/llvm/bin/llvm-profdata" \
+                      "${ROCM_PATH}/llvm/bin/llvm-profdata" \
+                      "${ROCM_PATH}/bin/llvm-profdata"; do
+            if command -v "${cand}" >/dev/null 2>&1; then
+              PROFDATA_BIN="$(command -v "${cand}")"; break
+            fi
           done
-          if [ -z "${LLVM_BIN}" ]; then
-            echo "::error::llvm-profdata not found under ${ROCM_PATH}/lib/llvm/bin or ${ROCM_PATH}/llvm/bin"
+          if [ -z "${PROFDATA_BIN}" ]; then
+            PROFDATA_BIN="$(command -v llvm-profdata-18 llvm-profdata-19 llvm-profdata-20 2>/dev/null | head -1 || true)"
+          fi
+          if [ -z "${PROFDATA_BIN}" ]; then
+            # This image builds LLVM via TheRock; the executables live under a
+            # bin/ dir in that tree (not /opt/rocm). Scan likely roots for an
+            # EXECUTABLE in a bin/ path so we skip source/test-tree hits like
+            # .../llvm/test/tools/llvm-profdata and .../llvm/tools/llvm-cov.
+            echo "Scanning for llvm-profdata executable..."
+            for root in "${ROCM_PATH}" /root/hostDrive/therock /opt /usr; do
+              [ -d "${root}" ] || continue
+              PROFDATA_BIN="$(find "${root}" -type f -executable \
+                                -path '*/bin/llvm-profdata*' 2>/dev/null \
+                              | grep -vE '/(test|tools)/' | head -1 || true)"
+              [ -n "${PROFDATA_BIN}" ] && break
+            done
+          fi
+          if [ -z "${PROFDATA_BIN}" ]; then
+            echo "::error::llvm-profdata executable not found in PATH, ${ROCM_PATH}, /root/hostDrive/therock, /opt or /usr."
+            echo "Any matches (incl. non-bin):"
+            find "${ROCM_PATH}" /root/hostDrive/therock /opt /usr -name 'llvm-profdata*' 2>/dev/null | head -20 || true
             exit 1
           fi
+          LLVM_BIN="$(dirname "${PROFDATA_BIN}")"
           echo "Using LLVM tools from: ${LLVM_BIN}"
           echo "LLVM_BIN=${LLVM_BIN}" >> "$GITHUB_ENV"
           # --failure-mode=all skips corrupt files instead of aborting.
-          "${LLVM_BIN}/llvm-profdata" merge \
+          "${PROFDATA_BIN}" merge \
             -sparse \
             --failure-mode=all \
             -f profraw_list.txt \
@@ -1101,7 +1135,17 @@ jobs:
 
       - name: Generate coverage report
         run: |
+          # LLVM_BIN was resolved and exported by the merge step. Pick llvm-cov
+          # from the same dir; fall back to a version-suffixed name if needed so
+          # the cov tool matches the profdata that produced coverage.profdata.
           LLVM_COV="${LLVM_BIN}/llvm-cov"
+          if [ ! -x "${LLVM_COV}" ]; then
+            LLVM_COV="$(ls "${LLVM_BIN}"/llvm-cov* 2>/dev/null | head -1 || true)"
+          fi
+          if [ -z "${LLVM_COV}" ] || [ ! -x "${LLVM_COV}" ]; then
+            echo "::error::llvm-cov not found in ${LLVM_BIN}"
+            exit 1
+          fi
           LIBOPENVX="$GITHUB_WORKSPACE/install/lib/libopenvx.so"
           PROFDATA="$GITHUB_WORKSPACE/coverage.profdata"
 
@@ -1122,18 +1166,23 @@ jobs:
             -ignore-filename-regex='(test|conformance)' \
             > coverage.lcov
 
-          # lcov/genhtml installed in the "Install coverage tools" step above
-          GENHTML_EXTRA_ARGS=()
-          if genhtml --version 2>&1 | grep -qE 'LCOV version ([2-9]|[1-9][0-9])'; then
-            GENHTML_EXTRA_ARGS+=(--ignore-errors unmapped)
+          # genhtml (from lcov) is optional — skip the HTML report if it isn't
+          # installed. The coverage numbers come from llvm-cov above regardless.
+          if command -v genhtml >/dev/null 2>&1; then
+            GENHTML_EXTRA_ARGS=()
+            if genhtml --version 2>&1 | grep -qE 'LCOV version ([2-9]|[1-9][0-9])'; then
+              GENHTML_EXTRA_ARGS+=(--ignore-errors unmapped)
+            fi
+            genhtml coverage.lcov \
+              --output-directory coverage_html \
+              --branch-coverage \
+              --title "AMD OpenVX Code Coverage (HIP)" \
+              --ignore-errors source \
+              "${GENHTML_EXTRA_ARGS[@]}" \
+              2>&1 || echo "::warning::genhtml had errors"
+          else
+            echo "::warning::genhtml not installed — skipping HTML coverage report"
           fi
-          genhtml coverage.lcov \
-            --output-directory coverage_html \
-            --branch-coverage \
-            --title "AMD OpenVX Code Coverage (HIP)" \
-            --ignore-errors source \
-            "${GENHTML_EXTRA_ARGS[@]}" \
-            2>&1 || echo "::warning::genhtml had errors"
 
       - name: Post coverage summary
         if: always()

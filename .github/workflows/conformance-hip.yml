@@ -1062,9 +1062,15 @@ jobs:
 
       - name: Merge profraw files
         run: |
-          echo "Profraw files found:"
-          find all-profraw -name '*.profraw' -type f | head -50
-          PROFRAW_COUNT=$(find all-profraw -name '*.profraw' -type f | wc -l)
+          # Collect paths into a file FIRST. Steps run under bash -eo pipefail,
+          # so `find ... | head -50` makes find die with SIGPIPE (exit 141)
+          # when there are >50 files and head closes the pipe early — that
+          # propagates through pipefail and fails the step. Read display/count
+          # from the file instead so nothing closes find's pipe.
+          find all-profraw -name '*.profraw' -type f > profraw_list.txt
+          PROFRAW_COUNT=$(wc -l < profraw_list.txt)
+          echo "Profraw files found (first 50):"
+          head -50 profraw_list.txt
           echo "Total profraw files: ${PROFRAW_COUNT}"
           if [ "$PROFRAW_COUNT" -eq 0 ]; then
             echo "::error::No profraw files found — no coverage data collected"
@@ -1073,10 +1079,7 @@ jobs:
             echo "No profraw files were collected from test jobs." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
-          # Collect paths into a file to avoid SIGPIPE from find→xargs pipe
-          # when llvm-profdata exits early on a bad profraw.
           # --failure-mode=all skips corrupt files instead of aborting.
-          find all-profraw -name '*.profraw' -type f > profraw_list.txt
           "${ROCM_PATH}/llvm/bin/llvm-profdata" merge \
             -sparse \
             --failure-mode=all \

@@ -32,9 +32,6 @@ on:
       - '**/*.md'
       - 'docs/**'
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   # ===========================================================================
   # Build Stage — three builds run in parallel
@@ -44,7 +41,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -60,7 +57,7 @@ jobs:
           make -j$(nproc)
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: build-artifacts
           path: |
@@ -75,7 +72,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout merge target ref
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           fetch-depth: 0
@@ -92,7 +89,7 @@ jobs:
           make -j$(nproc)
 
       - name: Upload main build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: build-artifacts-main
           path: |
@@ -105,7 +102,7 @@ jobs:
     name: Build AMD OpenVX (Debug + Coverage)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -165,7 +162,7 @@ jobs:
           make -j$(nproc)
 
       - name: Upload debug build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: build-artifacts-debug
           path: |
@@ -189,7 +186,7 @@ jobs:
       - build-main
     steps:
       - name: Checkout repo (for perf_gate.py script)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 1
 
@@ -199,13 +196,13 @@ jobs:
           sudo apt-get install -y build-essential cmake git python3
 
       - name: Download PR build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts
           path: ${{ github.workspace }}/pr-pkg
 
       - name: Download main build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-main
           path: ${{ github.workspace }}/main-pkg
@@ -323,7 +320,7 @@ jobs:
 
       - name: Upload PR benchmark results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: perf-gate-results-pr
           path: ${{ github.workspace }}/openvx-mark/build-pr/benchmark_results/
@@ -331,7 +328,7 @@ jobs:
 
       - name: Upload main benchmark results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: perf-gate-results-main
           path: ${{ github.workspace }}/openvx-mark/build-main/benchmark_results/
@@ -348,9 +345,9 @@ jobs:
     runs-on: ubuntu-24.04
     needs: build-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-debug
       - name: Run baseline tests
@@ -364,7 +361,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="GraphBase.*:Logging.*:SmokeTestBase.*:SmokeTest.*:TargetBase.*:Target.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-baseline
           path: profraw/
@@ -375,9 +372,9 @@ jobs:
     needs: build-debug
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-debug
       - name: Run graph tests
@@ -391,7 +388,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="Graph.*:GraphCallback.*:GraphDelay.*:GraphROI.*:UserNode.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-graph
           path: profraw/
@@ -402,9 +399,9 @@ jobs:
     needs: build-debug
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-debug
       - name: Run data object tests
@@ -418,7 +415,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="Scalar.*:Array.*:ObjectArray.*:Matrix.*:Convolution.*:Distribution.*:LUT.*:Histogram.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-data-objects
           path: profraw/
@@ -429,9 +426,9 @@ jobs:
     needs: build-debug
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-debug
       - name: Run image operation tests
@@ -445,7 +442,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="Image.*:vxCopyImagePatch.*:vxMapImagePatch.*:vxCreateImageFromChannel.*:vxCopyRemapPatch.*:vxMapRemapPatch.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-image-ops
           path: profraw/
@@ -456,9 +453,9 @@ jobs:
     needs: build-debug
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-debug
       - name: Run color and channel tests
@@ -472,7 +469,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="ColorConvert.*:ChannelExtract.*:ChannelCombine.*:vxConvertDepth.*:vxuConvertDepth.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-vision-color
           path: profraw/
@@ -483,9 +480,9 @@ jobs:
     needs: build-debug
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-debug
       - name: Run filter and morphology tests
@@ -499,7 +496,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="Box3x3.*:Gaussian3x3.*:Median3x3.*:Dilate3x3.*:Erode3x3.*:Sobel3x3.*:Magnitude.*:Phase.*:NonLinearFilter.*:Convolve.*:EqualizeHistogram.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-vision-filters
           path: profraw/
@@ -510,9 +507,9 @@ jobs:
     needs: build-debug
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-debug
       - name: Run arithmetic and bitwise tests
@@ -526,7 +523,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="vxAddSub.*:vxuAddSub.*:vxMultiply.*:vxuMultiply.*:vxBinOp8u.*:vxuBinOp8u.*:vxBinOp16s.*:vxuBinOp16s.*:vxBinOp1u.*:vxuBinOp1u.*:vxNot.*:vxuNot.*:WeightedAverage.*:Threshold.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-vision-arithmetic
           path: profraw/
@@ -537,9 +534,9 @@ jobs:
     needs: build-debug
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-debug
       - name: Run geometric transform tests
@@ -553,7 +550,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="Scale.*:WarpAffine.*:WarpPerspective.*:Remap.*:HalfScaleGaussian.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-vision-geometric
           path: profraw/
@@ -564,9 +561,9 @@ jobs:
     needs: build-debug
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-debug
       - name: Run feature and edge detection tests
@@ -580,7 +577,7 @@ jobs:
           timeout 600 ./bin/vx_test_conformance --filter="HarrisCorners.*:FastCorners.*:vxCanny.*:vxuCanny.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-vision-features
           path: profraw/
@@ -591,9 +588,9 @@ jobs:
     needs: build-debug
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-debug
       - name: Run statistics and analysis tests
@@ -607,7 +604,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="MeanStdDev.*:MinMaxLoc.*:Integral.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-vision-statistics
           path: profraw/
@@ -618,9 +615,9 @@ jobs:
     needs: build-debug
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-debug
       - name: Run pyramid and optical flow tests
@@ -634,7 +631,7 @@ jobs:
           timeout 300 ./bin/vx_test_conformance --filter="GaussianPyramid.*:LaplacianPyramid.*:LaplacianReconstruct.*:OptFlowPyrLK.*"
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-vision-pyramid
           path: profraw/
@@ -648,9 +645,9 @@ jobs:
     needs: build-debug
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-debug
       - name: Run API tests
@@ -696,7 +693,7 @@ jobs:
           fi
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-api-tests
           path: profraw/
@@ -708,9 +705,9 @@ jobs:
     needs: build-debug
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-debug
       - name: Run GDF tests
@@ -727,7 +724,7 @@ jobs:
             --hidden no
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-gdf-tests
           path: profraw/
@@ -739,9 +736,9 @@ jobs:
     needs: build-debug
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-debug
       - name: Run parametrized vision node tests
@@ -762,7 +759,7 @@ jobs:
             --runvx_directory ${{ github.workspace }}/install/bin --num_frames 10 --width 10 --height 10
       - name: Upload profraw
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: profraw-vision-tests
           path: profraw/
@@ -844,7 +841,7 @@ jobs:
       - gdf-tests
     if: always() && needs.build.result == 'success' && needs.baseline.result == 'success'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install benchmark dependencies
         run: |
@@ -856,7 +853,7 @@ jobs:
           pkg-config --modversion opencv4 || true
 
       - name: Download AMD OpenVX Release artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts
           path: ${{ github.workspace }}/artifacts
@@ -1024,7 +1021,7 @@ jobs:
 
       - name: Upload per-impl benchmark results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: benchmark-results
           path: |
@@ -1035,7 +1032,7 @@ jobs:
 
       - name: Upload pairwise comparison
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: benchmark-comparison
           path: ${{ github.workspace }}/openvx-mark/comparisons/
@@ -1049,7 +1046,7 @@ jobs:
       # flagged.
       - name: Upload sentinel output dumps
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: cross-verify-dumps
           path: |
@@ -1083,7 +1080,7 @@ jobs:
       - gdf-tests
       - vision-tests
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install LLVM tools and lcov
         run: |
@@ -1091,12 +1088,12 @@ jobs:
           sudo apt-get install -y llvm lcov
 
       - name: Download debug build (for libopenvx.so)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: build-artifacts-debug
 
       - name: Download all profraw artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           pattern: profraw-*
           path: all-profraw
@@ -1115,8 +1112,12 @@ jobs:
             echo "No profraw files were collected from test jobs." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
-          find all-profraw -name '*.profraw' -type f -print0 \
-            | xargs -0 llvm-profdata merge -sparse -o coverage.profdata
+          find all-profraw -name '*.profraw' -type f > profraw_list.txt
+          llvm-profdata merge \
+            -sparse \
+            --failure-mode=all \
+            -f profraw_list.txt \
+            -o coverage.profdata
 
       - name: Generate coverage report
         run: |
@@ -1305,7 +1306,7 @@ jobs:
 
       - name: Upload coverage artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: code-coverage-report
           path: |

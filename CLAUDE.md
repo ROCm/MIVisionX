@@ -1,6 +1,6 @@
 # MIVisionX
 
-AMD MIVisionX toolkit - version 3.5.0. Computer vision and machine intelligence libraries, utilities, and applications built on AMD OpenVX.
+AMD MIVisionX toolkit - version 4.0.0. A streamlined computer vision toolkit built on AMD OpenVX. As of 4.0.0, the project is reduced to its core: the AMD OpenVX engine, the AMD RPP OpenVX extension, and the RunVX graph executor, across `CPU`, `HIP`, and `OpenCL` backends.
 
 ## Project Structure
 
@@ -13,31 +13,17 @@ MIVisionX/
 │       ├── hipvx/                 # HIP GPU backend kernels
 │       └── include/               # Khronos OpenVX 1.3 standard headers (VX/) + AMD extensions
 ├── amd_openvx_extensions/         # OpenVX extension modules
-│   ├── amd_nn/                    # Neural network extension (MIOpen-based)
-│   ├── amd_opencv/                # OpenCV interop extension
-│   ├── amd_media/                 # FFmpeg media extension
-│   ├── amd_rpp/                   # ROCm Performance Primitives extension
-│   ├── amd_migraphx/              # MIGraphX inference extension
-│   ├── amd_loomsl/                # Loom stitch library (OpenCL only)
-│   ├── amd_custom/                # Custom kernel extension (HIP only)
-│   └── amd_winml/                 # Windows ML extension
+│   └── amd_rpp/                   # ROCm Performance Primitives extension (CPU/HIP; CPU-only with OpenCL core)
 ├── utilities/                     # CLI tools
-│   ├── runvx/                     # OpenVX graph executor
-│   ├── runcl/                     # OpenCL kernel runner
-│   ├── mv_deploy/                 # Model deployment tool
-│   ├── loom_shell/                # Loom stitch shell
-│   └── loom_io_media/             # Loom I/O media
+│   └── runvx/                     # OpenVX graph executor
 ├── tests/                         # Test suites
 │   ├── openvx_conformance_tests/  # Khronos OpenVX CTS runner (runConformanceTests.py)
 │   ├── openvx_api_tests/          # Individual API test programs
 │   ├── amd_openvx_gdfs/           # GDF (Graph Description Format) test scripts
 │   ├── vision_tests/              # Python-driven vision node tests
-│   ├── neural_network_tests/      # NN model import tests (caffe, onnx, nnef)
-│   └── ...                        # Extension-specific tests
-├── apps/                          # Sample applications
-├── model_compiler/                # Model compiler
-├── toolkit/                       # Additional toolkit utilities
-├── docker/                        # Dockerfiles (build, conformance, release)
+│   └── vx_rpp_tests/              # AMD RPP extension GDF tests
+├── apps/                          # Sample CV apps (bubble_pop, optical_flow) - OpenVX + OpenCV, built separately
+├── samples/                       # Sample GDF graphs and c_samples (canny)
 ├── cmake/                         # CMake find modules
 ├── docs/                          # Documentation (Sphinx-based)
 ├── .github/workflows/             # GitHub Actions workflows
@@ -54,11 +40,9 @@ CMake >= 3.10, C++17 required. Default compiler: `amdclang++` (from ROCm), falls
 
 | Option | Values | Default | Description |
 |--------|--------|---------|-------------|
-| `BACKEND` | `HIP`, `OPENCL`/`OCL`, `CPU`/`host` | `HIP` | GPU backend (macOS forces `CPU`) |
+| `BACKEND` | `HIP`, `OPENCL`/`OCL`, `CPU`/`host` | `HIP` | GPU backend (Windows defaults to `OpenCL`, macOS forces `CPU`) |
 | `GPU_SUPPORT` | `ON`/`OFF` | `ON` | Enable GPU support (macOS forces `OFF`) |
-| `NEURAL_NET` | `ON`/`OFF` | `ON` | Neural net extension |
-| `LOOM` | `ON`/`OFF` | `ON` | Loom stitch library |
-| `MIGRAPHX` | `ON`/`OFF` | `OFF` | MIGraphX support |
+| `CODE_COVERAGE` | `ON`/`OFF` | `OFF` | LLVM source-based coverage instrumentation |
 
 ### Build Commands
 
@@ -87,8 +71,8 @@ Default install prefix: `${ROCM_PATH}` (defaults to `/opt/rocm`).
 
 ### Build Output
 
-- Libraries go to `build/lib/` (`libopenvx.so`, `libvxu.so`, extensions)
-- Binaries go to `build/bin/` (`runvx`, `runcl`, etc.)
+- Libraries go to `build/lib/` (`libopenvx.so`, `libvxu.so`, `libvx_rpp.so`)
+- Binaries go to `build/bin/` (`runvx`)
 
 ## OpenVX Conformance Tests
 
@@ -125,8 +109,11 @@ The CTS needs these CMake variables pointing to the pre-built MIVisionX:
 
 ## Dependencies
 
+MIVisionX 4.0+ is built on the **ROCm Core SDK** and requires **ROCm 7.13 or later** (install via the [ROCm install guide](https://rocm.docs.amd.com/en/latest/install/rocm.html), e.g. `amdrocm-core-sdk7.13-gfx<arch>`). The Core SDK provides HIP, OpenCL, `amdclang++`, OpenMP, `half`, and `RPP`.
+
 **Core (CPU-only):** CMake >= 3.10, C++17 compiler, SSE4.2 support
-**HIP backend:** ROCm (hip::host, hip::device)
-**OpenCL backend:** OpenCL libraries/headers
-**Extensions:** MIOpen, OpenCV 3.x/4.x, FFmpeg, RPP >= 3.1.0 (each optional)
+**HIP backend:** ROCm (hip::host, hip::device) — from the ROCm Core SDK
+**OpenCL backend:** OpenCL libraries/headers — from the ROCm Core SDK
+**amd_rpp extension:** RPP >= 3.1.0 (CPU/HIP; CPU-only with an OpenCL core) — from the ROCm Core SDK
+**Optional:** OpenCV 3.x/4.x (RunVX display only)
 **Linux link libs:** `dl`, `m` (core); `pthread`, `dl`, `m`, `rt` (conformance tests)

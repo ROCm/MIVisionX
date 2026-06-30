@@ -53,7 +53,7 @@ left_nav_title = f"MIVisionX {version_number} Documentation"
 # for PDF output on Read the Docs
 project = "MIVisionX Documentation"
 author = "Advanced Micro Devices, Inc."
-copyright = "Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved."
+copyright = "Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved."
 version = version_number
 release = version_number
 

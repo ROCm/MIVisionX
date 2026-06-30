@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Khronos Group Inc.
+ * Copyright (c) 2012-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _OPENVX_OPENCL_INTEROP_H_
-#define _OPENVX_OPENCL_INTEROP_H_
+#ifndef OPENVX_OPENCL_INTEROP_H
+#define OPENVX_OPENCL_INTEROP_H
 
 #include <VX/vx.h>
 #if __APPLE__
@@ -34,28 +34,33 @@
  *  \ingroup group_opencl_interop
  */
 
-/* The vx_memory_type_e enum to import from the OpenCL buffer.
+/*! \brief The vx_memory_type_e enum to import from the OpenCL buffer.
+ *  \ingroup group_opencl_interop
  */
 #define VX_MEMORY_TYPE_OPENCL_BUFFER    (VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_MEMORY_TYPE) + 0x2)
 
-/* vx_context attribute to query the OpenCL context associated with the OpenVX context.
+/*! \brief vx_context attribute to query the OpenCL context associated with the OpenVX context.
  * Read-only.
+ * \ingroup group_opencl_interop
  */
 #define VX_CONTEXT_CL_CONTEXT           (VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_CONTEXT) + 0xF)
 
-/* vx_context attribute to query the coordination command queue associated with the OpenVX context.
+/*! \brief vx_context attribute to query the coordination command queue associated with the OpenVX context.
  * Read-only.
+ * \ingroup group_opencl_interop
  */
 #define VX_CONTEXT_CL_COMMAND_QUEUE     (VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_CONTEXT) + 0x10)
 
-/* vx_node attribute to query the cl_command_queue associated with a user kernel node.
+/*! \brief vx_node attribute to query the cl_command_queue associated with a user kernel node.
  * Read-only.
+ * \ingroup group_opencl_interop
  */
 #define VX_NODE_CL_COMMAND_QUEUE        (VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_NODE) + 0x9)
 
-/* vx_kernel attribute to specify and query whether a user kernel is using the vx_khr_opencl_interop API.
+/*! \brief vx_kernel attribute to specify and query whether a user kernel is using the vx_khr_opencl_interop API.
  * Return value is vx_bool. The default value of this attribute is vx_false_e.
  * This attribute is read-only after the vxFinalizeKernel call.
+ * \ingroup group_opencl_interop
  */
 #define VX_KERNEL_USE_OPENCL            (VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_KERNEL) + 0x4)
 
@@ -73,9 +78,9 @@ extern "C" {
  * the VX_CONTEXT_CL_CONTEXT and VX_CONTEXT_CL_COMMAND_QUEUE attributes of vx_context.
  *
  * If the OpenVX context is created using vxCreateContext or vxCreateContextFromCL with
- * opencl_context as NULL, the OpenCL context used by OpenVX is implementation dependent.
+ * opencl_context as NULL, the OpenCL context used by OpenVX is implementation-defined.
  * If the opencl_command_queue is NULL, the global coordination command queue used by
- * OpenVX is implementation dependent.
+ * OpenVX is implementation-defined.
  *
  * The global coordination command queue must be created using the OpenCL context used by OpenVX.
  *

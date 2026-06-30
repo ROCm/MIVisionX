@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Khronos Group Inc.
+ * Copyright (c) 2012-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _VX_KHR_CLASSIFIER_H_
-#define _VX_KHR_CLASSIFIER_H_
+#ifndef VX_KHR_CLASSIFIER_H
+#define VX_KHR_CLASSIFIER_H
 
 /*!
  * \file
@@ -38,7 +38,7 @@ extern "C" {
 /*! \brief The list of Classifier Extension Kernels.
  * \ingroup group_classifier
  */
-enum vx_kernel_nn_ext_e {
+enum vx_kernel_class_ext_e {
     /*! \brief The Classifier Extension scan kernel.
     * \see group_classifier
     */
@@ -68,7 +68,7 @@ typedef struct _vx_classifier_model* vx_classifier_model;
 enum vx_classifier_model_format_e
 {
 	/*! \brief Undefined binary format.
-	* Using this enumeration will result in an implementation defined behaviour.
+	* Using this enumeration will result in an implementation-defined behavior.
 	*/
 	VX_CLASSIFIER_MODEL_UNDEFINED = VX_ENUM_BASE( VX_ID_KHRONOS, VX_ENUM_CLASSIFIER_MODEL ) + 0x0,
 };
@@ -76,7 +76,7 @@ enum vx_classifier_model_format_e
  * \ingroup group_object_classifier_model
  */
 enum vx_classifier_type_e {
-	VX_TYPE_CLASSIFER_MODEL     = 0x02C,/*!< \brief A <tt>\ref vx_classifier_model</tt>. type */
+	VX_TYPE_CLASSIFIER_MODEL    = 0x02C,/*!< \brief A <tt>\ref vx_classifier_model</tt>. type */
 };
 
 /*==============================================================================
@@ -102,8 +102,8 @@ VX_API_ENTRY vx_classifier_model VX_API_CALL vxImportClassifierModel(vx_context 
  * count is zero. After returning from this function the reference is zeroed/cleared.
  * \param [in] model The pointer to the ClassifierModel to release.
  * \return A <tt>\ref vx_status_e</tt> enumeration.
- * \retval <tt>\ref VX_SUCCESS</tt> No errors; all other values indicate failure
- * \retval * An error occurred. See <tt\ref >vx_status_e</tt>.
+ * \retval VX_SUCCESS No errors; all other values indicate failure.
+ * \retval * An error occurred. See <tt>\ref vx_status_e</tt>.
  * \ingroup group_object_classifier_model
  */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseClassifierModel(vx_classifier_model* model);
@@ -112,14 +112,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseClassifierModel(vx_classifier_model*
  * \param [in] graph The reference to the graph
  * \param [in] input_feature_map The Feature-map, example is the output of <tt>\ref vxHOGFeaturesNode</tt>.
  * \param [in] model The pre-trained model loaded. Loaded using <tt>\ref vxImportClassifierModel</tt>
- * \param [in] scan_window_width Width of the scan window
- * \param [in] scan_window_height Height of the scan window
+ * \param [in] scanwindow_width Width of the scan window
+ * \param [in] scanwindow_height Height of the scan window
  * \param [in] step_x Horizontal step-size (along x-axis)
  * \param [in] step_y Vertical step-size (along y-axis)
  * \param [out] object_confidences [Optional] An array of confidences measure, the measure is of type <tt>\ref VX_TYPE_UINT16</tt>. The confidence measure is defined by the extensions which define classification model with defined binary format.
  * This output can be used as class index as well. In case we detect several different classes in single execution. The output will be an array of indexes of the classes.
  * \param [out] object_rectangles An array of object positions, in <tt>\ref VX_TYPE_RECTANGLE</tt>
- * \param [out] num_objects [optional] The number of object detected in a <tt>\ref VX_SIZE</tt> scalar
+ * \param [out] num_objects [optional] The number of object detected in a <tt>\ref vx_size</tt> scalar
  * \note The border mode <tt>\ref VX_NODE_BORDER</tt> value <tt>\ref VX_BORDER_UNDEFINED</tt> is supported.
  * \ingroup group_vision_function_classifier
  * \return <tt>\ref vx_node</tt>.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Khronos Group Inc.
+ * Copyright (c) 2012-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _OPENVX_USER_DATA_OBJECT_H_
-#define _OPENVX_USER_DATA_OBJECT_H_
+#ifndef OPENVX_USER_DATA_OBJECT_H
+#define OPENVX_USER_DATA_OBJECT_H
 
 /*!
  * \file
@@ -50,6 +50,10 @@ enum vx_user_data_object_attribute_e {
     VX_USER_DATA_OBJECT_NAME = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_USER_DATA_OBJECT) + 0x0,
     /*! \brief The number of bytes in the user data object. Read-only. Use a <tt>\ref vx_size</tt> parameter. */
     VX_USER_DATA_OBJECT_SIZE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_USER_DATA_OBJECT) + 0x1,
+    /*! \brief The number of valid bytes in the user data object. Must be less than or equal to the value of VX_USER_DATA_OBJECT_SIZE.
+     * By default, upon object creation, this value is set to be equal to VX_USER_DATA_OBJECT_SIZE, and may be modified by either the
+     * application or a node connected to this object. Read-write. Use a vx_size parameter. */
+    VX_USER_DATA_OBJECT_VALID_SIZE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_USER_DATA_OBJECT) + 0x2
 };
 
 
@@ -123,14 +127,32 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseUserDataObject(vx_user_data_object *
  * \param [in] size              The size in bytes of the container to which \a ptr points.
  *
  * \return A <tt>\ref vx_status_e</tt> enumeration.
- * \retval VX_SUCCESS                   No errors.
- * \retval VX_ERROR_INVALID_REFERENCE   If the \a user_data_object is not a <tt>\ref vx_user_data_object</tt>.
+ * \retval VX_SUCCESS                   No errors; any other value indicates failure.
+ * \retval VX_ERROR_INVALID_REFERENCE   \a user_data_object is not a valid <tt>\ref vx_user_data_object</tt> reference.
  * \retval VX_ERROR_NOT_SUPPORTED       If the \a attribute is not a value supported on this implementation.
  * \retval VX_ERROR_INVALID_PARAMETERS  If any of the other parameters are incorrect.
  *
  * \ingroup group_user_data_object
  */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryUserDataObject(vx_user_data_object user_data_object, vx_enum attribute, void *ptr, vx_size size);
+
+/*!
+ * \brief Sets an attribute in the User data object.
+ *
+ * \param [in] user_data_object  The reference to the User data object.
+ * \param [in] attribute         The attribute to set. Use a <tt>\ref vx_user_data_object_attribute_e</tt>.
+ * \param [in] ptr               The pointer to the data to which to set the attribute.
+ * \param [in] size              The size in bytes of the data to which ptr points.
+ *
+ * \return A <tt>\ref vx_status_e</tt> enumeration.
+ * \retval VX_SUCCESS                   No errors; any other value indicates failure.
+ * \retval VX_ERROR_INVALID_REFERENCE   \a user_data_object is not a valid <tt>\ref vx_user_data_object</tt> reference.
+ * \retval VX_ERROR_NOT_SUPPORTED       If the \a attribute is not a value supported on this implementation.
+ * \retval VX_ERROR_INVALID_PARAMETERS  If any of the other parameters are incorrect.
+ *
+ * \ingroup group_user_data_object
+ */
+VX_API_ENTRY vx_status VX_API_CALL vxSetUserDataObjectAttribute(vx_user_data_object user_data_object, vx_enum attribute, const void *ptr, vx_size size);
 
 /*! \brief Allows the application to copy a subset from/into a user data object.
  * \param [in] user_data_object   The reference to the user data object that is the source or the
@@ -191,7 +213,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyUserDataObject(vx_user_data_object user
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_ERROR_OPTIMIZED_AWAY This is a reference to a virtual user data object that cannot be accessed by the application.
  * \retval VX_ERROR_INVALID_REFERENCE The user_data_object reference is not actually a user data object reference.
- * \retval VX_ERROR_INVALID_PARAMETERS An other parameter is incorrect.
+ * \retval VX_ERROR_INVALID_PARAMETERS Another parameter is incorrect.
  * \ingroup group_user_data_object
  * \post <tt>\ref vxUnmapUserDataObject </tt> with same (*map_id) value.
  */

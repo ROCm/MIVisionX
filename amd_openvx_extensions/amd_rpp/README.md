@@ -1,46 +1,58 @@
-# AMD RPP Extension
+# AMD RPP Extension (`vx_rpp`)
 
-The AMD VX RPP extension (vx_rpp) is an OpenVX module that implements an interface to access RPP functionality as OpenVX kernels. These kernels can be accessed from within OpenVX framework using OpenVX API call [vxLoadKernels](https://www.khronos.org/registry/vx/specs/1.0.1/html/da/d83/group__group__user__kernels.html#gae00b6343fbb0126e3bf0f587b09393a3)(context, "vx_rpp").
+The AMD VX RPP extension (`vx_rpp`) is an OpenVX module that exposes [ROCm Performance Primitives (RPP)](https://github.com/ROCm/rpp) image and tensor augmentation functions as OpenVX kernels. It is the backend used by [rocAL](https://github.com/ROCm/rocAL) for data augmentation pipelines.
 
-## List of RPP functions 
+Load the extension at runtime with:
 
-The following is a list of RPP functions that have been included in the vx_rpp module.
+```c
+vxLoadKernels(context, "vx_rpp");
+```
 
-    Blend                       org.rpp.Blend
-    Blur                        org.rpp.Blur
-    Brightness                  org.rpp.Brightness
-    Color temperature           org.rpp.ColorTemperature
-    Contrast                    org.rpp.Contrast
-    Exposure                    org.rpp.Exposure
-    Fisheye lens effect         org.rpp.Fisheye
-    Flip                        org.rpp.Flip
-    Fog effect                  org.rpp.Fog
-    Gamma Correction            org.rpp.GammaCorrection
-    Image Resize                org.rpp.Resize
-    Jitter                      org.rpp.Jitter
-    Lens Correction             org.rpp.LensCorrection
-    Pixelate                    org.rpp.Pixelate
-    Rain overlay                org.rpp.Rain
-    Resize Crop                 org.rpp.ResizeCrop
-    Rotate                      org.rpp.Rotate
-    Salt and Pepper noise       org.rpp.NoiseSnp
-    Snow                        org.rpp.Snow
-    Vignette                    org.rpp.Vignette
-    Warp affine                 org.rpp.WarpAffine
+> [!NOTE]
+> `vx_rpp` supports the `CPU` and `HIP` backends. When MIVisionX is built with the `OpenCL` backend, `vx_rpp` is built in CPU-only mode (RPP has dropped OpenCL support).
 
-**NOTE** - For list of OpenVX API calls for RPP-interop refer include/[vx_ext_rpp.h](include/vx_ext_rpp.h)
+## Available kernels
 
-## Build Instructions
+| Kernel name | Description |
+|-------------|-------------|
+| `org.rpp.Blend` | Alpha-blend two images |
+| `org.rpp.Blur` | Box blur |
+| `org.rpp.Brightness` | Brightness adjustment |
+| `org.rpp.ColorTemperature` | Color temperature shift |
+| `org.rpp.Contrast` | Contrast adjustment |
+| `org.rpp.Exposure` | Exposure adjustment |
+| `org.rpp.FishEye` | Fisheye lens distortion |
+| `org.rpp.Flip` | Horizontal/vertical flip |
+| `org.rpp.Fog` | Fog overlay effect |
+| `org.rpp.GammaCorrection` | Gamma correction |
+| `org.rpp.Resize` | Image resize |
+| `org.rpp.Jitter` | Random jitter |
+| `org.rpp.LensCorrection` | Lens distortion correction |
+| `org.rpp.Pixelate` | Pixelation effect |
+| `org.rpp.Rain` | Rain overlay effect |
+| `org.rpp.ResizeCrop` | Resize and crop |
+| `org.rpp.Rotate` | Image rotation |
+| `org.rpp.Noise` | Salt-and-pepper noise |
+| `org.rpp.Snow` | Snow overlay effect |
+| `org.rpp.Vignette` | Vignette effect |
+| `org.rpp.WarpAffine` | Affine warp |
 
-### Pre-requisites
+For the full OpenVX API for each kernel, see [include/vx_ext_rpp.h](include/vx_ext_rpp.h).
 
-* AMD OpenVX&trade; library
-* [AMD RPP library](https://github.com/ROCm/rpp)
-* CMake 3.10 or later
-* OpenCL (optional)
+## Prerequisites
 
-### Build using CMake on Linux
+* AMD OpenVX&trade; library (`libopenvx.so`) — built as part of MIVisionX
+* [RPP](https://github.com/ROCm/rpp) `3.1.0` or later — provided by the ROCm Core SDK
+* CMake `3.10` or later
 
-* Use CMake to configure and generate Makefile
+## Build
 
-**NOTE:** OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.
+`amd_rpp` is built automatically as part of the top-level MIVisionX CMake build. To build it standalone:
+
+```shell
+mkdir build && cd build
+cmake ../
+make -j$(nproc)
+```
+
+OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

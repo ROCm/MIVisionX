@@ -12,6 +12,13 @@
 *.py         text eol=lf
 CMakeLists.txt text eol=lf
 *.cmake      text eol=lf
+*.cpp        text eol=lf
+*.h          text eol=lf
+*.c          text eol=lf
+*.hpp        text eol=lf
+*.md         text eol=lf
+*.rst        text eol=lf
+*.gdf        text eol=lf
 
 # Binary — no newline conversion
 *.png        binary

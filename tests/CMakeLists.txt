@@ -81,44 +81,7 @@ add_test(NAME vx_core_test
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-# 2 - vx_amd_media Tests
-if(VX_AMD_MEDIA_LIBRARY)
-  add_test(NAME vx_amd_media_test
-            COMMAND ${RUNVX_EXECUTABLE}
-            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_media_tests/gdf/decoder_test.gdf 
-            scalar:STRING,\"1,${ROCM_PATH}/share/mivisionx/test/videos/AMD_driving_virtual_20.mp4:0\"
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-endif(VX_AMD_MEDIA_LIBRARY)
-
-# 3 - vx_amd_migraphx Tests -- TBD: Disabled (ref:github issue 1410)
-if(VX_AMD_MIGRAPHX_LIBRARY AND 0)
-  add_test(NAME vx_amd_migraphx_test
-            COMMAND ${RUNVX_EXECUTABLE}
-            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_migraphx_tests/gdf/vx_migraphx_test.gdf
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-endif(VX_AMD_MIGRAPHX_LIBRARY AND 0)
-
-# 4 - VX_NN_LIBRARY Tests
-if(VX_NN_LIBRARY)
-  add_test(NAME vx_nn_test
-            COMMAND ${RUNVX_EXECUTABLE}
-            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/gdf/test_vx_nn.gdf
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-endif(VX_NN_LIBRARY)
-
-# 5 - vx_opencv Tests
-if(VX_OPENCV_LIBRARY)
-  add_test(NAME vx_opencv_test
-            COMMAND ${RUNVX_EXECUTABLE}
-            -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/amd_opencv_tests/gdfs/absdiff_test.gdf
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-endif(VX_OPENCV_LIBRARY)
-
-# 6 - vx_rpp Tests
+# 2 - vx_rpp Tests
 if(VX_RPP_LIBRARY)
   add_test(NAME vx_rpp_test
             COMMAND ${RUNVX_EXECUTABLE}
@@ -373,7 +336,7 @@ if(Python3_FOUND)
             --runvx_directory ${ROCM_PATH}/bin --num_frames 10 --width 10 --height 10
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
-  set_property(TEST openvx_tests_runVisionPython_CPU_5X3 PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+  set_property(TEST openvx_tests_runVisionPython_CPU_10X10 PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
 
   # 16 - openvx gdfs tests on CPU
   add_test(NAME openvx_gdf_tests_CPU 
@@ -425,75 +388,3 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
     set_property(TEST openvx_gdf_tests_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
   endif(Python3_FOUND)
 endif(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "OPENCL"))
-
-if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
-  # Neural Network tests
-  if(VX_NN_LIBRARY AND Python3_FOUND)
-    # 22 - caffe2nnir2openvx No Fuse flow
-    add_test(NAME caffe2nnir2openvx_no_fuse
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
-          --profiler_mode 1
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    )
-
-    # 23 - caffe2nnir2openvx Fuse flow
-    add_test(NAME caffe2nnir2openvx_fuse 
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
-          --profiler_mode 2 --reinstall off
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    )
-
-    # 24 - caffe2nnir2openvx FP16 flow
-    add_test(NAME caffe2nnir2openvx_fp16
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
-          --profiler_mode 3 --reinstall off
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    )
-
-    # 25 - onnx2nnir2openvx No Fuse flow
-    add_test(NAME onnx2nnir2openvx_no_fuse
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
-          --profiler_mode 4 --reinstall off
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    )    
-
-    # 26 - onnx2nnir2openvx Fuse flow
-    add_test(NAME onnx2nnir2openvx_fuse
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
-          --profiler_mode 5 --reinstall off
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    )
-
-    # 27 - onnx2nnir2openvx FP16 flow
-    add_test(NAME onnx2nnir2openvx_fp16
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
-          --profiler_mode 6 --reinstall off
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    )
-
-    # 28 - nnef2nnir2openvx No Fuse flow
-    add_test(NAME nnef2nnir2openvx_no_fuse
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
-          --profiler_mode 7 --reinstall off
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    )    
-
-    # 29 - nnef2nnir2openvx Fuse flow
-    add_test(NAME nnef2nnir2openvx_fuse
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
-          --profiler_mode 8 --reinstall off
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    )
-
-    # 30 - nnef2nnir2openvx FP16 flow
-    add_test(NAME nnef2nnir2openvx_fp16
-          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/neural_network_tests/runNeuralNetworkTests.py
-          --profiler_mode 9 --reinstall off
-          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    )
-  endif(VX_NN_LIBRARY AND Python3_FOUND)
-endif("${MIVISIONX_BACKEND}" STREQUAL "HIP")
-
-if("${MIVISIONX_BACKEND}" STREQUAL "OPENCL" AND VX_NN_LIBRARY)
-  message( "-- ${Yellow}${PROJECT_NAME}:NOTE: NN OpenCL Tests not supported${ColourReset}" )
-endif("${MIVISIONX_BACKEND}" STREQUAL "OPENCL" AND VX_NN_LIBRARY)

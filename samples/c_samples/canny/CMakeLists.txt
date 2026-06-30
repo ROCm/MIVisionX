@@ -45,10 +45,8 @@ endif()
 
 project (cannyDetect)
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-find_package(OpenCL REQUIRED)
 find_package(OpenCV REQUIRED)
-include_directories (${ROCM_PATH}/include/mivisionx)
+include_directories (${ROCM_PATH}/include/mivisionx ${OpenCV_INCLUDE_DIRS})
 link_directories    (${ROCM_PATH}/lib)
 add_executable(cannyDetect canny.cpp)
 target_link_libraries(${PROJECT_NAME} openvx ${OpenCV_LIBRARIES})

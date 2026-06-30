@@ -359,6 +359,10 @@ def configure_and_build_cts(
             "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
             f"-DOPENVX_INCLUDES={openvx_include}",
             openvx_libs_arg,
+            # The OpenVX 1.3 CTS hardcodes -O3 for C sources. GCC 13 on WSL can
+            # miscompile test_array.c's small-type verifier at that level even
+            # when the implementation returns the correct array bytes.
+            "-DOPENVX_CFLAGS=-O0",
             "-DOPENVX_CONFORMANCE_VISION=ON",
             str(cts_src),
         ],

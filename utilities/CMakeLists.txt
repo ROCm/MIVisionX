@@ -1,4 +1,4 @@
-# Copyright (c) 2015 - 2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,6 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 #set(ROCM_PATH /opt/rocm CACHE PATH " default ROCm installation path")
 
 if(GPU_SUPPORT)
-    find_package(FFmpeg QUIET)
     if("${BACKEND}" STREQUAL "OPENCL")
         find_package(OpenCL QUIET)
         if(OpenCL_FOUND)
@@ -52,30 +51,8 @@ add_subdirectory(runvx)
 
 if(OpenCL_FOUND AND BUILD_OPENCL)
     message("-- ${Green}Utilities -- runvx module added with OPENCL support${ColourReset}")
-    add_subdirectory(runcl)
-    if(LOOM)
-        add_subdirectory(loom_shell)
-        message("-- ${Green}Loom Shell -- loom shell script interpreter module added${ColourReset}")
-    else()
-        message("-- ${Cyan}Loom Shell Module turned OFF by user option -D LOOM=OFF ${ColourReset}")
-    endif()
-    if(FFMPEG_FOUND)
-        add_subdirectory(mv_deploy)
-        message("-- ${Green}Utilities -- runvx, runcl, loom_shell, & mv_deploy modules added${ColourReset}")
-    else()
-        message("-- ${Green}Utilities -- runcl modules added${ColourReset}")
-        message("-- ${Red}WARNING: FFMPEG Not Found -- mv_deploy module excluded${ColourReset}")
-    endif(FFMPEG_FOUND)
 elseif (HIP_FOUND)
-    if(FFMPEG_FOUND)
-        add_subdirectory(mv_deploy)
-        message("-- ${Green}Utilities -- runvx and mv_deploy modules added${ColourReset}")
-    else()
-        message("-- ${Green}Utilities -- runvx module added with HIP support${ColourReset}")
-        message("-- ${Red}WARNING: FFMPEG Not Found -- mv_deploy module excluded${ColourReset}")
-    endif(FFMPEG_FOUND)
-
+    message("-- ${Green}Utilities -- runvx module added with HIP support${ColourReset}")
 else()
     message("-- ${Green}Utilities -- runvx module added with CPU support${ColourReset}")
-    message("-- ${Red}WARNING: Utilities -- runcl, loom_shell, & mv_deploy modules excluded${ColourReset}")
 endif()

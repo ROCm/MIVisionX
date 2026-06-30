@@ -32,9 +32,6 @@ on:
       - '**/*.md'
       - 'docs/**'
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   # ===========================================================================
   # Build Stage — three builds run in parallel
@@ -56,7 +53,7 @@ jobs:
       - name: Build AMD OpenVX (CPU backend, Release)
         run: |
           mkdir build && cd build
-          cmake .. -DGPU_SUPPORT=OFF
+          cmake .. -DGPU_SUPPORT=OFF -DCMAKE_BUILD_TYPE=Release
           make -j$(nproc)
 
       - name: Upload build artifacts
@@ -88,7 +85,7 @@ jobs:
       - name: Build AMD OpenVX (CPU backend)
         run: |
           mkdir build && cd build
-          cmake .. -DGPU_SUPPORT=OFF
+          cmake .. -DGPU_SUPPORT=OFF -DCMAKE_BUILD_TYPE=Release
           make -j$(nproc)
 
       - name: Upload main build artifacts
@@ -1115,8 +1112,12 @@ jobs:
             echo "No profraw files were collected from test jobs." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
-          find all-profraw -name '*.profraw' -type f -print0 \
-            | xargs -0 llvm-profdata merge -sparse -o coverage.profdata
+          find all-profraw -name '*.profraw' -type f > profraw_list.txt
+          llvm-profdata merge \
+            -sparse \
+            --failure-mode=all \
+            -f profraw_list.txt \
+            -o coverage.profdata
 
       - name: Generate coverage report
         run: |

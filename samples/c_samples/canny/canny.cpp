@@ -22,7 +22,7 @@ THE SOFTWARE.
 
 #include <VX/vx.h>
 #include <VX/vx_compatibility.h>
-#include <vx_ext_opencv.h>
+#include <opencv2/opencv.hpp>
 
 using namespace cv;
 using namespace std;

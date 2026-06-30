@@ -1,30 +1,32 @@
-# OpenVX Vision Function Tests Using GDFs
+# AMD OpenVX GDF Tests
 
-OpenVX core tests using 300+ GDFs with runVX
+Exercises 300+ AMD OpenVX vision functions across the `CPU`, `HIP`, and `OCL` backends using `RunVX` and GDF (Graph Description Format) scripts.
 
-## Script to run vision gdf tests
+## Usage
 
-```
+```shell
 python3 runOpenVX.py --help
 ```
 
-
-usage:
-
 ```
-runOpenVX.py  --runvx_directory RUNVX_DIRECTORY
-              --list_tests LIST_TESTS
-              --num_frames NUM_FRAMES
-              --backend_type BACKEND_TYPE
-              --hidden HIDDEN
+runOpenVX.py  [--runvx_directory RUNVX_DIRECTORY]
+              [--list_tests LIST_TESTS]
+              [--num_frames NUM_FRAMES]
+              [--backend_type BACKEND_TYPE]
+              [--hidden HIDDEN]
 
 Arguments:
-  -h, --help        show this help message and exit
-  --runvx_directory RunVX Executable Directory - optional (default:/opt/rocm/bin)
-  --list_tests      List Vision Performance Tests - optional (default:no [options:no/yes])
-  --num_frames      Run Test for X number of frames - optional (default:1000 [range:1 - N])
-  --backend_type    OpenVX Backend type - optional (default:CPU [options:CPU/HIP/OCL])
-  --hidden          Hidden Vision Tests - optional (default:no [options:no/yes])
+  --runvx_directory  RunVX executable directory  (default: /opt/rocm/bin)
+  --list_tests       Print the test list and exit (default: no  | options: no/yes)
+  --num_frames       Number of frames to process  (default: 1000 | range: 1-N)
+  --backend_type     OpenVX backend               (default: CPU  | options: CPU/HIP/OCL)
+  --hidden           Include hidden internal tests (default: no  | options: no/yes)
+```
+
+Example — run all arithmetic tests on the HIP backend for 100 frames:
+
+```shell
+python3 runOpenVX.py --backend_type HIP --num_frames 100
 ```
 
 ## Vision GDF Tests

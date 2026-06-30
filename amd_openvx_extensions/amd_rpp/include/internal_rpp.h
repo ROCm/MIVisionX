@@ -31,10 +31,6 @@ THE SOFTWARE.
 #include "rpp/rpp.h"
 #include "rpp/rppdefs.h"
 
-#if ENABLE_OPENCL
-#include <CL/cl.h>
-#endif
-
 #include<stdio.h>
 #include<stdlib.h>
 #include<math.h>
@@ -65,9 +61,7 @@ using namespace std;
 
 //! Brief Common data shared across all nodes in a graph
 struct vxRppHandle {
-#if ENABLE_OPENCL
-    cl_command_queue cmdq;
-#elif ENABLE_HIP
+#if ENABLE_HIP
     hipStream_t hipstream;
 #endif
     rppHandle_t rppHandle;

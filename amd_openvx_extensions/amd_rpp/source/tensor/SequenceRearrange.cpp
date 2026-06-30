@@ -33,20 +33,13 @@ struct SequenceRearrangeLocalData {
     vxTensorLayout layout;
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
-#if ENABLE_OPENCL
-    cl_mem pClSrc;
-    cl_mem pClDst;
-#endif
 };
 
 static vx_status VX_CALLBACK refreshSequenceRearrange(vx_node node, const vx_reference *parameters, vx_uint32 num, SequenceRearrangeLocalData *data) {
     vx_status status = VX_SUCCESS;
     STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[2], 0, data->newSequenceLength, sizeof(vx_uint32), data->pNewOrder, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->pClSrc, sizeof(data->pClSrc)));
-        STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_OPENCL, &data->pClDst, sizeof(data->pClDst)));
-#elif ENABLE_HIP
+#if ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
 #endif
@@ -96,22 +89,7 @@ static vx_status VX_CALLBACK processSequenceRearrange(vx_node node, const vx_ref
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     refreshSequenceRearrange(node, parameters, num, data);
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        cl_command_queue handle = data->handle->cmdq;
-        for (unsigned sequence_cnt = 0; sequence_cnt < data->pSrcDesc->n; sequence_cnt++) {
-            unsigned src_sequence_start_address = sequence_cnt * data->pSrcDesc->strides.nStride * data->sequenceLength;
-            unsigned dst_sequence_start_address = sequence_cnt * data->pDstDesc->strides.nStride * data->newSequenceLength;
-            for (unsigned dst_index = 0; dst_index < data->newSequenceLength; dst_index++) {
-                unsigned src_index = data->pNewOrder[dst_index];
-                if (src_index > data->sequenceLength)
-                    ERRMSG(VX_ERROR_INVALID_VALUE, "invalid new order value=%d (must be between 0-%d)\n", src_index, data->sequenceLength - 1);
-                auto dst_offset = dst_sequence_start_address + (dst_index * data->pSrcDesc->strides.nStride);
-                auto src_offset = src_sequence_start_address + (src_index * data->pDstDesc->strides.nStride);
-                if (clEnqueueCopyBuffer(handle, data->pClSrc, data->pClDst, src_offset, dst_offset, data->pSrcDesc->strides.nStride, 0, NULL, NULL) != CL_SUCCESS)
-                        return VX_FAILURE;
-            }
-        }
-#elif ENABLE_HIP
+#if ENABLE_HIP
         for (unsigned sequence_cnt = 0; sequence_cnt < data->pSrcDesc->n; sequence_cnt++) {
             unsigned src_sequence_start_address = sequence_cnt * data->pSrcDesc->strides.nStride * data->sequenceLength;
             unsigned dst_sequence_start_address = sequence_cnt * data->pDstDesc->strides.nStride * data->newSequenceLength;
@@ -208,10 +186,6 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     else
         supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
 
-// hardcode the affinity to  CPU for OpenCL backend to avoid VerifyGraph failure since there is no codegen callback for amd_rpp nodes
-#if ENABLE_OPENCL
-    supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
-#endif
     return VX_SUCCESS;
 }
 
@@ -228,7 +202,7 @@ vx_status SequenceRearrange_Register(vx_context context) {
     ERROR_CHECK_OBJECT(kernel);
     AgoTargetAffinityInfo affinity;
     vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
-#if ENABLE_OPENCL || ENABLE_HIP
+#if ENABLE_HIP
     vx_bool enableBufferAccess = vx_true_e;
     if (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
         STATUS_ERROR_CHECK(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_GPU_BUFFER_ACCESS_ENABLE, &enableBufferAccess, sizeof(enableBufferAccess)));

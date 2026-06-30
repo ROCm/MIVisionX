@@ -1,4 +1,3 @@
-
 .. meta::
   :description: MIVisionX macOS installation
   :keywords: MIVisionX, ROCm, installation, macOS, Apple
@@ -10,32 +9,34 @@ Building and installing MIVisionX on macOS from source code
 
 .. note::
 
-    macOS only supports the MIVisionX CPU backend
+    macOS supports the MIVisionX CPU backend only.
 
-MIVisionX on macOS is built from the source code. The MIVisionX source code is available from `https://github.com/ROCm/MIVisionX <https://github.com/ROCm/MIVisionX>`_. 
+Prerequisites
+=============
 
-Building MIVisionX on macOS requires Homebrew, OpenCV, and OpenSSL:
+Install Homebrew, then use it to install the required dependencies:
 
 .. code:: shell
 
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     brew install cmake opencv openssl
 
+Build
+=====
 
-
-Create the ``build`` directory under the ``MIVisionX`` root directory. Change directory to ``build``:
-
-Use ``cmake`` to generate a makefile: 
-
-.. code:: shell
-
-    cmake ../
-
-Run ``make`` and ``make install`` :
+Clone the MIVisionX repository and build with CMake:
 
 .. code:: shell
 
-    make 
-    make install
+    git clone https://github.com/ROCm/MIVisionX.git
+    cd MIVisionX
+    mkdir build && cd build
+    cmake -DGPU_SUPPORT=OFF ../
+    make -j$(nproc)
+    sudo make install
 
-To make and run tests, use ``make test``. 
+To run the test suite after building:
+
+.. code:: shell
+
+    make test

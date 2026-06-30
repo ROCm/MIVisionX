@@ -15,40 +15,20 @@ subtrees:
     title: Install on Windows  
   - file: install/MIVisionX-macOS-install.rst
     title: Install on macOS
-  - file: install/MIVisionX-model-compiler-install.rst
-    title: Install the model compiler
   - file: install/MIVisionX-install-OpenVX.rst
     title: Install OpenVX
   - file: install/MIVisionX-test-install.rst
     title: Test the installation
 
 
-- caption: How to
-  entries:
-  - file: how-to/MIVisionX-how-to-model-compiler.rst
-    title: Use the model compiler
-  - file: how-to/MIVisionX-docker.rst
-    title: Use Docker
-
 - caption: Reference
   entries:
   - file: reference/MIVisionX-AMD-Openvx.rst
     title: AMD OpenVX
-  - file: reference/MIVisionX-supported-models.rst
-    title: Supported models and operators
-  - file: reference/MIVisionX-toolkits.rst
-    title: Toolkits
   - file: reference/MIVisionX-env-variables.rst
     title: Environment variables
   - file: doxygen/html/modules
     title: API Reference
-
-- caption: Examples
-  entries:
-  - file: tutorials/MIVisionX-apps-samples.rst     
-    title: Sample applications
-  - file: tutorials/MIVisionX-model-comp-samples.rst
-    title: Model compiler samples
 
 - caption: About
   entries:

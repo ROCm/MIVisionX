@@ -1,26 +1,19 @@
-## C/C++ Samples for OpenVX and OpenVX Extensions
+# C/C++ Samples for OpenVX
 
-MIVisionX Vision Samples in C/C++
+MIVisionX C/C++ sample applications demonstrating the OpenVX API.
 
-### Canny
+## Canny Edge Detector
 
-usage:
+Runs Canny edge detection on an image file or live camera using an OpenVX graph.
 
-``` 
-cd canny/
+```shell
+cd c_samples/canny/
 cmake .
 make
-./cannyDetect --image <imageName> 
+
+# On an image file
+./cannyDetect --image <path/to/image>
+
+# On a live camera
 ./cannyDetect --live
-```
-
-### Orb Detect
-
-usage:
-
-``` 
-cd opencv_orb/
-cmake .
-make
-./orbDetect
 ```

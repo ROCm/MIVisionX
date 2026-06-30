@@ -1,68 +1,37 @@
-## GDF - Graph Description Format
+# GDF - Graph Description Format Samples
 
-MIVisionX samples using [RunVX](https://github.com/ROCm/MIVisionX/tree/master/utilities/runvx#amd-runvx)
+MIVisionX GDF samples using [RunVX](../../utilities/runvx/README.md#amd-runvx). Before running, add MIVisionX to your environment:
 
-**Note:** 
-
-* To run the samples we need to put MIVisionX executables and libraries into the system path
-
-``` 
+```shell
 export PATH=$PATH:/opt/rocm/bin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/lib
 ```
 
-* To get help on RunVX, use `-h` option
+Use `runvx -h` for the full command reference.
 
-``` 
-runvx -h
-```
+## skintonedetect.gdf
 
-### skintonedetect.gdf
+Detects skin-tone pixels using color thresholding.
 
-<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/skinToneDetect_image.PNG" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/samples/images/skinToneDetect_image.PNG" /></p>
 
-usage:
-
-``` 
+```shell
 runvx skintonedetect.gdf
 ```
 
-### canny.gdf
+## canny.gdf
 
-<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/canny_image.PNG" /></p>
+Runs Canny edge detection on a sample image.
 
-usage:
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/samples/images/canny_image.PNG" /></p>
 
-``` 
+```shell
 runvx canny.gdf
 ```
 
-### skintonedetect-LIVE.gdf
+## Live camera variants
 
-Using a live camera
-
-usage:
-
-``` 
+```shell
 runvx -frames:live skintonedetect-LIVE.gdf
-```
-
-### canny-LIVE.gdf
-
-Using a live camera
-
-usage:
-
-``` 
 runvx -frames:live canny-LIVE.gdf
-```
-
-### OpenCV_orb-LIVE.gdf
-
-Using a live camera
-
-usage:
-
-``` 
-runvx -frames:live OpenCV_orb-LIVE.gdf
 ```

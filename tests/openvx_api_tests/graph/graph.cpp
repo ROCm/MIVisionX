@@ -98,21 +98,25 @@ int main(int argc, char **argv)
 
     AgoGraphImportInfo info = { 0 };
 
-    // Get ROCM_PATH and set file to load
-    const char * searchEnvName = "ROCM_PATH";
-    char rocmLocation[1024];
-    int isEnvSet = getEnvironmentVariable(searchEnvName, rocmLocation, sizeof(rocmLocation));
-    if(isEnvSet > 0)
-        printf("\nROCM PATH:%s\n", rocmLocation);
-    else{
-        printf("\nROCM PATH: NOT SET -- skipping GDF import test\n");
-        vxReleaseGraph(&graph);
-        vxReleaseContext(&context);
-        return 0;
+    // Resolve the MIVisionX install prefix: INSTALL_PATH takes priority
+    // (used by CI when building against a non-system prefix), then ROCM_PATH.
+    char installLocation[1024] = { 0 };
+    int isInstallSet = getEnvironmentVariable("INSTALL_PATH", installLocation, sizeof(installLocation));
+    if (isInstallSet <= 0) {
+        int isRocmSet = getEnvironmentVariable("ROCM_PATH", installLocation, sizeof(installLocation));
+        if (isRocmSet <= 0) {
+            printf("\nROCM PATH: NOT SET -- skipping GDF import test\n");
+            vxReleaseGraph(&graph);
+            vxReleaseContext(&context);
+            return 0;
+        }
+        printf("\nROCM PATH:%s\n", installLocation);
+    } else {
+        printf("\nINSTALL PATH:%s\n", installLocation);
     }
     char gdfFile[2048];
-    char gdfLocation[1024] = "/share/mivisionx/samples/gdf/read-gdf-sample.gdf";
-    snprintf(gdfFile, sizeof(gdfFile), "%s%s",rocmLocation, gdfLocation);
+    const char gdfLocation[] = "/share/mivisionx/samples/gdf/read-gdf-sample.gdf";
+    snprintf(gdfFile, sizeof(gdfFile), "%s%s", installLocation, gdfLocation);
     printf("GDF load file:%s\n", gdfFile);
 
     FILE *file = fopen(gdfFile, "rb");

@@ -3,5 +3,5 @@ data input_0 = image:1277,719,U008
 data input_1 = image:1277,719,U008
 data input_2 = image:1277,719,U008
 data input_3 = image:1277,719,U008
-data output = image:1277,719,RGBA
+data output = image:1277,719,RGBX
 node com.amd.openvx.ChannelCombine_U32_U8U8U8U8_RGBX output input_0 input_1 input_2 input_3

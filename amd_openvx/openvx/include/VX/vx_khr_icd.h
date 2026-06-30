@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Khronos Group Inc.
+ * Copyright (c) 2012-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@
  * \details The vx_khr_icd extension provides a mechanism for vendors to implement Installable Client Driver (ICD) for OpenVX. The OpenVX ICD Loader API provides a mechanism for applications to access these vendor implementations.
  */
 
-#ifndef _VX_KHR_ICD_H_
-#define _VX_KHR_ICD_H_
+#ifndef VX_KHR_ICD_H
+#define VX_KHR_ICD_H
 
 #include <VX/vx.h>
 #include <VX/vxu.h>
@@ -66,6 +66,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryPlatform(vx_platform platform, vx_enum
 
 /*! \brief Creates a <tt>\ref vx_context</tt> from a <tt>\ref vx_platform</tt>.
  * \details This creates a top-level object context for OpenVX from a platform handle.
+ * \param [in] platform The platform handle.
  * \returns The reference to the implementation context <tt>\ref vx_context</tt>. Any possible errors
  * preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  * \ingroup group_icd

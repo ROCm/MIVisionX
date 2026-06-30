@@ -1,6 +1,6 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![doc](https://img.shields.io/badge/doc-readthedocs-blueviolet)](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/)
-[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/ROCm/MIVisionX?style=for-the-badge)](https://github.com/ROCm/MIVisionX/releases)
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/ROCm/MIVisionX)](https://github.com/ROCm/MIVisionX/releases)
 
 <p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/MIVisionX.png" /></p>
 
@@ -31,8 +31,8 @@ Sample [applications](apps/README.md#applications) built on AMD OpenVX&trade; an
 ### Hardware
 
 * **CPU**: AMD64
-* **GPU**: [AMD Radeon&trade; Graphics](https://rocm.docs.amd.com/en/latest/compatibility/compatibility-matrix.html) / [AMD Instinct&trade; Accelerators](https://rocm.docs.amd.com/en/latest/compatibility/compatibility-matrix.html) [optional]
-* **APU**: AMD Radeon&trade; Mobile/Embedded [optional]
+* **GPU**: [AMD Radeon&trade; Graphics / AMD Instinct&trade; Accelerators](https://rocm.docs.amd.com/en/7.13.0-preview/compatibility/compatibility-matrix.html) [optional]
+* **APU**: [AMD Radeon&trade; Mobile/Embedded](https://rocm.docs.amd.com/en/7.13.0-preview/compatibility/compatibility-matrix.html) [optional]
 
 > [!IMPORTANT]
 > MIVisionX can be built for CPU only. For GPU acceleration via the `HIP` or `OpenCL` backend, an AMD GPU or APU is required.
@@ -49,11 +49,11 @@ Sample [applications](apps/README.md#applications) built on AMD OpenVX&trade; an
 
 ### Libraries
 
-The **ROCm Core SDK** (ROCm `7.13` or later) provides everything MIVisionX needs to build: the HIP and OpenCL runtimes, the `amdclang++` compiler, OpenMP, the `half` (float16) library, and `RPP` (`3.1.0` or later). The only additional dependency is:
+The **ROCm Core SDK** (ROCm `7.13` or later) provides everything MIVisionX needs to build: the HIP and OpenCL runtimes, the `amdclang++` compiler, OpenMP, the `half` (float16) library, and `RPP` (`3.1.0` or later). Additional dependencies:
 
 | Package | Minimum Version | Notes |
 |---------|----------------|-------|
-| CMake | `3.10` | install from your distribution: `sudo apt install cmake` |
+| CMake | `3.10` | install from your distribution's package manager |
 | OpenCV | `3.X` / `4.X` | optional — only used by `RunVX` for image/video display |
 | OpenSSL / libcrypto | any | optional, Linux only — enables MD5 checksums in `RunVX` `compare` commands; a built-in fallback is used when absent (Windows uses `wincrypt.h` automatically) |
 
@@ -62,7 +62,7 @@ The **ROCm Core SDK** (ROCm `7.13` or later) provides everything MIVisionX needs
 > * On `Ubuntu 22.04`: `sudo apt install libstdc++-12-dev`
 
 > [!NOTE]
-> `RPP` is included with the ROCm Core SDK. On ROCm releases where it is packaged separately, install it from the ROCm repository (for example `amdrpp7.13-*` / `rpp-dev`). Refer to the [ROCm install guide](https://rocm.docs.amd.com/en/latest/install/rocm.html) for exact package names.
+> `RPP` is included with the ROCm Core SDK. On ROCm releases where it is packaged separately, install it from the ROCm repository (for example `amdrpp7.13-*` / `rpp-dev`). Refer to the [ROCm install guide](https://rocm.docs.amd.com/en/7.13.0-preview/install/rocm.html) for exact package names.
 
 ## Installation instructions
 
@@ -74,30 +74,9 @@ The **ROCm Core SDK** (ROCm `7.13` or later) provides everything MIVisionX needs
 
 ### Linux
 
-MIVisionX `4.0` and later require **ROCm `7.13` or later** for GPU (`HIP`/`OpenCL`) builds. A CPU-only build needs neither ROCm nor a GPU.
-
 #### Install the ROCm Core SDK
 
-Verify you have [ROCm-supported hardware](https://rocm.docs.amd.com/en/latest/compatibility/compatibility-matrix.html), then follow [Install AMD ROCm](https://rocm.docs.amd.com/en/latest/install/rocm.html) for your GPU and operating system.
-
-The example below registers the ROCm repository and installs the Core SDK on `Ubuntu 24.04` for a `gfx1100` GPU (RX 7900 series). Adjust the distribution, GPU architecture, and ROCm version to match your system:
-
-```shell
-# Register the ROCm package repository
-sudo mkdir --parents --mode=0755 /etc/apt/keyrings
-wget https://repo.amd.com/rocm/packages/gpg/rocm.gpg -O - | \
-    gpg --dearmor | sudo tee /etc/apt/keyrings/amdrocm.gpg > /dev/null
-sudo tee /etc/apt/sources.list.d/rocm.list << EOF
-deb [arch=amd64 signed-by=/etc/apt/keyrings/amdrocm.gpg] https://repo.amd.com/rocm/packages/ubuntu2404 stable main
-EOF
-sudo apt update
-
-# Install the Core SDK for your GPU architecture (gfx110x covers gfx1100/gfx1101/gfx1102)
-sudo apt install amdrocm-core-sdk7.13-gfx110x
-```
-
-> [!NOTE]
-> The ROCm Core SDK installs into `/opt/rocm`. Confirm `amdclang++` (`/opt/rocm/lib/llvm/bin/amdclang++`) is available before building MIVisionX.
+Follow the [ROCm install guide](https://rocm.docs.amd.com/en/7.13.0-preview/install/rocm.html) for your GPU and operating system. Verify your hardware is on the [compatibility matrix](https://rocm.docs.amd.com/en/7.13.0-preview/compatibility/compatibility-matrix.html) before proceeding.
 
 > [!IMPORTANT]
 > Use **either** [package install](#package-install) **or** [source install](#source-install).
@@ -126,7 +105,6 @@ mkdir build-hip && cd build-hip
 cmake ../                 # HIP backend (default); use -DBACKEND=OCL for OpenCL, -DGPU_SUPPORT=OFF for CPU
 make -j$(nproc)
 sudo make install
-make test
 ```
 
 > [!NOTE]
@@ -162,10 +140,10 @@ cmake --build build --config Release
 
 ### macOS
 
-macOS [build instructions](https://github.com/ROCm/MIVisionX/wiki/macOS#macos-build-instructions)
-
 > [!IMPORTANT]
 > macOS supports the CPU backend only.
+
+See the [macOS build instructions](https://github.com/ROCm/MIVisionX/wiki/macOS#macos-build-instructions) wiki page.
 
 ## Verify installation
 
@@ -205,21 +183,33 @@ ctest -VV
 
 ### Windows
 
-Use `RunVX` to verify the build output under the `build` folder:
+Use `RunVX` to verify the build output. From the repo root:
 
 ```shell
-.\build\bin\Release\runvx.exe ADD_PATH_TO\MIVisionX\samples\gdf\skintonedetect.gdf
+.\build\bin\Release\runvx.exe samples\gdf\skintonedetect.gdf
 ```
 
 ## Documentation
 
 * [Published documentation](https://rocm.docs.amd.com/projects/MIVisionX/en/latest/)
-* Build locally: `cd docs && pip3 install -r sphinx/requirements.txt && python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html`
-* Doxygen API docs: `cd docs/doxygen && doxygen Doxyfile`
+
+Build locally:
+
+```shell
+cd docs
+pip3 install -r sphinx/requirements.txt
+python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
+```
+
+Doxygen API docs:
+
+```shell
+cd docs/doxygen && doxygen Doxyfile
+```
 
 ## Technical support
 
-Email `mivisionx.support@amd.com` or file a bug on the [GitHub issues](https://github.com/ROCm/MIVisionX/issues) page.
+File a bug on [GitHub issues](https://github.com/ROCm/MIVisionX/issues) or email `mivisionx.support@amd.com`.
 
 ## Release notes
 
@@ -229,10 +219,6 @@ Review all notable [changes](CHANGELOG.md#changelog) with the latest release.
 
 | Component | Version |
 |-----------|---------|
-| Windows | `10` / `11` |
-| Ubuntu | `22.04` / `24.04` |
-| RedHat | `8` / `9` |
-| SLES | `15-SP7` |
 | ROCm | `7.13` or later (ROCm Core SDK) |
 | RPP | `3.1.0` |
 | OpenCV | `4.5.4` / `4.6` (optional, RunVX display only) |

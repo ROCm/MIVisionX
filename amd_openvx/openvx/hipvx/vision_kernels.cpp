@@ -44,6 +44,8 @@ Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
         int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
         if (goffset >= 0) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        } else {
+            *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
         }
 
         bool doExtraLoad = false;
@@ -57,8 +59,12 @@ Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        if (doExtraLoad) {
+            if (goffset >= 0) {
+                *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+            } else {
+                *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
+            }
         }
         __syncthreads();
     }
@@ -273,6 +279,8 @@ Hip_CannySobel_U16_U8_5x5_L1NORM(uint dstWidth, uint dstHeight,
         int goffset = (y - 2) * srcImageStrideInBytes + x - 4;
         if (goffset >= 0) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        } else {
+            *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
         }
         bool doExtraLoad = false;
         if (ly < 4) {
@@ -285,8 +293,12 @@ Hip_CannySobel_U16_U8_5x5_L1NORM(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 2) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 20) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        if (doExtraLoad) {
+            if (goffset >= 0) {
+                *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+            } else {
+                *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
+            }
         }
         __syncthreads();
     }
@@ -768,6 +780,8 @@ Hip_CannySobel_U16_U8_7x7_L1NORM(uint dstWidth, uint dstHeight,
         int goffset = (y - 3) * srcImageStrideInBytes + x - 4;
         if (goffset >= 0) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        } else {
+            *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
         }
         bool doExtraLoad = false;
         if (ly < 6) {
@@ -780,8 +794,12 @@ Hip_CannySobel_U16_U8_7x7_L1NORM(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 3) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 22) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        if (doExtraLoad) {
+            if (goffset >= 0) {
+                *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+            } else {
+                *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
+            }
         }
         __syncthreads();
     }
@@ -1658,6 +1676,8 @@ Hip_CannySobel_U16_U8_3x3_L2NORM(uint dstWidth, uint dstHeight,
         int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
         if (goffset >= 0) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        } else {
+            *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
         }
         bool doExtraLoad = false;
         if (ly < 2) {
@@ -1670,8 +1690,12 @@ Hip_CannySobel_U16_U8_3x3_L2NORM(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        if (doExtraLoad) {
+            if (goffset >= 0) {
+                *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+            } else {
+                *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
+            }
         }
         __syncthreads();
     }
@@ -1886,6 +1910,8 @@ Hip_CannySobel_U16_U8_5x5_L2NORM(uint dstWidth, uint dstHeight,
         int goffset = (y - 2) * srcImageStrideInBytes + x - 4;
         if (goffset >= 0) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        } else {
+            *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
         }
         bool doExtraLoad = false;
         if (ly < 4) {
@@ -1898,8 +1924,12 @@ Hip_CannySobel_U16_U8_5x5_L2NORM(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 2) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 20) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        if (doExtraLoad) {
+            if (goffset >= 0) {
+                *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+            } else {
+                *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
+            }
         }
         __syncthreads();
     }
@@ -2379,6 +2409,8 @@ Hip_CannySobel_U16_U8_7x7_L2NORM(uint dstWidth, uint dstHeight,
         int goffset = (y - 3) * srcImageStrideInBytes + x - 4;
         if (goffset >= 0) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        } else {
+            *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
         }
         bool doExtraLoad = false;
         if (ly < 6) {
@@ -2391,8 +2423,12 @@ Hip_CannySobel_U16_U8_7x7_L2NORM(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 3) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 22) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        if (doExtraLoad) {
+            if (goffset >= 0) {
+                *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+            } else {
+                *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
+            }
         }
         __syncthreads();
     }
@@ -3272,6 +3308,8 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
         int goffset = (y - 1) * srcImageStrideInBytes + (x << 3) - 4;
         if (goffset >= 0) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        } else {
+            *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
         }
         bool doExtraLoad = false;
         if (ly < 2) {
@@ -3284,8 +3322,12 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + ((x - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        if (doExtraLoad) {
+            if (goffset >= 0) {
+                *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+            } else {
+                *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
+            }
         }
         __syncthreads();
     }
@@ -3741,6 +3783,8 @@ Hip_HarrisSobel_HG3_U8_3x3(uint dstWidth, uint dstHeight,
         int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
         if (goffset >= 0) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        } else {
+            *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
         }
         bool doExtraLoad = false;
         if (ly < 2) {
@@ -3753,8 +3797,12 @@ Hip_HarrisSobel_HG3_U8_3x3(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        if (doExtraLoad) {
+            if (goffset >= 0) {
+                *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+            } else {
+                *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
+            }
         }
         __syncthreads();
     }
@@ -3962,6 +4010,8 @@ Hip_HarrisSobel_HG3_U8_5x5(uint dstWidth, uint dstHeight,
         int goffset = (y - 2) * srcImageStrideInBytes + x - 4;
         if (goffset >= 0) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        } else {
+            *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
         }
         bool doExtraLoad = false;
         if (ly < 4) {
@@ -3974,8 +4024,12 @@ Hip_HarrisSobel_HG3_U8_5x5(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 2) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 20) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        if (doExtraLoad) {
+            if (goffset >= 0) {
+                *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+            } else {
+                *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
+            }
         }
         __syncthreads();
     }
@@ -4443,6 +4497,8 @@ Hip_HarrisSobel_HG3_U8_7x7(uint dstWidth, uint dstHeight,
         int goffset = (y - 3) * srcImageStrideInBytes + x - 4;
         if (goffset >= 0) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        } else {
+            *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
         }
         bool doExtraLoad = false;
         if (ly < 6) {
@@ -4455,8 +4511,12 @@ Hip_HarrisSobel_HG3_U8_7x7(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 3) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 22) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        if (doExtraLoad) {
+            if (goffset >= 0) {
+                *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+            } else {
+                *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
+            }
         }
         __syncthreads();
     }
@@ -6334,6 +6394,8 @@ Hip_NonMaxSupp_XY_ANY_3x3(char *pDstList, uint dstListOffset, uint capacityOfLis
         int goffset = (gy - 1) * srcImageStrideInBytes + (gx << 3) - 4;
         if (goffset >= 0) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        } else {
+            *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
         }
         bool doExtraLoad = false;
         if (ly < 2) {
@@ -6346,8 +6408,12 @@ Hip_NonMaxSupp_XY_ANY_3x3(char *pDstList, uint dstListOffset, uint capacityOfLis
             goffset = (gy - ly + id - 1) * srcImageStrideInBytes + ((gx  - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad && goffset >= 0) {
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        if (doExtraLoad) {
+            if (goffset >= 0) {
+                *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+            } else {
+                *((uint2 *)(&lbuf[loffset])) = make_uint2(0, 0);
+            }
         }
         __syncthreads();
     }

@@ -4,7 +4,7 @@
 
 A sample OpenVX application that creates bubbles and donuts on a live camera feed using OpenVX graph execution and OpenCV for display.
 
-<p align="center"><img width="60%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/vx-pop-app.gif" /></p>
+<p align="center"><img width="60%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/vx-pop-app.gif" /></p>
 
 ## Prerequisites
 

@@ -13,7 +13,7 @@ Use `runvx -h` for the full command reference.
 
 Detects skin-tone pixels using color thresholding.
 
-<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/skinToneDetect_image.PNG" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/samples/images/skinToneDetect_image.PNG" /></p>
 
 ```shell
 runvx skintonedetect.gdf
@@ -23,7 +23,7 @@ runvx skintonedetect.gdf
 
 Runs Canny edge detection on a sample image.
 
-<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/canny_image.PNG" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/samples/images/canny_image.PNG" /></p>
 
 ```shell
 runvx canny.gdf

@@ -4,7 +4,7 @@
 
 A sample application that runs Pyramidal Lucas-Kanade Optical Flow on a video file or live camera stream using an OpenVX graph. OpenCV is used for video decode and display.
 
-<p align="center"><img width="60%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/optical_flow_video.gif"></p>
+<p align="center"><img width="60%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/optical_flow_video.gif"></p>
 
 ## Prerequisites
 

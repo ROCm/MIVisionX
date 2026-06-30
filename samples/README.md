@@ -22,7 +22,7 @@ MIVisionX GDF samples using [RunVX](../utilities/runvx/README.md#amd-runvx). Run
 
 Detects skin-tone pixels in an image using color thresholding.
 
-<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/skinToneDetect_image.PNG" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/samples/images/skinToneDetect_image.PNG" /></p>
 
 ```shell
 runvx gdf/skintonedetect.gdf
@@ -32,7 +32,7 @@ runvx gdf/skintonedetect.gdf
 
 Runs Canny edge detection on a sample image.
 
-<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/canny_image.PNG" /></p>
+<p align="center"><img width="90%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/samples/images/canny_image.PNG" /></p>
 
 ```shell
 runvx gdf/canny.gdf

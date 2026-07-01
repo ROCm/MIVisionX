@@ -10691,9 +10691,10 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateImageObjectArrayFromTensor(vx_t
             return NULL;
         }
     }
-    // Pixel size in bits is pxNum/pxDenom; it must be byte-aligned so a slice can alias
-    // the tensor buffer without sub-byte packing.
-    vx_size pixel_bits = (pxDenom != 0) ? (pxNum / pxDenom) : 0;
+    // Pixel size in bits is pxNum/pxDenom; it must be an exact, byte-aligned value so a slice
+    // can alias the tensor buffer without sub-byte or fractional packing. A non-zero remainder
+    // (pxNum not a multiple of pxDenom) means a fractional bit-size, which cannot alias.
+    vx_size pixel_bits = (pxDenom != 0 && (pxNum % pxDenom) == 0) ? (pxNum / pxDenom) : 0;
     // Only single-plane formats can alias a contiguous tensor slice, the pixel size must be
     // a whole number of bytes, and it must equal the tensor element size.
     if (planes != 1 || pixel_bits == 0 || (pixel_bits & 7) != 0 || (pixel_bits >> 3) != elem_size) {
@@ -10731,11 +10732,25 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateImageObjectArrayFromTensor(vx_t
     // tensor strides are in bytes: stride[0] = element size, stride[1] = row stride,
     // stride[2] = slice stride. 'jump' is an index delta along dim-2 (per the OpenVX spec),
     // so the byte stride between consecutive images is jump * stride[2].
+    // NOTE: for a view/ROI tensor, agoAllocData already folds u.tensor.offset into
+    // tensor_data->buffer, so base_offset must NOT add it again (would double-apply the offset).
     vx_size slice_stride = slice_jump * tensor_data->u.tensor.stride[2];
     vx_size row_stride   = tensor_data->u.tensor.stride[1];
-    vx_size base_offset  = tensor_data->u.tensor.offset
-                         + (vx_size)rect->start_y * row_stride
+    vx_size base_offset  = (vx_size)rect->start_y * row_stride
                          + (vx_size)rect->start_x * tensor_data->u.tensor.stride[0];
+
+    // Offsets are relative to tensor_data->buffer. Bounds-check the highest byte accessed by the
+    // last slice against the tensor buffer size, and ensure the last slice's start offset fits in
+    // the vx_uint32 field (gpu_buffer_offset) used to record it for vxSwapTensorHandle.
+    vx_size last_slice_offset = base_offset + (array_size - 1) * slice_stride;
+    vx_size max_byte = last_slice_offset + (vx_size)(height - 1) * row_stride
+                     + (vx_size)width * tensor_data->u.tensor.stride[0];
+    if (max_byte > tensor_data->size || last_slice_offset > 0xFFFFFFFFu) {
+        agoAddLogEntry(&tensor_data->ref, VX_ERROR_INVALID_PARAMETERS,
+            "ERROR: vxCreateImageObjectArrayFromTensor: computed slice offset (" VX_FMT_SIZE " bytes) exceeds tensor buffer size " VX_FMT_SIZE "\n",
+            max_byte, tensor_data->size);
+        return NULL;
+    }
 
     for (vx_uint32 i = 0; i < obj_array->numChildren; i++) {
         AgoData * img = obj_array->children[i];

@@ -313,6 +313,15 @@ int main() {
                     printf("STATUS: swap re-points aliased images: %s\n", swap_fail == 0 ? "PASS" : "FAIL");
                     if (swap_fail) errors++;
                     vxReleaseObjectArray(&sarr);
+
+                    // Use-after-free guard: after releasing the object-array, the images must be
+                    // unlinked from the tensor's dependency list, so another swap must not touch
+                    // freed memory. This should complete cleanly (no crash / no corruption).
+                    void *prev2 = NULL;
+                    vx_status sw2 = vxSwapTensorHandle(stensor, sbuf1, &prev2);
+                    printf("STATUS: swap after object-array release: %s\n",
+                           (sw2 == VX_SUCCESS && prev2 == sbuf2) ? "PASS" : "FAIL");
+                    if (sw2 != VX_SUCCESS || prev2 != sbuf2) errors++;
                 } else {
                     printf("STATUS: swap-propagation test skipped (object-array create failed)\n");
                 }

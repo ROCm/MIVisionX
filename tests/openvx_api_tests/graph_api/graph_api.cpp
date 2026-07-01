@@ -90,6 +90,14 @@ int main(int argc, char **argv)
         printf("ERROR: vxRegisterKernelLibrary should fail with VX_ERROR_INVALID_PARAMETERS for null arguments, got (%d)\n", failure_register);
         exit(1);
     }
+    // a registered module has no shared library to recover vxUnpublishKernels from later, so a
+    // NULL unpublish callback must be rejected up front (even when module + publish are valid)
+    vx_status null_unpublish = vxRegisterKernelLibrary(context, "sample_kernel_library_no_unpublish", sample_publish_kernels, nullptr);
+    if (null_unpublish != VX_ERROR_INVALID_PARAMETERS)
+    {
+        printf("ERROR: vxRegisterKernelLibrary should fail with VX_ERROR_INVALID_PARAMETERS for NULL unpublish, got (%d)\n", null_unpublish);
+        exit(1);
+    }
     // success path: register a library by name with valid publish/unpublish callbacks
     ERROR_CHECK_STATUS(vxRegisterKernelLibrary(context, "sample_kernel_library", sample_publish_kernels, sample_unpublish_kernels));
     // re-registering the same module name is a no-op and must still succeed

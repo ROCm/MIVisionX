@@ -173,6 +173,7 @@ int main() {
                         vx_imagepatch_addressing_t addr;
                         void *iptr = NULL;
                         vx_map_id imap;
+                        // Read the value written through the tensor before the array was created.
                         if (vxMapImagePatch(img, &r, 0, &imap, &addr, &iptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0) == VX_SUCCESS) {
                             vx_uint8 got = *((vx_uint8 *)iptr);
                             if (got != (vx_uint8)(100 + i)) alias_fail++;
@@ -182,9 +183,43 @@ int main() {
                         }
                         vxReleaseImage(&img);
                     }
-                    printf("STATUS: object-array slices alias tensor memory: %s (%d mismatches)\n",
+                    printf("STATUS: object-array slices see tensor writes: %s (%d mismatches)\n",
                            alias_fail == 0 ? "PASS" : "FAIL", alias_fail);
                     if (alias_fail) errors++;
+
+                    // True aliasing check: write NEW values THROUGH each image, then read them
+                    // back FROM the tensor. A copy-based implementation would fail this.
+                    int writeback_fail = 0;
+                    for (vx_size i = 0; i < 5; i++) {
+                        vx_image img = (vx_image)vxGetObjectArrayItem(arr, (vx_uint32)i);
+                        vx_rectangle_t r = {0, 0, 4, 3};
+                        vx_imagepatch_addressing_t addr;
+                        void *iptr = NULL;
+                        vx_map_id imap;
+                        if (vxMapImagePatch(img, &r, 0, &imap, &addr, &iptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0) == VX_SUCCESS) {
+                            *((vx_uint8 *)iptr) = (vx_uint8)(200 + i);
+                            vxUnmapImagePatch(img, imap);
+                        } else {
+                            writeback_fail++;
+                        }
+                        vxReleaseImage(&img);
+                    }
+                    // Read back from the tensor and confirm the image writes are visible.
+                    void *rptr = NULL;
+                    vx_map_id rmap;
+                    vx_size rstride[3];
+                    if (vxMapTensorPatch(otensor, 3, ostart, oend, &rmap, rstride, &rptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST) == VX_SUCCESS && rptr) {
+                        for (vx_size d = 0; d < 5; d++) {
+                            vx_uint8 got = *((vx_uint8 *)rptr + 0 * rstride[0] + 0 * rstride[1] + d * rstride[2]);
+                            if (got != (vx_uint8)(200 + d)) writeback_fail++;
+                        }
+                        vxUnmapTensorPatch(otensor, rmap);
+                    } else {
+                        writeback_fail++;
+                    }
+                    printf("STATUS: image writes alias back into tensor memory: %s (%d mismatches)\n",
+                           writeback_fail == 0 ? "PASS" : "FAIL", writeback_fail);
+                    if (writeback_fail) errors++;
                     vxReleaseObjectArray(&arr);
                 }
 
@@ -207,6 +242,27 @@ int main() {
                     vxReleaseObjectArray(&farr);
                 } else {
                     printf("STATUS: mismatched-format rejected - OK\n");
+                }
+
+                // Negative: requesting more slices than the tensor depth (dims[2]=5) must be rejected
+                vx_object_array darr = vxCreateImageObjectArrayFromTensor(otensor, &rect, 6, 1, VX_DF_IMAGE_U8);
+                if (vxGetStatus((vx_reference)darr) == VX_SUCCESS) {
+                    printf("STATUS: depth-overflow (array_size) case FAIL (accepted)\n");
+                    errors++;
+                    vxReleaseObjectArray(&darr);
+                } else {
+                    printf("STATUS: depth-overflow (array_size) rejected - OK\n");
+                }
+
+                // Negative: a jump that steps past the tensor depth must be rejected
+                // (3 slices at jump=3 would access indices 0,3,6 but depth is 5)
+                vx_object_array jarr = vxCreateImageObjectArrayFromTensor(otensor, &rect, 3, 3, VX_DF_IMAGE_U8);
+                if (vxGetStatus((vx_reference)jarr) == VX_SUCCESS) {
+                    printf("STATUS: depth-overflow (jump) case FAIL (accepted)\n");
+                    errors++;
+                    vxReleaseObjectArray(&jarr);
+                } else {
+                    printf("STATUS: depth-overflow (jump) rejected - OK\n");
                 }
             } else {
                 printf("STATUS: vxCreateImageObjectArrayFromTensor test skipped (tensor map failed: %d)\n", ms);

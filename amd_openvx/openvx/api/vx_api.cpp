@@ -20,6 +20,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+/*
+ * Scope: OpenVX 1.3.2 - Vision Conformance Feature Set only
+ * -----------------------------------------------------------
+ * This implementation targets the Vision Conformance Feature Set as defined in the
+ * OpenVX Feature Set Definitions v1.1 (section 3):
+ *   https://registry.khronos.org/OpenVX/specs/1.3/vx_khr_feature_sets/1.1/html/vx_khr_feature_sets_1_1.html
+ * which is "roughly equivalent to the set of functions available in version 1.1 of the
+ * OpenVX specification." It does NOT target the optional Enhanced Vision (section 7) or
+ * Neural Network (section 4) feature sets.
+ *
+ * As a result, the following API functions are declared in the 1.3.2 headers but are
+ * intentionally NOT implemented here, because they belong to those out-of-scope feature
+ * sets rather than to Vision Conformance:
+ *   - Enhanced Vision (section 7): NonMaxSuppression, MatchTemplate, HoughLinesP, LBP,
+ *     HOGCells, HOGFeatures, BilateralFilter, Max, Min, Select, ScalarOperation, Copy
+ *   - Enhanced Vision + Neural Network (sections 4/7): TensorAdd, TensorSubtract,
+ *     TensorMultiply, TensorConvertDepth, TensorMatrixMultiply, TensorTableLookup,
+ *     TensorTranspose
+ * These may be added in the future if Enhanced Vision / Neural Network conformance is targeted.
+ */
 
 #include "ago_internal.h"
 #define VX_MAX_TENSOR_DIMENSIONS 6
@@ -2371,7 +2391,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxRegisterKernelLibrary(vx_context context, c
     if (agoIsValidContext(context))
     {
         status = VX_ERROR_INVALID_PARAMETERS;
-        if (module && publish)
+        // A registered module has hmodule==NULL, so agoUnloadModule cannot look up an
+        // unpublish callback from a shared library later. Require it up front.
+        if (module && publish && unpublish)
         {
             CAgoLock lock(context->cs);
             // check if the module is already registered
@@ -10554,7 +10576,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryMetaFormatAttribute(vx_meta_format met
                 }
                 break;
             case VX_TENSOR_DIMS:
-                if (size >= sizeof(vx_size) * meta->data.u.tensor.num_dims && meta->data.ref.type == VX_TYPE_TENSOR) {
+                if (meta->data.ref.type == VX_TYPE_TENSOR && size >= sizeof(vx_size) * meta->data.u.tensor.num_dims) {
                     memcpy(ptr, &meta->data.u.tensor.dims, sizeof(vx_size) * meta->data.u.tensor.num_dims);
                     status = VX_SUCCESS;
                 }
@@ -10606,6 +10628,15 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateImageObjectArrayFromTensor(vx_t
         return NULL;
     }
 
+    // The child images alias the tensor's host buffer directly. Tensors imported/created with
+    // OpenCL/HIP memory keep their data in device memory (host 'buffer' is intentionally unset),
+    // so aliasing would require wiring to device memory - which is not supported here. Reject them.
+    if (tensor_data->import_type == VX_MEMORY_TYPE_OPENCL || tensor_data->import_type == VX_MEMORY_TYPE_HIP) {
+        agoAddLogEntry(&tensor_data->ref, VX_ERROR_NOT_SUPPORTED,
+            "ERROR: vxCreateImageObjectArrayFromTensor: tensor with non-host (OpenCL/HIP) memory is not supported\n");
+        return NULL;
+    }
+
     // Validate the rectangle: start must be strictly less than end and stay within
     // the first two tensor dimensions (unsigned subtraction below would otherwise wrap).
     if (rect->start_x >= rect->end_x || rect->start_y >= rect->end_y ||
@@ -10620,26 +10651,39 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateImageObjectArrayFromTensor(vx_t
     vx_uint32 width  = rect->end_x - rect->start_x;
     vx_uint32 height = rect->end_y - rect->start_y;
 
+    // Validate that the requested slices stay within the tensor's third dimension (depth).
+    // 'jump' is an index delta along dim-2 (0 defaults to 1). The last accessed slice index is
+    // (array_size - 1) * jump and must be < dims[2].
+    vx_size slice_jump = (jump != 0) ? jump : 1;
+    if ((array_size - 1) * slice_jump >= tensor_data->u.tensor.dims[2]) {
+        agoAddLogEntry(&tensor_data->ref, VX_ERROR_INVALID_PARAMETERS,
+            "ERROR: vxCreateImageObjectArrayFromTensor: array_size " VX_FMT_SIZE " with jump " VX_FMT_SIZE " exceeds tensor depth " VX_FMT_SIZE "\n",
+            array_size, slice_jump, tensor_data->u.tensor.dims[2]);
+        return NULL;
+    }
+
     // The requested image format must match the tensor element size, since each image
     // slice aliases the tensor's memory directly with no format conversion.
     vx_size elem_size = agoType2Size(tensor_data->ref.context, tensor_data->u.tensor.data_type);
-    vx_size components = 0, planes = 0, pixel_bits_num = 0;
+    vx_size components = 0, planes = 0;
+    vx_uint32 pxNum = 0, pxDenom = 0;
     {
-        vx_uint32 pxNum = 0, pxDenom = 0;
         vx_color_space_e cspace; vx_channel_range_e crange;
         if (agoGetImageComponentsAndPlanes(tensor_data->ref.context, image_format, &components, &planes, &pxNum, &pxDenom, &cspace, &crange)) {
             agoAddLogEntry(&tensor_data->ref, VX_ERROR_INVALID_PARAMETERS,
                 "ERROR: vxCreateImageObjectArrayFromTensor: unsupported image_format 0x%08x\n", image_format);
             return NULL;
         }
-        pixel_bits_num = pxNum;
     }
-    // Only single-plane formats can alias a contiguous tensor slice, and the pixel size
-    // (in bytes) must equal the tensor element size.
-    if (planes != 1 || (pixel_bits_num >> 3) != elem_size) {
+    // Pixel size in bits is pxNum/pxDenom; it must be byte-aligned so a slice can alias
+    // the tensor buffer without sub-byte packing.
+    vx_size pixel_bits = (pxDenom != 0) ? (pxNum / pxDenom) : 0;
+    // Only single-plane formats can alias a contiguous tensor slice, the pixel size must be
+    // a whole number of bytes, and it must equal the tensor element size.
+    if (planes != 1 || pixel_bits == 0 || (pixel_bits & 7) != 0 || (pixel_bits >> 3) != elem_size) {
         agoAddLogEntry(&tensor_data->ref, VX_ERROR_INVALID_PARAMETERS,
-            "ERROR: vxCreateImageObjectArrayFromTensor: image_format 0x%08x (planes=" VX_FMT_SIZE ", %u bytes/pixel) incompatible with tensor element size " VX_FMT_SIZE "\n",
-            image_format, planes, (vx_uint32)(pixel_bits_num >> 3), elem_size);
+            "ERROR: vxCreateImageObjectArrayFromTensor: image_format 0x%08x (planes=" VX_FMT_SIZE ", " VX_FMT_SIZE " bits/pixel) incompatible with tensor element size " VX_FMT_SIZE " bytes\n",
+            image_format, planes, pixel_bits, elem_size);
         return NULL;
     }
 
@@ -10671,8 +10715,7 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateImageObjectArrayFromTensor(vx_t
     // tensor strides are in bytes: stride[0] = element size, stride[1] = row stride,
     // stride[2] = slice stride. 'jump' is an index delta along dim-2 (per the OpenVX spec),
     // so the byte stride between consecutive images is jump * stride[2].
-    vx_size slice_index_delta = (jump != 0) ? jump : 1;
-    vx_size slice_stride = slice_index_delta * tensor_data->u.tensor.stride[2];
+    vx_size slice_stride = slice_jump * tensor_data->u.tensor.stride[2];
     vx_size row_stride   = tensor_data->u.tensor.stride[1];
     vx_size base_offset  = tensor_data->u.tensor.offset
                          + (vx_size)rect->start_y * row_stride

@@ -103,6 +103,19 @@ int main(int argc, char **argv)
     // re-registering the same module name is a no-op and must still succeed
     ERROR_CHECK_STATUS(vxRegisterKernelLibrary(context, "sample_kernel_library", sample_publish_kernels, sample_unpublish_kernels));
 
+    // a registered module must survive a load/unload cycle so it can be loaded again
+    // (the registration is not consumed on first load)
+    ERROR_CHECK_STATUS(vxRegisterKernelLibrary(context, "sample_reloadable_library", sample_publish_kernels, sample_unpublish_kernels));
+    ERROR_CHECK_STATUS(vxLoadKernels(context, "sample_reloadable_library"));
+    ERROR_CHECK_STATUS(vxUnloadKernels(context, "sample_reloadable_library"));
+    vx_status reload_status = vxLoadKernels(context, "sample_reloadable_library");
+    if (reload_status != VX_SUCCESS)
+    {
+        printf("ERROR: registered module could not be reloaded after unload, got (%d)\n", reload_status);
+        exit(1);
+    }
+    ERROR_CHECK_STATUS(vxUnloadKernels(context, "sample_reloadable_library"));
+
     // register image formats
 	AgoImageFormatDescription desc = { 3, 1, 32, VX_COLOR_SPACE_DEFAULT, VX_CHANNEL_RANGE_FULL };
 	vxSetContextImageFormatDescription(context, VX_DF_IMAGE_Y210_AMD, &desc);

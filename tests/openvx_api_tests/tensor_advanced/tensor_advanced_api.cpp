@@ -716,6 +716,15 @@ static vx_status VX_CALLBACK meta_query_validate(vx_node node, const vx_referenc
         printf("ERROR: VX_TENSOR_DIMS accepted an undersized buffer\n");
         g_meta_query_errors++;
     }
+
+    // Querying an attribute for a different object type (VX_IMAGE_WIDTH on a tensor meta)
+    // must report VX_ERROR_INVALID_TYPE, not VX_ERROR_INVALID_PARAMETERS.
+    vx_uint32 dummy_w = 0;
+    vx_status type_status = vxQueryMetaFormatAttribute(metas[1], VX_IMAGE_WIDTH, &dummy_w, sizeof(dummy_w));
+    if (type_status != VX_ERROR_INVALID_TYPE) {
+        printf("ERROR: cross-type meta query returned %d, expected VX_ERROR_INVALID_TYPE\n", type_status);
+        g_meta_query_errors++;
+    }
     return VX_SUCCESS;
 }
 

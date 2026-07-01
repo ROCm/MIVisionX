@@ -1174,7 +1174,8 @@ int agoLoadModule(AgoContext * context, const char * module)
                 publish_kernels_f = it->publish;
                 unpublish_kernels_f = it->unpublish;
                 is_registered = true;
-                context->registered_modules.erase(it);
+                // Keep the registration so the module can be loaded again after a matching
+                // vxUnloadKernels (the module_path guard above prevents a duplicate active load).
                 break;
             }
         }

@@ -10305,9 +10305,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxSwapTensorHandle(vx_tensor tensor, void * n
                 data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
                 data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
             }
-            // propagate to ROIs
+            // propagate to ROIs. Image ROIs (from vxCreateImageObjectArrayFromTensor) track their
+            // byte offset in gpu_buffer_offset; tensor ROIs use their own tensor offset.
             for (auto roi = data->roiDepList.begin(); roi != data->roiDepList.end(); roi++) {
-                (*roi)->buffer = data->buffer + (*roi)->u.tensor.offset;
+                vx_size roi_offset = ((*roi)->ref.type == VX_TYPE_IMAGE) ? (*roi)->gpu_buffer_offset : (*roi)->u.tensor.offset;
+                (*roi)->buffer = data->buffer ? (data->buffer + roi_offset) : NULL;
             }
         }
 #if ENABLE_OPENCL
@@ -10598,6 +10600,16 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryMetaFormatAttribute(vx_meta_format met
                 status = VX_ERROR_NOT_SUPPORTED;
                 break;
             }
+            // Per the spec, a query whose attribute belongs to a different object type than this
+            // meta-format must report VX_ERROR_INVALID_TYPE rather than VX_ERROR_INVALID_PARAMETERS.
+            // Object-type attributes encode their type via VX_ATTRIBUTE_BASE; VX_TYPE_META_FORMAT
+            // attributes (e.g. VX_VALID_RECT_CALLBACK) apply to any meta-format and are exempt.
+            if (status == VX_ERROR_INVALID_PARAMETERS) {
+                vx_enum attr_type = (vx_enum)VX_TYPE(attribute);
+                if (attr_type != VX_TYPE_META_FORMAT && attr_type != meta->data.ref.type) {
+                    status = VX_ERROR_INVALID_TYPE;
+                }
+            }
         }
     }
     return status;
@@ -10613,6 +10625,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryMetaFormatAttribute(vx_meta_format met
  * \param [in] image_format The requested image format. Must match the tensor element type.
  * \return An <tt>\ref vx_object_array</tt> of images pointing into the tensor's memory,
  *         or NULL on error. Use <tt>\ref vxGetStatus</tt> to check for errors.
+ * \note The returned images alias the tensor's memory; the tensor must outlive the returned
+ *       object-array and its images (as with <tt>\ref vxCreateImageFromROI</tt>). The images are
+ *       linked to the tensor so that a subsequent <tt>\ref vxSwapTensorHandle</tt> re-points them
+ *       at the new buffer rather than leaving them dangling.
  * \ingroup group_object_tensor
  */
 VX_API_ENTRY vx_object_array VX_API_CALL vxCreateImageObjectArrayFromTensor(vx_tensor tensor, const vx_rectangle_t *rect, vx_size array_size, vx_size jump, vx_df_image image_format)
@@ -10727,10 +10743,16 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateImageObjectArrayFromTensor(vx_t
             // Single-plane image: alias directly into the tensor buffer. Marking import_type
             // (non-NONE) preserves this stride/buffer through agoDataSanityCheckAndUpdate, and
             // mem_handle=false keeps agoAllocData from allocating a fresh buffer.
+            vx_size img_offset = base_offset + (vx_size)i * slice_stride;
             img->import_type = VX_MEMORY_TYPE_HOST;
             img->u.img.mem_handle = vx_false_e;
             img->u.img.stride_in_bytes = (vx_uint32)row_stride;
-            img->buffer = tensor_data->buffer + base_offset + (vx_size)i * slice_stride;
+            img->buffer = tensor_data->buffer + img_offset;
+            // Record the byte offset and link the image to the tensor so that a subsequent
+            // vxSwapTensorHandle re-points this image's buffer instead of leaving it dangling.
+            img->gpu_buffer_offset = (vx_uint32)img_offset;
+            img->u.img.roiMasterImage = tensor_data;
+            tensor_data->roiDepList.push_back(img);
 #if (ENABLE_OPENCL || ENABLE_HIP)
             img->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
             img->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;

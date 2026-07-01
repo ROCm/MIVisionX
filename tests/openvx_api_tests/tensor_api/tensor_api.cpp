@@ -271,6 +271,60 @@ int main() {
         }
     }
 
+    // 6c. vxCreateImageObjectArrayFromTensor + vxSwapTensorHandle: swapping the tensor's
+    //     backing buffer must re-point the aliased images, not leave them dangling.
+    {
+        // 3D tensor [W=4, H=3, D=5] of U8, created from a host handle so the handle can be swapped.
+        vx_size sd[3] = {4, 3, 5};
+        vx_size sstride[3] = {sizeof(vx_uint8), 4 * sizeof(vx_uint8), 4 * 3 * sizeof(vx_uint8)};
+        vx_size scount = 4 * 3 * 5;
+        vx_uint8 *sbuf1 = (vx_uint8 *)calloc(scount, sizeof(vx_uint8));
+        vx_uint8 *sbuf2 = (vx_uint8 *)calloc(scount, sizeof(vx_uint8));
+        if (sbuf1 && sbuf2) {
+            for (vx_size d = 0; d < 5; d++)
+                for (vx_size i = 0; i < 12; i++) {
+                    sbuf1[d * 12 + i] = (vx_uint8)(10 + d);   // buffer 1: slice value 10+d
+                    sbuf2[d * 12 + i] = (vx_uint8)(50 + d);   // buffer 2: slice value 50+d
+                }
+            vx_tensor stensor = vxCreateTensorFromHandle(context, 3, sd, VX_TYPE_UINT8, 0,
+                                                         sstride, sbuf1, VX_MEMORY_TYPE_HOST);
+            if (vxGetStatus((vx_reference)stensor) == VX_SUCCESS) {
+                vx_rectangle_t srect = {0, 0, 4, 3};
+                vx_object_array sarr = vxCreateImageObjectArrayFromTensor(stensor, &srect, 5, 1, VX_DF_IMAGE_U8);
+                if (vxGetStatus((vx_reference)sarr) == VX_SUCCESS) {
+                    // Swap the tensor handle to buffer 2; aliased images must now see 50+d.
+                    void *prev = NULL;
+                    vx_status sw = vxSwapTensorHandle(stensor, sbuf2, &prev);
+                    int swap_fail = (sw != VX_SUCCESS || prev != sbuf1) ? 1 : 0;
+                    for (vx_size i = 0; i < 5 && !swap_fail; i++) {
+                        vx_image img = (vx_image)vxGetObjectArrayItem(sarr, (vx_uint32)i);
+                        vx_rectangle_t r = {0, 0, 4, 3};
+                        vx_imagepatch_addressing_t addr;
+                        void *iptr = NULL;
+                        vx_map_id imap;
+                        if (vxMapImagePatch(img, &r, 0, &imap, &addr, &iptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0) == VX_SUCCESS) {
+                            if (*((vx_uint8 *)iptr) != (vx_uint8)(50 + i)) swap_fail++;
+                            vxUnmapImagePatch(img, imap);
+                        } else {
+                            swap_fail++;
+                        }
+                        vxReleaseImage(&img);
+                    }
+                    printf("STATUS: swap re-points aliased images: %s\n", swap_fail == 0 ? "PASS" : "FAIL");
+                    if (swap_fail) errors++;
+                    vxReleaseObjectArray(&sarr);
+                } else {
+                    printf("STATUS: swap-propagation test skipped (object-array create failed)\n");
+                }
+                vxReleaseTensor(&stensor);
+            } else {
+                printf("STATUS: swap-propagation test skipped (tensor-from-handle create failed)\n");
+            }
+        }
+        free(sbuf1);
+        free(sbuf2);
+    }
+
     // 7. Create a virtual tensor in a graph
     vx_graph graph = vxCreateGraph(context);
     if (graph) {

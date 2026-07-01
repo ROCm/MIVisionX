@@ -10290,6 +10290,22 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, 
     return (vx_tensor)data;
 }
 
+/*! \brief Swaps the backing memory handle of a tensor created from a host/OpenCL/HIP handle.
+ * \param [in] tensor The tensor whose handle is to be swapped. Must be a top-level tensor
+ *        (not a view/ROI created by <tt>\ref vxCreateTensorFromView</tt>); a view tensor is
+ *        rejected with <tt>\ref VX_ERROR_INVALID_REFERENCE</tt>.
+ * \param [in] new_ptr The new memory handle (may be NULL to detach the current handle).
+ * \param [out] prev_ptr Optional; receives the previous handle.
+ * \return A <tt>\ref vx_status_e</tt> enumeration.
+ * \note Any images that alias this tensor via <tt>\ref vxCreateImageObjectArrayFromTensor</tt>
+ *       are re-pointed at \a new_ptr so they keep aliasing the live buffer. This propagation
+ *       only occurs when swapping the top-level tensor. Images created from a *view* tensor are
+ *       linked to the view, not to the parent; swapping the parent's handle does NOT re-point
+ *       them (and the view itself cannot be swapped). Therefore, do not swap the handle of a
+ *       tensor whose *view* still has live aliased images, or those images will reference stale
+ *       memory. Release the object-array/images before swapping in that case.
+ * \ingroup group_object_tensor
+ */
 VX_API_ENTRY vx_status VX_API_CALL vxSwapTensorHandle(vx_tensor tensor, void * new_ptr, void** prev_ptr)
 {
     AgoData * data = (AgoData *)tensor;
@@ -10739,16 +10755,21 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateImageObjectArrayFromTensor(vx_t
     vx_size base_offset  = (vx_size)rect->start_y * row_stride
                          + (vx_size)rect->start_x * tensor_data->u.tensor.stride[0];
 
-    // Offsets are relative to tensor_data->buffer. Bounds-check the highest byte accessed by the
-    // last slice against the tensor buffer size, and ensure the last slice's start offset fits in
-    // the vx_uint32 field (gpu_buffer_offset) used to record it for vxSwapTensorHandle.
+    // Image offsets are relative to tensor_data->buffer. Bounds-check the highest byte accessed by
+    // the last slice against the backing allocation. For a view/ROI tensor the data lives in the
+    // master's buffer (with the view's non-compact strides), so the byte extent must be checked
+    // against the master's size at the view's offset; for a top-level tensor it is its own size.
+    // Also ensure the last slice's start offset fits in the vx_uint32 field (gpu_buffer_offset)
+    // used to record it for vxSwapTensorHandle.
+    AgoData * backing = tensor_data->u.tensor.roiMaster ? tensor_data->u.tensor.roiMaster : tensor_data;
+    vx_size view_offset = tensor_data->u.tensor.roiMaster ? tensor_data->u.tensor.offset : 0;
     vx_size last_slice_offset = base_offset + (array_size - 1) * slice_stride;
-    vx_size max_byte = last_slice_offset + (vx_size)(height - 1) * row_stride
+    vx_size max_byte = view_offset + last_slice_offset + (vx_size)(height - 1) * row_stride
                      + (vx_size)width * tensor_data->u.tensor.stride[0];
-    if (max_byte > tensor_data->size || last_slice_offset > 0xFFFFFFFFu) {
+    if (max_byte > backing->size || (view_offset + last_slice_offset) > 0xFFFFFFFFu) {
         agoAddLogEntry(&tensor_data->ref, VX_ERROR_INVALID_PARAMETERS,
             "ERROR: vxCreateImageObjectArrayFromTensor: computed slice offset (" VX_FMT_SIZE " bytes) exceeds tensor buffer size " VX_FMT_SIZE "\n",
-            max_byte, tensor_data->size);
+            max_byte, backing->size);
         return NULL;
     }
 

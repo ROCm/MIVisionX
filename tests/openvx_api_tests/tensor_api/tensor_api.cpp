@@ -22,7 +22,8 @@ THE SOFTWARE.
 
 // Tensor API coverage test - exercises vxCreateTensor, vxQueryTensor,
 // vxCopyTensorPatch, vxMapTensorPatch, vxUnmapTensorPatch,
-// vxCreateTensorFromView, vxReleaseTensor, vxCreateVirtualTensor
+// vxCreateTensorFromView, vxReleaseTensor, vxCreateVirtualTensor,
+// vxCreateImageObjectArrayFromTensor
 
 #include <cstdio>
 #include <cstring>
@@ -134,6 +135,84 @@ int main() {
         // 6. Release tensor
         CHECK_STATUS(vxReleaseTensor(&tensor));
         printf("STATUS: vxReleaseTensor - OK\n");
+    }
+
+    // 6b. vxCreateImageObjectArrayFromTensor: images must ALIAS tensor memory
+    {
+        // 3D tensor [W=4, H=3, D=5] of U8; write value = 100 + slice index per slice
+        vx_size od[3] = {4, 3, 5};
+        vx_tensor otensor = vxCreateTensor(context, 3, od, VX_TYPE_UINT8, 0);
+        if (!otensor) {
+            printf("STATUS: vxCreateImageObjectArrayFromTensor test skipped (tensor create failed)\n");
+        } else {
+            vx_size ostart[3] = {0, 0, 0};
+            vx_size oend[3] = {4, 3, 5};
+            vx_size ostride[3];
+            void *optr = NULL;
+            vx_map_id omap;
+            vx_status ms = vxMapTensorPatch(otensor, 3, ostart, oend, &omap, ostride, &optr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+            if (ms == VX_SUCCESS && optr) {
+                for (vx_size d = 0; d < 5; d++)
+                    for (vx_size y = 0; y < 3; y++)
+                        for (vx_size x = 0; x < 4; x++)
+                            *((vx_uint8 *)optr + x * ostride[0] + y * ostride[1] + d * ostride[2]) = (vx_uint8)(100 + d);
+                vxUnmapTensorPatch(otensor, omap);
+
+                // Positive: extract all 5 full slices (jump = 1 => every slice along dim-2)
+                vx_rectangle_t rect = {0, 0, 4, 3};
+                vx_object_array arr = vxCreateImageObjectArrayFromTensor(otensor, &rect, 5, 1, VX_DF_IMAGE_U8);
+                if (vxGetStatus((vx_reference)arr) != VX_SUCCESS) {
+                    printf("STATUS: vxCreateImageObjectArrayFromTensor FAILED to create array\n");
+                    errors++;
+                } else {
+                    printf("STATUS: vxCreateImageObjectArrayFromTensor - OK\n");
+                    int alias_fail = 0;
+                    for (vx_size i = 0; i < 5; i++) {
+                        vx_image img = (vx_image)vxGetObjectArrayItem(arr, (vx_uint32)i);
+                        vx_rectangle_t r = {0, 0, 4, 3};
+                        vx_imagepatch_addressing_t addr;
+                        void *iptr = NULL;
+                        vx_map_id imap;
+                        if (vxMapImagePatch(img, &r, 0, &imap, &addr, &iptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0) == VX_SUCCESS) {
+                            vx_uint8 got = *((vx_uint8 *)iptr);
+                            if (got != (vx_uint8)(100 + i)) alias_fail++;
+                            vxUnmapImagePatch(img, imap);
+                        } else {
+                            alias_fail++;
+                        }
+                        vxReleaseImage(&img);
+                    }
+                    printf("STATUS: object-array slices alias tensor memory: %s (%d mismatches)\n",
+                           alias_fail == 0 ? "PASS" : "FAIL", alias_fail);
+                    if (alias_fail) errors++;
+                    vxReleaseObjectArray(&arr);
+                }
+
+                // Negative: invalid rect (start_x >= end_x) must be rejected
+                vx_rectangle_t bad = {3, 0, 1, 3};
+                vx_object_array barr = vxCreateImageObjectArrayFromTensor(otensor, &bad, 5, 1, VX_DF_IMAGE_U8);
+                if (vxGetStatus((vx_reference)barr) == VX_SUCCESS) {
+                    printf("STATUS: invalid-rect case FAIL (accepted)\n");
+                    errors++;
+                    vxReleaseObjectArray(&barr);
+                } else {
+                    printf("STATUS: invalid-rect rejected - OK\n");
+                }
+
+                // Negative: format wider than tensor element (RGB=3B vs U8=1B) must be rejected
+                vx_object_array farr = vxCreateImageObjectArrayFromTensor(otensor, &rect, 5, 1, VX_DF_IMAGE_RGB);
+                if (vxGetStatus((vx_reference)farr) == VX_SUCCESS) {
+                    printf("STATUS: mismatched-format case FAIL (accepted)\n");
+                    errors++;
+                    vxReleaseObjectArray(&farr);
+                } else {
+                    printf("STATUS: mismatched-format rejected - OK\n");
+                }
+            } else {
+                printf("STATUS: vxCreateImageObjectArrayFromTensor test skipped (tensor map failed: %d)\n", ms);
+            }
+            vxReleaseTensor(&otensor);
+        }
     }
 
     // 7. Create a virtual tensor in a graph

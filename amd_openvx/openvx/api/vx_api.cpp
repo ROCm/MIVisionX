@@ -10554,8 +10554,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryMetaFormatAttribute(vx_meta_format met
                 }
                 break;
             case VX_TENSOR_DIMS:
-                if (size <= AGO_MAX_TENSOR_DIMENSIONS * sizeof(vx_size) && meta->data.ref.type == VX_TYPE_TENSOR) {
-                    memcpy(ptr, &meta->data.u.tensor.dims, size);
+                if (size >= sizeof(vx_size) * meta->data.u.tensor.num_dims && meta->data.ref.type == VX_TYPE_TENSOR) {
+                    memcpy(ptr, &meta->data.u.tensor.dims, sizeof(vx_size) * meta->data.u.tensor.num_dims);
                     status = VX_SUCCESS;
                 }
                 break;
@@ -10586,7 +10586,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryMetaFormatAttribute(vx_meta_format met
  * \param [in] tensor The tensor data from which to extract the images. Must be a 3D tensor.
  * \param [in] rect Image coordinates (ROI) within the tensor's first two dimensions.
  * \param [in] array_size Number of images to extract.
- * \param [in] jump Byte stride between consecutive images along the third tensor dimension.
+ * \param [in] jump Delta between the indexes of two consecutive images along the third
+ *             tensor dimension (an index delta, not a byte count).
  * \param [in] image_format The requested image format. Must match the tensor element type.
  * \return An <tt>\ref vx_object_array</tt> of images pointing into the tensor's memory,
  *         or NULL on error. Use <tt>\ref vxGetStatus</tt> to check for errors.
@@ -10605,16 +10606,52 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateImageObjectArrayFromTensor(vx_t
         return NULL;
     }
 
+    // Validate the rectangle: start must be strictly less than end and stay within
+    // the first two tensor dimensions (unsigned subtraction below would otherwise wrap).
+    if (rect->start_x >= rect->end_x || rect->start_y >= rect->end_y ||
+        rect->end_x > tensor_data->u.tensor.dims[0] || rect->end_y > tensor_data->u.tensor.dims[1]) {
+        agoAddLogEntry(&tensor_data->ref, VX_ERROR_INVALID_PARAMETERS,
+            "ERROR: vxCreateImageObjectArrayFromTensor: invalid rect (%u,%u,%u,%u) for tensor dims [" VX_FMT_SIZE "," VX_FMT_SIZE "]\n",
+            rect->start_x, rect->start_y, rect->end_x, rect->end_y,
+            tensor_data->u.tensor.dims[0], tensor_data->u.tensor.dims[1]);
+        return NULL;
+    }
+
     vx_uint32 width  = rect->end_x - rect->start_x;
     vx_uint32 height = rect->end_y - rect->start_y;
-    if (width == 0 || height == 0) {
+
+    // The requested image format must match the tensor element size, since each image
+    // slice aliases the tensor's memory directly with no format conversion.
+    vx_size elem_size = agoType2Size(tensor_data->ref.context, tensor_data->u.tensor.data_type);
+    vx_size components = 0, planes = 0, pixel_bits_num = 0;
+    {
+        vx_uint32 pxNum = 0, pxDenom = 0;
+        vx_color_space_e cspace; vx_channel_range_e crange;
+        if (agoGetImageComponentsAndPlanes(tensor_data->ref.context, image_format, &components, &planes, &pxNum, &pxDenom, &cspace, &crange)) {
+            agoAddLogEntry(&tensor_data->ref, VX_ERROR_INVALID_PARAMETERS,
+                "ERROR: vxCreateImageObjectArrayFromTensor: unsupported image_format 0x%08x\n", image_format);
+            return NULL;
+        }
+        pixel_bits_num = pxNum;
+    }
+    // Only single-plane formats can alias a contiguous tensor slice, and the pixel size
+    // (in bytes) must equal the tensor element size.
+    if (planes != 1 || (pixel_bits_num >> 3) != elem_size) {
         agoAddLogEntry(&tensor_data->ref, VX_ERROR_INVALID_PARAMETERS,
-            "ERROR: vxCreateImageObjectArrayFromTensor: rect produces zero-size image\n");
+            "ERROR: vxCreateImageObjectArrayFromTensor: image_format 0x%08x (planes=" VX_FMT_SIZE ", %u bytes/pixel) incompatible with tensor element size " VX_FMT_SIZE "\n",
+            image_format, planes, (vx_uint32)(pixel_bits_num >> 3), elem_size);
         return NULL;
     }
 
     vx_context context = tensor_data->ref.context;
     CAgoLock lock(context->cs);
+
+    // Make sure the tensor's backing buffer is allocated so the images can alias it.
+    if (!tensor_data->buffer && agoAllocData(tensor_data)) {
+        agoAddLogEntry(&tensor_data->ref, VX_ERROR_NO_MEMORY,
+            "ERROR: vxCreateImageObjectArrayFromTensor: unable to allocate tensor buffer\n");
+        return NULL;
+    }
 
     // Build an image exemplar to describe each slice
     char img_desc[128];
@@ -10630,20 +10667,31 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateImageObjectArrayFromTensor(vx_t
     agoGenerateDataName(context, "objectarray", obj_array->name);
     agoAddData(&context->dataList, obj_array);
 
-    // Wire each child image to point into the tensor's buffer at the correct slice offset.
-    // tensor stride[0] = bytes per element, stride[1] = row stride, stride[2] = slice stride.
-    vx_size slice_stride = (jump != 0) ? jump : tensor_data->u.tensor.stride[2];
+    // Wire each child image to alias the tensor's buffer at the correct slice offset.
+    // tensor strides are in bytes: stride[0] = element size, stride[1] = row stride,
+    // stride[2] = slice stride. 'jump' is an index delta along dim-2 (per the OpenVX spec),
+    // so the byte stride between consecutive images is jump * stride[2].
+    vx_size slice_index_delta = (jump != 0) ? jump : 1;
+    vx_size slice_stride = slice_index_delta * tensor_data->u.tensor.stride[2];
+    vx_size row_stride   = tensor_data->u.tensor.stride[1];
     vx_size base_offset  = tensor_data->u.tensor.offset
-                         + rect->start_y * tensor_data->u.tensor.stride[1]
-                         + rect->start_x * tensor_data->u.tensor.stride[0];
+                         + (vx_size)rect->start_y * row_stride
+                         + (vx_size)rect->start_x * tensor_data->u.tensor.stride[0];
 
     for (vx_uint32 i = 0; i < obj_array->numChildren; i++) {
         AgoData * img = obj_array->children[i];
         if (img) {
-            img->u.img.roiMasterImage = tensor_data->u.tensor.roiMaster ? tensor_data->u.tensor.roiMaster : tensor_data;
-            img->import_type   = VX_MEMORY_TYPE_HOST;
-            // Record the byte offset into the tensor buffer for this slice
-            img->gpu_buffer_offset = (vx_uint32)(base_offset + (vx_size)i * slice_stride);
+            // Single-plane image: alias directly into the tensor buffer. Marking import_type
+            // (non-NONE) preserves this stride/buffer through agoDataSanityCheckAndUpdate, and
+            // mem_handle=false keeps agoAllocData from allocating a fresh buffer.
+            img->import_type = VX_MEMORY_TYPE_HOST;
+            img->u.img.mem_handle = vx_false_e;
+            img->u.img.stride_in_bytes = (vx_uint32)row_stride;
+            img->buffer = tensor_data->buffer + base_offset + (vx_size)i * slice_stride;
+#if (ENABLE_OPENCL || ENABLE_HIP)
+            img->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+            img->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+#endif
             agoAddData(&context->dataList, img);
             for (vx_uint32 j = 0; j < img->numChildren; j++) {
                 if (img->children[j])

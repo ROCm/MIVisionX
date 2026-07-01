@@ -71,6 +71,10 @@ enum vx_df_image_amd_sample {
 	VX_DF_IMAGE_RGB4_AMD = VX_DF_IMAGE('R', 'G', 'B', '4'),  // AGO image with RGB-48 16bit per channel (RGB4)
 };
 
+// Dummy publish/unpublish callbacks used to exercise the vxRegisterKernelLibrary success path.
+static vx_status VX_CALLBACK sample_publish_kernels(vx_context /*context*/) { return VX_SUCCESS; }
+static vx_status VX_CALLBACK sample_unpublish_kernels(vx_context /*context*/) { return VX_SUCCESS; }
+
 int main(int argc, char **argv)
 {
     std::cout << VX_VERSION << VX_CONTEXT_NONLINEAR_MAX_DIMENSION << "\n";;
@@ -86,6 +90,10 @@ int main(int argc, char **argv)
         printf("ERROR: vxRegisterKernelLibrary should fail with VX_ERROR_INVALID_PARAMETERS for null arguments, got (%d)\n", failure_register);
         exit(1);
     }
+    // success path: register a library by name with valid publish/unpublish callbacks
+    ERROR_CHECK_STATUS(vxRegisterKernelLibrary(context, "sample_kernel_library", sample_publish_kernels, sample_unpublish_kernels));
+    // re-registering the same module name is a no-op and must still succeed
+    ERROR_CHECK_STATUS(vxRegisterKernelLibrary(context, "sample_kernel_library", sample_publish_kernels, sample_unpublish_kernels));
 
     // register image formats
 	AgoImageFormatDescription desc = { 3, 1, 32, VX_COLOR_SPACE_DEFAULT, VX_CHANNEL_RANGE_FULL };

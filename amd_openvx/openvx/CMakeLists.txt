@@ -175,7 +175,10 @@ else()
     #   already hand-vectorized with AVX2/SSE intrinsics; ROCm 7.14's amdclang++ (LLVM 23)
     #   miscompiles these loops at -O3 by re-vectorizing them with a corrupt induction variable,
     #   causing out-of-bounds accesses and segfaults (e.g. HafCpu_ChannelCopy_U8_U8).
-    target_compile_options(openvx PRIVATE -msse4.2 -mavx2 -mfma -mbmi2 -fno-vectorize)
+    target_compile_options(openvx PRIVATE -msse4.2 -mavx2 -mfma -mbmi2)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_compile_options(openvx PRIVATE -fno-vectorize)
+    endif()
     target_compile_definitions(openvx PRIVATE USE_AVX=1)
     target_compile_definitions(openvx PRIVATE USE_FMA=1)
     target_compile_definitions(openvx PRIVATE USE_BMI2=1)

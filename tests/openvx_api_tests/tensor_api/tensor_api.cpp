@@ -22,7 +22,8 @@ THE SOFTWARE.
 
 // Tensor API coverage test - exercises vxCreateTensor, vxQueryTensor,
 // vxCopyTensorPatch, vxMapTensorPatch, vxUnmapTensorPatch,
-// vxCreateTensorFromView, vxReleaseTensor, vxCreateVirtualTensor
+// vxCreateTensorFromView, vxReleaseTensor, vxCreateVirtualTensor,
+// vxCreateImageObjectArrayFromTensor
 
 #include <cstdio>
 #include <cstring>
@@ -134,6 +135,300 @@ int main() {
         // 6. Release tensor
         CHECK_STATUS(vxReleaseTensor(&tensor));
         printf("STATUS: vxReleaseTensor - OK\n");
+    }
+
+    // 6b. vxCreateImageObjectArrayFromTensor: images must ALIAS tensor memory
+    {
+        // 3D tensor [W=4, H=3, D=5] of U8; write value = 100 + slice index per slice
+        vx_size od[3] = {4, 3, 5};
+        vx_tensor otensor = vxCreateTensor(context, 3, od, VX_TYPE_UINT8, 0);
+        if (!otensor) {
+            printf("STATUS: vxCreateImageObjectArrayFromTensor test skipped (tensor create failed)\n");
+        } else {
+            vx_size ostart[3] = {0, 0, 0};
+            vx_size oend[3] = {4, 3, 5};
+            vx_size ostride[3];
+            void *optr = NULL;
+            vx_map_id omap;
+            vx_status ms = vxMapTensorPatch(otensor, 3, ostart, oend, &omap, ostride, &optr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+            if (ms == VX_SUCCESS && optr) {
+                for (vx_size d = 0; d < 5; d++)
+                    for (vx_size y = 0; y < 3; y++)
+                        for (vx_size x = 0; x < 4; x++)
+                            *((vx_uint8 *)optr + x * ostride[0] + y * ostride[1] + d * ostride[2]) = (vx_uint8)(100 + d);
+                vxUnmapTensorPatch(otensor, omap);
+
+                // Positive: extract all 5 full slices (jump = 1 => every slice along dim-2)
+                vx_rectangle_t rect = {0, 0, 4, 3};
+                vx_object_array arr = vxCreateImageObjectArrayFromTensor(otensor, &rect, 5, 1, VX_DF_IMAGE_U8);
+                if (vxGetStatus((vx_reference)arr) != VX_SUCCESS) {
+                    printf("STATUS: vxCreateImageObjectArrayFromTensor FAILED to create array\n");
+                    errors++;
+                } else {
+                    printf("STATUS: vxCreateImageObjectArrayFromTensor - OK\n");
+                    int alias_fail = 0;
+                    for (vx_size i = 0; i < 5; i++) {
+                        vx_image img = (vx_image)vxGetObjectArrayItem(arr, (vx_uint32)i);
+                        vx_rectangle_t r = {0, 0, 4, 3};
+                        vx_imagepatch_addressing_t addr;
+                        void *iptr = NULL;
+                        vx_map_id imap;
+                        // Read the value written through the tensor before the array was created.
+                        if (vxMapImagePatch(img, &r, 0, &imap, &addr, &iptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0) == VX_SUCCESS) {
+                            vx_uint8 got = *((vx_uint8 *)iptr);
+                            if (got != (vx_uint8)(100 + i)) alias_fail++;
+                            vxUnmapImagePatch(img, imap);
+                        } else {
+                            alias_fail++;
+                        }
+                        vxReleaseImage(&img);
+                    }
+                    printf("STATUS: object-array slices see tensor writes: %s (%d mismatches)\n",
+                           alias_fail == 0 ? "PASS" : "FAIL", alias_fail);
+                    if (alias_fail) errors++;
+
+                    // True aliasing check: write NEW values THROUGH each image, then read them
+                    // back FROM the tensor. A copy-based implementation would fail this.
+                    int writeback_fail = 0;
+                    for (vx_size i = 0; i < 5; i++) {
+                        vx_image img = (vx_image)vxGetObjectArrayItem(arr, (vx_uint32)i);
+                        vx_rectangle_t r = {0, 0, 4, 3};
+                        vx_imagepatch_addressing_t addr;
+                        void *iptr = NULL;
+                        vx_map_id imap;
+                        if (vxMapImagePatch(img, &r, 0, &imap, &addr, &iptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0) == VX_SUCCESS) {
+                            *((vx_uint8 *)iptr) = (vx_uint8)(200 + i);
+                            vxUnmapImagePatch(img, imap);
+                        } else {
+                            writeback_fail++;
+                        }
+                        vxReleaseImage(&img);
+                    }
+                    // Read back from the tensor and confirm the image writes are visible.
+                    void *rptr = NULL;
+                    vx_map_id rmap;
+                    vx_size rstride[3];
+                    if (vxMapTensorPatch(otensor, 3, ostart, oend, &rmap, rstride, &rptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST) == VX_SUCCESS && rptr) {
+                        for (vx_size d = 0; d < 5; d++) {
+                            vx_uint8 got = *((vx_uint8 *)rptr + 0 * rstride[0] + 0 * rstride[1] + d * rstride[2]);
+                            if (got != (vx_uint8)(200 + d)) writeback_fail++;
+                        }
+                        vxUnmapTensorPatch(otensor, rmap);
+                    } else {
+                        writeback_fail++;
+                    }
+                    printf("STATUS: image writes alias back into tensor memory: %s (%d mismatches)\n",
+                           writeback_fail == 0 ? "PASS" : "FAIL", writeback_fail);
+                    if (writeback_fail) errors++;
+                    vxReleaseObjectArray(&arr);
+                }
+
+                // Negative: invalid rect (start_x >= end_x) must be rejected
+                vx_rectangle_t bad = {3, 0, 1, 3};
+                vx_object_array barr = vxCreateImageObjectArrayFromTensor(otensor, &bad, 5, 1, VX_DF_IMAGE_U8);
+                if (vxGetStatus((vx_reference)barr) == VX_SUCCESS) {
+                    printf("STATUS: invalid-rect case FAIL (accepted)\n");
+                    errors++;
+                    vxReleaseObjectArray(&barr);
+                } else {
+                    printf("STATUS: invalid-rect rejected - OK\n");
+                }
+
+                // Negative: format wider than tensor element (RGB=3B vs U8=1B) must be rejected
+                vx_object_array farr = vxCreateImageObjectArrayFromTensor(otensor, &rect, 5, 1, VX_DF_IMAGE_RGB);
+                if (vxGetStatus((vx_reference)farr) == VX_SUCCESS) {
+                    printf("STATUS: mismatched-format case FAIL (accepted)\n");
+                    errors++;
+                    vxReleaseObjectArray(&farr);
+                } else {
+                    printf("STATUS: mismatched-format rejected - OK\n");
+                }
+
+                // Negative: requesting more slices than the tensor depth (dims[2]=5) must be rejected
+                vx_object_array darr = vxCreateImageObjectArrayFromTensor(otensor, &rect, 6, 1, VX_DF_IMAGE_U8);
+                if (vxGetStatus((vx_reference)darr) == VX_SUCCESS) {
+                    printf("STATUS: depth-overflow (array_size) case FAIL (accepted)\n");
+                    errors++;
+                    vxReleaseObjectArray(&darr);
+                } else {
+                    printf("STATUS: depth-overflow (array_size) rejected - OK\n");
+                }
+
+                // Negative: a jump that steps past the tensor depth must be rejected
+                // (3 slices at jump=3 would access indices 0,3,6 but depth is 5)
+                vx_object_array jarr = vxCreateImageObjectArrayFromTensor(otensor, &rect, 3, 3, VX_DF_IMAGE_U8);
+                if (vxGetStatus((vx_reference)jarr) == VX_SUCCESS) {
+                    printf("STATUS: depth-overflow (jump) case FAIL (accepted)\n");
+                    errors++;
+                    vxReleaseObjectArray(&jarr);
+                } else {
+                    printf("STATUS: depth-overflow (jump) rejected - OK\n");
+                }
+            } else {
+                printf("STATUS: vxCreateImageObjectArrayFromTensor test skipped (tensor map failed: %d)\n", ms);
+            }
+            vxReleaseTensor(&otensor);
+        }
+    }
+
+    // 6c. vxCreateImageObjectArrayFromTensor + vxSwapTensorHandle: swapping the tensor's
+    //     backing buffer must re-point the aliased images, not leave them dangling.
+    {
+        // 3D tensor [W=4, H=3, D=5] of U8, created from a host handle so the handle can be swapped.
+        vx_size sd[3] = {4, 3, 5};
+        vx_size sstride[3] = {sizeof(vx_uint8), 4 * sizeof(vx_uint8), 4 * 3 * sizeof(vx_uint8)};
+        vx_size scount = 4 * 3 * 5;
+        vx_uint8 *sbuf1 = (vx_uint8 *)calloc(scount, sizeof(vx_uint8));
+        vx_uint8 *sbuf2 = (vx_uint8 *)calloc(scount, sizeof(vx_uint8));
+        if (sbuf1 && sbuf2) {
+            for (vx_size d = 0; d < 5; d++)
+                for (vx_size i = 0; i < 12; i++) {
+                    sbuf1[d * 12 + i] = (vx_uint8)(10 + d);   // buffer 1: slice value 10+d
+                    sbuf2[d * 12 + i] = (vx_uint8)(50 + d);   // buffer 2: slice value 50+d
+                }
+            vx_tensor stensor = vxCreateTensorFromHandle(context, 3, sd, VX_TYPE_UINT8, 0,
+                                                         sstride, sbuf1, VX_MEMORY_TYPE_HOST);
+            if (vxGetStatus((vx_reference)stensor) == VX_SUCCESS) {
+                vx_rectangle_t srect = {0, 0, 4, 3};
+                vx_object_array sarr = vxCreateImageObjectArrayFromTensor(stensor, &srect, 5, 1, VX_DF_IMAGE_U8);
+                if (vxGetStatus((vx_reference)sarr) == VX_SUCCESS) {
+                    // Swap the tensor handle to buffer 2; aliased images must now see 50+d.
+                    void *prev = NULL;
+                    vx_status sw = vxSwapTensorHandle(stensor, sbuf2, &prev);
+                    int swap_fail = (sw != VX_SUCCESS || prev != sbuf1) ? 1 : 0;
+                    for (vx_size i = 0; i < 5 && !swap_fail; i++) {
+                        vx_image img = (vx_image)vxGetObjectArrayItem(sarr, (vx_uint32)i);
+                        vx_rectangle_t r = {0, 0, 4, 3};
+                        vx_imagepatch_addressing_t addr;
+                        void *iptr = NULL;
+                        vx_map_id imap;
+                        if (vxMapImagePatch(img, &r, 0, &imap, &addr, &iptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0) == VX_SUCCESS) {
+                            if (*((vx_uint8 *)iptr) != (vx_uint8)(50 + i)) swap_fail++;
+                            vxUnmapImagePatch(img, imap);
+                        } else {
+                            swap_fail++;
+                        }
+                        vxReleaseImage(&img);
+                    }
+                    printf("STATUS: swap re-points aliased images: %s\n", swap_fail == 0 ? "PASS" : "FAIL");
+                    if (swap_fail) errors++;
+                    vxReleaseObjectArray(&sarr);
+
+                    // Use-after-free guard: after releasing the object-array, the images must be
+                    // unlinked from the tensor's dependency list, so another swap must not touch
+                    // freed memory. This should complete cleanly (no crash / no corruption).
+                    void *prev2 = NULL;
+                    vx_status sw2 = vxSwapTensorHandle(stensor, sbuf1, &prev2);
+                    printf("STATUS: swap after object-array release: %s\n",
+                           (sw2 == VX_SUCCESS && prev2 == sbuf2) ? "PASS" : "FAIL");
+                    if (sw2 != VX_SUCCESS || prev2 != sbuf2) errors++;
+                } else {
+                    printf("STATUS: swap-propagation test skipped (object-array create failed)\n");
+                }
+                vxReleaseTensor(&stensor);
+            } else {
+                printf("STATUS: swap-propagation test skipped (tensor-from-handle create failed)\n");
+            }
+        }
+        free(sbuf1);
+        free(sbuf2);
+    }
+
+    // 6d. vxCreateImageObjectArrayFromTensor with a non-zero base offset: exercises the offset
+    //     arithmetic for (a) a view/ROI tensor (whose offset is folded into buffer) and (b) a
+    //     non-zero rect start. Regression guard against double-applying the offset.
+    {
+        // Base 3D tensor [W=6, H=5, D=4] of U8. Encode a unique value per (x,y,slice):
+        // value = x + y*10 + d*50 (all fit in a byte for these dims).
+        vx_size bd[3] = {6, 5, 4};
+        vx_tensor btensor = vxCreateTensor(context, 3, bd, VX_TYPE_UINT8, 0);
+        if (vxGetStatus((vx_reference)btensor) == VX_SUCCESS) {
+            vx_size bstart[3] = {0, 0, 0};
+            vx_size bend[3] = {6, 5, 4};
+            vx_size bstride[3];
+            void *bptr = NULL;
+            vx_map_id bmap;
+            if (vxMapTensorPatch(btensor, 3, bstart, bend, &bmap, bstride, &bptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST) == VX_SUCCESS && bptr) {
+                for (vx_size d = 0; d < 4; d++)
+                    for (vx_size y = 0; y < 5; y++)
+                        for (vx_size x = 0; x < 6; x++)
+                            *((vx_uint8 *)bptr + x * bstride[0] + y * bstride[1] + d * bstride[2]) =
+                                (vx_uint8)(x + y * 10 + d * 50);
+                vxUnmapTensorPatch(btensor, bmap);
+
+                // (a) Non-zero rect start: extract a 3x2 region starting at (x=2,y=1) from each of
+                //     the 4 slices. The top-left pixel of image i must be (2 + 1*10 + i*50).
+                vx_rectangle_t orect = {2, 1, 5, 3};   // start_x=2,start_y=1,end_x=5,end_y=3 -> 3x2
+                vx_object_array oarr = vxCreateImageObjectArrayFromTensor(btensor, &orect, 4, 1, VX_DF_IMAGE_U8);
+                if (vxGetStatus((vx_reference)oarr) == VX_SUCCESS) {
+                    int off_fail = 0;
+                    for (vx_size i = 0; i < 4; i++) {
+                        vx_image img = (vx_image)vxGetObjectArrayItem(oarr, (vx_uint32)i);
+                        vx_rectangle_t r = {0, 0, 3, 2};
+                        vx_imagepatch_addressing_t addr;
+                        void *iptr = NULL;
+                        vx_map_id imap;
+                        if (vxMapImagePatch(img, &r, 0, &imap, &addr, &iptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0) == VX_SUCCESS) {
+                            vx_uint8 got = *((vx_uint8 *)iptr);
+                            if (got != (vx_uint8)(2 + 1 * 10 + i * 50)) off_fail++;
+                            vxUnmapImagePatch(img, imap);
+                        } else {
+                            off_fail++;
+                        }
+                        vxReleaseImage(&img);
+                    }
+                    printf("STATUS: object-array with non-zero rect start: %s\n", off_fail == 0 ? "PASS" : "FAIL");
+                    if (off_fail) errors++;
+                    vxReleaseObjectArray(&oarr);
+                } else {
+                    printf("STATUS: non-zero rect start test skipped (object-array create failed)\n");
+                }
+
+                // (b) View tensor with non-zero offset: view spans slices d=1..3, x=1..5, y=1..4.
+                //     Creating an object-array over the whole view's first two dims must land on the
+                //     view's data (offset applied exactly once). Image i (i=0..2) top-left pixel
+                //     corresponds to base (x=1,y=1,d=1+i) = 1 + 1*10 + (1+i)*50.
+                vx_size vstart[3] = {1, 1, 1};
+                vx_size vend[3] = {5, 4, 4};   // view dims [4, 3, 3]
+                vx_tensor vtensor = vxCreateTensorFromView(btensor, 3, vstart, vend);
+                if (vxGetStatus((vx_reference)vtensor) == VX_SUCCESS) {
+                    vx_rectangle_t vrect = {0, 0, 4, 3};   // full first-two-dims of the view
+                    vx_object_array varr = vxCreateImageObjectArrayFromTensor(vtensor, &vrect, 3, 1, VX_DF_IMAGE_U8);
+                    if (vxGetStatus((vx_reference)varr) == VX_SUCCESS) {
+                        int view_fail = 0;
+                        for (vx_size i = 0; i < 3; i++) {
+                            vx_image img = (vx_image)vxGetObjectArrayItem(varr, (vx_uint32)i);
+                            vx_rectangle_t r = {0, 0, 4, 3};
+                            vx_imagepatch_addressing_t addr;
+                            void *iptr = NULL;
+                            vx_map_id imap;
+                            if (vxMapImagePatch(img, &r, 0, &imap, &addr, &iptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0) == VX_SUCCESS) {
+                                vx_uint8 got = *((vx_uint8 *)iptr);
+                                if (got != (vx_uint8)(1 + 1 * 10 + (1 + i) * 50)) view_fail++;
+                                vxUnmapImagePatch(img, imap);
+                            } else {
+                                view_fail++;
+                            }
+                            vxReleaseImage(&img);
+                        }
+                        printf("STATUS: object-array from view tensor (offset applied once): %s\n",
+                               view_fail == 0 ? "PASS" : "FAIL");
+                        if (view_fail) errors++;
+                        vxReleaseObjectArray(&varr);
+                    } else {
+                        printf("STATUS: view object-array test skipped (create failed)\n");
+                    }
+                    vxReleaseTensor(&vtensor);
+                } else {
+                    printf("STATUS: view object-array test skipped (view create failed)\n");
+                }
+            } else {
+                printf("STATUS: non-zero offset test skipped (tensor map failed)\n");
+            }
+            vxReleaseTensor(&btensor);
+        } else {
+            printf("STATUS: non-zero offset test skipped (tensor create failed)\n");
+        }
     }
 
     // 7. Create a virtual tensor in a graph

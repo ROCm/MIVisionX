@@ -149,9 +149,8 @@ list(APPEND SOURCES
 
 if (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
     message("-- ${Green}vx_rpp -- Building with HIP${ColourReset}")
-    set(ENABLE_OPENCL 0)
     set(ENABLE_HIP 1)
-    add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DENABLE_HIP=${ENABLE_HIP} -DRPP_BACKEND_HIP=1 -D__HIP_PLATFORM_AMD__)
+    add_definitions(-DENABLE_HIP=${ENABLE_HIP} -DRPP_BACKEND_HIP=1 -D__HIP_PLATFORM_AMD__)
     include_directories(${ROCM_PATH}/include)
     link_directories(${HIP_PATH}/lib)
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} hip::host)
@@ -161,9 +160,8 @@ if (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGPU_SUPPORT=1 -DRPP_BACKEND_HIP=1") # Currently used by rpp. To be removed.
 else()
     message("-- ${Green}vx_rpp -- Building with CPU backend${ColourReset}")
-    set(ENABLE_OPENCL 0)
     set(ENABLE_HIP 0)
-    add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DENABLE_HIP=${ENABLE_HIP})
+    add_definitions(-DENABLE_HIP=${ENABLE_HIP})
     add_library(vx_rpp SHARED ${SOURCES})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGPU_SUPPORT=0" ) # Currently used by rpp. To be removed.
 endif()

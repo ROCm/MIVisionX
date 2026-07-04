@@ -51,9 +51,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &numDims, sizeof(numDims)));
     int roiDims = ((numDims == 3) && (data->inputTensorDims[2] == 1)) ? 1 : data->pSrcGenericDesc->numDims - 1;  // roiDims - For how many dims the ROI (start, end) values are needed
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_HIP
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HIP, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
@@ -132,9 +130,7 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
         mean_stddev_array_size = std::max(mean_stddev_array_size, totalElements);
     }
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        return VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_HIP
         if (!data->pMean) {
             hipError_t err = hipHostMalloc(&data->pMean, data->inputTensorDims[0] * mean_stddev_array_size * sizeof(float), hipHostMallocDefault);
             if (err != hipSuccess)

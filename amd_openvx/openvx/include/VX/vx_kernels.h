@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Khronos Group Inc.
+ * Copyright (c) 2012-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _OPENVX_KERNELS_H_
-#define _OPENVX_KERNELS_H_
+#ifndef OPENVX_KERNELS_H
+#define OPENVX_KERNELS_H
 
 /*!
  * \file
@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 /*!
- * \brief The standard list of available libraries
+ * \brief The standard list of available libraries.
  * \ingroup group_kernel
  */
 enum vx_library_e {
@@ -38,13 +38,17 @@ enum vx_library_e {
 /*!
  * \brief The standard list of available vision kernels.
  *
- * Each kernel listed here can be used with the <tt>\ref vxGetKernelByEnum</tt> call.
+ * \details Each kernel listed here can be used with the <tt>\ref vxGetKernelByEnum</tt> call.
  * When programming the parameters, use
  * \arg <tt>\ref VX_INPUT</tt> for [in]
  * \arg <tt>\ref VX_OUTPUT</tt> for [out]
  *
  * When programming the parameters, use
- * \arg <tt>\ref VX_TYPE_IMAGE</tt> for a <tt>\ref vx_image</tt> in the size field of <tt>\ref vxGetParameterByIndex</tt> or <tt>\ref vxSetParameterByIndex</tt>  * \arg <tt>\ref VX_TYPE_ARRAY</tt> for a <tt>\ref vx_array</tt> in the size field of <tt>\ref vxGetParameterByIndex</tt> or <tt>\ref vxSetParameterByIndex</tt>  * \arg or other appropriate types in \ref vx_type_e.
+ * \arg <tt>\ref VX_TYPE_IMAGE</tt> for a <tt>\ref vx_image</tt> in the size field of
+ * <tt>\ref vxGetParameterByIndex</tt> or <tt>\ref vxSetParameterByIndex</tt>
+ * \arg <tt>\ref VX_TYPE_ARRAY</tt> for a <tt>\ref vx_array</tt> in the size field of
+ * <tt>\ref vxGetParameterByIndex</tt> or <tt>\ref vxSetParameterByIndex</tt>
+ * \arg or other appropriate types in \ref vx_type_e.
  * \ingroup group_kernel
  */
 enum vx_kernel_e {
@@ -102,7 +106,7 @@ enum vx_kernel_e {
      */
     VX_KERNEL_SCALE_IMAGE = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x7,
 
-    /*! \brief The Table Lookup kernel
+    /*! \brief The Table Lookup kernel.
      * \see group_vision_function_lut
      */
     VX_KERNEL_TABLE_LOOKUP = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x8,
@@ -257,7 +261,7 @@ enum vx_kernel_e {
      */
     VX_KERNEL_HALFSCALE_GAUSSIAN = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x29,
 
-    VX_KERNEL_MAX_1_0, /*!< \internal Used for VX1.0 bounds checking in the conformance test. */
+    VX_KERNEL_MAX_1_0 = VX_KERNEL_HALFSCALE_GAUSSIAN + 1, /*!< \internal Used for VX1.0 bounds checking in the conformance test. */
 
     /* kernel added in OpenVX 1.1 */
 
@@ -276,22 +280,22 @@ enum vx_kernel_e {
     */
     VX_KERNEL_NON_LINEAR_FILTER = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x2C,
 
-    VX_KERNEL_MAX_1_1, /*!< \internal Used for VX1.1 bounds checking in the conformance test. */
+    VX_KERNEL_MAX_1_1 = VX_KERNEL_NON_LINEAR_FILTER + 1, /*!< \internal Used for VX1.1 bounds checking in the conformance test. */
 
     /* kernel added in OpenVX 1.2 */
 
     /*! \brief The Match Template Kernel.
-    * \see group_vision_match_template
+    * \see group_vision_function_match_template
     */
     VX_KERNEL_MATCH_TEMPLATE = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x2D,
 
     /*! \brief The LBP Kernel.
-    * \see group_lbp
+    * \see group_vision_function_lbp
     */
     VX_KERNEL_LBP = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x2E,
 
     /*! \brief The hough lines probability Kernel.
-    * \see group_vision_hough_lines_p
+    * \see group_vision_function_hough_lines_p
     */
     VX_KERNEL_HOUGH_LINES_P = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x2F,
 
@@ -365,21 +369,40 @@ enum vx_kernel_e {
     */
     VX_KERNEL_SELECT = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x3D,
 
-    /* insert new kernels here */
-    VX_KERNEL_MAX_1_2, /*!< \internal Used for VX1.2 bounds checking in the conformance test. */
     /*! \brief The max kernel.
     * \see group_vision_function_max
     */
     VX_KERNEL_MAX = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x3E,
+
     /*! \brief The min kernel.
     * \see group_vision_function_min
     */
     VX_KERNEL_MIN = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x3F,
 
-    /*! \brief The weigthed average kernel.
+    VX_KERNEL_MAX_1_2 = VX_KERNEL_MIN + 1, /*!< \internal Used for VX1.2 bounds checking in the conformance test. */
+
+    /* kernel added in OpenVX 1.3 */
+
+    /*! \brief The weighted average kernel.
      * \see group_vision_function_weighted_average
      */
     VX_KERNEL_WEIGHTED_AVERAGE = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x40,
+
+    VX_KERNEL_MAX_1_3 = VX_KERNEL_WEIGHTED_AVERAGE + 1, /*!< \internal Used for VX1.3 bounds checking in the conformance test. */
+
+    /* kernel added in Swap/Move Extension */
+
+    /*! \brief The data object swap kernel. (If implemented)
+    * \see group_vision_function_swap
+    */
+    VX_KERNEL_SWAP = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x41,
+
+    /*! \brief The data object move kernel. (If implemented)
+    * \see group_vision_function_move
+    */
+    VX_KERNEL_MOVE = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x42,
+
+    /* insert new kernels here */
 
 };
 
@@ -387,4 +410,4 @@ enum vx_kernel_e {
 }
 #endif
 
-#endif  /* _OPEN_VISION_LIBRARY_KERNELS_H_ */
+#endif  /* OPENVX_KERNELS_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Khronos Group Inc.
+ * Copyright (c) 2012-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _OPENVX_IMPORT_KERNEL_H_
-#define _OPENVX_IMPORT_KERNEL_H_
+#ifndef OPENVX_IMPORT_KERNEL_H
+#define OPENVX_IMPORT_KERNEL_H
 
 #include <VX/vx.h>
 

@@ -20,6 +20,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+/*
+ * Scope: OpenVX 1.3.2 - Vision Conformance Feature Set only
+ * -----------------------------------------------------------
+ * This implementation targets the Vision Conformance Feature Set as defined in the
+ * OpenVX Feature Set Definitions v1.1 (section 3):
+ *   https://registry.khronos.org/OpenVX/specs/1.3/vx_khr_feature_sets/1.1/html/vx_khr_feature_sets_1_1.html
+ * which is "roughly equivalent to the set of functions available in version 1.1 of the
+ * OpenVX specification." It does NOT target the optional Enhanced Vision (section 7) or
+ * Neural Network (section 4) feature sets.
+ *
+ * As a result, the following API functions are declared in the 1.3.2 headers but are
+ * intentionally NOT implemented here, because they belong to those out-of-scope feature
+ * sets rather than to Vision Conformance:
+ *   - Enhanced Vision (section 7): NonMaxSuppression, MatchTemplate, HoughLinesP, LBP,
+ *     HOGCells, HOGFeatures, BilateralFilter, Max, Min, Select, ScalarOperation, Copy
+ *   - Enhanced Vision + Neural Network (sections 4/7): TensorAdd, TensorSubtract,
+ *     TensorMultiply, TensorConvertDepth, TensorMatrixMultiply, TensorTableLookup,
+ *     TensorTranspose
+ * These may be added in the future if Enhanced Vision / Neural Network conformance is targeted.
+ */
 
 #include "ago_internal.h"
 #define VX_MAX_TENSOR_DIMENSIONS 6
@@ -2370,8 +2390,34 @@ VX_API_ENTRY vx_status VX_API_CALL vxRegisterKernelLibrary(vx_context context, c
     vx_status status = VX_ERROR_INVALID_REFERENCE;
     if (agoIsValidContext(context))
     {
-        // TBD: add support to load obj files or static libs
-        status = VX_SUCCESS;
+        status = VX_ERROR_INVALID_PARAMETERS;
+        // A registered module has hmodule==NULL, so agoUnloadModule cannot look up an
+        // unpublish callback from a shared library later. Require it up front.
+        if (module && publish && unpublish)
+        {
+            CAgoLock lock(context->cs);
+            // check if the module is already registered
+            for (auto& reg : context->registered_modules) {
+                if (strcmp(module, reg.module_name) == 0) {
+                    return VX_SUCCESS;
+                }
+            }
+            // check if the module is already loaded
+            for (vx_uint32 index = 0; index < context->num_active_modules; index++) {
+                if (strcmp(module, context->modules[index].module_name) == 0) {
+                    return VX_SUCCESS;
+                }
+            }
+            ModuleData data = {};
+            strncpy(data.module_name, module, sizeof(data.module_name) - 1);
+            data.hmodule = NULL;
+            data.module_internal_data_ptr = nullptr;
+            data.module_internal_data_size = 0;
+            data.publish = publish;
+            data.unpublish = unpublish;
+            context->registered_modules.push_back(data);
+            status = VX_SUCCESS;
+        }
     }
     return status;
 }
@@ -9516,11 +9562,15 @@ VX_API_ENTRY vx_status VX_API_CALL vxGetModuleInternalData(vx_context context, c
 {
     vx_status status = VX_ERROR_INVALID_REFERENCE;
     if (agoIsValidContext(context)) {
-        for (auto it = context->modules.begin(); it != context->modules.end(); it++) {
-            if (it->hmodule && !strcmp(it->module_name, module)) {
-                *ptr = it->module_internal_data_ptr;
-                *size = it->module_internal_data_size;
-                status = VX_SUCCESS;
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (module && ptr && size) {
+            for (auto it = context->modules.begin(); it != context->modules.end(); it++) {
+                if (!strcmp(it->module_name, module)) {
+                    *ptr = it->module_internal_data_ptr;
+                    *size = it->module_internal_data_size;
+                    status = VX_SUCCESS;
+                    break;
+                }
             }
         }
     }
@@ -9531,11 +9581,15 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetModuleInternalData(vx_context context, c
 {
     vx_status status = VX_ERROR_INVALID_REFERENCE;
     if (agoIsValidContext(context)) {
-        for (auto it = context->modules.begin(); it != context->modules.end(); it++) {
-            if (it->hmodule && !strcmp(it->module_name, module)) {
-                it->module_internal_data_ptr = (vx_uint8 *)ptr;
-                it->module_internal_data_size = size;
-                status = VX_SUCCESS;
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (module) {
+            for (auto it = context->modules.begin(); it != context->modules.end(); it++) {
+                if (!strcmp(it->module_name, module)) {
+                    it->module_internal_data_ptr = (vx_uint8 *)ptr;
+                    it->module_internal_data_size = size;
+                    status = VX_SUCCESS;
+                    break;
+                }
             }
         }
     }
@@ -10236,6 +10290,22 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, 
     return (vx_tensor)data;
 }
 
+/*! \brief Swaps the backing memory handle of a tensor created from a host/OpenCL/HIP handle.
+ * \param [in] tensor The tensor whose handle is to be swapped. Must be a top-level tensor
+ *        (not a view/ROI created by <tt>\ref vxCreateTensorFromView</tt>); a view tensor is
+ *        rejected with <tt>\ref VX_ERROR_INVALID_REFERENCE</tt>.
+ * \param [in] new_ptr The new memory handle (may be NULL to detach the current handle).
+ * \param [out] prev_ptr Optional; receives the previous handle.
+ * \return A <tt>\ref vx_status_e</tt> enumeration.
+ * \note Any images that alias this tensor via <tt>\ref vxCreateImageObjectArrayFromTensor</tt>
+ *       are re-pointed at \a new_ptr so they keep aliasing the live buffer. This propagation
+ *       only occurs when swapping the top-level tensor. Images created from a *view* tensor are
+ *       linked to the view, not to the parent; swapping the parent's handle does NOT re-point
+ *       them (and the view itself cannot be swapped). Therefore, do not swap the handle of a
+ *       tensor whose *view* still has live aliased images, or those images will reference stale
+ *       memory. Release the object-array/images before swapping in that case.
+ * \ingroup group_object_tensor
+ */
 VX_API_ENTRY vx_status VX_API_CALL vxSwapTensorHandle(vx_tensor tensor, void * new_ptr, void** prev_ptr)
 {
     AgoData * data = (AgoData *)tensor;
@@ -10251,9 +10321,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxSwapTensorHandle(vx_tensor tensor, void * n
                 data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
                 data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
             }
-            // propagate to ROIs
+            // propagate to ROIs. Image ROIs (from vxCreateImageObjectArrayFromTensor) track their
+            // byte offset in gpu_buffer_offset; tensor ROIs use their own tensor offset.
             for (auto roi = data->roiDepList.begin(); roi != data->roiDepList.end(); roi++) {
-                (*roi)->buffer = data->buffer + (*roi)->u.tensor.offset;
+                vx_size roi_offset = ((*roi)->ref.type == VX_TYPE_IMAGE) ? (*roi)->gpu_buffer_offset : (*roi)->u.tensor.offset;
+                (*roi)->buffer = data->buffer ? (data->buffer + roi_offset) : NULL;
             }
         }
 #if ENABLE_OPENCL
@@ -10318,4 +10390,416 @@ VX_API_ENTRY vx_bool VX_API_CALL vxIsTensorAliased(vx_tensor tensorMaster, vx_si
         status = vx_true_e;
     }
     return status;
+}
+
+/*! \brief This function allows a user to query the attributes of a <tt>\ref vx_meta_format</tt> object in a kernel parameter.
+ * \param [in] meta The reference to the \ref vx_meta_format struct to query.
+ * \param [in] attribute Use the subset of data object attributes that define the meta data of this object.
+ * \param [out] ptr The output pointer of the value to query on the meta format object.
+ * \param [in] size The size in bytes of the object to which \a ptr points.
+ * \ingroup group_import_kernel
+ * \return A <tt>\ref vx_status_e</tt> enumeration.
+ * \retval VX_SUCCESS The attribute was returned.
+ * \retval VX_ERROR_INVALID_REFERENCE meta is not a valid <tt>\ref vx_meta_format</tt> reference.
+ * \retval VX_ERROR_INVALID_PARAMETERS size was not correct for the type needed.
+ * \retval VX_ERROR_NOT_SUPPORTED the object attribute was not supported on the meta format object.
+ * \retval VX_ERROR_INVALID_TYPE attribute type did not match known meta format type.
+ */
+VX_API_ENTRY vx_status VX_API_CALL vxQueryMetaFormatAttribute(vx_meta_format meta, vx_enum attribute, void *ptr, vx_size size)
+{
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (meta && agoIsValidReference(&meta->data.ref)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            /**********************************************************************/
+            case VX_VALID_RECT_CALLBACK:
+                if (size == sizeof(vx_kernel_image_valid_rectangle_f)) {
+                    *(vx_kernel_image_valid_rectangle_f *)ptr = meta->set_valid_rectangle_callback;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_IMAGE_FORMAT:
+                if (size == sizeof(vx_df_image) && meta->data.ref.type == VX_TYPE_IMAGE) {
+                    *(vx_df_image *)ptr = meta->data.u.img.format;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_IMAGE_HEIGHT:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_IMAGE) {
+                    *(vx_uint32 *)ptr = meta->data.u.img.height;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_IMAGE_WIDTH:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_IMAGE) {
+                    *(vx_uint32 *)ptr = meta->data.u.img.width;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_ARRAY_CAPACITY:
+                if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_ARRAY) {
+                    *(vx_size *)ptr = meta->data.u.arr.capacity;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_ARRAY_ITEMTYPE:
+                if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_ARRAY) {
+                    *(vx_enum *)ptr = meta->data.u.arr.itemtype;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_OBJECT_ARRAY_NUMITEMS:
+                if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_OBJECT_ARRAY) {
+                    *(vx_size *)ptr = meta->data.u.objarr.numitems;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_OBJECT_ARRAY_ITEMTYPE:
+                if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_OBJECT_ARRAY) {
+                    *(vx_enum *)ptr = meta->data.u.objarr.itemtype;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_REMAP_SOURCE_WIDTH:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_REMAP) {
+                    *(vx_uint32 *)ptr = meta->data.u.remap.src_width;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_REMAP_SOURCE_HEIGHT:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_REMAP) {
+                    *(vx_uint32 *)ptr = meta->data.u.remap.src_height;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_REMAP_DESTINATION_WIDTH:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_REMAP) {
+                    *(vx_uint32 *)ptr = meta->data.u.remap.dst_width;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_REMAP_DESTINATION_HEIGHT:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_REMAP) {
+                    *(vx_uint32 *)ptr = meta->data.u.remap.dst_height;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_LUT_TYPE:
+                if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_LUT) {
+                    *(vx_enum *)ptr = meta->data.u.lut.type;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_LUT_COUNT:
+                if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_LUT) {
+                    *(vx_size *)ptr = meta->data.u.lut.count;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_THRESHOLD_TYPE:
+                if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_THRESHOLD) {
+                    *(vx_enum *)ptr = meta->data.u.thr.thresh_type;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_DISTRIBUTION_BINS:
+                if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_DISTRIBUTION) {
+                    *(vx_size *)ptr = meta->data.u.dist.numbins;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_DISTRIBUTION_OFFSET:
+                if (size == sizeof(vx_int32) && meta->data.ref.type == VX_TYPE_DISTRIBUTION) {
+                    *(vx_int32 *)ptr = meta->data.u.dist.offset;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_DISTRIBUTION_RANGE:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_DISTRIBUTION) {
+                    *(vx_uint32 *)ptr = meta->data.u.dist.range;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_PYRAMID_FORMAT:
+                if (size == sizeof(vx_df_image) && meta->data.ref.type == VX_TYPE_PYRAMID) {
+                    *(vx_df_image *)ptr = meta->data.u.pyr.format;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_PYRAMID_HEIGHT:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_PYRAMID) {
+                    *(vx_uint32 *)ptr = meta->data.u.pyr.height;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_PYRAMID_WIDTH:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_PYRAMID) {
+                    *(vx_uint32 *)ptr = meta->data.u.pyr.width;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_PYRAMID_LEVELS:
+                if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_PYRAMID) {
+                    *(vx_size *)ptr = meta->data.u.pyr.levels;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_PYRAMID_SCALE:
+                if (size == sizeof(vx_float32) && meta->data.ref.type == VX_TYPE_PYRAMID) {
+                    *(vx_float32 *)ptr = meta->data.u.pyr.scale;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_SCALAR_TYPE:
+                if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_SCALAR) {
+                    *(vx_enum *)ptr = meta->data.u.scalar.type;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_MATRIX_TYPE:
+                if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_MATRIX) {
+                    *(vx_enum *)ptr = meta->data.u.mat.type;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_MATRIX_COLUMNS:
+                if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_MATRIX) {
+                    *(vx_size *)ptr = meta->data.u.mat.columns;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_MATRIX_ROWS:
+                if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_MATRIX) {
+                    *(vx_size *)ptr = meta->data.u.mat.rows;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_TENSOR_NUMBER_OF_DIMS:
+                if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_TENSOR) {
+                    *(vx_size *)ptr = meta->data.u.tensor.num_dims;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_TENSOR_DIMS:
+                if (meta->data.ref.type == VX_TYPE_TENSOR && size >= sizeof(vx_size) * meta->data.u.tensor.num_dims) {
+                    memcpy(ptr, &meta->data.u.tensor.dims, sizeof(vx_size) * meta->data.u.tensor.num_dims);
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_TENSOR_DATA_TYPE:
+                if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_TENSOR) {
+                    *(vx_enum *)ptr = meta->data.u.tensor.data_type;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_TENSOR_FIXED_POINT_POSITION:
+                if (size == sizeof(vx_uint8) && meta->data.ref.type == VX_TYPE_TENSOR) {
+                    *(vx_int8 *)ptr = (vx_int8)meta->data.u.tensor.fixed_point_pos;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+            // Per the spec, a query whose attribute belongs to a different object type than this
+            // meta-format must report VX_ERROR_INVALID_TYPE rather than VX_ERROR_INVALID_PARAMETERS.
+            // Object-type attributes encode their type via VX_ATTRIBUTE_BASE; VX_TYPE_META_FORMAT
+            // attributes (e.g. VX_VALID_RECT_CALLBACK) apply to any meta-format and are exempt.
+            if (status == VX_ERROR_INVALID_PARAMETERS) {
+                vx_enum attr_type = (vx_enum)VX_TYPE(attribute);
+                if (attr_type != VX_TYPE_META_FORMAT && attr_type != meta->data.ref.type) {
+                    status = VX_ERROR_INVALID_TYPE;
+                }
+            }
+        }
+    }
+    return status;
+}
+
+/*! \brief Creates an array of images from a 3D tensor, where each image plane maps
+ * into adjacent 2D slices of the tensor's third dimension.
+ * \param [in] tensor The tensor data from which to extract the images. Must be a 3D tensor.
+ * \param [in] rect Image coordinates (ROI) within the tensor's first two dimensions.
+ * \param [in] array_size Number of images to extract.
+ * \param [in] jump Delta between the indexes of two consecutive images along the third
+ *             tensor dimension (an index delta, not a byte count).
+ * \param [in] image_format The requested image format. Must match the tensor element type.
+ * \return An <tt>\ref vx_object_array</tt> of images pointing into the tensor's memory,
+ *         or NULL on error. Use <tt>\ref vxGetStatus</tt> to check for errors.
+ * \note The returned images alias the tensor's memory; the tensor must outlive the returned
+ *       object-array and its images (as with <tt>\ref vxCreateImageFromROI</tt>). The images are
+ *       linked to the tensor so that a subsequent <tt>\ref vxSwapTensorHandle</tt> re-points them
+ *       at the new buffer rather than leaving them dangling.
+ * \ingroup group_object_tensor
+ */
+VX_API_ENTRY vx_object_array VX_API_CALL vxCreateImageObjectArrayFromTensor(vx_tensor tensor, const vx_rectangle_t *rect, vx_size array_size, vx_size jump, vx_df_image image_format)
+{
+    AgoData * tensor_data = (AgoData *)tensor;
+    if (!agoIsValidData(tensor_data, VX_TYPE_TENSOR) || !rect || array_size == 0)
+        return NULL;
+
+    // Must be a 3D tensor
+    if (tensor_data->u.tensor.num_dims != 3) {
+        agoAddLogEntry(&tensor_data->ref, VX_ERROR_INVALID_PARAMETERS,
+            "ERROR: vxCreateImageObjectArrayFromTensor: tensor must have exactly 3 dimensions\n");
+        return NULL;
+    }
+
+    // The child images alias the tensor's host buffer directly. Tensors imported/created with
+    // OpenCL/HIP memory keep their data in device memory (host 'buffer' is intentionally unset),
+    // so aliasing would require wiring to device memory - which is not supported here. Reject them.
+    if (tensor_data->import_type == VX_MEMORY_TYPE_OPENCL || tensor_data->import_type == VX_MEMORY_TYPE_HIP) {
+        agoAddLogEntry(&tensor_data->ref, VX_ERROR_NOT_SUPPORTED,
+            "ERROR: vxCreateImageObjectArrayFromTensor: tensor with non-host (OpenCL/HIP) memory is not supported\n");
+        return NULL;
+    }
+
+    // Validate the rectangle: start must be strictly less than end and stay within
+    // the first two tensor dimensions (unsigned subtraction below would otherwise wrap).
+    if (rect->start_x >= rect->end_x || rect->start_y >= rect->end_y ||
+        rect->end_x > tensor_data->u.tensor.dims[0] || rect->end_y > tensor_data->u.tensor.dims[1]) {
+        agoAddLogEntry(&tensor_data->ref, VX_ERROR_INVALID_PARAMETERS,
+            "ERROR: vxCreateImageObjectArrayFromTensor: invalid rect (%u,%u,%u,%u) for tensor dims [" VX_FMT_SIZE "," VX_FMT_SIZE "]\n",
+            rect->start_x, rect->start_y, rect->end_x, rect->end_y,
+            tensor_data->u.tensor.dims[0], tensor_data->u.tensor.dims[1]);
+        return NULL;
+    }
+
+    vx_uint32 width  = rect->end_x - rect->start_x;
+    vx_uint32 height = rect->end_y - rect->start_y;
+
+    // Validate that the requested slices stay within the tensor's third dimension (depth).
+    // 'jump' is an index delta along dim-2 (0 defaults to 1). The last accessed slice index is
+    // (array_size - 1) * jump and must be < dims[2].
+    vx_size slice_jump = (jump != 0) ? jump : 1;
+    if ((array_size - 1) * slice_jump >= tensor_data->u.tensor.dims[2]) {
+        agoAddLogEntry(&tensor_data->ref, VX_ERROR_INVALID_PARAMETERS,
+            "ERROR: vxCreateImageObjectArrayFromTensor: array_size " VX_FMT_SIZE " with jump " VX_FMT_SIZE " exceeds tensor depth " VX_FMT_SIZE "\n",
+            array_size, slice_jump, tensor_data->u.tensor.dims[2]);
+        return NULL;
+    }
+
+    // The requested image format must match the tensor element size, since each image
+    // slice aliases the tensor's memory directly with no format conversion.
+    vx_size elem_size = agoType2Size(tensor_data->ref.context, tensor_data->u.tensor.data_type);
+    vx_size components = 0, planes = 0;
+    vx_uint32 pxNum = 0, pxDenom = 0;
+    {
+        vx_color_space_e cspace; vx_channel_range_e crange;
+        if (agoGetImageComponentsAndPlanes(tensor_data->ref.context, image_format, &components, &planes, &pxNum, &pxDenom, &cspace, &crange)) {
+            agoAddLogEntry(&tensor_data->ref, VX_ERROR_INVALID_PARAMETERS,
+                "ERROR: vxCreateImageObjectArrayFromTensor: unsupported image_format 0x%08x\n", image_format);
+            return NULL;
+        }
+    }
+    // Pixel size in bits is pxNum/pxDenom; it must be an exact, byte-aligned value so a slice
+    // can alias the tensor buffer without sub-byte or fractional packing. A non-zero remainder
+    // (pxNum not a multiple of pxDenom) means a fractional bit-size, which cannot alias.
+    vx_size pixel_bits = (pxDenom != 0 && (pxNum % pxDenom) == 0) ? (pxNum / pxDenom) : 0;
+    // Only single-plane formats can alias a contiguous tensor slice, the pixel size must be
+    // a whole number of bytes, and it must equal the tensor element size.
+    if (planes != 1 || pixel_bits == 0 || (pixel_bits & 7) != 0 || (pixel_bits >> 3) != elem_size) {
+        agoAddLogEntry(&tensor_data->ref, VX_ERROR_INVALID_PARAMETERS,
+            "ERROR: vxCreateImageObjectArrayFromTensor: image_format 0x%08x (planes=" VX_FMT_SIZE ", " VX_FMT_SIZE " bits/pixel) incompatible with tensor element size " VX_FMT_SIZE " bytes\n",
+            image_format, planes, pixel_bits, elem_size);
+        return NULL;
+    }
+
+    vx_context context = tensor_data->ref.context;
+    CAgoLock lock(context->cs);
+
+    // Make sure the tensor's backing buffer is allocated so the images can alias it.
+    if (!tensor_data->buffer && agoAllocData(tensor_data)) {
+        agoAddLogEntry(&tensor_data->ref, VX_ERROR_NO_MEMORY,
+            "ERROR: vxCreateImageObjectArrayFromTensor: unable to allocate tensor buffer\n");
+        return NULL;
+    }
+
+    // Build an image exemplar to describe each slice
+    char img_desc[128];
+    snprintf(img_desc, sizeof(img_desc), "image:%4.4s,%u,%u", FORMAT_STR(image_format), width, height);
+
+    char arr_desc[256];
+    snprintf(arr_desc, sizeof(arr_desc), "objectarray:" VX_FMT_SIZE ",[%s]", array_size, img_desc);
+
+    AgoData * obj_array = agoCreateDataFromDescription(context, NULL, arr_desc, true);
+    if (!obj_array)
+        return NULL;
+
+    agoGenerateDataName(context, "objectarray", obj_array->name);
+    agoAddData(&context->dataList, obj_array);
+
+    // Wire each child image to alias the tensor's buffer at the correct slice offset.
+    // tensor strides are in bytes: stride[0] = element size, stride[1] = row stride,
+    // stride[2] = slice stride. 'jump' is an index delta along dim-2 (per the OpenVX spec),
+    // so the byte stride between consecutive images is jump * stride[2].
+    // NOTE: for a view/ROI tensor, agoAllocData already folds u.tensor.offset into
+    // tensor_data->buffer, so base_offset must NOT add it again (would double-apply the offset).
+    vx_size slice_stride = slice_jump * tensor_data->u.tensor.stride[2];
+    vx_size row_stride   = tensor_data->u.tensor.stride[1];
+    vx_size base_offset  = (vx_size)rect->start_y * row_stride
+                         + (vx_size)rect->start_x * tensor_data->u.tensor.stride[0];
+
+    // Image offsets are relative to tensor_data->buffer. Bounds-check the highest byte accessed by
+    // the last slice against the backing allocation. For a view/ROI tensor the data lives in the
+    // master's buffer (with the view's non-compact strides), so the byte extent must be checked
+    // against the master's size at the view's offset; for a top-level tensor it is its own size.
+    // Also ensure the last slice's start offset fits in the vx_uint32 field (gpu_buffer_offset)
+    // used to record it for vxSwapTensorHandle.
+    AgoData * backing = tensor_data->u.tensor.roiMaster ? tensor_data->u.tensor.roiMaster : tensor_data;
+    vx_size view_offset = tensor_data->u.tensor.roiMaster ? tensor_data->u.tensor.offset : 0;
+    vx_size last_slice_offset = base_offset + (array_size - 1) * slice_stride;
+    vx_size max_byte = view_offset + last_slice_offset + (vx_size)(height - 1) * row_stride
+                     + (vx_size)width * tensor_data->u.tensor.stride[0];
+    if (max_byte > backing->size || (view_offset + last_slice_offset) > 0xFFFFFFFFu) {
+        agoAddLogEntry(&tensor_data->ref, VX_ERROR_INVALID_PARAMETERS,
+            "ERROR: vxCreateImageObjectArrayFromTensor: computed slice offset (" VX_FMT_SIZE " bytes) exceeds tensor buffer size " VX_FMT_SIZE "\n",
+            max_byte, backing->size);
+        return NULL;
+    }
+
+    for (vx_uint32 i = 0; i < obj_array->numChildren; i++) {
+        AgoData * img = obj_array->children[i];
+        if (img) {
+            // Single-plane image: alias directly into the tensor buffer. Marking import_type
+            // (non-NONE) preserves this stride/buffer through agoDataSanityCheckAndUpdate, and
+            // mem_handle=false keeps agoAllocData from allocating a fresh buffer.
+            vx_size img_offset = base_offset + (vx_size)i * slice_stride;
+            img->import_type = VX_MEMORY_TYPE_HOST;
+            img->u.img.mem_handle = vx_false_e;
+            img->u.img.stride_in_bytes = (vx_uint32)row_stride;
+            img->buffer = tensor_data->buffer + img_offset;
+            // Record the byte offset and link the image to the tensor so that a subsequent
+            // vxSwapTensorHandle re-points this image's buffer instead of leaving it dangling.
+            img->gpu_buffer_offset = (vx_uint32)img_offset;
+            img->u.img.roiMasterImage = tensor_data;
+            tensor_data->roiDepList.push_back(img);
+#if (ENABLE_OPENCL || ENABLE_HIP)
+            img->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+            img->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+#endif
+            agoAddData(&context->dataList, img);
+            for (vx_uint32 j = 0; j < img->numChildren; j++) {
+                if (img->children[j])
+                    agoAddData(&context->dataList, img->children[j]);
+            }
+        }
+    }
+
+    return (vx_object_array)obj_array;
 }

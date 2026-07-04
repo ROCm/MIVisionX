@@ -2863,6 +2863,13 @@ int agoReleaseData(AgoData * data, bool isForExternalUse)
                 data->children = nullptr;
             }
 
+            // if this is an image ROI (incl. an image aliasing a tensor via
+            // vxCreateImageObjectArrayFromTensor), unlink it from its master's roiDepList so a
+            // later handle swap on the master does not dereference this freed entry.
+            if (data->ref.type == VX_TYPE_IMAGE && data->u.img.roiMasterImage) {
+                data->u.img.roiMasterImage->roiDepList.remove(data);
+            }
+
             // remove the data from graph
             if (agoRemoveData(&graph->dataList, data, nullptr)) {
                 agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoReleaseData: agoRemoveData(context,%s) failed\n", data->name.c_str());
@@ -2910,6 +2917,13 @@ int agoReleaseData(AgoData * data, bool isForExternalUse)
             if (data->children) {
                 delete[] data->children;
                 data->children = nullptr;
+            }
+
+            // if this is an image ROI (incl. an image aliasing a tensor via
+            // vxCreateImageObjectArrayFromTensor), unlink it from its master's roiDepList so a
+            // later handle swap on the master does not dereference this freed entry.
+            if (data->ref.type == VX_TYPE_IMAGE && data->u.img.roiMasterImage) {
+                data->u.img.roiMasterImage->roiDepList.remove(data);
             }
 
             // remove the data from context

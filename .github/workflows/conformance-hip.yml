@@ -67,8 +67,8 @@ concurrency:
 # no --group-add video/render is needed (and the mivisionx image lacks the
 # render group name, which would make docker start fail on --group-add render).
 #
-# mivisionx/ubuntu-24.04:rocm-7.13 is used because it ships a full ROCm
-# 7.13 stack (amdclang++, HIP runtime, rocminfo) with device support for all
+# mivisionx/ubuntu-24.04:rocm-20260627 is used because it ships a full ROCm
+# stack (amdclang++, HIP runtime, rocminfo) with device support for all
 # supported GPU archs, so it works on whichever runner the job lands on, and
 # rocminfo works correctly in it.
 #
@@ -88,7 +88,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     steps:
       - uses: actions/checkout@v4
@@ -131,7 +131,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     steps:
       - name: Checkout merge target ref
@@ -177,7 +177,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     steps:
       - uses: actions/checkout@v4
@@ -278,7 +278,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     env:
       # 40 vision kernels with a stable 1:1 GPU implementation — excludes
@@ -461,7 +461,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -497,7 +497,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -533,7 +533,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -569,7 +569,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -605,7 +605,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -641,7 +641,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -677,7 +677,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -713,7 +713,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -749,7 +749,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -785,7 +785,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -821,7 +821,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -859,7 +859,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -926,7 +926,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -968,7 +968,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -1018,7 +1018,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260627
       options: --device /dev/kfd --device /dev/dri
     if: always() && needs.build-hip-debug.result == 'success'
     needs:

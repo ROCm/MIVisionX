@@ -24,6 +24,8 @@ THE SOFTWARE.
 #include "ago_internal.h"
 
 #if ENABLE_HIP
+#include <hip/hip_runtime_api.h>
+
 // Create a HIP stream with a CU mask based on MIVISIONX_HIP_CU_COUNT.
 // The CU mask bit-vector maps to HIP multiProcessorCount units. On gfx10+
 // those units are WGPs (2 CUs each) unless GPU_ENABLE_WGP_MODE=0 overrides
@@ -38,7 +40,7 @@ static hipError_t agoCreateHipStreamWithCuLimit(hipStream_t * stream, AgoContext
     char * endPtr = nullptr;
     long requestedCu = strtol(envCuCount, &endPtr, 10);
     // Ignore empty, non-numeric, or non-positive values and fall back to default.
-    if (endPtr == envCuCount || requestedCu <= 0) {
+    if (endPtr == envCuCount || *endPtr != '\0' || requestedCu <= 0) {
         return hipStreamCreate(stream);
     }
 
@@ -68,7 +70,14 @@ static hipError_t agoCreateHipStreamWithCuLimit(hipStream_t * stream, AgoContext
     agoAddLogEntry(&context->ref, VX_SUCCESS,
         "INFO: limiting HIP graph stream to %ld CUs (%ld mask bits) out of %d mask bits on device %d\n",
         actualCu, requestedMaskBits, maxMaskBits, context->hip_device_id);
-    return hipExtStreamCreateWithCUMask(stream, maskWords, cuMask.data());
+    hipError_t err = hipExtStreamCreateWithCUMask(stream, maskWords, cuMask.data());
+    if (err != hipSuccess) {
+        agoAddLogEntry(&context->ref, VX_SUCCESS,
+            "WARNING: hipExtStreamCreateWithCUMask failed (%d); falling back to all CUs on device %d\n",
+            err, context->hip_device_id);
+        return hipStreamCreate(stream);
+    }
+    return err;
 }
 #endif
 

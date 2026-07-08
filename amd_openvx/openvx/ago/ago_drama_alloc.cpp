@@ -23,6 +23,55 @@ THE SOFTWARE.
 
 #include "ago_internal.h"
 
+#if ENABLE_HIP
+// Create a HIP stream with a CU mask based on MIVISIONX_HIP_CU_COUNT.
+// The CU mask bit-vector maps to HIP multiProcessorCount units. On gfx10+
+// those units are WGPs (2 CUs each) unless GPU_ENABLE_WGP_MODE=0 overrides
+// the semantic; the override is respected here so MIVISIONX_HIP_CU_COUNT
+// stays consistent with the rest of the HIP backend.
+static hipError_t agoCreateHipStreamWithCuLimit(hipStream_t * stream, AgoContext * context)
+{
+    char envCuCount[32] = {};
+    if (!agoGetEnvironmentVariable("MIVISIONX_HIP_CU_COUNT", envCuCount, sizeof(envCuCount))) {
+        return hipStreamCreate(stream);
+    }
+    char * endPtr = nullptr;
+    long requestedCu = strtol(envCuCount, &endPtr, 10);
+    // Ignore empty, non-numeric, or non-positive values and fall back to default.
+    if (endPtr == envCuCount || requestedCu <= 0) {
+        return hipStreamCreate(stream);
+    }
+
+    hipDeviceProp_t & prop = context->hip_dev_prop;
+    int maxMaskBits = prop.multiProcessorCount;
+
+    bool wgpMode = (prop.major >= 10);
+    if (wgpMode) {
+        char temp[2] = {};
+        if (agoGetEnvironmentVariable("GPU_ENABLE_WGP_MODE", temp, sizeof(temp))) {
+            wgpMode = (temp[0] == '0') ? false : true;
+        }
+    }
+
+    // In WGP mode each mask bit controls one WGP (2 CUs); otherwise one bit = one CU.
+    long requestedMaskBits = wgpMode ? (requestedCu + 1) / 2 : requestedCu;
+    if (requestedMaskBits < 1) requestedMaskBits = 1;
+    if (requestedMaskBits > maxMaskBits) requestedMaskBits = maxMaskBits;
+
+    size_t maskWords = (maxMaskBits + 31) / 32;
+    std::vector<uint32_t> cuMask(maskWords, 0);
+    for (int i = 0; i < requestedMaskBits; ++i) {
+        cuMask[i / 32] |= (1u << (i % 32));
+    }
+
+    long actualCu = wgpMode ? requestedMaskBits * 2 : requestedMaskBits;
+    agoAddLogEntry(&context->ref, VX_SUCCESS,
+        "INFO: limiting HIP graph stream to %ld CUs (%ld mask bits) out of %d mask bits on device %d\n",
+        actualCu, requestedMaskBits, maxMaskBits, context->hip_device_id);
+    return hipExtStreamCreateWithCUMask(stream, maskWords, cuMask.data());
+}
+#endif
+
 static int agoOptimizeDramaAllocRemoveUnusedData(AgoGraph * agraph)
 {
     for (;;)
@@ -383,10 +432,10 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
                 return -1;
             }
         }
-        // create a seperate stream for graph 
-        hipError_t err = hipStreamCreate(&graph->hip_stream0);
+        // create a separate stream for graph
+        hipError_t err = agoCreateHipStreamWithCuLimit(&graph->hip_stream0, context);
         if (err != hipSuccess) {
-            agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipStreamCreate(%p) => %d (failed) for graph => dev%d\n", graph->hip_stream0, err, context->hip_device_id);
+            agoAddLogEntry(NULL, VX_FAILURE, "ERROR: agoCreateHipStreamWithCuLimit(%p) => %d (failed) for graph => dev%d\n", graph->hip_stream0, err, context->hip_device_id);
             return -1;
         }
         //Force creation of the underlying HW queue associated with the HIP stream created above here;

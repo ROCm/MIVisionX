@@ -46,6 +46,9 @@ static hipError_t agoCreateHipStreamWithCuLimit(hipStream_t * stream, AgoContext
 
     hipDeviceProp_t & prop = context->hip_dev_prop;
     int maxMaskBits = prop.multiProcessorCount;
+    if (maxMaskBits <= 0) {
+        return hipStreamCreate(stream);
+    }
 
     bool wgpMode = (prop.major >= 10);
     if (wgpMode) {
@@ -56,7 +59,7 @@ static hipError_t agoCreateHipStreamWithCuLimit(hipStream_t * stream, AgoContext
     }
 
     // In WGP mode each mask bit controls one WGP (2 CUs); otherwise one bit = one CU.
-    long requestedMaskBits = wgpMode ? (requestedCu + 1) / 2 : requestedCu;
+    long requestedMaskBits = wgpMode ? (requestedCu / 2) + (requestedCu % 2 ? 1 : 0) : requestedCu;
     if (requestedMaskBits < 1) requestedMaskBits = 1;
     if (requestedMaskBits > maxMaskBits) requestedMaskBits = maxMaskBits;
 
@@ -444,7 +447,7 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
         // create a separate stream for graph
         hipError_t err = agoCreateHipStreamWithCuLimit(&graph->hip_stream0, context);
         if (err != hipSuccess) {
-            agoAddLogEntry(NULL, VX_FAILURE, "ERROR: agoCreateHipStreamWithCuLimit(%p) => %d (failed) for graph => dev%d\n", graph->hip_stream0, err, context->hip_device_id);
+            agoAddLogEntry(NULL, VX_FAILURE, "ERROR: agoCreateHipStreamWithCuLimit() => %d (failed) for graph => dev%d\n", err, context->hip_device_id);
             return -1;
         }
         //Force creation of the underlying HW queue associated with the HIP stream created above here;

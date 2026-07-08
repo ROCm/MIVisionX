@@ -26,7 +26,7 @@ def run_runvx(runvx_exe, gdf_path, cu_count):
 
     cmd = [str(runvx_exe), "-frames:1", "-dump-profile", str(gdf_path)]
     result = subprocess.run(cmd, env=env, stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT, text=True)
+                            stderr=subprocess.STDOUT, text=True, timeout=300)
     return result
 
 
@@ -35,7 +35,7 @@ def check_output(result, cu_count, expect_limit):
     if result.returncode != 0:
         return False, f"runvx exited with code {result.returncode}\n{result.stdout[-1500:]}"
 
-    combined = result.stdout + result.stderr.decode() if result.stderr else result.stdout
+    combined = result.stdout
     has_limit_log = re.search(r"INFO: limiting HIP graph stream to", combined) is not None
 
     if expect_limit and not has_limit_log:
@@ -65,12 +65,9 @@ def main():
         return 1
 
     cu_counts = []
-    has_all = False
     for c in args.cu_counts.split(","):
         c = c.strip()
-        if c.lower() == "all":
-            has_all = True
-        else:
+        if c.lower() != "all":
             cu_counts.append(int(c))
 
     # Always test the default/unset path once; if "all" was given, it represents this case.

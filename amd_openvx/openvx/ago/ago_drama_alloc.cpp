@@ -70,9 +70,6 @@ static hipError_t agoCreateHipStreamWithCuLimit(hipStream_t * stream, AgoContext
     }
 
     long actualCu = wgpMode ? requestedMaskBits * 2 : requestedMaskBits;
-    agoAddLogEntry(&context->ref, VX_SUCCESS,
-        "INFO: limiting HIP graph stream to %ld CUs (%ld mask bits) out of %d mask bits on device %d\n",
-        actualCu, requestedMaskBits, maxMaskBits, context->hip_device_id);
     hipError_t err = hipExtStreamCreateWithCUMask(stream, maskWords, cuMask.data());
     if (err != hipSuccess) {
         agoAddLogEntry(&context->ref, VX_SUCCESS,
@@ -80,6 +77,9 @@ static hipError_t agoCreateHipStreamWithCuLimit(hipStream_t * stream, AgoContext
             err, context->hip_device_id);
         return hipStreamCreate(stream);
     }
+    agoAddLogEntry(&context->ref, VX_SUCCESS,
+        "INFO: limiting HIP graph stream to %ld CUs (%ld mask bits) out of %d mask bits on device %d\n",
+        actualCu, requestedMaskBits, maxMaskBits, context->hip_device_id);
     return err;
 }
 #endif

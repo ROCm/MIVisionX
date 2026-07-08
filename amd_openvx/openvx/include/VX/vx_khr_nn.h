@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Khronos Group Inc.
+ * Copyright (c) 2012-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _VX_KHR_NN_H_
-#define _VX_KHR_NN_H_
+#ifndef VX_KHR_NN_H
+#define VX_KHR_NN_H
 
 /*!
  * \file
@@ -214,7 +214,7 @@ typedef struct _vx_nn_roi_pool_params_t
 =============================================================================*/
 /*! \brief [Graph] Creates a Convolutional Network Convolution Layer Node.
  * \details This function implement Convolutional Network Convolution layer.
- *  For fixed-point data types, a fixed point calculation is performed with round and saturate according to the number of accumulator bits. The number of the accumulator bits are implementation defined,
+ *  For fixed-point data types, a fixed point calculation is performed with round and saturate according to the number of accumulator bits. The number of the accumulator bits are implementation-defined,
  * and should be at least 16.\n
  * round: rounding according the <tt>vx_round_policy_e</tt> enumeration. \n
  * saturate: A saturation according the <tt>vx_convert_policy_e</tt> enumeration.
@@ -253,7 +253,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxConvolutionLayer(vx_graph graph, vx_tensor in
 
 /*! \brief [Graph] Creates a Fully connected Convolutional Network Layer Node.
  * \details This function implement Fully connected Convolutional Network layers.
- * For fixed-point data types, a fixed point calculation is performed with round and saturate according to the number of accumulator bits. The number of the accumulator bits are implementation defined,
+ * For fixed-point data types, a fixed point calculation is performed with round and saturate according to the number of accumulator bits. The number of the accumulator bits are implementation-defined,
  * and should be at least 16.\n
  * round: rounding according the <tt>vx_round_policy_e</tt> enumeration. \n
  * saturate: A saturation according the <tt>vx_convert_policy_e</tt> enumeration.
@@ -282,7 +282,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxFullyConnectedLayer(vx_graph graph, vx_tensor
 
 /*! \brief [Graph] Creates a Convolutional Network Pooling Layer Node.
  * \details Pooling is done on the width and height dimensions of the <tt>\ref vx_tensor</tt>. Therefore, we use here the term x for the width dimension and y for the height dimension.\n
- * Pooling operation is a function operation over a rectangle size and then a nearest neighbour down scale.
+ * Pooling operation is a function operation over a rectangle size and then a nearest neighbor down scale.
  * Here we use pooling_size_x and pooling_size_y to specify the rectangle size on which the operation
  * is performed. \n
  * before the operation is done (average or maximum value). the data is padded with zeros in width and height dimensions .
@@ -335,7 +335,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxSoftmaxLayer(vx_graph graph, vx_tensor inputs
 
 /*! \brief [Graph] Creates a Convolutional Network Local Response Normalization Layer Node. This function is optional for 8-bit extension with the extension string 'KHR_NN_8'.
  * \details Normalizing over local input regions. Each input value is divided by \f$ (\bias+\frac{\alpha}{n}\sum_i x^2_i)^\beta \f$ , where n is the number of elements to normalize across.
- * and the sum is taken over a rectangle region centred at that value (zero padding is added where necessary).
+ * and the sum is taken over a rectangle region centered at that value (zero padding is added where necessary).
  * \param [in] graph The handle to the graph.
  * \param [in] inputs The input tensor data. 3 lower dimensions represent a single input, 4th dimension for batch of inputs is optional. Dimension layout is [width, height, IFM, #batches].
  * See <tt>\ref vxCreateTensor</tt> and <tt>\ref vxCreateVirtualTensor</tt>.
@@ -383,12 +383,12 @@ VX_API_ENTRY vx_node VX_API_CALL vxActivationLayer(vx_graph graph, vx_tensor inp
  * The down scale method is determined by the pool_type.
  * Notice that this node creation function has more parameters than the corresponding kernel. Numbering of kernel parameters (required if you create this node using the generic interface) is explicitly specified here.
  * \param [in] graph The handle to the graph.
- * \param [in] inputs The input tensor data. 3 lower dimensions represent a single input, 4th dimension for batch of inputs is optional. Dimension layout is [width, height, #IFM, #batches].
+ * \param [in] input_data The input tensor data. 3 lower dimensions represent a single input, 4th dimension for batch of inputs is optional. Dimension layout is [width, height, #IFM, #batches].
  * See <tt>\ref vxCreateTensor</tt> and <tt>\ref vxCreateVirtualTensor</tt>.
  * Implementations must support input tensor data types indicated by the extension strings 'KHR_NN_8' or 'KHR_NN_8 KHR_NN_16'.  (Kernel parameter #0)
- * \param [in] inputs_rois The roi array tensor. ROI array with dimensions [4, roi_count, #batches] where the first dimension represents 4 coordinates of the top left and bottom right corners of the roi rectangles, based on the input tensor width and height.
+ * \param [in] input_rois The roi array tensor. ROI array with dimensions [4, roi_count, #batches] where the first dimension represents 4 coordinates of the top left and bottom right corners of the roi rectangles, based on the input tensor width and height.
  * #batches is optional and must be the same as in inputs. roi_count is the number of ROI rectangles.  (Kernel parameter #1)
- * \param [in] pool_type [static] Of type <tt>\ref vx_nn_pooling_type_e</tt>. Only <tt>\ref VX_NN_POOLING_MAX</tt> pooling is supported.   (Kernel parameter #2)
+ * \param [in] roi_pool_params [static] Of type <tt>\ref vx_nn_pooling_type_e</tt>. Only <tt>\ref VX_NN_POOLING_MAX</tt> pooling is supported.   (Kernel parameter #2)
  * \param [in] size_of_roi_params [static] Size in bytes of roi_pool_params. Note that this parameter is not counted as one of the kernel parameters.
  * \param [out] output_arr The output tensor. Output will have [output_width, output_height, #IFM, #batches] dimensions. #batches is optional and must be the same as in inputs.  (Kernel parameter #3)
  * \ingroup group_cnn
@@ -404,7 +404,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxROIPoolingLayer(vx_graph graph, vx_tensor inp
  * Convolutional Network Deconvolution is up-sampling of an image by learned Deconvolution coefficients.
  * The operation is similar to convolution but can be implemented by up-sampling the inputs with zeros insertions between the inputs,
  * and convolving the Deconvolution kernels on the up-sampled result.
- * For fixed-point data types, a fixed point calculation is performed with round and saturate according to the number of accumulator bits. The number of the accumulator bits are implementation defined,
+ * For fixed-point data types, a fixed point calculation is performed with round and saturate according to the number of accumulator bits. The number of the accumulator bits are implementation-defined,
  * and should be at least 16.\n
  * round: rounding according the <tt>vx_round_policy_e</tt> enumeration. \n
  * saturate: A saturation according the <tt>vx_convert_policy_e</tt> enumeration.
@@ -422,7 +422,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxROIPoolingLayer(vx_graph graph, vx_tensor inp
  * \f$width_{output}\f$ is the size of the output width dimension. \f$height_{output}\f$ is the size of the output height dimension.
  * \f$kernel_x\f$ and \f$kernel_y\f$ are the convolution sizes in width and height. \f$a_x\f$ and \f$a_y\f$ are user-specified quantity used to distinguish between the \f$upscale_x\f$ and \f$upscale_y\f$ different possible output sizes.
  * \f$upscale_x\f$ and \f$upscale_y\f$ are calculated by the relation between input and output.
- * \f$a_x\f$ and \f$a_y\f$ must be positive and smaller then \f$upscale_x\f$ and \f$upscale_y\f$ respectively.
+ * \f$a_x\f$ and \f$a_y\f$ must be positive and smaller than \f$upscale_x\f$ and \f$upscale_y\f$ respectively.
  * Since the padding parameter is on the output. The effective input padding is: \n
  * \f$ padding_{input_x} = kernel_x -padding_x -1\f$ \n
  * \f$ padding_{input_y} = kernel_y -padding_y -1\f$ \n

@@ -1,55 +1,33 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-<p align="center"><img width="50%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/OpenVX_logo.png" /></p>
+# VX Bubble Pop
 
-# OpenVX Samples
+A sample OpenVX application that creates bubbles and donuts on a live camera feed using OpenVX graph execution and OpenCV for display.
 
-<a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX&trade;</a> is an open, royalty-free standard for cross-platform acceleration of computer vision applications. OpenVX enables a performance and power-optimized computer vision processing, especially important in embedded and real-time use cases such as face, body, and gesture tracking, smart video surveillance, advanced driver assistance systems (ADAS), object and scene reconstruction, augmented reality, visual inspection, robotics and more.
+<p align="center"><img width="60%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/vx-pop-app.gif" /></p>
 
-In this project, we provide OpenVX sample applications to use with any conformant implementation of OpenVX.
+## Prerequisites
 
-## VX Bubble Pop Sample
+* MIVisionX installed (see [installation instructions](../../README.md#installation-instructions))
+* OpenCV `3.4` or later
+* A connected camera
 
-In this sample we will create an OpenVX graph to run VX Bubble Pop on a live camera. This sample application uses <a href="https://en.wikipedia.org/wiki/OpenCV" target="_blank">OpenCV</a> to decode input image, draw bubbles/donuts and display the output.
+## Build
 
- <p align="center"><img width="60%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/master/docs/data/vx-pop-app.gif" /></p>
+These apps are built separately against an installed MIVisionX using the `apps/CMakeLists.txt`:
 
-### Prerequisites
-
-* [OpenCV](https://github.com/opencv/opencv/releases/tag/3.4.0)
-
-* Camera
-
-* Build and install [MIVisionX](https://github.com/ROCm/MIVisionX#build--install-mivisionx) 
-
-### Steps to run the Bubble Pop sample
-
-* **Step - 1:** Clone the MIVisionX project
-
-``` 
-cd ~/ && mkdir OpenVX-bubble-pop
-cd OpenVX-bubble-pop/
-git clone https://github.com/ROCm/MIVisionX
-```
-
-* **Step - 2:** CMake and Build the pop application
-
-``` 
+```shell
 mkdir pop-build && cd pop-build
 cmake ../MIVisionX/apps/bubble_pop/
 make
 ```
 
-* **Step - 3:** Run VX Pop application
+## Run
 
- - **Bubbles**
+```shell
+# Bubbles mode
+./vxPop --bubble
 
- ``` 
- ./vxPop --bubble
- ```
-
- - **Donuts**
-
- ``` 
- ./vxPop --donut
- ````
+# Donuts mode
+./vxPop --donut
+```

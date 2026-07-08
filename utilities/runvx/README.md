@@ -8,11 +8,11 @@ If available, this project uses OpenCV for camera capture and image display.
 
 * **CPU**: AMD64
 * **GPU**: AMD Radeon&trade; Graphics [optional]
-* Windows: install the latest drivers and OpenCL SDK download [optional]
-* Linux: install ROCm [optional]
-* OpenCV `3.4+` [optional]
-  + `Windows`:Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
-* Install `libssl-dev` on Linux [optional]
+  + Windows: install the latest AMD [drivers](https://www.amd.com/en/support) and the [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
+  + Linux: install the [ROCm Core SDK](https://rocm.docs.amd.com/en/7.13.0-preview/install/rocm.html) (ROCm `7.13` or later)
+* OpenCV `3.4+` [optional] — enables camera capture and image/video display
+  + Windows: set the `OpenCV_DIR` environment variable to the `OpenCV/build` folder
+* OpenSSL / `libssl-dev` [optional, Linux only] — enables MD5 checksum verification in the `compare` GDF command; a built-in fallback is used when not present (Windows uses `wincrypt.h` automatically)
 
 ## RunVX Usage and GDF Syntax
     runvx.exe [options] <file.gdf> [argument(s)]
@@ -92,27 +92,8 @@ If available, this project uses OpenCV for camera capture and image display.
         org.khronos.openvx.remap
         org.khronos.openvx.halfscale_gaussian
         
-    The supported list of AMD's built-in kernel names is given below:
-        com.amd.nn_extension.argmax_layer
-        com.amd.nn_extension.batch_normalization_layer
-        com.amd.nn_extension.cast_layer
-        com.amd.nn_extension.concat_layer
-        com.amd.nn_extension.crop_layer
-        com.amd.nn_extension.crop_and_resize_layer
-        com.amd.nn_extension.detection_output
-        com.amd.nn_extension.permute_layer
-        com.amd.nn_extension.prior_box_layer
-        com.amd.nn_extension.scale_layer
-        com.amd.nn_extension.slice_layer
-        com.amd.nn_extension.convert_image_to_tensor
-        com.amd.nn_extension.convert_tensor_to_image
-        com.amd.nn_extension.tensor_exp
-        com.amd.nn_extension.tensor_log
-        com.amd.nn_extension.upsample_nearest_layer
-        com.amd.nn_extension.reshape_layer
-        com.amd.nn_extension.gather_layer
-        com.amd.nn_extension.topk_layer
-        com.amd.nn_extension.nms_layer
+    AMD-specific kernel extensions can be loaded at runtime with the `import` GDF command.
+    For example, to load the RPP extension: import vx_rpp
         
     The available GDF commands are:
       import <libraryName>
@@ -221,7 +202,7 @@ If available, this project uses OpenCV for camera capture and image display.
                   Show graph details for debug.
 
       rename <dataNameOld> <dataNameNew>
-          Rename a data object\n"
+          Rename a data object.
 
       init <dataName> <initial-value>
           Initialize data object with specified value.
@@ -341,7 +322,7 @@ If available, this project uses OpenCV for camera capture and image display.
 Here are few examples that demonstrate use of RUNVX prototyping tool.
 
 ### Canny Edge Detector
-This example demonstrates building OpenVX graph for Canny edge detector. Use [face1.jpg](https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/face1.jpg) for this example.
+This example demonstrates building OpenVX graph for Canny edge detector. Use [face1.jpg](https://raw.githubusercontent.com/ROCm/MIVisionX/develop/samples/images/face1.jpg) for this example.
 
     % runvx[.exe] file canny.gdf
 
@@ -368,7 +349,7 @@ File **canny.gdf**:
     node org.khronos.openvx.canny_edge_detector luma hyst gradient_size !NORM_L1 output
 
 ### Skintone Pixel Detector
-This example demonstrates building OpenVX graph for pixel-based skin tone detector [Peer et al. 2003]. Use [face1.jpg](https://raw.githubusercontent.com/ROCm/MIVisionX/master/samples/images/face1.jpg) for this example.
+This example demonstrates building OpenVX graph for pixel-based skin tone detector [Peer et al. 2003]. Use [face1.jpg](https://raw.githubusercontent.com/ROCm/MIVisionX/develop/samples/images/face1.jpg) for this example.
 
     % runvx[.exe] file skintonedetect.gdf
 

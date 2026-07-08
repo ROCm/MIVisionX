@@ -1164,38 +1164,55 @@ int agoLoadModule(AgoContext * context, const char * module)
                 return VX_SUCCESS;
             }
         }
-        ago_module hmodule = agoOpenModule(filePath);
-        if (hmodule == NULL) {
-            status = VX_ERROR_INVALID_MODULE;
-            agoAddLogEntry(&context->ref, status, "ERROR: Unable to load module %s\n", filePath);
+        // check if module was registered via vxRegisterKernelLibrary
+        vx_publish_kernels_f publish_kernels_f = nullptr;
+        vx_unpublish_kernels_f unpublish_kernels_f = nullptr;
+        ago_module hmodule = NULL;
+        bool is_registered = false;
+        for (auto it = context->registered_modules.begin(); it != context->registered_modules.end(); ++it) {
+            if (strcmp(module, it->module_name) == 0) {
+                publish_kernels_f = it->publish;
+                unpublish_kernels_f = it->unpublish;
+                is_registered = true;
+                // Keep the registration so the module can be loaded again after a matching
+                // vxUnloadKernels (the module_path guard above prevents a duplicate active load).
+                break;
+            }
         }
-        else {
-            vx_publish_kernels_f publish_kernels_f = (vx_publish_kernels_f)agoGetFunctionAddress(hmodule, "vxPublishKernels");
-            if (!publish_kernels_f) {
+        if (!is_registered) {
+            hmodule = agoOpenModule(filePath);
+            if (hmodule == NULL) {
                 status = VX_ERROR_INVALID_MODULE;
-                agoAddLogEntry(&context->ref, status, "ERROR: vxPublishKernels symbol missing in %s\n", filePath);
+                agoAddLogEntry(&context->ref, status, "ERROR: Unable to load module %s\n", filePath);
             }
             else {
-                // add module entry into context
-                ModuleData data;
-                strncpy(data.module_name, module, sizeof(data.module_name) - 1);
-                strncpy(data.module_path, filePath, sizeof(data.module_path) - 1);
-                data.hmodule = hmodule;
-                data.module_internal_data_ptr = nullptr;
-                data.module_internal_data_size = 0;
-                context->modules.push_back(data);
-                context->num_active_modules++;
-                // invoke vxPublishKernels
-                vx_uint32 count = context->kernelList.count;
-                context->importing_module_index_plus1 = context->num_active_modules;
-                status = publish_kernels_f(context);
-                context->importing_module_index_plus1 = 0;
-                if (status == VX_SUCCESS) {
-                    agoAddLogEntry(&context->ref, VX_SUCCESS, "OK: loaded %d kernels from %s\n", context->kernelList.count - count, filePath);
+                publish_kernels_f = (vx_publish_kernels_f)agoGetFunctionAddress(hmodule, "vxPublishKernels");
+                if (!publish_kernels_f) {
+                    status = VX_ERROR_INVALID_MODULE;
+                    agoAddLogEntry(&context->ref, status, "ERROR: vxPublishKernels symbol missing in %s\n", filePath);
                 }
-                else {
-                    agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: vxPublishKernels(%s) failed (%d:%s)\n", module, status, agoEnum2Name(status));
-                }
+            }
+        }
+        if (publish_kernels_f) {
+            ModuleData data = {};
+            strncpy(data.module_name, module, sizeof(data.module_name) - 1);
+            strncpy(data.module_path, filePath, sizeof(data.module_path) - 1);
+            data.hmodule = hmodule;
+            data.module_internal_data_ptr = nullptr;
+            data.module_internal_data_size = 0;
+            data.publish = publish_kernels_f;
+            data.unpublish = unpublish_kernels_f;
+            context->modules.push_back(data);
+            context->num_active_modules++;
+            vx_uint32 count = context->kernelList.count;
+            context->importing_module_index_plus1 = context->num_active_modules;
+            status = publish_kernels_f(context);
+            context->importing_module_index_plus1 = 0;
+            if (status == VX_SUCCESS) {
+                agoAddLogEntry(&context->ref, VX_SUCCESS, "OK: loaded %d kernels from %s\n", context->kernelList.count - count, filePath);
+            }
+            else {
+                agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: vxPublishKernels(%s) failed (%d:%s)\n", module, status, agoEnum2Name(status));
             }
         }
     }
@@ -1211,7 +1228,10 @@ int agoUnloadModule(AgoContext * context, const char * module)
         char filePath[1024]; snprintf(filePath, sizeof(filePath), SHARED_LIBRARY_PREFIX "%s" SHARED_LIBRARY_EXTENSION, module);
         for (vx_uint32 index = 0; index < context->num_active_modules; index++) {
             if (strcmp(filePath, context->modules[index].module_path) == 0) {
-                vx_unpublish_kernels_f unpublish_kernels_f = (vx_unpublish_kernels_f)agoGetFunctionAddress(context->modules[index].hmodule, "vxUnpublishKernels");
+                vx_unpublish_kernels_f unpublish_kernels_f = context->modules[index].unpublish;
+                if (!unpublish_kernels_f && context->modules[index].hmodule) {
+                    unpublish_kernels_f = (vx_unpublish_kernels_f)agoGetFunctionAddress(context->modules[index].hmodule, "vxUnpublishKernels");
+                }
                 if (!unpublish_kernels_f) {
                     status = VX_ERROR_NOT_SUPPORTED;
                     agoAddLogEntry(&context->ref, status, "ERROR: vxUnpublishKernels symbol missing in %s\n", filePath);
@@ -1219,8 +1239,10 @@ int agoUnloadModule(AgoContext * context, const char * module)
                 else {
                     status = unpublish_kernels_f(context);
                     if (status == VX_SUCCESS) {
-                        agoCloseModule(context->modules[index].hmodule);
-                        context->modules.erase (context->modules.begin()+index);
+                        if (context->modules[index].hmodule) {
+                            agoCloseModule(context->modules[index].hmodule);
+                        }
+                        context->modules.erase(context->modules.begin()+index);
                         context->num_active_modules--;
                     }
                 }
@@ -1399,7 +1421,7 @@ vx_status agoVerifyNode(AgoNode * node)
                         data->u.img.rect_valid.end_y = data->u.img.height;
                     // check for VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU attribute
                     if (meta->data.u.img.enableUserBufferGPU) {
-                        // supports only virtual images without ROI (planes commented out for accepting NV12 user buffer for amd_media)
+                        // supports only virtual images without ROI (planes commented out for accepting NV12 user buffer)
                         if (!data->isVirtual /*|| data->u.img.planes != 1 */|| data->u.img.isROI || data->ownerOfUserBufferGPU) {
                             agoAddLogEntry(&kernel->ref, VX_ERROR_NOT_SUPPORTED, "ERROR: agoVerifyGraph: kernel %s: VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU is not supported for argument#%d\n", kernel->name, arg);
                             return VX_ERROR_NOT_SUPPORTED;
@@ -2460,7 +2482,7 @@ int agoExecuteGraph(AgoGraph * graph)
                 }
                 if (status) {
                     if (status == VX_ERROR_GRAPH_ABANDONED)
-                        agoAddLogEntry((vx_reference)graph, VX_FAILURE, "INFO: kernel %s exec returned graph_stopped status: (this could mean EOS for amd_media extension (%d))\n", kernel->name, status);
+                        agoAddLogEntry((vx_reference)graph, VX_FAILURE, "INFO: kernel %s exec returned graph_stopped status: VX_ERROR_GRAPH_ABANDONED (%d)\n", kernel->name, status);
                     else
                         agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: kernel %s exec failed (%d:%s)\n", kernel->name, status, agoEnum2Name(status));
                     return status;

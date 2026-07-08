@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Khronos Group Inc.
+ * Copyright (c) 2012-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@
  *       without deviating from the OpenVX specification.
  */
 
-#ifndef _OPENVX_H_
-#define _OPENVX_H_
+#ifndef OPENVX_H
+#define OPENVX_H
 
 /*!
  * \file
@@ -91,5 +91,14 @@
  * \ingroup group_basic_features
  */
 #define VX_VERSION          (VX_VERSION_1_3)
+
+/*! \brief Defines the OpenVX specification patch version.
+ *
+ * Use this macro to distinguish specification revisions within a major.minor
+ * version (e.g., 1.3.0 vs 1.3.1 vs 1.3.2). The major and minor version are
+ * encoded in \ref VX_VERSION; this macro provides the third component.
+ * \ingroup group_basic_features
+ */
+#define VX_VERSION_PATCH    (2)
 
 #endif

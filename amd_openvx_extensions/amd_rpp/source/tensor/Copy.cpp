@@ -73,9 +73,7 @@ static vx_status VX_CALLBACK processCopy(vx_node node, const vx_reference *param
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-        status = VX_ERROR_NOT_IMPLEMENTED;
-#elif ENABLE_HIP
+#if ENABLE_HIP
         refreshCopy(node, parameters, num, data);
         CHECK_HIP_RETURN_STATUS(hipMemcpyAsync(data->pDst, data->pSrc, data->tensorSize, hipMemcpyDeviceToDevice, data->handle.hipstream));
         CHECK_HIP_RETURN_STATUS(hipStreamSynchronize(data->handle.hipstream));

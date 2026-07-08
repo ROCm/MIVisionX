@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Khronos Group Inc.
+ * Copyright (c) 2012-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _OPENVX_BUFFER_ALIASING_H_
-#define _OPENVX_BUFFER_ALIASING_H_
+#ifndef OPENVX_BUFFER_ALIASING_H
+#define OPENVX_BUFFER_ALIASING_H
 
 /*!
  * \file
@@ -66,7 +66,7 @@ enum vx_buffer_aliasing_processing_type_e {
 /*! \brief Notifies framework that the kernel supports buffer aliasing of specified parameters
  *
  * This is intended to be called from within the vx_publish_kernels_f callback, for applicable
- * kernels in between the call to the <tt>\ref vxAddUserKernel</tt> function and the <tt>\ref vxFinalizeKernel(kernel)</tt>
+ * kernels in between the call to the <tt>\ref vxAddUserKernel</tt> function and the <tt>\ref vxFinalizeKernel</tt>
  * function for the corresponding kernel.
  *
  * If a kernel can not support buffer aliasing of its parameters (for in-place processing),

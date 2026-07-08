@@ -725,6 +725,8 @@ struct ModuleData {
     ago_module hmodule;
     vx_uint8 * module_internal_data_ptr;
     vx_size module_internal_data_size;
+    vx_publish_kernels_f publish;
+    vx_unpublish_kernels_f unpublish;
 };
 struct MacroData {
     char name[256];
@@ -752,6 +754,7 @@ struct AgoContext {
     vx_uint32 thread_config;
     vx_char extensions[256];
     std::vector<ModuleData> modules;
+    std::vector<ModuleData> registered_modules;
     std::vector<MacroData> macros;
     std::vector<AgoNodeMergeRule> merge_rules;
     std::vector<AgoImageFormatDescItem> image_format_list;

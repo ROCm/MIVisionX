@@ -6,13 +6,30 @@
 MIVisionX prerequisites
 ******************************************
 
-MIVisionX can be used with or without ROCm.
+MIVisionX ``4.0`` and later are built on top of the **ROCm Core SDK** and require **ROCm 7.13 or later** for GPU (``HIP``/``OpenCL``) builds. A CPU-only build (``-DGPU_SUPPORT=OFF``) requires neither ROCm nor an AMD GPU.
 
-MIVisionX on ROCm requires ROCm running on an `GPUs based on the CDNA architecture <https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html>`_ installed with the AMDGPU installer and the ``rocm`` usecase:
+.. note::
 
-.. code:: shell
+    * **ROCm 7.2.x and below**: install MIVisionX from the prebuilt packages (``mivisionx``, ``mivisionx-dev``, ``mivisionx-test``). See :doc:`./MIVisionX-package-install`.
+    * **ROCm 7.13 and later**: build MIVisionX from source on top of the ROCm Core SDK. See :doc:`./MIVisionX-linux-build-and-install`.
+    * **CPU-only**: build from source with ``-DGPU_SUPPORT=OFF`` (no ROCm or GPU required).
 
-    sudo amdgpu-install --usecase=rocm
+Install the ROCm Core SDK by following `Install AMD ROCm <https://rocm.docs.amd.com/en/latest/install/rocm.html>`_ for your GPU and operating system. The Core SDK provides the HIP and OpenCL runtimes, the ``amdclang++`` compiler, OpenMP, the ``half`` (float16) library, and ``RPP`` (used by the ``amd_rpp`` extension).
+
+The following example registers the ROCm repository and installs the Core SDK on Ubuntu 24.04 for a Radeon ``gfx1100`` GPU. Adjust the distribution, GPU architecture (``gfx110x``, ``gfx120x``, ``gfx94x``, ...), and ROCm version to match your system:
+
+.. code-block:: shell
+
+    sudo mkdir --parents --mode=0755 /etc/apt/keyrings
+    wget https://repo.amd.com/rocm/packages/gpg/rocm.gpg -O - | \
+        gpg --dearmor | sudo tee /etc/apt/keyrings/amdrocm.gpg > /dev/null
+    sudo tee /etc/apt/sources.list.d/rocm.list << EOF
+    deb [arch=amd64 signed-by=/etc/apt/keyrings/amdrocm.gpg] https://repo.amd.com/rocm/packages/ubuntu2404 stable main
+    EOF
+    sudo apt update
+    sudo apt install amdrocm-core-sdk7.13-gfx110x
+
+The ROCm Core SDK installs into ``/opt/rocm``.
 
 MIVisionX has been tested on the following Linux environments:
   
@@ -33,58 +50,25 @@ Building MIVisionX from source on Linux requires CMake Version 3.10 or later, AM
 * OpenMP
 * Threads
 
-When building MIVisionX from source on Linux, the |setup|_ Python script can be used to install prerequisites:
+Beyond the ROCm Core SDK, building MIVisionX from source only needs CMake from your distribution. On Ubuntu:
 
 .. code-block:: shell
 
-  MIVisionX-setup.py [-h]   [--directory DIRECTORY; default: ~/]
-                            [--opencv OpenCV_VERSION; default: 4.6.0]
-                            [--ffmpeg {ON|OFF}; default: ON]
-                            [--amd_rpp {ON|OFF}; default: ON]
-                            [--neural_net {ON|OFF}; default: ON]
-                            [--inference {ON|OFF}; default: ON]
-                            [--developer {ON|OFF}; default:OFF]
-                            [--reinstall {ON|OFF}; default:OFF]
-                            [--backend {HIP|OCL|CPU}]
-                            [--rocm_path ROCM_PATH; default: /opt/rocm]
+    sudo apt install cmake
 
-| ``directory``: The user home directory.
-| ``opencv``: The OpenCV version to install.
-| ``ffmpeg``: Install the required FFMpeg libraries.
-| ``amd_rpp``: Install the packages needed to install and use RPP.
-| ``neural_net``: Install the packages needed to install and use neural net.
-| ``inference``: Install the packages needed to install and use neural net inference.
-| ``developer``: Use the developer options.
-| ``reinstall``: Remove the previous dependency installations and install new dependencies.
-| ``backend``: Specifies the backend to use.
-| ``rocm_path``: The ROCm installation path.
+Use the appropriate package manager (``yum``/``dnf`` or ``zypper``) on RHEL and SLES.
 
-.. note::
+The ROCm Core SDK provides the required runtime and development dependencies:
 
-    libstdc++-12-dev isn't installed by the setup script and must be installed manually on Ubuntu 22.04 only.
-
-
-The following prerequisites are required and are installed with both the Linux package installer and the setup script:
-
-* `MIOpen <https://rocm.docs.amd.com/projects/MIOpen/en/latest/>`_
-* `MIGraphX <https://rocm.docs.amd.com/projects/AMDMIGraphX/en/latest/>`_
-* `RPP <https://rocm.docs.amd.com/projects/rpp/en/latest/>`_
+* HIP and OpenCL runtimes and the ``amdclang++`` compiler
 * `The half-precision floating-point library <https://half.sourceforge.net>`_ version 1.12.0 or later
-* `Google Protobuf <https://developers.google.com/protocol-buffers>`_ version 3.12.4 or later
-* `LMBD Library <http://www.lmdb.tech/doc/>`_
-* `TurboJPEG <https://libjpeg-turbo.org/>`_
-* `PyBind11 <https://github.com/pybind/pybind11/releases/tag/v2.11.1>`_ version 2.11.1
-* `RapidJSON <https://github.com/Tencent/rapidjson>`_
-* `OpenCV <https://docs.opencv.org/4.6.0/index.html>`_ version 4.6
-* `Python3 <https://www.python.org/>`_
-* libavcodec-dev, libavformat-dev, libavutil-dev, libswscale-dev version 4.4.2 or later
+* `RPP <https://rocm.docs.amd.com/projects/rpp/en/latest/>`_ version 3.1.0 or later (required for the ``amd_rpp`` extension; supports the ``CPU`` and ``HIP`` backends)
 
+The following prerequisite is optional:
+
+* `OpenCV <https://docs.opencv.org/4.6.0/index.html>`_ version 3.x or 4.x, only used by ``RunVX`` for image and video display
 
 .. note::
 
-    libavcodec-dev, libavformat-dev, libavutil-dev, and libswscale-dev are the only `FFmpeg <https://www.ffmpeg.org>`_ libraries required by MIVisionX. They're installed by default with the setup script and by the package installers.
-
-
-.. |setup| replace:: ``MIVisionX-setup.py``
-
-.. _setup: https://github.com/ROCm/MIVisionX/blob/develop/MIVisionX-setup.py
+    * ``RPP`` is included with the ROCm Core SDK. On ROCm releases where it is packaged separately, install it from the ROCm repository.
+    * On Ubuntu 22.04, ``libstdc++-12-dev`` must also be installed manually.

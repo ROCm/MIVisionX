@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Khronos Group Inc.
+ * Copyright (c) 2012-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _OPENVX_TYPES_H_
-#define _OPENVX_TYPES_H_
+#ifndef OPENVX_TYPES_H
+#define OPENVX_TYPES_H
 
 /*!
  * \file vx_types.h
@@ -25,12 +25,16 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*!
  * \internal
  * \def VX_API_ENTRY
  * \brief This is a tag used to identify exported, public API functions as
  * distinct from internal functions, helpers, and other non-public interfaces.
- * It can optionally be defined in the make system according the the compiler and intent.
+ * It can optionally be defined in the make system according to the compiler and intent.
  * \ingroup group_basic_features
  */
 
@@ -64,7 +68,7 @@
 #endif
 #endif
 
-/*! \brief An 8 bit ASCII character.
+/*! \brief An 8-bit ASCII character.
  * \ingroup group_basic_features
  */
 typedef char     vx_char;
@@ -109,6 +113,9 @@ typedef int32_t  vx_int32;
  */
 typedef int64_t  vx_int64;
 
+/*! \brief A 32-bit unsigned value used to pass flags to a function.
+ * \ingroup group_basic_features
+ */
 typedef uint32_t vx_bitfield;
 
 #if defined(EXPERIMENTAL_PLATFORM_SUPPORTS_16_FLOAT)
@@ -119,7 +126,7 @@ typedef uint32_t vx_bitfield;
 #if defined(__arm__) || defined(__arm64__)
 typedef __fp16   vx_float16;
 #else
-typedef hfloat   vx_float16;
+typedef uint16_t vx_float16;
 #endif
 #endif
 
@@ -203,7 +210,7 @@ typedef struct _vx_parameter *vx_parameter;
  */
 typedef struct _vx_node *vx_node;
 
-/*! \brief An opaque reference to a graph
+/*! \brief An opaque reference to a graph.
  * \see vxCreateGraph
  * \ingroup group_graph
  * \extends vx_reference
@@ -281,10 +288,10 @@ typedef struct _vx_object_array *vx_object_array;
 
  /*! \brief The multidimensional data object (Tensor).
  * \see vxCreateTensor
- * \ingroup group_object_tensor
+ * \ingroup group_tensor
  * \extends vx_reference
  */
-typedef struct _vx_tensor_t * vx_tensor;
+typedef struct _vx_tensor *vx_tensor;
 
 /*! \brief A Boolean value.
  * This allows 0 to be FALSE, as it is in C, and any non-zero to be TRUE.
@@ -350,31 +357,31 @@ enum vx_type_e {
     VX_TYPE_COORDINATES3D   = 0x023,/*!< \brief A <tt>\ref vx_coordinates3d_t</tt>. */
     VX_TYPE_COORDINATES2DF  = 0x024,/*!< \brief A <tt>\ref vx_coordinates2df_t</tt>. */
 
-	/* Reserve enums that are defined in khronos extensions
-		NN extensions:
-		VX_TYPE_NN_CONVOLUTION_PARAMS     = 0x025,
-		VX_TYPE_NN_DECONVOLUTION_PARAMS   = 0x026,
-		VX_TYPE_NN_ROI_POOL_PARAMS        = 0x027,
-		Classifier extension:
-		VX_TYPE_CLASSIFER_MODEL           = 0x02C,
-	*/
-	VX_TYPE_HOG_PARAMS                       = 0x028, /*!< \brief A <tt>\ref vx_hog_t</tt>. */
-	VX_TYPE_HOUGH_LINES_PARAMS               = 0x029, /*!< \brief A <tt>\ref vx_hough_lines_p_t</tt>. */
-	VX_TYPE_LINE_2D                          = 0x02A, /*!< \brief A <tt>\ref vx_line2d_t</tt>. */
-	VX_TYPE_TENSOR_MATRIX_MULTIPLY_PARAMS    = 0x02B, /*!< \brief A <tt>\ref vx_tensor_matrix_multiply_params_t</tt>. */
+    /* Reserve enums that are defined in khronos extensions
+        NN extensions:
+        VX_TYPE_NN_CONVOLUTION_PARAMS     = 0x025,
+        VX_TYPE_NN_DECONVOLUTION_PARAMS   = 0x026,
+        VX_TYPE_NN_ROI_POOL_PARAMS        = 0x027,
+        Classifier extension:
+        VX_TYPE_CLASSIFIER_MODEL          = 0x02C,
+    */
+    VX_TYPE_HOG_PARAMS                       = 0x028, /*!< \brief A <tt>\ref vx_hog_t</tt>. */
+    VX_TYPE_HOUGH_LINES_PARAMS               = 0x029, /*!< \brief A <tt>\ref vx_hough_lines_p_t</tt>. */
+    VX_TYPE_LINE_2D                          = 0x02A, /*!< \brief A <tt>\ref vx_line2d_t</tt>. */
+    VX_TYPE_TENSOR_MATRIX_MULTIPLY_PARAMS    = 0x02B, /*!< \brief A <tt>\ref vx_tensor_matrix_multiply_params_t</tt>. */
 
 
     VX_TYPE_USER_STRUCT_START    = 0x100,/*!< \brief A user-defined struct base index.*/
     VX_TYPE_VENDOR_STRUCT_START  = 0x400,/*!< \brief A vendor-defined struct base index.*/
-    VX_TYPE_KHRONOS_OBJECT_START = 0x800,/*!< \brief A Khronos defined object base index. */
-    VX_TYPE_VENDOR_OBJECT_START  = 0xC00,/*!< \brief A vendor defined object base index. */
+    VX_TYPE_KHRONOS_OBJECT_START = 0x800,/*!< \brief A Khronos-defined object base index. */
+    VX_TYPE_VENDOR_OBJECT_START  = 0xC00,/*!< \brief A vendor-defined object base index. */
 
-    VX_TYPE_KHRONOS_STRUCT_MAX   = (vx_enum)VX_TYPE_USER_STRUCT_START - 1,/*!< \brief A value for comparison between Khronos defined structs and user structs. */
+    VX_TYPE_KHRONOS_STRUCT_MAX   = (vx_enum)VX_TYPE_USER_STRUCT_START - 1,/*!< \brief A value for comparison between Khronos-defined structs and user structs. */
 
     VX_TYPE_USER_STRUCT_END      = (vx_enum)VX_TYPE_VENDOR_STRUCT_START - 1,/*!< \brief A value for comparison between user structs and vendor structs. */
-    VX_TYPE_VENDOR_STRUCT_END    = (vx_enum)VX_TYPE_KHRONOS_OBJECT_START - 1,/*!< \brief A value for comparison between vendor structs and Khronos defined objects. */
-    VX_TYPE_KHRONOS_OBJECT_END   = (vx_enum)VX_TYPE_VENDOR_OBJECT_START - 1,/*!< \brief A value for comparison between Khronos defined objects and vendor structs. */
-    VX_TYPE_VENDOR_OBJECT_END    = 0xFFF,/*!< \brief A value used for bound checking of vendor objects */
+    VX_TYPE_VENDOR_STRUCT_END    = (vx_enum)VX_TYPE_KHRONOS_OBJECT_START - 1,/*!< \brief A value for comparison between vendor structs and Khronos-defined objects. */
+    VX_TYPE_KHRONOS_OBJECT_END   = (vx_enum)VX_TYPE_VENDOR_OBJECT_START - 1,/*!< \brief A value for comparison between Khronos-defined objects and vendor structs. */
+    VX_TYPE_VENDOR_OBJECT_END    = 0xFFF,/*!< \brief A value used for bound checking of vendor objects. */
 
 
     VX_TYPE_REFERENCE       = 0x800,/*!< \brief A <tt>\ref vx_reference</tt>. */
@@ -390,7 +397,7 @@ enum vx_type_e {
     VX_TYPE_THRESHOLD       = 0x80A,/*!< \brief A <tt>\ref vx_threshold</tt>. */
     VX_TYPE_MATRIX          = 0x80B,/*!< \brief A <tt>\ref vx_matrix</tt>. */
     VX_TYPE_CONVOLUTION     = 0x80C,/*!< \brief A <tt>\ref vx_convolution</tt>. */
-    VX_TYPE_SCALAR          = 0x80D,/*!< \brief A <tt>\ref vx_scalar</tt>. when needed to be completely generic for kernel validation. */
+    VX_TYPE_SCALAR          = 0x80D,/*!< \brief A <tt>\ref vx_scalar</tt>. Used when a completely generic type is needed for kernel validation. */
     VX_TYPE_ARRAY           = 0x80E,/*!< \brief A <tt>\ref vx_array</tt>. */
     VX_TYPE_IMAGE           = 0x80F,/*!< \brief A <tt>\ref vx_image</tt>. */
     VX_TYPE_REMAP           = 0x810,/*!< \brief A <tt>\ref vx_remap</tt>. */
@@ -400,17 +407,18 @@ enum vx_type_e {
     /* Reserved for IX and XML extensions */
     /* VX_TYPE_IMPORT          = 0x814, !< \brief A <tt>\ref vx_import</tt>. */
     VX_TYPE_TENSOR          = 0x815,/*!< \brief A <tt>\ref vx_tensor</tt>. */
-    /* \todo add new object types here */
-
 };
 
+
 /*! \brief The enumeration of all status codes.
- * \see vx_status.
+ * \see vx_status
  * \ingroup group_basic_features
  */
 enum vx_status_e {
-    VX_STATUS_MIN                       = -(vx_int32)25,/*!< \brief Indicates the lower bound of status codes in VX. Used for bounds checks only. */
+    VX_STATUS_MIN                       = -(vx_int32)27,/*!< \brief Indicates the lower bound of status codes in VX. Used for bounds checks only. */
     /* add new codes here */
+    VX_ERROR_GRAPH_NOT_VERIFIED         = -(vx_int32)26,/*!< \brief Indicates that the graph has not yet been verified. Returned by APIs that require a verified graph. (Added in OpenVX 1.3.2) */
+    VX_ERROR_TIMEOUT                    = -(vx_int32)25,/*!< \brief Indicates that an operation did not complete within an expected duration. Returned by APIs that support timeout-based execution when a timeout is configured. (Added in OpenVX 1.3.2) */
     VX_ERROR_REFERENCE_NONZERO          = -(vx_int32)24,/*!< \brief Indicates that an operation did not complete due to a reference count being non-zero. */
     VX_ERROR_MULTIPLE_WRITERS           = -(vx_int32)23,/*!< \brief Indicates that the graph has more than one node outputting to the same data object. This is an invalid graph structure. */
     VX_ERROR_GRAPH_ABANDONED            = -(vx_int32)22,/*!< \brief Indicates that the graph is stopped due to an error or a callback that abandoned execution. */
@@ -426,13 +434,13 @@ enum vx_status_e {
     VX_ERROR_INVALID_REFERENCE          = -(vx_int32)12,/*!< \brief Indicates that the reference provided is not valid. */
     VX_ERROR_INVALID_MODULE             = -(vx_int32)11,/*!< \brief This is returned from <tt>\ref vxLoadKernels</tt> when the module does not contain the entry point. */
     VX_ERROR_INVALID_PARAMETERS         = -(vx_int32)10,/*!< \brief Indicates that the supplied parameter information does not match the kernel contract. */
-    VX_ERROR_OPTIMIZED_AWAY             = -(vx_int32)9,/*!< \brief Indicates that the object refered to has been optimized out of existence. */
-    VX_ERROR_NO_MEMORY                  = -(vx_int32)8,/*!< \brief Indicates that an internal or implicit allocation failed. Typically catastrophic. After detection, deconstruct the context. \see vxVerifyGraph. */
-    VX_ERROR_NO_RESOURCES               = -(vx_int32)7,/*!< \brief Indicates that an internal or implicit resource can not be acquired (not memory). This is typically catastrophic. After detection, deconstruct the context. \see vxVerifyGraph. */
-    VX_ERROR_NOT_COMPATIBLE             = -(vx_int32)6,/*!< \brief Indicates that the attempt to link two parameters together failed due to type incompatibilty. */
+    VX_ERROR_OPTIMIZED_AWAY             = -(vx_int32)9,/*!< \brief Indicates that the object referred to has been optimized out of existence. */
+    VX_ERROR_NO_MEMORY                  = -(vx_int32)8,/*!< \brief Indicates that an internal or implicit allocation failed. Typically catastrophic. After detection, deconstruct the context. \see vxVerifyGraph */
+    VX_ERROR_NO_RESOURCES               = -(vx_int32)7,/*!< \brief Indicates that an internal or implicit resource cannot be acquired (not memory). This is typically catastrophic. After detection, deconstruct the context. \see vxVerifyGraph */
+    VX_ERROR_NOT_COMPATIBLE             = -(vx_int32)6,/*!< \brief Indicates that the attempt to link two parameters together failed due to type incompatibility. */
     VX_ERROR_NOT_ALLOCATED              = -(vx_int32)5,/*!< \brief Indicates to the system that the parameter must be allocated by the system.  */
-    VX_ERROR_NOT_SUFFICIENT             = -(vx_int32)4,/*!< \brief Indicates that the given graph has failed verification due to an insufficient number of required parameters, which cannot be automatically created. Typically this indicates required atomic parameters. \see vxVerifyGraph. */
-    VX_ERROR_NOT_SUPPORTED              = -(vx_int32)3,/*!< \brief Indicates that the requested set of parameters produce a configuration that cannot be supported. Refer to the supplied documentation on the configured kernels. \see vx_kernel_e. This is also returned if a function to set an attribute is called on a Read-only attribute.*/
+    VX_ERROR_NOT_SUFFICIENT             = -(vx_int32)4,/*!< \brief Indicates that the given graph has failed verification due to an insufficient number of required parameters, which cannot be automatically created. Typically this indicates required atomic parameters. \see vxVerifyGraph */
+    VX_ERROR_NOT_SUPPORTED              = -(vx_int32)3,/*!< \brief Indicates that the requested set of parameters produce a configuration that cannot be supported. Refer to the supplied documentation on the configured kernels. This is also returned if a function to set an attribute is called on a Read-only attribute. \see vx_kernel_e */
     VX_ERROR_NOT_IMPLEMENTED            = -(vx_int32)2,/*!< \brief Indicates that the requested kernel is missing. \see vx_kernel_e vxGetKernelByName. */
     VX_FAILURE                          = -(vx_int32)1,/*!< \brief Indicates a generic error code, used when no other describes the error. */
     VX_SUCCESS                          =  0,/*!< \brief No error. */
@@ -578,7 +586,7 @@ enum vx_enum_e {
     VX_ENUM_GRAPH_STATE     = 0x15, /*!< \brief Graph attribute states. */
     VX_ENUM_NONLINEAR       = 0x16, /*!< \brief Non-linear function list. */
     VX_ENUM_PATTERN         = 0x17, /*!< \brief Matrix pattern enumeration. */
-    VX_ENUM_LBP_FORMAT      = 0x18, /*!< \brief Lbp format. */
+    VX_ENUM_LBP_FORMAT      = 0x18, /*!< \brief LBP format. */
     VX_ENUM_COMP_METRIC     = 0x19, /*!< \brief Compare metric. */
 /* NN extension
     VX_ENUM_NN_ROUNDING_TYPE	= 0x1A,
@@ -590,8 +598,22 @@ enum vx_enum_e {
 	VX_ENUM_CLASSIFIER_MODEL= 0x1E,
 */
 /* IX extension
-    VX_ENUM_IX_USE          = 0x1F, !< \brief How to use references in import and export. */
-    VX_ENUM_SCALAR_OPERATION= 0X20  /*!< \brief Scalar operation list. */
+    VX_ENUM_IX_USE          = 0x1F,
+*/
+    VX_ENUM_SCALAR_OPERATION= 0x20  /*!< \brief Scalar operation list. */
+/* Pipelining extension
+    VX_ENUM_GRAPH_SCHEDULE_MODE_TYPE     = 0x21,
+    VX_ENUM_EVENT_TYPE     = 0x22,
+    VX_ENUM_NODE_STATE_TYPE     = 0x23,
+*/
+/* Raw Image extension
+    VX_ENUM_IMAGE_RAW_BUFFER_ACCESS         = (vx_enum)0x24
+    VX_ENUM_IMAGE_RAW_PIXEL_CONTAINER       = (vx_enum)0x25
+    VX_ENUM_IMAGE_RAW_EXPOSURE_INTERLEAVING = (vx_enum)0x26
+*/
+/* Target kernel extension
+    VX_ENUM_MEM_POOL     = 0x27
+*/
 	};
 
 /*! \brief A return code enumeration from a <tt>\ref vx_nodecomplete_f</tt> during execution.
@@ -621,7 +643,7 @@ enum vx_direction_e {
  * \ingroup group_hint
  */
 enum vx_hint_e {
-    /*! \brief Indicates to the implementation that user do not apply any specific
+    /*! \brief Indicates to the implementation that the user does not have any specific
      *  requirements for performance.
      */
     VX_HINT_PERFORMANCE_DEFAULT = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_HINT) + 0x1,
@@ -639,7 +661,7 @@ enum vx_hint_e {
  * platform optimizations and/or features. Directives are not optional and
  * usually are vendor-specific, by defining a vendor range of directives and
  * starting their enumeration from there.
- * \see <tt>vxDirective</tt>
+ * \see <tt>\ref vxDirective</tt>
  * \ingroup group_directive
  */
 enum vx_directive_e {
@@ -647,7 +669,7 @@ enum vx_directive_e {
     VX_DIRECTIVE_DISABLE_LOGGING = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_DIRECTIVE) + 0x0,
     /*! \brief Enables recording information for graph debugging. */
     VX_DIRECTIVE_ENABLE_LOGGING = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_DIRECTIVE) + 0x1,
-    /*! \brief Disables performance counters for the context. By default performance counters are disabled */
+    /*! \brief Disables performance counters for the context. By default performance counters are disabled. */
     VX_DIRECTIVE_DISABLE_PERFORMANCE = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_DIRECTIVE) + 0x2,
     /*! \brief Enables performance counters for the context. */
     VX_DIRECTIVE_ENABLE_PERFORMANCE = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_DIRECTIVE) + 0x3,
@@ -657,15 +679,15 @@ enum vx_directive_e {
  * \ingroup group_graph
  */
 enum vx_graph_state_e {
-   /*! \brief The graph should be verified before execution */
+   /*! \brief The graph should be verified before execution. */
    VX_GRAPH_STATE_UNVERIFIED = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_GRAPH_STATE) + 0x0,
-   /*! \brief The graph has been verified and has not been executed or scheduled for execution yet */
+   /*! \brief The graph has been verified and has not been executed or scheduled for execution yet. */
    VX_GRAPH_STATE_VERIFIED = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_GRAPH_STATE) + 0x1,
-   /*! \brief The graph either has been scheduled and not completed, or is being executed */
+   /*! \brief The graph either has been scheduled and not completed, or is being executed. */
    VX_GRAPH_STATE_RUNNING = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_GRAPH_STATE) + 0x2,
-   /*! \brief The graph execution was abandoned */
+   /*! \brief The graph execution was abandoned. */
    VX_GRAPH_STATE_ABANDONED = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_GRAPH_STATE) + 0x3,
-   /*! \brief The graph execution is completed and the graph is not scheduled for execution */
+   /*! \brief The graph execution is completed and the graph is not scheduled for execution. */
    VX_GRAPH_STATE_COMPLETED = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_GRAPH_STATE) + 0x4,
 };
 
@@ -682,7 +704,7 @@ enum vx_graph_attribute_e {
     VX_GRAPH_PERFORMANCE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_GRAPH) + 0x2,
     /*! \brief Returns the number of explicitly declared parameters on the graph. Read-only. Use a <tt>\ref vx_uint32</tt> parameter. */
     VX_GRAPH_NUMPARAMETERS = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_GRAPH) + 0x3,
-    /*! \brief Returns the state of the graph. See <tt>\ref vx_graph_state_e</tt> enum. */
+    /*! \brief Returns the state of the graph. Read-only. Use a <tt>\ref vx_enum</tt> parameter. See <tt>\ref vx_graph_state_e</tt>. */
     VX_GRAPH_STATE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_GRAPH) + 0x4,
 };
 
@@ -710,10 +732,15 @@ enum vx_df_image_e {
      */
     VX_DF_IMAGE_RGB  = VX_DF_IMAGE('R','G','B','2'),
     /*! \brief A single plane of 32-bit pixel as 4 interleaved 8-bit units of
+     * R then G then B then Alpha data.
+     * This uses the BT709 full range by default. (Added in OpenVX 1.3.2)
+     */
+    VX_DF_IMAGE_RGBA = VX_DF_IMAGE('R','G','B','A'),
+    /*! \brief A single plane of 32-bit pixel as 4 interleaved 8-bit units of
      * R then G then B data, then a <i>don't care</i> byte.
      * This uses the BT709 full range by default.
      */
-    VX_DF_IMAGE_RGBX = VX_DF_IMAGE('R','G','B','A'),
+    VX_DF_IMAGE_RGBX = VX_DF_IMAGE('R','G','B','X'),
     /*! \brief A 2-plane YUV format of Luma (Y) and interleaved UV data at
      * 4:2:0 sampling. This uses the BT709 full range by default.
      */
@@ -734,12 +761,15 @@ enum vx_df_image_e {
      * This uses the BT709 full range by default.
      */
     VX_DF_IMAGE_IYUV = VX_DF_IMAGE('I','Y','U','V'),
-    /*! \brief A 3 plane of 8 bit 4:4:4 sampled Y, U, V planes.
+    /*! \brief A 3 plane of 8-bit 4:4:4 sampled Y, U, V planes.
      * This uses the BT709 full range by default.
      */
     VX_DF_IMAGE_YUV4 = VX_DF_IMAGE('Y','U','V','4'),
     /*! \brief A single plane of unsigned 1-bit data packed eight pixels per byte.
-     * The least significant bit is the first pixel in each byte.
+     * The least significant bit is the first pixel in each byte, and planes always
+     * start on a byte boundary.
+     * The range of data is not specified, as it may be extracted from a YUV or
+     * generated.
      * See <tt>\ref vx_imagepatch_addressing_t</tt> for more details.
      */
     VX_DF_IMAGE_U1 = VX_DF_IMAGE('U','0','0','1'),
@@ -763,7 +793,7 @@ enum vx_df_image_e {
      * generated.
      */
     VX_DF_IMAGE_U32  = VX_DF_IMAGE('U','0','3','2'),
-    /*! \brief A single plane of unsigned 32-bit data.
+    /*! \brief A single plane of signed 32-bit data.
      * The range of data is not specified, as it may be extracted from a YUV or
      * generated.
      */
@@ -774,7 +804,7 @@ enum vx_df_image_e {
  * \ingroup group_basic_features
  */
 enum vx_target_e {
-    /*! \brief Any available target. An OpenVX implementation must support at least one target associated with this value */
+    /*! \brief Any available target. An OpenVX implementation must support at least one target associated with this value. */
     VX_TARGET_ANY = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_TARGET) + 0x0000,
     /*! \brief Target, explicitly specified by its (case-insensitive) name string. */
     VX_TARGET_STRING = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_TARGET) + 0x0001,
@@ -790,7 +820,8 @@ enum vx_reference_attribute_e {
     VX_REFERENCE_COUNT = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_REFERENCE) + 0x0,
     /*! \brief Returns the <tt>\ref vx_type_e</tt> of the reference. Read-only. Use a <tt>\ref vx_enum</tt> parameter. */
     VX_REFERENCE_TYPE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_REFERENCE) + 0x1,
-    /*! \brief Used to query the reference for its name. Read-write. Use a *<tt>\ref vx_char</tt> parameter. */
+    /*! \brief Used to query the reference for its name. This attribute can be set via the <tt>\ref vxSetReferenceName</tt>
+     * function. Read-write. Use a <tt>\ref vx_char</tt> parameter. */
     VX_REFERENCE_NAME = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_REFERENCE) + 0x2,
 };
 
@@ -798,9 +829,9 @@ enum vx_reference_attribute_e {
  * \ingroup group_context
  */
 enum vx_context_attribute_e {
-    /*! \brief Queries the unique vendor ID. Read-only. Use a <tt>\ref vx_uint16</tt>. */
+    /*! \brief Queries the unique vendor ID. Read-only. Use a <tt>\ref vx_uint16</tt> parameter. */
     VX_CONTEXT_VENDOR_ID = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_CONTEXT) + 0x0,
-    /*! \brief Queries the OpenVX Version Number. Read-only. Use a <tt>\ref vx_uint16</tt> */
+    /*! \brief Queries the OpenVX Version Number. Read-only. Use a <tt>\ref vx_uint16</tt> parameter. */
     VX_CONTEXT_VERSION = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_CONTEXT) + 0x1,
     /*! \brief Queries the context for the number of \e unique kernels. Read-only. Use a <tt>\ref vx_uint32</tt> parameter. */
     VX_CONTEXT_UNIQUE_KERNELS = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_CONTEXT) + 0x2,
@@ -808,7 +839,7 @@ enum vx_context_attribute_e {
     VX_CONTEXT_MODULES = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_CONTEXT) + 0x3,
     /*! \brief Queries the context for the number of active references. Read-only. Use a <tt>\ref vx_uint32</tt> parameter. */
     VX_CONTEXT_REFERENCES = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_CONTEXT) + 0x4,
-    /*! \brief Queries the context for it's implementation name. Read-only. Use a <tt>\ref vx_char</tt>[<tt>\ref VX_MAX_IMPLEMENTATION_NAME</tt>] array */
+    /*! \brief Queries the context for its implementation name. Read-only. Use a <tt>\ref vx_char</tt>[<tt>\ref VX_MAX_IMPLEMENTATION_NAME</tt>] array. */
     VX_CONTEXT_IMPLEMENTATION = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_CONTEXT) + 0x5,
     /*! \brief Queries the number of bytes in the extensions string. Read-only. Use a <tt>\ref vx_size</tt> parameter. */
     VX_CONTEXT_EXTENSIONS_SIZE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_CONTEXT) + 0x6,
@@ -825,12 +856,13 @@ enum vx_context_attribute_e {
      * <tt>\ref VX_CONTEXT_CONVOLUTION_MAX_DIMENSION</tt> attribute. n is an odd
      * number that should not be smaller than 9. w and h may or may not be equal to
      * each other. All combinations of w and h meeting the conditions above must be
-     * supported. The behavior of <tt>\ref vxCreateConvolution</tt> is undefined for values
+     * supported. The behavior of <tt>\ref vxCreateConvolution</tt> is implementation-defined for values
      * larger than the value returned by this attribute.
      */
     VX_CONTEXT_CONVOLUTION_MAX_DIMENSION = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_CONTEXT) + 0x8,
     /*! \brief The maximum window dimension of the OpticalFlowPyrLK kernel. The value of this attribute shall be equal to or greater than '9'.
-     * \see <tt>\ref VX_KERNEL_OPTICAL_FLOW_PYR_LK</tt>. Read-only. Use a <tt>\ref vx_size</tt> parameter.
+     * Read-only. Use a <tt>\ref vx_size</tt> parameter.
+     * \see <tt>\ref VX_KERNEL_OPTICAL_FLOW_PYR_LK</tt>.
      */
     VX_CONTEXT_OPTICAL_FLOW_MAX_WINDOW_DIMENSION = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_CONTEXT) + 0x9,
     /*! \brief The border mode for immediate mode functions.
@@ -838,13 +870,13 @@ enum vx_context_attribute_e {
      * \note The assumed default value for immediate mode functions is <tt>\ref VX_BORDER_UNDEFINED</tt>.
      */
     VX_CONTEXT_IMMEDIATE_BORDER = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_CONTEXT) + 0xA,
-    /*! \brief Returns the table of all unique the kernels that exist in the context.
+    /*! \brief Returns the table of all the unique kernels that exist in the context.
      *  Read-only. Use a <tt>\ref vx_kernel_info_t</tt> array.
      * \pre You must call <tt>\ref vxQueryContext</tt> with <tt>\ref VX_CONTEXT_UNIQUE_KERNELS</tt>
      * to compute the necessary size of the array.
      */
     VX_CONTEXT_UNIQUE_KERNEL_TABLE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_CONTEXT) + 0xB,
-    /*! \brief The unsupported border mode policy for immediate mode functions. Read-Write.
+    /*! \brief The unsupported border mode policy for immediate mode functions. Read-write.
      * \details Graph mode functions are unaffected by this attribute. Use a <tt>\ref vx_enum</tt> as parameter. Will contain a <tt>\ref vx_border_policy_e</tt>.
      * \note The assumed default value for immediate mode functions is <tt>\ref VX_BORDER_POLICY_DEFAULT_TO_UNDEFINED</tt>. Users should refer to the documentation of their implementation to determine what border modes are supported by each kernel.
      */
@@ -854,12 +886,12 @@ enum vx_context_attribute_e {
      * up to the value of this attribute.  The lowest value that must be supported for this attribute is 9.
      * Read-only. Use a <tt>\ref vx_size</tt> parameter.
      */
-    VX_CONTEXT_NONLINEAR_MAX_DIMENSION = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_CONTEXT) + 0xd,
-    /*! \brief tensor Data maximal number of dimensions supported by the implementation. */
+    VX_CONTEXT_NONLINEAR_MAX_DIMENSION = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_CONTEXT) + 0xD,
+    /*! \brief The maximum number of tensor dimensions supported by the implementation. Read-only. Use a <tt>\ref vx_size</tt> parameter. */
     VX_CONTEXT_MAX_TENSOR_DIMS = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_CONTEXT) + 0xE,
 };
 
-/*! \brief The kernel attributes list
+/*! \brief The kernel attributes list.
  * \ingroup group_kernel
  */
 enum vx_kernel_attribute_e {
@@ -891,21 +923,21 @@ enum vx_node_attribute_e {
     VX_NODE_STATUS = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_NODE) + 0x0,
     /*! \brief Queries the performance of the node execution.
      * The accuracy of timing information is platform dependent and also depends on the graph
-     * optimizations. Read-only.
+     * optimizations. Read-only. Use a <tt>\ref vx_perf_t</tt> parameter.
      * \note Performance tracking must have been enabled. See <tt>\ref vx_directive_e</tt>.
      */
     VX_NODE_PERFORMANCE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_NODE) + 0x1,
     /*! \brief Gets or sets the border mode of the node.
-     * Read-write. Use a <tt>\ref vx_border_t</tt> structure with a default value of VX_BORDER_UNDEFINED.
+     * Read-write. Use a <tt>\ref vx_border_t</tt> parameter with a default value of VX_BORDER_UNDEFINED.
      */
     VX_NODE_BORDER = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_NODE) + 0x2,
     /*! \brief Indicates the size of the kernel local memory area.
-     * Read-only. Can be written only at user-node (de)initialization if VX_KERNEL_LOCAL_DATA_SIZE==0.
+     * Read-only. Can be written only at user-node (de)initialization if VX_KERNEL_LOCAL_DATA_SIZE == 0.
      * Use a <tt>\ref vx_size</tt> parameter.
      */
     VX_NODE_LOCAL_DATA_SIZE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_NODE) + 0x3,
     /*! \brief Indicates the pointer kernel local memory area.
-     * Read-Write. Can be written only at user-node (de)initialization if VX_KERNEL_LOCAL_DATA_SIZE==0.
+     * Read-write. Can be written only at user-node (de)initialization if VX_KERNEL_LOCAL_DATA_SIZE == 0.
      * Use a void * parameter.
      */
     VX_NODE_LOCAL_DATA_PTR = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_NODE) + 0x4,
@@ -927,7 +959,7 @@ enum vx_node_attribute_e {
     VX_NODE_VALID_RECT_RESET = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_NODE) + 0x8,
 };
 
-/*! \brief The parameter attributes list
+/*! \brief The parameter attributes list.
  * \ingroup group_parameter
  */
 enum vx_parameter_attribute_e {
@@ -935,13 +967,24 @@ enum vx_parameter_attribute_e {
     VX_PARAMETER_INDEX = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_PARAMETER) + 0x0,
     /*! \brief Queries a parameter for its direction value on the kernel with which it is associated. Read-only. Use a <tt>\ref vx_enum</tt> parameter. */
     VX_PARAMETER_DIRECTION = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_PARAMETER) + 0x1,
-    /*! \brief Queries a parameter for its type, \ref vx_type_e is returned. Read-only. The size of the parameter is implied for plain data objects. For opaque data objects like images and arrays a query to their attributes has to be called to determine the size. */
+    /*! \brief Queries a parameter for its type, \ref vx_type_e is returned. Read-only. Use a <tt>\ref vx_enum</tt> parameter. The size of the parameter is implied for plain data objects. For opaque data objects like images and arrays a query to their attributes has to be called to determine the size. */
     VX_PARAMETER_TYPE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_PARAMETER) + 0x2,
     /*! \brief Queries a parameter for its state. A value in <tt>\ref vx_parameter_state_e</tt> is returned. Read-only. Use a <tt>\ref vx_enum</tt> parameter. */
     VX_PARAMETER_STATE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_PARAMETER) + 0x3,
-    /*! \brief Use to extract the reference contained in the parameter. Read-only. Use a <tt>\ref vx_reference</tt> parameter.  */
+    /*! \brief Use to extract the reference contained in the parameter. Read-only. Use a <tt>\ref vx_reference</tt> parameter.
+     * Each time the <tt>\ref vxQueryParameter</tt>  function is invoked with VX_PARAMETER_REF,
+     * the application will need to release the returned <tt>\ref vx_reference</tt> object
+     * one additional time before it can be destructed. */
     VX_PARAMETER_REF = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_PARAMETER) + 0x4,
-    /*! \brief Use to extract the meta format contained in the parameter. Read-only. Use a <tt>\ref vx_meta_format</tt> parameter.  */
+    /*! \brief Use to extract the meta format contained in the parameter. Read-only. Use a <tt>\ref vx_meta_format</tt> parameter.
+    * This parameter attribute is designed for use by the vx_khr_import_kernel extension.
+    * To check whether this attribute is supported for the kernel parameter, refer to its
+    * kernel description. The list meta data attributes for the returned <tt>\ref vx_meta_format</tt>
+    * will also be available in the kernel description.
+    * Each time the <tt>\ref vxQueryParameter</tt>  function is invoked with VX_PARAMETER_META_FORMAT,
+    * the application will need to release the returned <tt>\ref vx_meta_format</tt> object
+    * one additional time before it can be destructed. In order to release the <tt>\ref vx_meta_format</tt>
+    * object, use the <tt>\ref vxReleaseReference</tt> function with explicit cast to <tt>\ref vx_reference</tt> object. */
     VX_PARAMETER_META_FORMAT = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_PARAMETER) + 0x5,
 };
 
@@ -962,11 +1005,12 @@ enum vx_image_attribute_e {
     /*! \brief Queries an image for its channel range (see <tt>\ref vx_channel_range_e</tt>). Read-only. Use a <tt>\ref vx_enum</tt> parameter. */
     VX_IMAGE_RANGE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_IMAGE) + 0x5,
     /*! \brief Queries memory type if created using vxCreateImageFromHandle. If vx_image was not created using
-        vxCreateImageFromHandle, VX_MEMORY_TYPE_NONE is returned. Use a <tt>\ref vx_memory_type_e</tt> parameter. */
+     *  vxCreateImageFromHandle, VX_MEMORY_TYPE_NONE is returned. Read-only. Use a <tt>\ref vx_memory_type_e</tt> parameter. */
     VX_IMAGE_MEMORY_TYPE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_IMAGE) + 0x7,
-    /*! \brief Queries if an image is uniform. Read-only. Use a <tt>\ref vx_bool</tt> parameter */
+    /*! \brief Queries if an image is uniform. Read-only. Use a <tt>\ref vx_bool</tt> parameter. */
     VX_IMAGE_IS_UNIFORM = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_IMAGE) + 0x8,
-    /*! \brief Queries the image uniform value if any. Read-only. Use a <tt>\ref vx_pixel_value_t</tt> parameter. */
+    /*! \brief Queries the image uniform value if any. If vx_image was not created using
+     *  vxCreateUniformImage, VX_ERROR_NOT_SUPPORTED is returned. Read-only. Use a <tt>\ref vx_pixel_value_t</tt> parameter. */
     VX_IMAGE_UNIFORM_VALUE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_IMAGE) + 0x9,
 };
 
@@ -1023,13 +1067,13 @@ enum vx_scalar_operation_e {
  * \ingroup group_lut
  */
 enum vx_lut_attribute_e {
-    /*! \brief Indicates the value type of the LUT. Read-only. Use a <tt>\ref vx_enum</tt>. */
+    /*! \brief Indicates the value type of the LUT. Read-only. Use a <tt>\ref vx_enum</tt> parameter. */
     VX_LUT_TYPE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS,VX_TYPE_LUT) + 0x0,
-    /*! \brief Indicates the number of elements in the LUT. Read-only. Use a <tt>\ref vx_size</tt>. */
+    /*! \brief Indicates the number of elements in the LUT. Read-only. Use a <tt>\ref vx_size</tt> parameter. */
     VX_LUT_COUNT = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS,VX_TYPE_LUT) + 0x1,
-    /*! \brief Indicates the total size of the LUT in bytes. Read-only. Uses a <tt>\ref vx_size</tt>. */
+    /*! \brief Indicates the total size of the LUT in bytes. Read-only. Use a <tt>\ref vx_size</tt> parameter. */
     VX_LUT_SIZE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS,VX_TYPE_LUT) + 0x2,
-    /*! \brief Indicates the index of the input value = 0. Read-only. Uses a <tt>\ref vx_uint32</tt>. */
+    /*! \brief Indicates the index of the input value = 0. Read-only. Use a <tt>\ref vx_uint32</tt> parameter. */
     VX_LUT_OFFSET = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS,VX_TYPE_LUT) + 0x3,
 };
 
@@ -1041,7 +1085,7 @@ enum vx_distribution_attribute_e {
     VX_DISTRIBUTION_DIMENSIONS = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_DISTRIBUTION) + 0x0,
     /*! \brief Indicates the start of the values to use (inclusive). Read-only. Use a <tt>\ref vx_int32</tt> parameter. */
     VX_DISTRIBUTION_OFFSET = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_DISTRIBUTION) + 0x1,
-    /*! \brief Indicates the total number of the consecutive values of the distribution interval. */
+    /*! \brief Indicates the total number of the consecutive values of the distribution interval. Read-only. Use a <tt>\ref vx_uint32</tt> parameter.*/
     VX_DISTRIBUTION_RANGE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_DISTRIBUTION) + 0x2,
     /*! \brief Indicates the number of bins. Read-only. Use a <tt>\ref vx_size</tt> parameter. */
     VX_DISTRIBUTION_BINS = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_DISTRIBUTION) + 0x3,
@@ -1087,9 +1131,9 @@ enum vx_matrix_attribute_e {
     /*! \brief The total size of the matrix in bytes. Read-only. Use a <tt>\ref vx_size</tt> parameter. */
     VX_MATRIX_SIZE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_MATRIX) + 0x3,
     /*! \brief The origin of the matrix with a default value of [floor(VX_MATRIX_COLUMNS/2),
-         floor(VX_MATRIX_ROWS/2)]. Read-only. Use a <tt>\ref vx_coordinates2d_t</tt> parameter. */
+     * floor(VX_MATRIX_ROWS/2)]. Read-only. Use a <tt>\ref vx_coordinates2d_t</tt> parameter. */
     VX_MATRIX_ORIGIN = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_MATRIX) + 0x4,
-    /*! \brief The pattern of the matrix. See <tt>\ref vx_pattern_e </tt>. Read-only. Use a
+    /*! \brief The pattern of the matrix. See <tt>\ref vx_pattern_e</tt>. Read-only. Use a
      * <tt>\ref vx_enum</tt> parameter. If the matrix was created via <tt>\ref vxCreateMatrixFromPattern</tt>
      * or <tt>\ref vxCreateMatrixFromPatternAndOrigin</tt>, the attribute corresponds to the given pattern.
      * Otherwise the attribute is <tt>\ref VX_PATTERN_OTHER</tt>. */
@@ -1167,18 +1211,18 @@ enum vx_object_array_attribute_e {
     /*! \brief The number of items in the ObjectArray. Read-only. Use a <tt>\ref vx_size</tt> parameter. */
     VX_OBJECT_ARRAY_NUMITEMS = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_OBJECT_ARRAY) + 0x1,
 };
-/*! \brief tensor Data attributes.
- * \ingroup group_object_tensor
+/*! \brief The tensor Data attributes.
+ * \ingroup group_tensor
  */
 enum vx_tensor_attribute_e
 {
-    /*! \brief Number of dimensions. */
+    /*! \brief Number of dimensions. Read-only. Use a <tt>\ref vx_size</tt> parameter. */
     VX_TENSOR_NUMBER_OF_DIMS = VX_ATTRIBUTE_BASE( VX_ID_KHRONOS, VX_TYPE_TENSOR ) + 0x0,
-    /*! \brief Dimension sizes. */
+    /*! \brief Dimension sizes. Read-only. Use a <tt>\ref vx_size</tt> * parameter. */
     VX_TENSOR_DIMS        = VX_ATTRIBUTE_BASE( VX_ID_KHRONOS, VX_TYPE_TENSOR ) + 0x1,
-    /*! \brief tensor Data element data type. <tt>vx_type_e</tt> */
+    /*! \brief Tensor data element data type. Read-only. Use a <tt>\ref vx_enum</tt> parameter. \see vx_type_e */
     VX_TENSOR_DATA_TYPE   = VX_ATTRIBUTE_BASE( VX_ID_KHRONOS, VX_TYPE_TENSOR ) + 0x2,
-    /*! \brief fixed point position when the input element type is integer. */
+    /*! \brief Fixed point position when the input element type is integer. Read-only. Use a <tt>\ref vx_int8</tt> parameter. */
     VX_TENSOR_FIXED_POINT_POSITION = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_TENSOR) + 0x3
 };
 
@@ -1235,7 +1279,7 @@ enum vx_memory_type_e {
 
 /*! \brief The image reconstruction filters supported by image resampling operations.
  *
- * The edge of a pixel is interpreted as being aligned to the edge of the image.
+ * \details The edge of a pixel is interpreted as being aligned to the edge of the image.
  * The value for an output pixel is evaluated at the center of that pixel.
  *
  * This means, for example, that an even enlargement of a factor of two in nearest-neighbor
@@ -1279,14 +1323,14 @@ enum vx_non_linear_filter_e {
     VX_NONLINEAR_FILTER_MAX = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_NONLINEAR) + 0x2,
 };
 
-/*! \brief An enumeration of matrix patterns. See <tt>\ref vxCreateMatrixFromPattern </tt>
- *  and <tt>\ref vxCreateMatrixFromPatternAndOrigin </tt>
+/*! \brief An enumeration of matrix patterns. See <tt>\ref vxCreateMatrixFromPattern</tt>
+ *  and <tt>\ref vxCreateMatrixFromPatternAndOrigin</tt>
  * \ingroup group_basic_features
  */
 enum vx_pattern_e {
-    /*! \brief Box pattern matrix */
+    /*! \brief Box pattern matrix. */
     VX_PATTERN_BOX = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_PATTERN) + 0x0,
-    /*! \brief Cross pattern matrix */
+    /*! \brief Cross pattern matrix. */
     VX_PATTERN_CROSS = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_PATTERN) + 0x1 ,
     /*! \brief A square matrix (rows = columns = size) */
     VX_PATTERN_DISK = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_PATTERN) + 0x2,
@@ -1302,12 +1346,12 @@ enum vx_color_space_e {
     VX_COLOR_SPACE_NONE = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_COLOR_SPACE) + 0x0,
     /*! \brief Use to indicate that the BT.601 coefficients and SMPTE C primaries are used for conversions. */
     VX_COLOR_SPACE_BT601_525 = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_COLOR_SPACE) + 0x1,
-    /*! \brief Use to indicate that the BT.601 coefficients and BTU primaries are used for conversions. */
+    /*! \brief Use to indicate that the BT.601 coefficients and EBU primaries are used for conversions. */
     VX_COLOR_SPACE_BT601_625 = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_COLOR_SPACE) + 0x2,
     /*! \brief Use to indicate that the BT.709 coefficients are used for conversions. */
     VX_COLOR_SPACE_BT709 = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_COLOR_SPACE) + 0x3,
 
-    /*! \brief All images in VX are by default BT.709 */
+    /*! \brief All images in VX are by default BT.709. */
     VX_COLOR_SPACE_DEFAULT = VX_COLOR_SPACE_BT709,
 };
 
@@ -1315,9 +1359,9 @@ enum vx_color_space_e {
  *  \ingroup group_image
  */
 enum vx_channel_range_e {
-    /*! \brief Full range of the unit of the channel */
+    /*! \brief Full range of the unit of the channel. */
     VX_CHANNEL_RANGE_FULL = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_COLOR_RANGE) + 0x0,
-    /*! \brief Restricted range of the unit of the channel based on the space given */
+    /*! \brief Restricted range of the unit of the channel based on the space given. */
     VX_CHANNEL_RANGE_RESTRICTED = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_COLOR_RANGE) + 0x1,
 };
 
@@ -1330,7 +1374,7 @@ enum vx_parameter_state_e {
      */
     VX_PARAMETER_STATE_REQUIRED = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_PARAMETER_STATE) + 0x0,
     /*! \brief The parameter may be unspecified. The kernel takes care not
-     * to deference optional parameters until it is certain they are valid.
+     * to dereference optional parameters until it is certain they are valid.
      */
     VX_PARAMETER_STATE_OPTIONAL = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_PARAMETER_STATE) + 0x1,
 };
@@ -1368,9 +1412,9 @@ enum vx_border_policy_e {
 enum vx_termination_criteria_e {
     /*! \brief Indicates a termination after a set number of iterations. */
     VX_TERM_CRITERIA_ITERATIONS = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_TERM_CRITERIA) + 0x0,
-    /*! \brief Indicates a termination after matching against the value of eplison provided to the function. */
+    /*! \brief Indicates a termination after matching against the value of epsilon provided to the function. */
     VX_TERM_CRITERIA_EPSILON = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_TERM_CRITERIA) + 0x1,
-    /*! \brief Indicates that both an iterations and eplison method are employed. Whichever one matches first
+    /*! \brief Indicates that both an iterations and epsilon method are employed. Whichever one matches first
      * causes the termination.
      */
     VX_TERM_CRITERIA_BOTH = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_TERM_CRITERIA) + 0x2,
@@ -1399,17 +1443,17 @@ enum vx_delay_attribute_e {
 
 /*! \brief The memory accessor hint flags.
  * These enumeration values are used to indicate desired \e system behavior,
- * not the \b User intent. For example: these can be interpretted as hints to the
- * system about cache operations or marshalling operations.
+ * not the \b User intent. For example: these can be interpreted as hints to the
+ * system about cache operations or marshaling operations.
  * \ingroup group_context
  */
 enum vx_accessor_e {
     /*! \brief The memory shall be treated by the system as if it were read-only.
-     * If the User writes to this memory, the results are implementation defined.
+     * If the User writes to this memory, the results are implementation-defined.
      */
     VX_READ_ONLY = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_ACCESSOR) + 0x1,
     /*! \brief The memory shall be treated by the system as if it were write-only.
-     * If the User reads from this memory, the results are implementation defined.
+     * If the User reads from this memory, the results are implementation-defined.
      */
     VX_WRITE_ONLY = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_ACCESSOR) + 0x2,
     /*! \brief The memory shall be treated by the system as if it were readable and writeable.
@@ -1435,11 +1479,11 @@ enum vx_lbp_format_e
     /*! \brief local binary pattern
 	*/
     VX_LBP  = VX_ENUM_BASE( VX_ID_KHRONOS, VX_ENUM_LBP_FORMAT ) + 0x0,
-    /*! \brief Modified Local Binary Patterns
+    /*! \brief Modified Local Binary Patterns.
 	*/
 
     VX_MLBP = VX_ENUM_BASE( VX_ID_KHRONOS, VX_ENUM_LBP_FORMAT ) + 0x1,
-    /*! \brief Uniform local binary pattern
+    /*! \brief Uniform local binary pattern.
 	*/
     VX_ULBP = VX_ENUM_BASE( VX_ID_KHRONOS, VX_ENUM_LBP_FORMAT ) + 0x2
 };
@@ -1455,7 +1499,7 @@ enum vx_comp_metric_e
     VX_COMPARE_HAMMING    = VX_ENUM_BASE( VX_ID_KHRONOS, VX_ENUM_COMP_METRIC ) + 0x0,
     /*! \brief L1 distance \f$ R(x,y) = \frac{1}{w*h}\sum_{\grave{x},\grave{y}}^{w,h} ABS(T(\grave{x},\grave{y}) - I(x+\grave{x},y+\grave{y}))\f$ */
     VX_COMPARE_L1         = VX_ENUM_BASE( VX_ID_KHRONOS, VX_ENUM_COMP_METRIC ) + 0x1,
-    /*! \brief L2 distance normalized by image size \f$ R(x,y) = \frac{1}{w*h}\sum_{\grave{x},\grave{y}}^{w,h} (T(\grave{x},\grave{y}) - I(x+\grave{x},y+\grave{y}))^2\f$*/
+    /*! \brief L2 distance, normalized by image size \f$ R(x,y) = \frac{1}{w*h}\sum_{\grave{x},\grave{y}}^{w,h} (T(\grave{x},\grave{y}) - I(x+\grave{x},y+\grave{y}))^2\f$*/
     VX_COMPARE_L2         = VX_ENUM_BASE( VX_ID_KHRONOS, VX_ENUM_COMP_METRIC ) + 0x2,
     /*! \brief cross correlation distance \f$ R(x,y) = \frac{1}{w*h}\sum_{\grave{x},\grave{y}}^{w,h} (T(\grave{x},\grave{y})*I(x+\grave{x},y+\grave{y}))\f$*/
     VX_COMPARE_CCORR      = VX_ENUM_BASE( VX_ID_KHRONOS, VX_ENUM_COMP_METRIC ) + 0x3,
@@ -1518,16 +1562,21 @@ enum vx_comp_metric_e
  * every other pixel in that dimension is an alias. This is useful in situations
  * where iteration over unique pixels is required, such as in serializing
  * or de-serializing the image patch information.
+ * \arg stride_x_bits - The physical bit distance from a logical pixel to the next
+ * logically adjacent pixel in the positive x-direction. This field is only used
+ * when the stride in the x-direction is not an integer number of bytes (e.g. for VX_DF_IMAGE_U1 images).
  * \see <tt>\ref vxMapImagePatch</tt>
  * \note For <tt>\ref VX_DF_IMAGE_U1</tt> images it is defined that \a stride_x == 0 since it is less than one byte.
- * The least significant bit (bit number 0, value 1) in the first byte in the image,
- * is the left-most pixel in the upper left corner, i.e. origo. A <tt>\ref VX_DF_IMAGE_U1</tt> image always
- * start on a byte boundary and each row has a \a stride_y that is a multiple of whole bytes, which means padding
- * bits of undefined value may be present at the end of each row.
- * Imagepatches can only be accessed at a multiple of eight pixels: the x-coordinate must be a multiple of eight.
+ * The least significant bit (bit number 0) in the first byte in the image,
+ * is the left-most pixel in the upper left corner, i.e. origin. A <tt>\ref VX_DF_IMAGE_U1</tt> image always
+ * starts on a byte boundary and each row has a \a stride_y that is a multiple of whole bytes, which means padding
+ * bits of implementation-defined values may be present at the end of each row.
+ * Image patches can only be accessed at a multiple of eight pixels: the x-coordinate must be a multiple of eight.
  * Individual pixel access is also different: the byte at the imagepatch-calculated pointer value is a collection of eight pixels.
  * Each byte can then be masked with the bit-mask <tt> 1 << (x % 8)</tt> to get individual pixel values (shifted <tt>x</tt> times).
- * See \ref sub_image_access for an example.
+ * See \ref sub_image_access for an example of pixel addressing on a <tt>\ref VX_DF_IMAGE_U16</tt> image.
+ * \note If data type is contained in a whole number of bytes, then \a stride_x *MUST* be equal to the number of bytes
+ * represented by that data type (e.g. For <tt>\ref VX_DF_IMAGE_U16</tt>, \a stride_x must be 2 only).
  * \ingroup group_image
  */
 typedef struct _vx_imagepatch_addressing_t {
@@ -1539,7 +1588,7 @@ typedef struct _vx_imagepatch_addressing_t {
     vx_uint32 scale_y;      /*!< \brief Scale of Y dimension. For sub-sampled planes this is the scaling factor of the dimension of the plane in relation to the zero plane. Use <tt>\ref VX_SCALE_UNITY</tt> in the numerator.  */
     vx_uint32 step_x;       /*!< \brief Step of X dimension in pixels. */
     vx_uint16 step_y;       /*!< \brief Step of Y dimension in pixels. */
-    vx_uint16 stride_x_bits; /*!< \brief Stride in X dimension in bits. Used when stride_x is not an integer number of bytes. */
+    vx_uint16 stride_x_bits; /*!< \brief Stride in X dimension in bits. Used when stride_x is not an integer number of bytes (e.g. for <tt>\ref VX_DF_IMAGE_U1</tt> images). */
 } vx_imagepatch_addressing_t;
 
 /*! \brief Use to initialize a <tt>\ref vx_imagepatch_addressing_t</tt> structure on the stack.
@@ -1597,9 +1646,8 @@ typedef struct _vx_line2d_t
     vx_float32 end_y;
 } vx_line2d_t;
 
-/*! \brief Matrix Multiply Parameters
+/*! \brief Matrix Multiply Parameters.
  *
- * transpose_input1/input2/input3 : if True the matrix is transposed before the operation, otherwise the matrix is used as is. \n
  * \ingroup group_vision_function_tensor_matrix_multiply
  */
 typedef struct _vx_tensor_matrix_multiply_params_t{
@@ -1612,9 +1660,9 @@ typedef struct _vx_tensor_matrix_multiply_params_t{
 } vx_tensor_matrix_multiply_params_t;
 
 /*! \brief Initializes a <tt>\ref vx_perf_t</tt> on the stack.
- * \ingroup group performance
+ * \ingroup group_performance
  */
-#define VX_PERF_INIT    {0ul, 0ul, 0ul, 0ul, 0ul, 0ul}
+#define VX_PERF_INIT    {0ul, 0ul, 0ul, 0ul, 0ul, 0ul, 0ul, 0ul}
 
 /*! \brief The Kernel Information Structure. This is returned by the Context
  * to indicate which kernels are available in the OpenVX implementation.
@@ -1639,7 +1687,7 @@ typedef struct _vx_kernel_info_t {
  */
 #define VX_SCALE_PYRAMID_HALF       (0.5f)
 
-/*! \brief Use to indicate a ORB scaled pyramid whose scaling factor is \f$ \frac{1}{\root 4 \of {2}} \f$.
+/*! \brief Use to indicate an ORB scaled pyramid whose scaling factor is \f$ \frac{1}{\root 4 \of {2}} \f$.
  * \ingroup group_pyramid
  */
 #define VX_SCALE_PYRAMID_ORB        ((vx_float32)0.8408964f)
@@ -1657,7 +1705,7 @@ typedef struct _vx_keypoint_t {
     vx_float32 error;           /*!< \brief A tracking method specific error. Initialized to 0 by corner detectors. */
 } vx_keypoint_t;
 
-/*! \brief The rectangle data structure that is shared with the users. The area of the rectangle can be computed as (end_x-start_x)*(end_y-start_y).
+/*! \brief The rectangle data structure that is shared with the users. The area of the rectangle can be computed as (end_x - start_x) * (end_y - start_y).
  * \ingroup group_basic_features
  */
 typedef struct _vx_rectangle_t {
@@ -1698,6 +1746,7 @@ typedef struct _vx_coordinates3d_t {
 */
 typedef union _vx_pixel_value_t {
     vx_uint8 RGB[3]; /*!< \brief <tt>\ref VX_DF_IMAGE_RGB</tt> format in the R,G,B order */
+    vx_uint8 RGBA[4]; /*!< \brief <tt>\ref VX_DF_IMAGE_RGBA</tt> format in the R,G,B,A order */
     vx_uint8 RGBX[4]; /*!< \brief <tt>\ref VX_DF_IMAGE_RGBX</tt> format in the R,G,B,X order */
     vx_uint8 YUV[3]; /*!< \brief All YUV formats in the Y,U,V order */
     vx_bool U1; /*!< \brief <tt>\ref VX_DF_IMAGE_U1</tt> */
@@ -1706,30 +1755,30 @@ typedef union _vx_pixel_value_t {
     vx_int16 S16; /*!< \brief <tt>\ref VX_DF_IMAGE_S16</tt> */
     vx_uint32 U32; /*!< \brief <tt>\ref VX_DF_IMAGE_U32</tt> */
     vx_int32 S32; /*!< \brief <tt>\ref VX_DF_IMAGE_S32</tt> */
-    vx_uint8 reserved[16];
+    vx_uint8 reserved[16]; /*!< \brief unused */
 } vx_pixel_value_t;
 
 /*! \brief The HOG descriptor structure.
  * \ingroup group_vision_function_hog
  */
 typedef struct {
-    /*! \brief   The histogram cell width of type <tt>\ref VX_TYPE_INT32</tt>.*/
+    /*! \brief   The histogram cell width of type <tt>\ref vx_int32</tt>. */
     vx_int32 cell_width;
-    /*! \brief   The histogram cell height of type <tt>\ref VX_TYPE_INT32</tt>.*/
+    /*! \brief   The histogram cell height of type <tt>\ref vx_int32</tt>. */
     vx_int32 cell_height;
-    /*! \brief  The histogram block width of type <tt>\ref VX_TYPE_INT32</tt>.  Must be divisible by cell_width. */
+    /*! \brief  The histogram block width of type <tt>\ref vx_int32</tt>. Must be divisible by cell_width. */
     vx_int32 block_width;
-    /*! \brief  The histogram block height of type <tt>\ref VX_TYPE_INT32</tt>.  Must be divisible by cell_height. */
+    /*! \brief  The histogram block height of type <tt>\ref vx_int32</tt>. Must be divisible by cell_height. */
     vx_int32 block_height;
-    /*! \brief  The histogram block stride within the window of type <tt>\ref VX_TYPE_INT32</tt>.  Must be an integral number of cell_width and cell_height.*/
+    /*! \brief  The histogram block stride within the window of type <tt>\ref vx_int32</tt>. Must be an integral number of cell_width and cell_height. */
     vx_int32 block_stride;
-    /*! \brief  The histogram size of type <tt>\ref VX_TYPE_INT32</tt>.*/
+    /*! \brief  The histogram size of type <tt>\ref vx_int32</tt>. */
     vx_int32 num_bins;
-    /*! \brief  The feature descriptor window width of type <tt>\ref VX_TYPE_INT32</tt>*/
+    /*! \brief  The feature descriptor window width of type <tt>\ref vx_int32</tt>. */
     vx_int32 window_width;
-    /*! \brief  The feature descriptor window height of type <tt>\ref VX_TYPE_INT32</tt>*/
+    /*! \brief  The feature descriptor window height of type <tt>\ref vx_int32</tt>. */
     vx_int32 window_height;
-    /*! \brief The feature descriptor window stride of type <tt>\ref VX_TYPE_INT32</tt>*/
+    /*! \brief The feature descriptor window stride of type <tt>\ref vx_int32</tt>. */
     vx_int32 window_stride;
      /*! \brief The threshold for the maximum L2-norm value for a histogram bin.  It is used as part of block normalization.  It defaults to 0.2. */
     vx_float32 threshold;
@@ -1738,7 +1787,7 @@ typedef struct {
 /*! \brief Use with the enumeration <tt>\ref VX_NODE_BORDER</tt> to set the
 * border mode behavior of a node that supports borders.
 *
-* If the indicated border mode is not supported, an error <tt>\ref VX_ERROR_NOT_SUPPORTED</tt> will be reported
+* \details If the indicated border mode is not supported, an error <tt>\ref VX_ERROR_NOT_SUPPORTED</tt> will be reported
 * either at the time the <tt>\ref VX_NODE_BORDER</tt> is set or at the time of graph verification.
 * \ingroup group_borders
 */
@@ -1827,7 +1876,7 @@ typedef vx_status(VX_CALLBACK *vx_kernel_validate_f)(vx_node node, const vx_refe
 * allocation passed to the callback is managed by the framework, the application must not allocate or
 * deallocate those pointers.
 *
-* The behavior of the callback function vx_kernel_image_valid_rectangle_f is undefined
+* The behavior of the callback function vx_kernel_image_valid_rectangle_f is implementation-defined
 * if one of the following is true:
 * - One of the input arguments of a user node is a pyramid or an array of images.
 * - Either input or output argument of a user node is an array of pyramids.
@@ -1861,5 +1910,9 @@ typedef void (VX_CALLBACK *vx_log_callback_f)(vx_context context,
 enum vx_map_flag_e {
      VX_NOGAP_X = 1,  /*!< \brief No Gap. */
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

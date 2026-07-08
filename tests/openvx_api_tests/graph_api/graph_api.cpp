@@ -71,6 +71,10 @@ enum vx_df_image_amd_sample {
 	VX_DF_IMAGE_RGB4_AMD = VX_DF_IMAGE('R', 'G', 'B', '4'),  // AGO image with RGB-48 16bit per channel (RGB4)
 };
 
+// Dummy publish/unpublish callbacks used to exercise the vxRegisterKernelLibrary success path.
+static vx_status VX_CALLBACK sample_publish_kernels(vx_context /*context*/) { return VX_SUCCESS; }
+static vx_status VX_CALLBACK sample_unpublish_kernels(vx_context /*context*/) { return VX_SUCCESS; }
+
 int main(int argc, char **argv)
 {
     std::cout << VX_VERSION << VX_CONTEXT_NONLINEAR_MAX_DIMENSION << "\n";;
@@ -80,7 +84,37 @@ int main(int argc, char **argv)
     ERROR_CHECK_OBJECT(context);
     vxRegisterLogCallback(context, log_callback, vx_false_e);
 
-    ERROR_CHECK_STATUS(vxRegisterKernelLibrary(context, nullptr, nullptr, nullptr));
+    vx_status failure_register = vxRegisterKernelLibrary(context, nullptr, nullptr, nullptr);
+    if (failure_register != VX_ERROR_INVALID_PARAMETERS)
+    {
+        printf("ERROR: vxRegisterKernelLibrary should fail with VX_ERROR_INVALID_PARAMETERS for null arguments, got (%d)\n", failure_register);
+        exit(1);
+    }
+    // a registered module has no shared library to recover vxUnpublishKernels from later, so a
+    // NULL unpublish callback must be rejected up front (even when module + publish are valid)
+    vx_status null_unpublish = vxRegisterKernelLibrary(context, "sample_kernel_library_no_unpublish", sample_publish_kernels, nullptr);
+    if (null_unpublish != VX_ERROR_INVALID_PARAMETERS)
+    {
+        printf("ERROR: vxRegisterKernelLibrary should fail with VX_ERROR_INVALID_PARAMETERS for NULL unpublish, got (%d)\n", null_unpublish);
+        exit(1);
+    }
+    // success path: register a library by name with valid publish/unpublish callbacks
+    ERROR_CHECK_STATUS(vxRegisterKernelLibrary(context, "sample_kernel_library", sample_publish_kernels, sample_unpublish_kernels));
+    // re-registering the same module name is a no-op and must still succeed
+    ERROR_CHECK_STATUS(vxRegisterKernelLibrary(context, "sample_kernel_library", sample_publish_kernels, sample_unpublish_kernels));
+
+    // a registered module must survive a load/unload cycle so it can be loaded again
+    // (the registration is not consumed on first load)
+    ERROR_CHECK_STATUS(vxRegisterKernelLibrary(context, "sample_reloadable_library", sample_publish_kernels, sample_unpublish_kernels));
+    ERROR_CHECK_STATUS(vxLoadKernels(context, "sample_reloadable_library"));
+    ERROR_CHECK_STATUS(vxUnloadKernels(context, "sample_reloadable_library"));
+    vx_status reload_status = vxLoadKernels(context, "sample_reloadable_library");
+    if (reload_status != VX_SUCCESS)
+    {
+        printf("ERROR: registered module could not be reloaded after unload, got (%d)\n", reload_status);
+        exit(1);
+    }
+    ERROR_CHECK_STATUS(vxUnloadKernels(context, "sample_reloadable_library"));
 
     // register image formats
 	AgoImageFormatDescription desc = { 3, 1, 32, VX_COLOR_SPACE_DEFAULT, VX_CHANNEL_RANGE_FULL };

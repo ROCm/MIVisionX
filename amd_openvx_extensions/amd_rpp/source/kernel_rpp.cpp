@@ -1944,10 +1944,9 @@ vx_status createRPPHandle(vx_node node, vxRppHandle **pHandle, Rpp32u batchSize,
         handle->count = 1;
         
         if (deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-            STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &handle->cmdq, sizeof(handle->cmdq)));
-            rppCreate(&handle->rppHandle, batchSize, 0, handle->cmdq, RppBackend::RPP_OCL_BACKEND);
-#elif ENABLE_HIP
+            // RPP supports the HIP and CPU backends only (OpenCL backend support has been dropped in RPP).
+            // Under an OpenCL core build ENABLE_HIP is 0, so RPP nodes run on the CPU host backend instead.
+#if ENABLE_HIP
             STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &handle->hipstream, sizeof(handle->hipstream)));
             rppCreate(&handle->rppHandle, batchSize, 0, handle->hipstream, RppBackend::RPP_HIP_BACKEND);
 #endif
@@ -1965,11 +1964,10 @@ vx_status releaseRPPHandle(vx_node node, vxRppHandle *handle, Rpp32u deviceType)
     handle->count--;
     if (handle->count == 0) {
         if(deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_OPENCL
-            rppDestroy(handle->rppHandle, RppBackend::RPP_OCL_BACKEND);
-#elif ENABLE_HIP
+            // RPP supports the HIP and CPU backends only (OpenCL backend support has been dropped in RPP).
+#if ENABLE_HIP
             rppDestroy(handle->rppHandle, RppBackend::RPP_HIP_BACKEND);
-#endif   
+#endif
         } else if (deviceType == AGO_TARGET_AFFINITY_CPU) {
             rppDestroy(handle->rppHandle, RppBackend::RPP_HOST_BACKEND);
         }

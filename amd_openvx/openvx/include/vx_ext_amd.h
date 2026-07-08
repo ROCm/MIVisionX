@@ -73,7 +73,6 @@ THE SOFTWARE.
 
 /*! \brief The Neural Network activation functions vx_nn_activation_function_e extension.
  * \ingroup group_amd
- * \ingroup group_amd_nn
  */
 #define VX_NN_ACTIVATION_LEAKY_RELU (VX_ENUM_BASE(VX_ID_AMD, VX_ENUM_NN_ACTIVATION_FUNCTION_TYPE) + 0x9)
 
@@ -330,14 +329,6 @@ enum vx_scalar_attribute_amd_e
     /*! \brief scalar's buffer */
     VX_SCALAR_BUFFER = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_SCALAR) + 0x1,
 };
-
-/*! \brief The multidimensional data object (Tensor).
- * \ingroup group_amd
- * \see vxCreateTensor
- * \ingroup group_tensor
- * \extends vx_reference
- */
-typedef struct _vx_tensor_t *vx_tensor;
 
 /*! \brief AMD data structure for image format information.
  * \ingroup group_amd

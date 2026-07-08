@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Khronos Group Inc.
+ * Copyright (c) 2012-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _OPENVX_IMPORT_EXPORT_H_
-#define _OPENVX_IMPORT_EXPORT_H_
+#ifndef OPENVX_IMPORT_EXPORT_H
+#define OPENVX_IMPORT_EXPORT_H
 
 /*!
  * \file
@@ -58,7 +58,7 @@ Export to host memory
  * - <tt>\ref VX_IX_USE_APPLICATION_CREATE</tt> \n
  * Export sufficient data to check that an application-supplied
  * object is compatible when the data is later imported[*REQ*].
- * \note This value must be given for images created from handles, or the the export operation
+ * \note This value must be given for images created from handles, or the export operation
  * will fail[*REQ*]
  * - <tt>\ref VX_IX_USE_EXPORT_VALUES</tt>\n
  * Export complete information (for example image data or value of a

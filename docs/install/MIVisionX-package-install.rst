@@ -6,19 +6,21 @@
 Install MIVisionX using the Linux package installer
 ********************************************************
 
+.. note::
+
+    Prebuilt MIVisionX packages are available for **ROCm 7.2.x and below**. For **ROCm 7.13 and later**, :doc:`build and install from source <./MIVisionX-linux-build-and-install>` on top of the ROCm Core SDK.
+
 Three MIVisionX packages are available on Linux:
 
-| ``mivisionx``: The MIVisionX runtime package. This is the basic rocAL package that only provides dynamic libraries. It must always be installed.
+| ``mivisionx``: The MIVisionX runtime package. It provides the dynamic libraries and executables. It must always be installed.
 | ``mivisionx-dev``: The MIVisionX development package. This package installs a full suite of libraries, header files, and samples. This package needs to be installed to use samples.
 | ``mivisionx-test``: A test package that provides a CTest to verify the installation. 
 
 All the required prerequisites are installed when the package installation method is used.
 
 .. note::
-  
-    | The package installation only supports the HIP backend. :doc:`Build and install from source <./MIVisionX-linux-build-and-install>` to use the OpenCL backend. 
-    |
-    | The FFmpeg and OpenCV dev packages must be installed manually on RHEL and SLES.
+
+    The package installation only supports the HIP backend. :doc:`Build and install from source <./MIVisionX-linux-build-and-install>` to use the OpenCL backend.
 
 
 Basic installation
@@ -64,23 +66,19 @@ Use the following commands to install ``mivisionx``, ``mivisionx-dev``, and ``mi
 
     .. code:: shell
 
-      sudo yum install mivisionx mivisionx-dev mivisionx-test
+      sudo yum install mivisionx mivisionx-devel mivisionx-test
 
   .. tab-item:: SLES
 
     .. code:: shell
 
-      sudo zypper install mivisionx mivisionx-dev mivisionx-test
+      sudo zypper install mivisionx mivisionx-devel mivisionx-test
 
 
-Th test package will install the ``ctest`` module to test MIVisionX. Use the following steps to test package install:
+The test package installs a ``ctest`` module to verify MIVisionX. Run the following commands to test the installation:
 
 .. code-block:: shell
 
-    mkdir mivisionx-test
-    cd mivisionx-test
+    mkdir mivisionx-test && cd mivisionx-test
     cmake /opt/rocm/share/mivisionx/test/
     ctest -VV
-
-
-

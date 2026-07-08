@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Khronos Group Inc.
+ * Copyright (c) 2012-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _VX_KHR_TILING_H_
-#define _VX_KHR_TILING_H_
+#ifndef VX_KHR_TILING_H
+#define VX_KHR_TILING_H
 
 /*!
  * \file
@@ -274,7 +274,7 @@ enum vx_node_attribute_tiling_e {
 enum vx_border_tiling_e {
     /*! \brief This value indicates that the author of the tiling kernel wrote
      * code to handle border conditions into the kernel itself. If this mode
-     * is set, it can not be overriden by a call to the \ref vxSetNodeAttribute
+     * is set, it can not be overridden by a call to the \ref vxSetNodeAttribute
      * with \ref VX_NODE_BORDER.
      */
     VX_BORDER_MODE_SELF = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_BORDER) + 0x3,

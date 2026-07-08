@@ -1,4 +1,4 @@
 # Exercise postfix in ColorConvert_V_RGBX
 data output = image:1277,719,U008
-data input = image:1277,719,RGBA
+data input = image:1277,719,RGBX
 node com.amd.openvx.ColorConvert_V_RGBX output input

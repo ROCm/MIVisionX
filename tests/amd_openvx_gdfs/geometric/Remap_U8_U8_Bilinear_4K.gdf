@@ -1,0 +1,7 @@
+# Remap U8->U8 Bilinear 4K horizontal flip
+# Used by the HIP CU-mask control CTest.
+
+data input_1 = uniform-image:3840,2160,U008,125
+data output_1 = image:3840,2160,U008
+data remap_table = remap:3840,2160,3840,2160:init,hflip
+node org.khronos.openvx.remap input_1 remap_table !BILINEAR output_1

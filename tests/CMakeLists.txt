@@ -386,5 +386,17 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
     set_property(TEST openvx_gdf_tests_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+
+    # 22 - HIP CU-mask control verification using a 4K Remap graph
+    if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") AND RUNVX_EXECUTABLE)
+      add_test(NAME openvx_hip_cu_mask_remap_4K
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/hip_cu_mask_tests/test_hip_cu_mask_remap.py
+            --runvx ${RUNVX_EXECUTABLE}
+            --gdf ${CMAKE_CURRENT_SOURCE_DIR}/amd_openvx_gdfs/geometric/Remap_U8_U8_Bilinear_4K.gdf
+            --cu-counts "2,4,8,16,32,all"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
+      set_property(TEST openvx_hip_cu_mask_remap_4K PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+    endif()
   endif(Python3_FOUND)
 endif(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "OPENCL"))

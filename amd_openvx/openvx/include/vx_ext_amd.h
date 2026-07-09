@@ -330,14 +330,6 @@ enum vx_scalar_attribute_amd_e
     VX_SCALAR_BUFFER = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_SCALAR) + 0x1,
 };
 
-/*! \brief The multidimensional data object (Tensor).
- * \ingroup group_amd
- * \see vxCreateTensor
- * \ingroup group_tensor
- * \extends vx_reference
- */
-typedef struct _vx_tensor_t *vx_tensor;
-
 /*! \brief AMD data structure for image format information.
  * \ingroup group_amd
  */

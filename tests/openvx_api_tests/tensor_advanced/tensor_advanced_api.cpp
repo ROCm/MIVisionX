@@ -657,6 +657,138 @@ static int test_CopyTensorPatchStrided(vx_context context)
 }
 
 // ------------------------------------------------------------------
+// Test 11: vxQueryMetaFormatAttribute(VX_TENSOR_DIMS) round-trip
+// Exercises the meta-format query path from inside an output validator:
+// the validator sets the output tensor meta, then reads VX_TENSOR_NUMBER_OF_DIMS
+// and VX_TENSOR_DIMS back and confirms they match what was set. This covers the
+// tensor branch of vxQueryMetaFormatAttribute (type-checked before the union read).
+// ------------------------------------------------------------------
+static int g_meta_query_errors = 0;
+static bool g_meta_query_ran = false;
+
+static vx_status VX_CALLBACK meta_query_kernel_func(vx_node node, const vx_reference *parameters, vx_uint32 num)
+{
+    (void)node; (void)parameters; (void)num;
+    return VX_SUCCESS;
+}
+
+static vx_status VX_CALLBACK meta_query_validate(vx_node node, const vx_reference *parameters,
+                                                 vx_uint32 num, vx_meta_format metas[])
+{
+    (void)node; (void)parameters; (void)num;
+    g_meta_query_ran = true;
+
+    const vx_size num_dims = 3;
+    vx_size dims[3] = {6, 4, 2};
+    vx_enum data_type = VX_TYPE_UINT8;
+
+    // Describe the output tensor meta (index 1).
+    if (vxSetMetaFormatAttribute(metas[1], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)) != VX_SUCCESS ||
+        vxSetMetaFormatAttribute(metas[1], VX_TENSOR_DIMS, dims, sizeof(dims)) != VX_SUCCESS ||
+        vxSetMetaFormatAttribute(metas[1], VX_TENSOR_DATA_TYPE, &data_type, sizeof(data_type)) != VX_SUCCESS) {
+        printf("ERROR: meta_query_validate failed to set tensor meta\n");
+        g_meta_query_errors++;
+        return VX_FAILURE;
+    }
+
+    // Query number-of-dims back.
+    vx_size got_num_dims = 0;
+    if (vxQueryMetaFormatAttribute(metas[1], VX_TENSOR_NUMBER_OF_DIMS, &got_num_dims, sizeof(got_num_dims)) != VX_SUCCESS ||
+        got_num_dims != num_dims) {
+        printf("ERROR: VX_TENSOR_NUMBER_OF_DIMS query mismatch (got " VX_FMT_SIZE ")\n", got_num_dims);
+        g_meta_query_errors++;
+    }
+
+    // Query dims back and confirm each value.
+    vx_size got_dims[3] = {0, 0, 0};
+    if (vxQueryMetaFormatAttribute(metas[1], VX_TENSOR_DIMS, got_dims, sizeof(got_dims)) != VX_SUCCESS) {
+        printf("ERROR: VX_TENSOR_DIMS query failed\n");
+        g_meta_query_errors++;
+    } else if (got_dims[0] != dims[0] || got_dims[1] != dims[1] || got_dims[2] != dims[2]) {
+        printf("ERROR: VX_TENSOR_DIMS mismatch (got [" VX_FMT_SIZE "," VX_FMT_SIZE "," VX_FMT_SIZE "])\n",
+               got_dims[0], got_dims[1], got_dims[2]);
+        g_meta_query_errors++;
+    }
+
+    // Undersized query buffer must be rejected (must not partial-copy).
+    vx_size tiny[1] = {0};
+    if (vxQueryMetaFormatAttribute(metas[1], VX_TENSOR_DIMS, tiny, sizeof(tiny)) == VX_SUCCESS) {
+        printf("ERROR: VX_TENSOR_DIMS accepted an undersized buffer\n");
+        g_meta_query_errors++;
+    }
+
+    // Querying an attribute for a different object type (VX_IMAGE_WIDTH on a tensor meta)
+    // must report VX_ERROR_INVALID_TYPE, not VX_ERROR_INVALID_PARAMETERS.
+    vx_uint32 dummy_w = 0;
+    vx_status type_status = vxQueryMetaFormatAttribute(metas[1], VX_IMAGE_WIDTH, &dummy_w, sizeof(dummy_w));
+    if (type_status != VX_ERROR_INVALID_TYPE) {
+        printf("ERROR: cross-type meta query returned %d, expected VX_ERROR_INVALID_TYPE\n", type_status);
+        g_meta_query_errors++;
+    }
+    return VX_SUCCESS;
+}
+
+static int test_QueryMetaFormatTensorDims(vx_context context)
+{
+    int errors = 0;
+    printf("\n=== Test: vxQueryMetaFormatAttribute (VX_TENSOR_DIMS) ===\n");
+
+    vx_enum kernel_enum = VX_KERNEL_BASE(VX_ID_USER, 0) + 300;
+    vx_kernel kernel = vxAddUserKernel(context,
+                                       "org.test.meta_query_kernel",
+                                       kernel_enum,
+                                       meta_query_kernel_func,
+                                       2,
+                                       meta_query_validate,
+                                       NULL, NULL);
+    CHECK_NULL(kernel, "vxAddUserKernel for meta query test");
+    if (!kernel) return 1;
+
+    CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT,  VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+    CHECK_STATUS(vxAddParameterToKernel(kernel, 1, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+    CHECK_STATUS(vxFinalizeKernel(kernel));
+
+    vx_graph graph = vxCreateGraph(context);
+    CHECK_NULL(graph, "vxCreateGraph for meta query test");
+    if (!graph) { vxReleaseKernel(&kernel); return errors + 1; }
+
+    vx_size in_dims[3]  = {6, 4, 2};
+    vx_size out_dims[3] = {6, 4, 2};
+    vx_tensor in_tensor  = vxCreateTensor(context, 3, in_dims,  VX_TYPE_UINT8, 0);
+    vx_tensor out_tensor = vxCreateTensor(context, 3, out_dims, VX_TYPE_UINT8, 0);
+    CHECK_NULL(in_tensor, "input tensor");
+    CHECK_NULL(out_tensor, "output tensor");
+
+    vx_node node = vxCreateGenericNode(graph, kernel);
+    CHECK_NULL(node, "vxCreateGenericNode for meta query test");
+    if (node) {
+        CHECK_STATUS(vxSetParameterByIndex(node, 0, (vx_reference)in_tensor));
+        CHECK_STATUS(vxSetParameterByIndex(node, 1, (vx_reference)out_tensor));
+
+        // Verifying the graph invokes the output validator, which runs the meta queries.
+        vx_status vstatus = vxVerifyGraph(graph);
+        if (vstatus != VX_SUCCESS) {
+            printf("ERROR: vxVerifyGraph returned %d\n", vstatus);
+            errors++;
+        }
+        if (!g_meta_query_ran) {
+            printf("ERROR: output validator did not run - meta query path not exercised\n");
+            errors++;
+        } else if (g_meta_query_errors == 0) {
+            printf("STATUS: VX_TENSOR_DIMS meta-format round-trip - PASS\n");
+        }
+        errors += g_meta_query_errors;
+        vxReleaseNode(&node);
+    }
+
+    if (in_tensor)  vxReleaseTensor(&in_tensor);
+    if (out_tensor) vxReleaseTensor(&out_tensor);
+    vxReleaseGraph(&graph);
+    vxReleaseKernel(&kernel);
+    return errors;
+}
+
+// ------------------------------------------------------------------
 // main
 // ------------------------------------------------------------------
 int main()
@@ -678,6 +810,7 @@ int main()
     errors += test_ModuleHandle(context);
     errors += test_ModuleInternalData(context);
     errors += test_CopyTensorPatchStrided(context);
+    errors += test_QueryMetaFormatTensorDims(context);
 
     vxReleaseContext(&context);
 

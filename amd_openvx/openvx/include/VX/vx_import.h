@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Khronos Group Inc.
+ * Copyright (c) 2012-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef _OPENVX_IMPORT_H_
-#define _OPENVX_IMPORT_H_
+#ifndef OPENVX_IMPORT_H
+#define OPENVX_IMPORT_H
+
+#include <VX/vx.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -30,7 +33,7 @@ extern "C" {
  * <tt>\ref vxImportObjectsFromMemory</tt>
  * \ingroup vx_enum_e
  */
-#define VX_ENUM_IX_USE      0x18
+#define VX_ENUM_IX_USE      0x1F
 /*! \brief How to export and import an object
  * \ingroup group_import
  */
@@ -47,7 +50,7 @@ extern "C" {
 /*=============================================================================
 IMPORT
 =============================================================================*/
-/*! \brief The Import Object. Import is a container of OpenVX objects, which may be retreived
+/*! \brief The Import Object. Import is a container of OpenVX objects, which may be retrieved
  * by name
  * \ingroup group_import
  */
@@ -64,7 +67,7 @@ typedef struct _vx_import *vx_import;
  * \details This function imports objects from a memory blob previously created using <tt>\ref vxExportObjectsToMemory</tt>[*REQ*].\n
  * A pointer to memory is given where a list of references is stored, together with the list
  * of uses which describes how the references are used. The number of references given and the
- * list of uses must match that given upon export, or this function will not be sucessful[*REQ*].\n
+ * list of uses must match that given upon export, or this function will not be successful[*REQ*].\n
  * The *uses* array specifies how the objects in the corresponding *refs* array will be imported:
  * - <tt>\ref VX_IX_USE_APPLICATION_CREATE</tt>\n
  * The application must create the object and supply the reference; the
@@ -94,7 +97,7 @@ typedef struct _vx_import *vx_import;
  * \note The *refs* array must be the correct length to hold all references of the import; this will be the same length
  * that was supplied at the time of export. Only references for objects created by the application, where the
  * corresponding *uses* entry is <tt>\ref VX_IX_USE_APPLICATION_CREATE</tt> should be filled in by the application;
- * all other entries will be supplied by the framework and may be initialised by the application to NULL. The *uses* array
+ * all other entries will be supplied by the framework and may be initialized by the application to NULL. The *uses* array
  * must have the identical length and content as given at the time of export, and the value of *numrefs* must also match;
  * these measures increase confidence that the import contains the correct data.
 * \note Graph parameters may be changed after import by using the <tt>\ref vxSetGraphParameterByIndex</tt> API, and
@@ -102,7 +105,7 @@ typedef struct _vx_import *vx_import;
  * When <tt>\ref vxSetGraphParameterByIndex</tt> is used, the framework will check that the new parameter is of the
  * correct type to run with the graph, which cannot be re-verified. If the reference supplied is not suitable, an error
  * will be returned, but there may be circumstances where changing graph parameters for unsuitable ones is not detected
- * and could lead to implementation-dependent behaviour; one such circumstance is when the new parameters are images
+ * and could lead to implementation-defined behavior; one such circumstance is when the new parameters are images
  * corresponding to overlapping regions of interest. The user should avoid these circumstances.
  * In other words,
  *  - The meta data of the new graph parameter must match the meta data of the graph parameter it replaces [*REQ*].
@@ -138,9 +141,9 @@ VX_API_ENTRY vx_import VX_API_CALL vxImportObjectsFromMemory(
  * \details This function releases the reference to the import object [*REQ*].\n
  * Other objects including those imported at the time of creation of the import object are unaffected[*REQ*].\n
  * \param [in,out] import The pointer to the reference to the import object[*REQ*].
- * \post After returning sucessfully from this function the reference is zeroed[*REQ*].
+ * \post After returning successfully from this function the reference is zeroed[*REQ*].
  * \return A <tt>\ref vx_status</tt> value.
- * \retval VX_SUCCESS If no errors occurred and the import was sucessfully released[*REQ*].\n
+ * \retval VX_SUCCESS If no errors occurred and the import was successfully released[*REQ*].\n
  * An error is indicated when the return value is not VX_SUCCESS[*REQ*].\n
  * An implementation may provide several different return values to give useful diagnostic
  * information in the event of failure to export, but these are not required to indicate
@@ -155,7 +158,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseImport(vx_import *import);
  * in the array *refs*, which is populated partly by the application before import, and partly by the
  * framework. However, it may be more convenient to access the references in the import object without
  * referring to this array, for example if the import object is passed as a parameter to another function.
- * In this case, references may be retreived by name, assuming that <tt>\ref vxSetReferenceName</tt>
+ * In this case, references may be retrieved by name, assuming that <tt>\ref vxSetReferenceName</tt>
  * was called to assign a name to the reference.
  * This function searches the given import for the given name and returns the associated reference[*REQ*].\n
  * The reference may have been named either before export or after import[*REQ*].\n

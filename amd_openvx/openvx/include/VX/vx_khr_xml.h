@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Khronos Group Inc.
+ * Copyright (c) 2012-2026 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef _VX_KHR_XML_H_
-#define _VX_KHR_XML_H_
+#ifndef VX_KHR_XML_H
+#define VX_KHR_XML_H
 
 /*! \file
  * \brief The OpenVX XML Schema Extension Header.
@@ -27,13 +27,7 @@
 #define OPENVX_KHR_XML  "vx_khr_xml"
 
 #include <VX/vx.h>
-
-/*! \brief The Object Type Enumeration for Imports.
- * \ingroup group_xml
- */
-enum vx_ext_import_type_e {
-    VX_TYPE_IMPORT = 0x814,/*!< \brief A <tt>\ref vx_import</tt> */
-};
+#include <VX/vx_import.h>
 
 /*! \brief The import type enumeration.
  * \ingroup group_xml
@@ -53,12 +47,6 @@ enum vx_import_attribute_e {
     /*! \brief Returns the type of import. Use a <tt>\ref vx_ext_import_types_e </tt> parameter */
     VX_IMPORT_ATTRIBUTE_TYPE = VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_IMPORT) + 0x1,
 };
-
-/*! \brief An abstract handle to an import object.
- * \ingroup group_xml
- * \extends vx_reference
- */
-typedef struct _vx_import *vx_import;
 
 
 #ifdef __cplusplus
@@ -95,19 +83,6 @@ VX_API_ENTRY vx_status VX_API_CALL vxExportToXML(vx_context context, vx_char xml
  */
 VX_API_ENTRY vx_import VX_API_CALL vxImportFromXML(vx_context context, vx_char xmlfile[]);
 
-/*! \brief Used to retrieve a reference by name from the import when the name is known beforehand.  If
- *  multiple references have the same name, then *any* one of them may be returned.
- * \param [in] import The reference to the import object.
- * \param [in] name The reference string name.
- * \return <tt>\ref vx_reference</tt>
- * \retval 0 Invalid import object or name does not match a reference in the import object.
- * \retval * The reference matching the requested name.
- * \note Use <tt>\ref vxReleaseReference</tt> to release the reference before releasing the context.
- * \pre <tt>\ref vxImportFromXML</tt>
- * \ingroup group_xml
- */
-VX_API_ENTRY vx_reference VX_API_CALL vxGetImportReferenceByName(vx_import import, const vx_char *name);
-
 /*! \brief Used to retrieve a reference by the index from the import.
  * \param [in] import The reference to the import object.
  * \param [in] index The index of the reference in the import object to return.
@@ -132,20 +107,6 @@ VX_API_ENTRY vx_reference VX_API_CALL vxGetImportReferenceByIndex(vx_import impo
  * \ingroup group_xml
  */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryImport(vx_import import, vx_enum attribute, void *ptr, vx_size size);
-
-/*! \brief Releases a reference to an import object.
- * Also internally releases its references to its imported objects. These
- * imported objects may not be garbage collected until their total reference
- * counts are zero.
- * \param [in] import The pointer to the import object to release.
- * \return A <tt>\ref vx_status_e</tt> enumeration.
- * \retval VX_SUCCESS No errors.
- * \retval VX_ERROR_INVALID_REFERENCE If import is not a <tt>\ref vx_import</tt>.
- * \note After returning from this function the reference will be zeroed.
- * \pre <tt>\ref vxImportFromXML</tt>
- * \ingroup group_xml
- */
-VX_API_ENTRY vx_status VX_API_CALL vxReleaseImport(vx_import *import);
 
 #ifdef __cplusplus
 }

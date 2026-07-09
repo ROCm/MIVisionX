@@ -1143,21 +1143,33 @@ jobs:
             echo "::error::llvm-cov not found in ${LLVM_BIN}"
             exit 1
           fi
-          LIBOPENVX="$GITHUB_WORKSPACE/install/lib/libopenvx.so"
+          LIBDIR="$GITHUB_WORKSPACE/install/lib"
           PROFDATA="$GITHUB_WORKSPACE/coverage.profdata"
 
-          "${LLVM_COV}" report "${LIBOPENVX}" \
+          # Report against every instrumented shared library that was built.
+          # libopenvx.so is the primary (positional) object; libvxu.so and
+          # libvx_rpp.so are added with -object when present so their coverage
+          # is included too.
+          COV_OBJECTS=("$LIBDIR/libopenvx.so")
+          for lib in libvxu.so libvx_rpp.so; do
+            if [ -f "$LIBDIR/$lib" ]; then
+              COV_OBJECTS+=(-object "$LIBDIR/$lib")
+            fi
+          done
+          echo "Coverage objects: ${COV_OBJECTS[*]}"
+
+          "${LLVM_COV}" report "${COV_OBJECTS[@]}" \
             -instr-profile="${PROFDATA}" \
             -ignore-filename-regex='(test|conformance)' \
             | tee coverage_report.txt
 
-          "${LLVM_COV}" export "${LIBOPENVX}" \
+          "${LLVM_COV}" export "${COV_OBJECTS[@]}" \
             -instr-profile="${PROFDATA}" \
             -format=text \
             -ignore-filename-regex='(test|conformance)' \
             > coverage.json
 
-          "${LLVM_COV}" export "${LIBOPENVX}" \
+          "${LLVM_COV}" export "${COV_OBJECTS[@]}" \
             -instr-profile="${PROFDATA}" \
             -format=lcov \
             -ignore-filename-regex='(test|conformance)' \

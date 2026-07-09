@@ -151,19 +151,27 @@ endif()
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   # -O0  -- Don't Optimize output file
   # -g -- generate debugging information
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
+  # Use the per-config flag variable rather than the base CMAKE_CXX_FLAGS so we
+  # don't trip ROCm's ROCMChecks toolchain-variable warning (which only inspects
+  # the base CMAKE_C_FLAGS/CMAKE_CXX_FLAGS).
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
 else()
   # -O3 -- Optimize output file
   # -DNDEBUG -- turn off asserts
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG")
 endif()
 # Generate position-independent code for all targets
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-# Code coverage instrumentation (LLVM source-based coverage)
+# Code coverage instrumentation (LLVM source-based coverage).
+# Applied PER-TARGET (see amd_openvx/openvx/CMakeLists.txt) rather than via the
+# global CMAKE_CXX_FLAGS on purpose: the coverage report is generated only from
+# libopenvx.so, so only that target needs instrumentation. Injecting the flags
+# globally also leaked them into the HIP device kernels (openvx_hip), where
+# newer LLVM (ROCm 7.15+) instruments GPU code and emits references to the
+# device-side symbol __llvm_profile_instrument_gpu, which has no runtime and
+# fails to link (lld: error: undefined symbol: __llvm_profile_instrument_gpu).
 if(CODE_COVERAGE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
-  message("-- ${BoldBlue}MIVisionX Code Coverage -- ENABLED (LLVM)${ColourReset}")
+  message("-- ${BoldBlue}MIVisionX Code Coverage -- ENABLED (LLVM, per-target on openvx)${ColourReset}")
 endif()
 message("-- ${BoldBlue}MIVisionX Build Type -- ${CMAKE_BUILD_TYPE}${ColourReset}")
 

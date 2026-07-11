@@ -67,17 +67,19 @@ concurrency:
 # no --group-add video/render is needed (and the mivisionx image lacks the
 # render group name, which would make docker start fail on --group-add render).
 #
-# mivisionx/ubuntu-24.04:rocm-20260710 is used because it ships a full ROCm
-# stack (amdclang++, HIP runtime, rocminfo) with device support for all
-# supported GPU archs, so it works on whichever runner the job lands on, and
-# rocminfo works correctly in it.
+# mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x is a ROCm 7.15 (nightly
+# 20260710) stack built for the gfx120X family (gfx1200 / gfx1201). It is used
+# to evaluate the HIP conformance tests on gfx1201, which is the arch the
+# shark42 runner group hands out (alongside gfx1100).
 #
 # Runner group: linux-shark42-runner-group. The shark42 group serves RDNA3+
 # GPUs (gfx1100 / gfx1201) and, unlike the shark39 group, never hands out a
-# gfx1030 runner. This matters because the newer nightly ROCm images currently
-# fail the HIP conformance tests on gfx1030 (silent vxVerifyGraph VX_FAILURE);
-# that gfx1030 regression is tracked separately. Staying on shark42 keeps the
-# jobs on gfx1030-free runners so we can use the up-to-date ROCm toolchain.
+# gfx1030 runner (the gfx1030 conformance regression is tracked separately).
+#
+# NOTE: this is a gfx120X-focused image. Jobs must build MIVisionX for the arch
+# they run on; if a job lands on a gfx1100 runner, ensure the build's
+# GPU_TARGETS still includes gfx1100 (or pin the runner to gfx1201) so the HIP
+# code objects match the device the job executes on.
 #
 # Build-only jobs that do not execute GPU kernels still use the same image
 # so the amdclang++ toolchain and ROCm headers are available without any
@@ -95,7 +97,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     steps:
       - uses: actions/checkout@v4
@@ -138,7 +140,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     steps:
       - name: Checkout merge target ref
@@ -184,7 +186,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     steps:
       - uses: actions/checkout@v4
@@ -285,7 +287,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     env:
       # 40 vision kernels with a stable 1:1 GPU implementation — excludes
@@ -468,7 +470,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -505,7 +507,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -542,7 +544,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -579,7 +581,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -616,7 +618,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -653,7 +655,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -690,7 +692,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -727,7 +729,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -764,7 +766,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -801,7 +803,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -838,7 +840,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -877,7 +879,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -944,7 +946,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -986,7 +988,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -1036,7 +1038,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
       options: --device /dev/kfd --device /dev/dri
     if: always() && needs.build-hip-debug.result == 'success'
     needs:

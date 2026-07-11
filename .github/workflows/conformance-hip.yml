@@ -102,7 +102,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          # Shallow clone: the build does not use git history.
+          fetch-depth: 1
 
       - name: Install build dependencies
         run: |
@@ -147,7 +148,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.base.ref }}
-          fetch-depth: 0
+          # Shallow: this job only builds the base ref for the perf baseline and
+          # never uses git history (no git-based versioning in the build), so a
+          # full-history clone is unnecessary and slow.
+          fetch-depth: 1
 
       - name: Install build dependencies
         run: |
@@ -191,7 +195,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          # Shallow clone: the build does not use git history.
+          fetch-depth: 1
 
       - name: Install build dependencies
         run: |
@@ -474,7 +479,7 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -511,7 +516,7 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -548,7 +553,7 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -585,7 +590,7 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -622,7 +627,7 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -659,7 +664,7 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -696,7 +701,7 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -733,7 +738,7 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -770,7 +775,7 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -807,7 +812,7 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -844,7 +849,7 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -883,7 +888,7 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt API tests from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:

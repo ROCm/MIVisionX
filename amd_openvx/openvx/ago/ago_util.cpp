@@ -3190,7 +3190,17 @@ void agoAddLogEntry(vx_reference ref, vx_status status, const char *message, ...
 {
     va_list ap;
     bool use_context_callback = (agoIsValidReference(ref) && ref->enable_logging && ref->context->callback_log) ? true : false;
-    if (use_context_callback || g_callback_log) {
+    // Optional diagnostic: when no log callback is registered (e.g. the OpenVX
+    // CTS), AGO log entries are silently dropped, which hides the reason for
+    // failures such as graph-verify errors. Setting AGO_LOG_STDERR=1 routes
+    // those entries to stderr. Off by default; the env is read once.
+    static int s_log_stderr = -1;
+    if (s_log_stderr < 0) {
+        char envLogStderr[8] = {};
+        s_log_stderr = (agoGetEnvironmentVariable("AGO_LOG_STDERR", envLogStderr, sizeof(envLogStderr))
+                        && envLogStderr[0] && envLogStderr[0] != '0') ? 1 : 0;
+    }
+    if (use_context_callback || g_callback_log || s_log_stderr) {
         vx_char string[VX_MAX_LOG_MESSAGE_LEN];
         va_start(ap, message);
         vsnprintf(string, VX_MAX_LOG_MESSAGE_LEN - 1, message, ap);
@@ -3211,8 +3221,11 @@ void agoAddLogEntry(vx_reference ref, vx_status status, const char *message, ...
                 ref->context->callback_log(ref->context, ref, status, string);
             }
         }
-        else {
+        else if (g_callback_log) {
             g_callback_log(NULL, NULL, status, string);
+        }
+        else {
+            fprintf(stderr, "AGO LOG [status=%d]: %s", (int)status, string);
         }
     }
 }

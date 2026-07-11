@@ -67,19 +67,22 @@ concurrency:
 # no --group-add video/render is needed (and the mivisionx image lacks the
 # render group name, which would make docker start fail on --group-add render).
 #
-# mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x is a ROCm 7.15 (nightly
-# 20260710) stack built for the gfx120X family (gfx1200 / gfx1201). It is used
-# to evaluate the HIP conformance tests on gfx1201, which is the arch the
-# shark42 runner group hands out (alongside gfx1100).
+# mivisionx/ubuntu-24.04:rocm-20260710 is a multi-arch ROCm 7.15 (nightly
+# 20260710) stack (amdclang++, HIP runtime, rocminfo) with device support for
+# all supported GPU archs, so it works on whichever runner the job lands on.
+# Multi-arch is required because the shark42 group hands out either gfx1100 or
+# gfx1201, and a single-family image would fail on the other arch.
 #
-# Runner group: linux-shark42-runner-group. The shark42 group serves RDNA3+
-# GPUs (gfx1100 / gfx1201) and, unlike the shark39 group, never hands out a
-# gfx1030 runner (the gfx1030 conformance regression is tracked separately).
+# Runner group: linux-shark42-runner-group (RDNA3+ GPUs gfx1100 / gfx1201;
+# never hands out gfx1030).
 #
-# NOTE: this is a gfx120X-focused image. Jobs must build MIVisionX for the arch
-# they run on; if a job lands on a gfx1100 runner, ensure the build's
-# GPU_TARGETS still includes gfx1100 (or pin the runner to gfx1201) so the HIP
-# code objects match the device the job executes on.
+# HIP_VISIBLE_DEVICES: the runner sets both ROCR_VISIBLE_DEVICES and
+# HIP_VISIBLE_DEVICES to the same host GPU index. These stack -- ROCR filters
+# HSA to the assigned GPU (now the only device), then HIP re-indexes into that
+# single-device set, so on a host-index-1 GPU (e.g. gfx1201) HIP asks for device
+# 1 and gets hipErrorNoDevice, failing every graph at vxVerifyGraph. The GPU run
+# steps therefore export HIP_VISIBLE_DEVICES=0 so HIP uses index 0 of the
+# ROCR-filtered set (the correct, assigned device).
 #
 # Build-only jobs that do not execute GPU kernels still use the same image
 # so the amdclang++ toolchain and ROCm headers are available without any
@@ -97,7 +100,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     steps:
       - uses: actions/checkout@v4
@@ -141,7 +144,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     steps:
       - name: Checkout merge target ref
@@ -190,7 +193,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     steps:
       - uses: actions/checkout@v4
@@ -292,7 +295,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     env:
       # 40 vision kernels with a stable 1:1 GPU implementation — excludes
@@ -366,6 +369,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/openvx-mark/build-pr
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/pr-pkg/build/lib:${ROCM_PATH}/lib
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           ./openvx-mark --validate-timing
           ./openvx-mark --kernel "$PARITY_KERNELS" --skip-pipelines \
@@ -375,6 +379,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/openvx-mark/build-main
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/main-pkg/build/lib:${ROCM_PATH}/lib
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           ./openvx-mark --validate-timing
           ./openvx-mark --kernel "$PARITY_KERNELS" --skip-pipelines \
@@ -475,7 +480,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -495,6 +500,7 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/baseline_%p.profraw
@@ -512,7 +518,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -532,6 +538,7 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/graph_%p.profraw
@@ -549,7 +556,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -569,6 +576,7 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/data_objects_%p.profraw
@@ -586,7 +594,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -606,6 +614,7 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/image_ops_%p.profraw
@@ -623,7 +632,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -643,6 +652,7 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_color_%p.profraw
@@ -660,7 +670,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -680,6 +690,7 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_filters_%p.profraw
@@ -697,7 +708,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -717,6 +728,7 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_arithmetic_%p.profraw
@@ -734,7 +746,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -754,6 +766,7 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_geometric_%p.profraw
@@ -771,7 +784,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -791,6 +804,7 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_features_%p.profraw
@@ -808,7 +822,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -828,6 +842,7 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_statistics_%p.profraw
@@ -845,7 +860,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -865,6 +880,7 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_pyramid_%p.profraw
@@ -884,7 +900,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -902,6 +918,7 @@ jobs:
           mkdir -p profraw
           export INSTALL_PATH=$GITHUB_WORKSPACE/install
           export LD_LIBRARY_PATH=$INSTALL_PATH/lib:${ROCM_PATH}/lib
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/api_%p.profraw
 
@@ -951,7 +968,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -972,6 +989,7 @@ jobs:
         run: |
           mkdir -p profraw
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/gdf_%p.profraw
           chmod +x install/bin/runvx
@@ -993,7 +1011,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -1014,6 +1032,7 @@ jobs:
         run: |
           mkdir -p profraw
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_%p.profraw
           chmod +x install/bin/runvx
@@ -1043,7 +1062,7 @@ jobs:
     runs-on:
       group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.15-20260710-gfx120x
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     if: always() && needs.build-hip-debug.result == 'success'
     needs:

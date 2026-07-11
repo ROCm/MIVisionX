@@ -50,10 +50,10 @@ concurrency:
 # ---------------------------------------------------------------------------
 # Runner & container assignment
 #
-#   All jobs use group: linux-shark39-runner-group which contains both
-#   prolense-shark39-gfx1100-scaleset and prolense-shark39-gfx1030-scaleset.
-#   GitHub schedules each job on whichever scaleset runner is available first,
-#   so CI is not blocked when one runner is offline or busy.
+#   All jobs use group: linux-shark42-runner-group, which serves RDNA3+ GPUs
+#   (gfx1100 / gfx1201) and contains no gfx1030 runners. GitHub schedules each
+#   job on whichever scaleset runner in the group is available first, so CI is
+#   not blocked when one runner is offline or busy.
 #
 # Both runners use controller-mode:docker, meaning each job runs inside an
 # ephemeral Docker container launched by the runner controller.  The
@@ -67,14 +67,17 @@ concurrency:
 # no --group-add video/render is needed (and the mivisionx image lacks the
 # render group name, which would make docker start fail on --group-add render).
 #
-# mivisionx/ubuntu-24.04:rocm-7.13 is used because it ships a full ROCm 7.13
+# mivisionx/ubuntu-24.04:rocm-20260710 is used because it ships a full ROCm
 # stack (amdclang++, HIP runtime, rocminfo) with device support for all
 # supported GPU archs, so it works on whichever runner the job lands on, and
 # rocminfo works correctly in it.
 #
-# NOTE: newer nightly images (rocm-20260627 / rocm-20260710) currently fail the
-# HIP conformance tests on gfx1030 runners (silent vxVerifyGraph VX_FAILURE);
-# pinned back to rocm-7.13 until that gfx1030 regression is root-caused.
+# Runner group: linux-shark42-runner-group. The shark42 group serves RDNA3+
+# GPUs (gfx1100 / gfx1201) and, unlike the shark39 group, never hands out a
+# gfx1030 runner. This matters because the newer nightly ROCm images currently
+# fail the HIP conformance tests on gfx1030 (silent vxVerifyGraph VX_FAILURE);
+# that gfx1030 regression is tracked separately. Staying on shark42 keeps the
+# jobs on gfx1030-free runners so we can use the up-to-date ROCm toolchain.
 #
 # Build-only jobs that do not execute GPU kernels still use the same image
 # so the amdclang++ toolchain and ROCm headers are available without any
@@ -90,9 +93,9 @@ jobs:
   build-hip:
     name: Build AMD OpenVX (HIP, Release)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     steps:
       - uses: actions/checkout@v4
@@ -133,9 +136,9 @@ jobs:
     name: Build AMD OpenVX (HIP, Release, main)
     if: github.event_name == 'pull_request'
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     steps:
       - name: Checkout merge target ref
@@ -179,9 +182,9 @@ jobs:
   build-hip-debug:
     name: Build AMD OpenVX (HIP, Debug + Coverage)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     steps:
       - uses: actions/checkout@v4
@@ -280,9 +283,9 @@ jobs:
     name: Perf gate HIP (PR vs main)
     if: github.event_name == 'pull_request'
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     env:
       # 40 vision kernels with a stable 1:1 GPU implementation — excludes
@@ -463,9 +466,9 @@ jobs:
   baseline-hip:
     name: Baseline (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -499,9 +502,9 @@ jobs:
   graph-hip:
     name: Graph (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -535,9 +538,9 @@ jobs:
   data-objects-hip:
     name: Data objects (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -571,9 +574,9 @@ jobs:
   image-ops-hip:
     name: Image ops (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -607,9 +610,9 @@ jobs:
   vision-color-hip:
     name: Vision color (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -643,9 +646,9 @@ jobs:
   vision-filters-hip:
     name: Vision filters (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -679,9 +682,9 @@ jobs:
   vision-arithmetic-hip:
     name: Vision arithmetic (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -715,9 +718,9 @@ jobs:
   vision-geometric-hip:
     name: Vision geometric (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -751,9 +754,9 @@ jobs:
   vision-features-hip:
     name: Vision features (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -787,9 +790,9 @@ jobs:
   vision-statistics-hip:
     name: Vision statistics (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -823,9 +826,9 @@ jobs:
   vision-pyramid-hip:
     name: Vision pyramid (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -861,9 +864,9 @@ jobs:
   api-tests-hip:
     name: API tests (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -928,9 +931,9 @@ jobs:
   gdf-tests-hip:
     name: GDF tests (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -970,9 +973,9 @@ jobs:
   vision-tests-hip:
     name: Vision node tests (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -1020,9 +1023,9 @@ jobs:
   coverage-summary-hip:
     name: Code coverage summary (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     if: always() && needs.build-hip-debug.result == 'success'
     needs:

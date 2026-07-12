@@ -295,6 +295,7 @@ jobs:
           # llvm-cov. Validated: coverage report is identical post-strip.
           strip --strip-debug install/lib/libopenvx.so* install/lib/libvxu.so* 2>/dev/null || true
           strip --strip-debug install/lib/libvx_rpp.so* 2>/dev/null || true
+          strip --strip-debug install/bin/runvx 2>/dev/null || true
           strip --strip-debug OpenVX-cts/build/bin/vx_test_conformance 2>/dev/null || true
           strip --strip-debug OpenVX-cts/build/lib/*.so* 2>/dev/null || true
 
@@ -302,10 +303,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-hip-debug
-          # Only install/lib is needed at test/coverage runtime (headers and
-          # share/ are build-time only), which further trims the artifact.
+          # install/lib (runtime libs) and install/bin (runvx, used by the GDF
+          # and vision-node jobs) are what the test/coverage jobs need; headers
+          # and share/ are build-time only, so they are excluded to trim size.
           path: |
             install/lib/
+            install/bin/
             build/api_tests/
             OpenVX-cts/build/bin/vx_test_conformance
             OpenVX-cts/build/lib/

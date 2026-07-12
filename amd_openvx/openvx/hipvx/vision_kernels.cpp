@@ -72,7 +72,7 @@ Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
     d_float8 sum2 = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 * lbufptr;  // per-thread pointer: each thread indexes lbuf at its own (lx,ly); must NOT be __shared__ (that races and yields one thread's address for the whole block)
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -306,7 +306,7 @@ Hip_CannySobel_U16_U8_5x5_L1NORM(uint dstWidth, uint dstHeight,
     d_float8 sum2 = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 * lbufptr;  // per-thread pointer: each thread indexes lbuf at its own (lx,ly); must NOT be __shared__ (that races and yields one thread's address for the whole block)
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -807,7 +807,7 @@ Hip_CannySobel_U16_U8_7x7_L1NORM(uint dstWidth, uint dstHeight,
     d_float8 sum2 = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 * lbufptr;  // per-thread pointer: each thread indexes lbuf at its own (lx,ly); must NOT be __shared__ (that races and yields one thread's address for the whole block)
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -1703,7 +1703,7 @@ Hip_CannySobel_U16_U8_3x3_L2NORM(uint dstWidth, uint dstHeight,
     d_float8 sum2 = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 * lbufptr;  // per-thread pointer: each thread indexes lbuf at its own (lx,ly); must NOT be __shared__ (that races and yields one thread's address for the whole block)
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
     pix = lbufptr[0];
@@ -1937,7 +1937,7 @@ Hip_CannySobel_U16_U8_5x5_L2NORM(uint dstWidth, uint dstHeight,
     d_float8 sum2 = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 * lbufptr;  // per-thread pointer: each thread indexes lbuf at its own (lx,ly); must NOT be __shared__ (that races and yields one thread's address for the whole block)
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
       pix = lbufptr[0];
@@ -2436,7 +2436,7 @@ Hip_CannySobel_U16_U8_7x7_L2NORM(uint dstWidth, uint dstHeight,
     d_float8 sum2 = {0.0f};
     uint2 pix;
     float fval;
-    __shared__ uint2 * lbufptr;
+    uint2 * lbufptr;  // per-thread pointer: each thread indexes lbuf at its own (lx,ly); must NOT be __shared__ (that races and yields one thread's address for the whole block)
     lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
     // filterRow = 0
       pix = lbufptr[0];

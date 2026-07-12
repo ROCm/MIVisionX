@@ -268,8 +268,17 @@ jobs:
           # END of the link line (after libopenvx) via *_STANDARD_LIBRARIES so
           # single-pass ld can resolve from it; -rpath-link silences the
           # libamdhip64.so.7 soname warning. The CTS executable is C.
+          # Build the CTS at -O2, not its default -O3. amdclang (LLVM) at -O3
+          # miscompiles the CTS harness with this ROCm, so pin -O2 (the level
+          # the CTS itself downgrades -O3 to in cmake/openvx.cmake). We build
+          # Release and force -O2 explicitly via the per-config flags so it
+          # holds regardless of that internal replace.
           cmake .. \
-            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG" \
+            -DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG" \
+            -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
+            -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++" \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DOPENVX_INCLUDES="$GITHUB_WORKSPACE/amd_openvx/openvx/include" \
             -DOPENVX_LIBRARIES="$GITHUB_WORKSPACE/install/lib/libopenvx.so;$GITHUB_WORKSPACE/install/lib/libvxu.so;pthread;dl;m;rt" \

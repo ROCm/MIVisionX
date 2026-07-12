@@ -303,12 +303,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-hip-debug
-          # install/lib (runtime libs) and install/bin (runvx, used by the GDF
-          # and vision-node jobs) are what the test/coverage jobs need; headers
-          # and share/ are build-time only, so they are excluded to trim size.
+          # Upload the full install tree: the libs (lib/), runvx (bin/) and the
+          # sample GDFs + data under share/ are all used by various test jobs.
+          # The artifact size is already controlled by the two-arch GPU_TARGETS
+          # build and the debug-symbol strip above (device code + DWARF were the
+          # bulk); include/ and share/ are small by comparison.
           path: |
-            install/lib/
-            install/bin/
+            install/
             build/api_tests/
             OpenVX-cts/build/bin/vx_test_conformance
             OpenVX-cts/build/lib/

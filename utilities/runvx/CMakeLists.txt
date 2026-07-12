@@ -132,12 +132,12 @@ else()
         )
         if(NOT "${SSL_INCLUDE}" STREQUAL "SSL_INCLUDE-NOTFOUND")
             include_directories(${SSL_INCLUDE})
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OpenSSL=1")
+            target_compile_definitions(runvx PRIVATE HAVE_OpenSSL=1)
             target_link_libraries(runvx crypto)
         endif()
     endif()
     # -Wno-deprecated-declarations -- Do not warn about uses of functions, variables, and types marked as deprecated by using the deprecated attribute.
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
+    target_compile_options(runvx PRIVATE -Wno-deprecated-declarations)
 endif()
 
 # install MIVisionX executables -- {ROCM_PATH}/bin

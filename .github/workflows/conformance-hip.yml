@@ -50,10 +50,10 @@ concurrency:
 # ---------------------------------------------------------------------------
 # Runner & container assignment
 #
-#   All jobs use group: linux-shark39-runner-group which contains both
-#   prolense-shark39-gfx1100-scaleset and prolense-shark39-gfx1030-scaleset.
-#   GitHub schedules each job on whichever scaleset runner is available first,
-#   so CI is not blocked when one runner is offline or busy.
+#   All jobs use group: linux-shark42-runner-group, which serves RDNA3+ GPUs
+#   (gfx1100 / gfx1201) and contains no gfx1030 runners. GitHub schedules each
+#   job on whichever scaleset runner in the group is available first, so CI is
+#   not blocked when one runner is offline or busy.
 #
 # Both runners use controller-mode:docker, meaning each job runs inside an
 # ephemeral Docker container launched by the runner controller.  The
@@ -67,10 +67,22 @@ concurrency:
 # no --group-add video/render is needed (and the mivisionx image lacks the
 # render group name, which would make docker start fail on --group-add render).
 #
-# mivisionx/ubuntu-24.04:rocm-7.13 is used because it ships a full ROCm
-# 7.13 stack (amdclang++, HIP runtime, rocminfo) with device support for all
-# supported GPU archs, so it works on whichever runner the job lands on, and
-# rocminfo works correctly in it.
+# mivisionx/ubuntu-24.04:rocm-20260710 is a multi-arch ROCm 7.15 (nightly
+# 20260710) stack (amdclang++, HIP runtime, rocminfo) with device support for
+# all supported GPU archs, so it works on whichever runner the job lands on.
+# Multi-arch is required because the shark42 group hands out either gfx1100 or
+# gfx1201, and a single-family image would fail on the other arch.
+#
+# Runner group: linux-shark42-runner-group (RDNA3+ GPUs gfx1100 / gfx1201;
+# never hands out gfx1030).
+#
+# HIP_VISIBLE_DEVICES: the runner sets both ROCR_VISIBLE_DEVICES and
+# HIP_VISIBLE_DEVICES to the same host GPU index. These stack -- ROCR filters
+# HSA to the assigned GPU (now the only device), then HIP re-indexes into that
+# single-device set, so on a host-index-1 GPU (e.g. gfx1201) HIP asks for device
+# 1 and gets hipErrorNoDevice, failing every graph at vxVerifyGraph. The GPU run
+# steps therefore export HIP_VISIBLE_DEVICES=0 so HIP uses index 0 of the
+# ROCR-filtered set (the correct, assigned device).
 #
 # Build-only jobs that do not execute GPU kernels still use the same image
 # so the amdclang++ toolchain and ROCm headers are available without any
@@ -86,14 +98,15 @@ jobs:
   build-hip:
     name: Build AMD OpenVX (HIP, Release)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          # Shallow clone: the build does not use git history.
+          fetch-depth: 1
 
       - name: Install build dependencies
         run: |
@@ -110,6 +123,7 @@ jobs:
           mkdir build && cd build
           cmake .. \
             -DBACKEND=HIP \
+            -DGPU_TARGETS="gfx1100;gfx1201" \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
             -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++"
@@ -129,16 +143,19 @@ jobs:
     name: Build AMD OpenVX (HIP, Release, main)
     if: github.event_name == 'pull_request'
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     steps:
       - name: Checkout merge target ref
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.base.ref }}
-          fetch-depth: 0
+          # Shallow: this job only builds the base ref for the perf baseline and
+          # never uses git history (no git-based versioning in the build), so a
+          # full-history clone is unnecessary and slow.
+          fetch-depth: 1
 
       - name: Install build dependencies
         run: |
@@ -155,6 +172,7 @@ jobs:
           mkdir build && cd build
           cmake .. \
             -DBACKEND=HIP \
+            -DGPU_TARGETS="gfx1100;gfx1201" \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
             -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++"
@@ -175,14 +193,15 @@ jobs:
   build-hip-debug:
     name: Build AMD OpenVX (HIP, Debug + Coverage)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          # Shallow clone: the build does not use git history.
+          fetch-depth: 1
 
       - name: Install build dependencies
         run: |
@@ -197,8 +216,13 @@ jobs:
       - name: Build and install AMD OpenVX (HIP, Debug + Coverage)
         run: |
           mkdir build && cd build
+          # Build device code only for the archs the shark42 group runs on
+          # (gfx1100 / gfx1201). The default fat binary covers ~14 archs, which
+          # is what bloats the debug artifact (and its download in every test
+          # job); limiting to the runner archs shrinks it substantially.
           cmake .. \
             -DBACKEND=HIP \
+            -DGPU_TARGETS="gfx1100;gfx1201" \
             -DCODE_COVERAGE=ON \
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
@@ -244,8 +268,17 @@ jobs:
           # END of the link line (after libopenvx) via *_STANDARD_LIBRARIES so
           # single-pass ld can resolve from it; -rpath-link silences the
           # libamdhip64.so.7 soname warning. The CTS executable is C.
+          # Build the CTS at -O2, not its default -O3. amdclang (LLVM) at -O3
+          # miscompiles the CTS harness with this ROCm, so pin -O2 (the level
+          # the CTS itself downgrades -O3 to in cmake/openvx.cmake). We build
+          # Release and force -O2 explicitly via the per-config flags so it
+          # holds regardless of that internal replace.
           cmake .. \
-            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG" \
+            -DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG" \
+            -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
+            -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++" \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DOPENVX_INCLUDES="$GITHUB_WORKSPACE/amd_openvx/openvx/include" \
             -DOPENVX_LIBRARIES="$GITHUB_WORKSPACE/install/lib/libopenvx.so;$GITHUB_WORKSPACE/install/lib/libvxu.so;pthread;dl;m;rt" \
@@ -255,10 +288,26 @@ jobs:
             -DCMAKE_EXE_LINKER_FLAGS="-Wl,-rpath-link,${ROCM_PATH}/lib"
           make -j$(nproc)
 
+      - name: Strip debug symbols (keep coverage sections)
+        run: |
+          # Source-based coverage lives in __llvm_covmap / __llvm_prf_* sections,
+          # not DWARF, so --strip-debug shrinks the artifact without affecting
+          # llvm-cov. Validated: coverage report is identical post-strip.
+          strip --strip-debug install/lib/libopenvx.so* install/lib/libvxu.so* 2>/dev/null || true
+          strip --strip-debug install/lib/libvx_rpp.so* 2>/dev/null || true
+          strip --strip-debug install/bin/runvx 2>/dev/null || true
+          strip --strip-debug OpenVX-cts/build/bin/vx_test_conformance 2>/dev/null || true
+          strip --strip-debug OpenVX-cts/build/lib/*.so* 2>/dev/null || true
+
       - name: Upload debug build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-hip-debug
+          # Upload the full install tree: the libs (lib/), runvx (bin/) and the
+          # sample GDFs + data under share/ are all used by various test jobs.
+          # The artifact size is already controlled by the two-arch GPU_TARGETS
+          # build and the debug-symbol strip above (device code + DWARF were the
+          # bulk); include/ and share/ are small by comparison.
           path: |
             install/
             build/api_tests/
@@ -276,9 +325,9 @@ jobs:
     name: Perf gate HIP (PR vs main)
     if: github.event_name == 'pull_request'
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     env:
       # 40 vision kernels with a stable 1:1 GPU implementation — excludes
@@ -352,6 +401,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/openvx-mark/build-pr
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/pr-pkg/build/lib:${ROCM_PATH}/lib
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           ./openvx-mark --validate-timing
           ./openvx-mark --kernel "$PARITY_KERNELS" --skip-pipelines \
@@ -361,6 +411,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/openvx-mark/build-main
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/main-pkg/build/lib:${ROCM_PATH}/lib
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           ./openvx-mark --validate-timing
           ./openvx-mark --kernel "$PARITY_KERNELS" --skip-pipelines \
@@ -459,13 +510,13 @@ jobs:
   baseline-hip:
     name: Baseline (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -481,11 +532,17 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
+          export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/baseline_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="GraphBase.*:Logging.*:SmokeTestBase.*:SmokeTest.*:TargetBase.*:Target.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-baseline
@@ -495,13 +552,13 @@ jobs:
   graph-hip:
     name: Graph (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -517,11 +574,17 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
+          export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/graph_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="Graph.*:GraphCallback.*:GraphDelay.*:GraphROI.*:UserNode.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-graph
@@ -531,13 +594,13 @@ jobs:
   data-objects-hip:
     name: Data objects (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -553,11 +616,17 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
+          export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/data_objects_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="Scalar.*:Array.*:ObjectArray.*:Matrix.*:Convolution.*:Distribution.*:LUT.*:Histogram.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-data-objects
@@ -567,13 +636,13 @@ jobs:
   image-ops-hip:
     name: Image ops (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -589,11 +658,17 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
+          export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/image_ops_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="Image.*:vxCopyImagePatch.*:vxMapImagePatch.*:vxCreateImageFromChannel.*:vxCopyRemapPatch.*:vxMapRemapPatch.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-image-ops
@@ -603,13 +678,13 @@ jobs:
   vision-color-hip:
     name: Vision color (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -625,11 +700,17 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
+          export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_color_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="ColorConvert.*:ChannelExtract.*:ChannelCombine.*:vxConvertDepth.*:vxuConvertDepth.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-color
@@ -639,13 +720,13 @@ jobs:
   vision-filters-hip:
     name: Vision filters (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -661,11 +742,17 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
+          export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_filters_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="Box3x3.*:Gaussian3x3.*:Median3x3.*:Dilate3x3.*:Erode3x3.*:Sobel3x3.*:Magnitude.*:Phase.*:NonLinearFilter.*:Convolve.*:EqualizeHistogram.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-filters
@@ -675,13 +762,13 @@ jobs:
   vision-arithmetic-hip:
     name: Vision arithmetic (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -697,11 +784,17 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
+          export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_arithmetic_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="vxAddSub.*:vxuAddSub.*:vxMultiply.*:vxuMultiply.*:vxBinOp8u.*:vxuBinOp8u.*:vxBinOp16s.*:vxuBinOp16s.*:vxBinOp1u.*:vxuBinOp1u.*:vxNot.*:vxuNot.*:WeightedAverage.*:Threshold.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-arithmetic
@@ -711,13 +804,13 @@ jobs:
   vision-geometric-hip:
     name: Vision geometric (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -733,11 +826,17 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
+          export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_geometric_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="Scale.*:WarpAffine.*:WarpPerspective.*:Remap.*:HalfScaleGaussian.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-geometric
@@ -747,13 +846,13 @@ jobs:
   vision-features-hip:
     name: Vision features (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -769,11 +868,17 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
+          export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_features_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="HarrisCorners.*:FastCorners.*:vxCanny.*:vxuCanny.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-features
@@ -783,13 +888,13 @@ jobs:
   vision-statistics-hip:
     name: Vision statistics (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -805,11 +910,17 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
+          export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_statistics_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="MeanStdDev.*:MinMaxLoc.*:Integral.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-statistics
@@ -819,13 +930,13 @@ jobs:
   vision-pyramid-hip:
     name: Vision pyramid (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -841,11 +952,17 @@ jobs:
           cd OpenVX-cts/build
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
+          export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_pyramid_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="GaussianPyramid.*:LaplacianPyramid.*:LaplacianReconstruct.*:OptFlowPyrLK.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-pyramid
@@ -857,13 +974,13 @@ jobs:
   api-tests-hip:
     name: API tests (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      # No checkout: this job only runs the prebuilt API tests from the artifact.
       - name: Download debug build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -877,6 +994,7 @@ jobs:
           mkdir -p profraw
           export INSTALL_PATH=$GITHUB_WORKSPACE/install
           export LD_LIBRARY_PATH=$INSTALL_PATH/lib:${ROCM_PATH}/lib
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/api_%p.profraw
 
@@ -914,7 +1032,11 @@ jobs:
             exit 1
           fi
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-api-tests
@@ -924,9 +1046,9 @@ jobs:
   gdf-tests-hip:
     name: GDF tests (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -947,6 +1069,7 @@ jobs:
         run: |
           mkdir -p profraw
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/gdf_%p.profraw
           chmod +x install/bin/runvx
@@ -956,7 +1079,11 @@ jobs:
             --backend_type HIP \
             --hidden no
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-gdf-tests
@@ -966,9 +1093,9 @@ jobs:
   vision-tests-hip:
     name: Vision node tests (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
@@ -989,6 +1116,7 @@ jobs:
         run: |
           mkdir -p profraw
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
           export AGO_DEFAULT_TARGET=GPU
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_%p.profraw
           chmod +x install/bin/runvx
@@ -999,7 +1127,11 @@ jobs:
           python3 tests/vision_tests/runVisionTests.py \
             --runvx_directory $GITHUB_WORKSPACE/install/bin --num_frames 10 --width 10 --height 10
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-tests
@@ -1016,9 +1148,9 @@ jobs:
   coverage-summary-hip:
     name: Code coverage summary (HIP)
     runs-on:
-      group: linux-shark39-runner-group
+      group: linux-shark42-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-7.13
+      image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
     if: always() && needs.build-hip-debug.result == 'success'
     needs:
@@ -1143,21 +1275,33 @@ jobs:
             echo "::error::llvm-cov not found in ${LLVM_BIN}"
             exit 1
           fi
-          LIBOPENVX="$GITHUB_WORKSPACE/install/lib/libopenvx.so"
+          LIBDIR="$GITHUB_WORKSPACE/install/lib"
           PROFDATA="$GITHUB_WORKSPACE/coverage.profdata"
 
-          "${LLVM_COV}" report "${LIBOPENVX}" \
+          # Report against every instrumented shared library that was built.
+          # libopenvx.so is the primary (positional) object; libvxu.so and
+          # libvx_rpp.so are added with -object when present so their coverage
+          # is included too.
+          COV_OBJECTS=("$LIBDIR/libopenvx.so")
+          for lib in libvxu.so libvx_rpp.so; do
+            if [ -f "$LIBDIR/$lib" ]; then
+              COV_OBJECTS+=(-object "$LIBDIR/$lib")
+            fi
+          done
+          echo "Coverage objects: ${COV_OBJECTS[*]}"
+
+          "${LLVM_COV}" report "${COV_OBJECTS[@]}" \
             -instr-profile="${PROFDATA}" \
             -ignore-filename-regex='(test|conformance)' \
             | tee coverage_report.txt
 
-          "${LLVM_COV}" export "${LIBOPENVX}" \
+          "${LLVM_COV}" export "${COV_OBJECTS[@]}" \
             -instr-profile="${PROFDATA}" \
             -format=text \
             -ignore-filename-regex='(test|conformance)' \
             > coverage.json
 
-          "${LLVM_COV}" export "${LIBOPENVX}" \
+          "${LLVM_COV}" export "${COV_OBJECTS[@]}" \
             -instr-profile="${PROFDATA}" \
             -format=lcov \
             -ignore-filename-regex='(test|conformance)' \

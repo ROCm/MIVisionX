@@ -1121,24 +1121,36 @@ jobs:
 
       - name: Generate coverage report
         run: |
-          LIBOPENVX="${{ github.workspace }}/install/lib/libopenvx.so"
+          LIBDIR="${{ github.workspace }}/install/lib"
           PROFDATA="${{ github.workspace }}/coverage.profdata"
 
+          # Report against every instrumented shared library that was built.
+          # libopenvx.so is the primary (positional) object; libvxu.so and
+          # libvx_rpp.so are added with -object when present so their coverage
+          # is included too.
+          COV_OBJECTS=("$LIBDIR/libopenvx.so")
+          for lib in libvxu.so libvx_rpp.so; do
+            if [ -f "$LIBDIR/$lib" ]; then
+              COV_OBJECTS+=(-object "$LIBDIR/$lib")
+            fi
+          done
+          echo "Coverage objects: ${COV_OBJECTS[*]}"
+
           # Generate text report
-          llvm-cov report "${LIBOPENVX}" \
+          llvm-cov report "${COV_OBJECTS[@]}" \
             -instr-profile="${PROFDATA}" \
             -ignore-filename-regex='(test|conformance)' \
             | tee coverage_report.txt
 
           # Generate JSON export (for structured summary)
-          llvm-cov export "${LIBOPENVX}" \
+          llvm-cov export "${COV_OBJECTS[@]}" \
             -instr-profile="${PROFDATA}" \
             -format=text \
             -ignore-filename-regex='(test|conformance)' \
             > coverage.json
 
           # Generate LCOV export
-          llvm-cov export "${LIBOPENVX}" \
+          llvm-cov export "${COV_OBJECTS[@]}" \
             -instr-profile="${PROFDATA}" \
             -format=lcov \
             -ignore-filename-regex='(test|conformance)' \

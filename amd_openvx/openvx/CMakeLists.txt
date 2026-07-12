@@ -212,11 +212,15 @@ else()
     if(NOT APPLE)
         target_link_libraries(openvx dl m)
     endif()
-    # Code coverage instrumentation (LLVM source-based coverage)
+    # Code coverage instrumentation (LLVM source-based coverage).
+    # Applied to both openvx and vxu so libopenvx.so and libvxu.so emit profile
+    # data (the coverage report reads both shared libraries).
     if(CODE_COVERAGE)
         target_compile_options(openvx PRIVATE -fprofile-instr-generate -fcoverage-mapping)
         target_link_options(openvx PRIVATE -fprofile-instr-generate -fcoverage-mapping)
-        message("-- ${Green}AMD OpenVX -- Code coverage ENABLED (LLVM)${ColourReset}")
+        target_compile_options(vxu PRIVATE -fprofile-instr-generate -fcoverage-mapping)
+        target_link_options(vxu PRIVATE -fprofile-instr-generate -fcoverage-mapping)
+        message("-- ${Green}AMD OpenVX -- Code coverage ENABLED (LLVM) for openvx and vxu${ColourReset}")
     endif()
 endif()
 

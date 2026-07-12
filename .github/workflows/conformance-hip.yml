@@ -538,7 +538,11 @@ jobs:
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/baseline_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="GraphBase.*:Logging.*:SmokeTestBase.*:SmokeTest.*:TargetBase.*:Target.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-baseline
@@ -576,7 +580,11 @@ jobs:
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/graph_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="Graph.*:GraphCallback.*:GraphDelay.*:GraphROI.*:UserNode.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-graph
@@ -614,7 +622,11 @@ jobs:
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/data_objects_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="Scalar.*:Array.*:ObjectArray.*:Matrix.*:Convolution.*:Distribution.*:LUT.*:Histogram.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-data-objects
@@ -652,7 +664,11 @@ jobs:
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/image_ops_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="Image.*:vxCopyImagePatch.*:vxMapImagePatch.*:vxCreateImageFromChannel.*:vxCopyRemapPatch.*:vxMapRemapPatch.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-image-ops
@@ -690,7 +706,11 @@ jobs:
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_color_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="ColorConvert.*:ChannelExtract.*:ChannelCombine.*:vxConvertDepth.*:vxuConvertDepth.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-color
@@ -728,7 +748,11 @@ jobs:
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_filters_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="Box3x3.*:Gaussian3x3.*:Median3x3.*:Dilate3x3.*:Erode3x3.*:Sobel3x3.*:Magnitude.*:Phase.*:NonLinearFilter.*:Convolve.*:EqualizeHistogram.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-filters
@@ -766,7 +790,11 @@ jobs:
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_arithmetic_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="vxAddSub.*:vxuAddSub.*:vxMultiply.*:vxuMultiply.*:vxBinOp8u.*:vxuBinOp8u.*:vxBinOp16s.*:vxuBinOp16s.*:vxBinOp1u.*:vxuBinOp1u.*:vxNot.*:vxuNot.*:WeightedAverage.*:Threshold.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-arithmetic
@@ -804,7 +832,11 @@ jobs:
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_geometric_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="Scale.*:WarpAffine.*:WarpPerspective.*:Remap.*:HalfScaleGaussian.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-geometric
@@ -842,7 +874,11 @@ jobs:
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_features_%p.profraw
           timeout 600 ./bin/vx_test_conformance --filter="HarrisCorners.*:FastCorners.*:vxCanny.*:vxuCanny.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-features
@@ -880,7 +916,11 @@ jobs:
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_statistics_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="MeanStdDev.*:MinMaxLoc.*:Integral.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-statistics
@@ -918,7 +958,11 @@ jobs:
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_pyramid_%p.profraw
           timeout 300 ./bin/vx_test_conformance --filter="GaussianPyramid.*:LaplacianPyramid.*:LaplacianReconstruct.*:OptFlowPyrLK.*"
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-pyramid
@@ -988,7 +1032,11 @@ jobs:
             exit 1
           fi
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-api-tests
@@ -1031,7 +1079,11 @@ jobs:
             --backend_type HIP \
             --hidden no
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-gdf-tests
@@ -1075,7 +1127,11 @@ jobs:
           python3 tests/vision_tests/runVisionTests.py \
             --runvx_directory $GITHUB_WORKSPACE/install/bin --num_frames 10 --width 10 --height 10
       - name: Upload profraw
+        # Coverage data is best-effort: a transient GitHub artifact-service
+        # upload timeout must not fail an otherwise-passing test job (the
+        # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-tests

@@ -123,6 +123,7 @@ jobs:
           mkdir build && cd build
           cmake .. \
             -DBACKEND=HIP \
+            -DGPU_TARGETS="gfx1100;gfx1201" \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
             -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++"
@@ -171,6 +172,7 @@ jobs:
           mkdir build && cd build
           cmake .. \
             -DBACKEND=HIP \
+            -DGPU_TARGETS="gfx1100;gfx1201" \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
             -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++"
@@ -214,8 +216,13 @@ jobs:
       - name: Build and install AMD OpenVX (HIP, Debug + Coverage)
         run: |
           mkdir build && cd build
+          # Build device code only for the archs the shark42 group runs on
+          # (gfx1100 / gfx1201). The default fat binary covers ~14 archs, which
+          # is what bloats the debug artifact (and its download in every test
+          # job); limiting to the runner archs shrinks it substantially.
           cmake .. \
             -DBACKEND=HIP \
+            -DGPU_TARGETS="gfx1100;gfx1201" \
             -DCODE_COVERAGE=ON \
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
@@ -272,12 +279,24 @@ jobs:
             -DCMAKE_EXE_LINKER_FLAGS="-Wl,-rpath-link,${ROCM_PATH}/lib"
           make -j$(nproc)
 
+      - name: Strip debug symbols (keep coverage sections)
+        run: |
+          # Source-based coverage lives in __llvm_covmap / __llvm_prf_* sections,
+          # not DWARF, so --strip-debug shrinks the artifact without affecting
+          # llvm-cov. Validated: coverage report is identical post-strip.
+          strip --strip-debug install/lib/libopenvx.so* install/lib/libvxu.so* 2>/dev/null || true
+          strip --strip-debug install/lib/libvx_rpp.so* 2>/dev/null || true
+          strip --strip-debug OpenVX-cts/build/bin/vx_test_conformance 2>/dev/null || true
+          strip --strip-debug OpenVX-cts/build/lib/*.so* 2>/dev/null || true
+
       - name: Upload debug build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-hip-debug
+          # Only install/lib is needed at test/coverage runtime (headers and
+          # share/ are build-time only), which further trims the artifact.
           path: |
-            install/
+            install/lib/
             build/api_tests/
             OpenVX-cts/build/bin/vx_test_conformance
             OpenVX-cts/build/lib/

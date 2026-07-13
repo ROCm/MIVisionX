@@ -206,7 +206,7 @@ jobs:
       - name: Install build dependencies
         run: |
           apt-get update -qq
-          apt-get install -y --no-install-recommends build-essential cmake git python3
+          apt-get install -y --no-install-recommends build-essential cmake git git-lfs python3
 
       - name: Validate ROCm
         run: |
@@ -261,6 +261,7 @@ jobs:
         run: |
           git clone --depth 1 -b openvx_1.3.2 https://github.com/KhronosGroup/OpenVX-cts.git
           cd OpenVX-cts
+          git lfs pull
           mkdir -p build && cd build
           # vx_test_conformance links libopenvx.so (HIP backend), which pulls
           # in HIP runtime symbols (e.g. hipMemcpyHtoD@hip_4.2) from

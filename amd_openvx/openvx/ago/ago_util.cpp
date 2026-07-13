@@ -1147,7 +1147,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         case VX_DF_IMAGE_S16: data->u.img.uniform_pixel_value.S16 = (vx_int16)data->u.img.uniform[0]; break;
         case VX_DF_IMAGE_U32: data->u.img.uniform_pixel_value.U32 = (vx_uint32)data->u.img.uniform[0]; break;
         case VX_DF_IMAGE_S32: data->u.img.uniform_pixel_value.S32 = (vx_int32)data->u.img.uniform[0]; break;
-        case VX_DF_IMAGE_U1_AMD: data->u.img.uniform_pixel_value.U8 = (vx_uint8)data->u.img.uniform[0]; break;
+        case VX_DF_IMAGE_U1_AMD: data->u.img.uniform_pixel_value.U1 = data->u.img.uniform[0] ? (vx_bool)vx_true_e : (vx_bool)vx_false_e; break;
         case VX_DF_IMAGE_RGB:
             data->u.img.uniform_pixel_value.RGB[0] = (vx_uint8)data->u.img.uniform[0];
             data->u.img.uniform_pixel_value.RGB[1] = (vx_uint8)data->u.img.uniform[1];

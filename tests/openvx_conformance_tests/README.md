@@ -1,6 +1,6 @@
 # MIVisionX - OpenVX 1.3 Conformance Tests
 
-Runs the [Khronos OpenVX CTS](https://github.com/KhronosGroup/OpenVX-cts) (branch `openvx_1.3`) against the MIVisionX implementation across the `HOST`, `HIP`, and `OCL` backends.
+Runs the [Khronos OpenVX CTS](https://github.com/KhronosGroup/OpenVX-cts) (branch `openvx_1.3.2`) against the MIVisionX implementation across the `HOST`, `HIP`, and `OCL` backends.
 
 ## Usage
 
@@ -27,7 +27,7 @@ Arguments:
   --skip-cts-build        Skip rebuilding the CTS
   --skip-cts-run          Skip running the CTS (build only)
   --cts-repo        CTS git repository URL (default: https://github.com/KhronosGroup/OpenVX-cts.git)
-  --cts-branch      CTS git branch (default: openvx_1.3)
+  --cts-branch      CTS git branch (default: openvx_1.3.2)
 ```
 
 ## Quick start

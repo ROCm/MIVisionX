@@ -206,7 +206,7 @@ jobs:
       - name: Install build dependencies
         run: |
           apt-get update -qq
-          apt-get install -y --no-install-recommends build-essential cmake git python3
+          apt-get install -y --no-install-recommends build-essential cmake git git-lfs python3
 
       - name: Validate ROCm
         run: |
@@ -259,8 +259,9 @@ jobs:
 
       - name: Clone and build OpenVX CTS
         run: |
-          git clone --depth 1 -b openvx_1.3 https://github.com/KhronosGroup/OpenVX-cts.git
+          git clone --depth 1 -b openvx_1.3.2 https://github.com/KhronosGroup/OpenVX-cts.git
           cd OpenVX-cts
+          git lfs pull
           mkdir -p build && cd build
           # vx_test_conformance links libopenvx.so (HIP backend), which pulls
           # in HIP runtime symbols (e.g. hipMemcpyHtoD@hip_4.2) from
@@ -305,15 +306,29 @@ jobs:
           name: build-artifacts-hip-debug
           # Upload the full install tree: the libs (lib/), runvx (bin/) and the
           # sample GDFs + data under share/ are all used by various test jobs.
-          # The artifact size is already controlled by the two-arch GPU_TARGETS
-          # build and the debug-symbol strip above (device code + DWARF were the
-          # bulk); include/ and share/ are small by comparison.
+          # The artifact size is controlled by the two-arch GPU_TARGETS build and
+          # the debug-symbol strip above (device code + DWARF were the bulk).
+          # OpenVX-cts/test_data/ is uploaded separately as build-artifacts-hip-cts-data
+          # to keep this artifact small so that the binary download is fast and
+          # reliable across all parallel test jobs.
           path: |
             install/
             build/api_tests/
             OpenVX-cts/build/bin/vx_test_conformance
             OpenVX-cts/build/lib/
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload CTS test data
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-hip-cts-data
+          # CTS test data is large (git-lfs binary images). Uploading separately
+          # from the binary artifact so that each test job can download the small
+          # binary artifact first (fast, reliable) and the test data separately.
+          path: |
             OpenVX-cts/test_data/
+          if-no-files-found: error
           retention-days: 1
 
   # ===========================================================================
@@ -521,6 +536,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Download CTS test data
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-cts-data
       - name: Validate ROCm
         run: |
           rocminfo
@@ -563,6 +582,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Download CTS test data
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-cts-data
       - name: Validate ROCm
         run: |
           rocminfo
@@ -605,6 +628,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Download CTS test data
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-cts-data
       - name: Validate ROCm
         run: |
           rocminfo
@@ -647,6 +674,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Download CTS test data
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-cts-data
       - name: Validate ROCm
         run: |
           rocminfo
@@ -689,6 +720,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Download CTS test data
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-cts-data
       - name: Validate ROCm
         run: |
           rocminfo
@@ -731,6 +766,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Download CTS test data
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-cts-data
       - name: Validate ROCm
         run: |
           rocminfo
@@ -743,10 +782,15 @@ jobs:
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
-          export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_filters_%p.profraw
-          timeout 600 ./bin/vx_test_conformance --filter="Box3x3.*:Gaussian3x3.*:Median3x3.*:Dilate3x3.*:Erode3x3.*:Sobel3x3.*:Magnitude.*:Phase.*:NonLinearFilter.*:Convolve.*:EqualizeHistogram.*"
+          # Run each suite on both AGO targets (CPU HAF + HIP kernels are both
+          # compiled/instrumented in the HIP build).
+          for target in CPU GPU; do
+            echo "::group::vision-filters (AGO_DEFAULT_TARGET=$target)"
+            AGO_DEFAULT_TARGET=$target timeout 600 ./bin/vx_test_conformance --filter="Box3x3.*:Gaussian3x3.*:Median3x3.*:Dilate3x3.*:Erode3x3.*:Sobel3x3.*:Magnitude.*:Phase.*:NonLinearFilter.*:Convolve.*:EqualizeHistogram.*"
+            echo "::endgroup::"
+          done
       - name: Upload profraw
         # Coverage data is best-effort: a transient GitHub artifact-service
         # upload timeout must not fail an otherwise-passing test job (the
@@ -773,6 +817,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Download CTS test data
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-cts-data
       - name: Validate ROCm
         run: |
           rocminfo
@@ -815,6 +863,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Download CTS test data
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-cts-data
       - name: Validate ROCm
         run: |
           rocminfo
@@ -857,6 +909,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Download CTS test data
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-cts-data
       - name: Validate ROCm
         run: |
           rocminfo
@@ -899,6 +955,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Download CTS test data
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-cts-data
       - name: Validate ROCm
         run: |
           rocminfo
@@ -941,6 +1001,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Download CTS test data
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-cts-data
       - name: Validate ROCm
         run: |
           rocminfo

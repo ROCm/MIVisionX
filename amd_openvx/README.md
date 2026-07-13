@@ -2,7 +2,7 @@
 
 # AMD OpenVX&trade;
 
-AMD OpenVX&trade; is a highly optimized conformant open-source implementation of the [Khronos OpenVX&trade; 1.3.2](https://registry.khronos.org/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html) computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded `AMD64` CPUs and large workstation discrete GPUs.
+AMD OpenVX&trade; is a highly optimized conformant open-source implementation of the [Khronos OpenVX&trade; 1.3.2](https://registry.khronos.org/OpenVX/specs/1.3.2/html/OpenVX_Specification_1_3_2.html) computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded `AMD64` CPUs and large workstation discrete GPUs.
 
 ## Features
 
@@ -14,15 +14,15 @@ AMD OpenVX&trade; is a highly optimized conformant open-source implementation of
 
 ## OpenVX 1.3.2 Vision Conformance
 
-AMD OpenVX implements the full [Vision Conformance Feature Set](https://registry.khronos.org/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html), which includes:
+AMD OpenVX implements the full [Vision Conformance Feature Set](https://registry.khronos.org/OpenVX/specs/1.3.2/html/OpenVX_Specification_1_3_2.html), which includes:
 
-* **Base Feature Set**: Core [framework objects](https://registry.khronos.org/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#sec_framework_objects) (`vx_context`, `vx_graph`, `vx_kernel`, `vx_node`, `vx_parameter`, `vx_reference`, `vx_meta_format`, `vx_delay`) for constructing and executing OpenVX graphs.
+* **Base Feature Set**: Core [framework objects](https://registry.khronos.org/OpenVX/specs/1.3.2/html/OpenVX_Specification_1_3_2.html#sec_framework_objects) (`vx_context`, `vx_graph`, `vx_kernel`, `vx_node`, `vx_parameter`, `vx_reference`, `vx_meta_format`, `vx_delay`) for constructing and executing OpenVX graphs.
 
-* **Vision Data Objects**: [Data objects](https://registry.khronos.org/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#sec_data_objects) including `vx_image`, `vx_array`, `vx_convolution`, `vx_distribution`, `vx_lut`, `vx_matrix`, `vx_pyramid`, `vx_remap`, `vx_scalar`, `vx_threshold`, and `vx_object_array`.
+* **Vision Data Objects**: [Data objects](https://registry.khronos.org/OpenVX/specs/1.3.2/html/OpenVX_Specification_1_3_2.html#sec_data_objects) including `vx_image`, `vx_array`, `vx_convolution`, `vx_distribution`, `vx_lut`, `vx_matrix`, `vx_pyramid`, `vx_remap`, `vx_scalar`, `vx_threshold`, and `vx_object_array`.
 
-* **Vision Functions**: 36 [vision processing functions](https://registry.khronos.org/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#group_vision_functions) including edge detection (Canny, Sobel), feature detection (Harris, FAST corners), filtering (Gaussian, Median, Box), geometric transforms (Warp, Remap, Scale), color conversion, histogram, optical flow, and more.
+* **Vision Functions**: 36 [vision processing functions](https://registry.khronos.org/OpenVX/specs/1.3.2/html/OpenVX_Specification_1_3_2.html#group_vision_functions) including edge detection (Canny, Sobel), feature detection (Harris, FAST corners), filtering (Gaussian, Median, Box), geometric transforms (Warp, Remap, Scale), color conversion, histogram, optical flow, and more.
 
-* **VXU Immediate Functions**: The [VXU library](https://registry.khronos.org/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html#group_vxu) provides all OpenVX operators as directly callable C functions without requiring graph construction, useful for porting existing vision applications.
+* **VXU Immediate Functions**: The [VXU library](https://registry.khronos.org/OpenVX/specs/1.3.2/html/OpenVX_Specification_1_3_2.html#group_vxu) provides all OpenVX operators as directly callable C functions without requiring graph construction, useful for porting existing vision applications.
 
 [Khronos OpenVX&trade; 1.0.1](https://registry.khronos.org/OpenVX/specs/1.0.1/html/index.html) conformant implementation is available in [MIVisionX Lite](https://github.com/ROCm/MIVisionX/tree/openvx-1.0.1).
 
@@ -60,28 +60,5 @@ On Windows, the default backend is `OpenCL`; pass `-DGPU_SUPPORT=OFF` for a CPU-
 
 > [!NOTE]
 > AMD GPU HIP backend is not supported on Windows.
-
-### OpenCL backend setup on ROCm 7.13 (ICD loader workaround)
-
-On ROCm `7.13` with newer integrated APUs (e.g. `gfx1151`), the OpenCL backend can fail to enumerate any platform even though the AMD OpenCL driver is installed:
-
-```text
-ERROR: clGetPlatformIDs(0,0,*) => -1001 (failed)
-ERROR: vxVerifyGraph(graph) failed (-1:VX_FAILURE)
-```
-
-The cause is that `/opt/rocm/lib/libOpenCL.so` (picked up via the build `RPATH`) is an ICD loader that does not enumerate the AMD platform on this hardware. The system `ocl-icd` loader (`/usr/lib/x86_64-linux-gnu/libOpenCL.so.1`) and the upstream [Khronos OpenCL-ICD-Loader](https://github.com/KhronosGroup/OpenCL-ICD-Loader) both work correctly. To fix without `sudo`, point a working loader at the ROCm OpenCL driver through an ICD vendor file:
-
-```shell
-# 1. Register the ROCm OpenCL driver as an ICD vendor
-mkdir -p ~/.openclaw/opencl-vendors
-echo "/opt/rocm/core-7.13/lib/opencl/libamdocl64.so" > ~/.openclaw/opencl-vendors/amdocl64.icd
-
-# 2. Run with the system ocl-icd loader ahead of the broken ROCm loader
-export OCL_ICD_VENDORS=$HOME/.openclaw/opencl-vendors
-export LD_LIBRARY_PATH=<MIVisionX-build>/lib:/usr/lib/x86_64-linux-gnu:/opt/rocm/core-7.13/lib/opencl:$LD_LIBRARY_PATH
-```
-
-Verify with `clinfo` — it should report one `AMD Accelerated Parallel Processing` platform. If you prefer a self-contained loader, build the Khronos `OpenCL-ICD-Loader` and put its `libOpenCL.so.1` first on `LD_LIBRARY_PATH` instead of the system one. See [issue #1698](https://github.com/ROCm/MIVisionX/issues/1698) for details.
 
 OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

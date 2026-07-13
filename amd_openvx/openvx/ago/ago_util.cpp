@@ -1133,6 +1133,44 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         memcpy(&data->u.img.format, desc, sizeof(data->u.img.format));
         if (sscanf(desc + 5, "%d,%d," VX_FMT_SIZE "," VX_FMT_SIZE "," VX_FMT_SIZE "," VX_FMT_SIZE "", &data->u.img.width, &data->u.img.height, &data->u.img.uniform[0], &data->u.img.uniform[1], &data->u.img.uniform[2], &data->u.img.uniform[3]) < 2) return -1;
         if (agoGetImageComponentsAndPlanes(acontext, data->u.img.format, &data->u.img.components, &data->u.img.planes, &data->u.img.pixel_size_in_bits_num, &data->u.img.pixel_size_in_bits_denom, &data->u.img.color_space, &data->u.img.channel_range)) return -1;
+        // Populate uniform_pixel_value from the parsed per-channel uniform[] so the
+        // VX_IMAGE_UNIFORM_VALUE query returns a correct value for every uniform
+        // image created from a description -- including the child plane images that
+        // vxCreateImageFromChannel returns for multi-planar formats (NV12/NV21/...).
+        // For images created via vxCreateUniformImage the top-level image is
+        // additionally overwritten there with the caller's verbatim vx_pixel_value_t
+        // for full-byte fidelity.
+        memset(&data->u.img.uniform_pixel_value, 0, sizeof(data->u.img.uniform_pixel_value));
+        switch (data->u.img.format) {
+        case VX_DF_IMAGE_U8:  data->u.img.uniform_pixel_value.U8  = (vx_uint8)data->u.img.uniform[0]; break;
+        case VX_DF_IMAGE_U16: data->u.img.uniform_pixel_value.U16 = (vx_uint16)data->u.img.uniform[0]; break;
+        case VX_DF_IMAGE_S16: data->u.img.uniform_pixel_value.S16 = (vx_int16)data->u.img.uniform[0]; break;
+        case VX_DF_IMAGE_U32: data->u.img.uniform_pixel_value.U32 = (vx_uint32)data->u.img.uniform[0]; break;
+        case VX_DF_IMAGE_S32: data->u.img.uniform_pixel_value.S32 = (vx_int32)data->u.img.uniform[0]; break;
+        case VX_DF_IMAGE_U1_AMD: data->u.img.uniform_pixel_value.U8 = (vx_uint8)data->u.img.uniform[0]; break;
+        case VX_DF_IMAGE_RGB:
+            data->u.img.uniform_pixel_value.RGB[0] = (vx_uint8)data->u.img.uniform[0];
+            data->u.img.uniform_pixel_value.RGB[1] = (vx_uint8)data->u.img.uniform[1];
+            data->u.img.uniform_pixel_value.RGB[2] = (vx_uint8)data->u.img.uniform[2];
+            break;
+        case VX_DF_IMAGE_RGBX:
+            data->u.img.uniform_pixel_value.RGBX[0] = (vx_uint8)data->u.img.uniform[0];
+            data->u.img.uniform_pixel_value.RGBX[1] = (vx_uint8)data->u.img.uniform[1];
+            data->u.img.uniform_pixel_value.RGBX[2] = (vx_uint8)data->u.img.uniform[2];
+            data->u.img.uniform_pixel_value.RGBX[3] = (vx_uint8)data->u.img.uniform[3];
+            break;
+        case VX_DF_IMAGE_NV12:
+        case VX_DF_IMAGE_NV21:
+        case VX_DF_IMAGE_IYUV:
+        case VX_DF_IMAGE_YUV4:
+        case VX_DF_IMAGE_UYVY:
+        case VX_DF_IMAGE_YUYV:
+            data->u.img.uniform_pixel_value.YUV[0] = (vx_uint8)data->u.img.uniform[0];
+            data->u.img.uniform_pixel_value.YUV[1] = (vx_uint8)data->u.img.uniform[1];
+            data->u.img.uniform_pixel_value.YUV[2] = (vx_uint8)data->u.img.uniform[2];
+            break;
+        default: break;
+        }
         data->isInitialized = vx_true_e;
         if (data->u.img.planes > 1) {
             if (data->children)

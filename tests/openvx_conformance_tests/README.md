@@ -1,4 +1,4 @@
-# MIVisionX - OpenVX 1.3 Conformance Tests
+# MIVisionX - OpenVX 1.3.2 Conformance Tests
 
 Runs the [Khronos OpenVX CTS](https://github.com/KhronosGroup/OpenVX-cts) (branch `openvx_1.3.2`) against the MIVisionX implementation across the `HOST`, `HIP`, and `OCL` backends.
 

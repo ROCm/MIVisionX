@@ -39,6 +39,13 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 BACKEND="${1:-HOST}"
 BACKEND="${BACKEND^^}"
 
+# Consume the backend positional so it is not forwarded again via "$@" below;
+# otherwise runConformanceTests.py's argparse sees an unexpected positional and
+# exits. Only shift when a positional was actually supplied.
+if [[ $# -gt 0 ]]; then
+    shift
+fi
+
 case "${BACKEND}" in
   HOST|HIP|ALL) ;;
   *)

@@ -6,12 +6,12 @@ AMD MIVisionX toolkit - version 4.0.0. A streamlined computer vision toolkit bui
 
 ```
 MIVisionX/
-├── amd_openvx/                    # Core AMD OpenVX implementation (v1.3.0)
+├── amd_openvx/                    # Core AMD OpenVX implementation (v1.3.2)
 │   └── openvx/
 │       ├── ago/                   # AMD Graph Optimizer (AGO) engine - CPU & GPU kernels
 │       ├── api/                   # OpenVX API (vx_api.cpp, vx_nodes.cpp, vxu.cpp)
 │       ├── hipvx/                 # HIP GPU backend kernels
-│       └── include/               # Khronos OpenVX 1.3 standard headers (VX/) + AMD extensions
+│       └── include/               # Khronos OpenVX 1.3.2 standard headers (VX/) + AMD extensions
 ├── amd_openvx_extensions/         # OpenVX extension modules
 │   └── amd_rpp/                   # ROCm Performance Primitives extension (CPU/HIP; CPU-only with OpenCL core)
 ├── utilities/                     # CLI tools
@@ -76,7 +76,7 @@ Default install prefix: `${ROCM_PATH}` (defaults to `/opt/rocm`).
 
 ## OpenVX Conformance Tests
 
-The Khronos OpenVX CTS is cloned from `https://github.com/KhronosGroup/OpenVX-cts.git` (branch `openvx_1.3`).
+The Khronos OpenVX CTS is cloned from `https://github.com/KhronosGroup/OpenVX-cts.git` (branch `openvx_1.3.2`).
 
 ### Running Conformance Locally
 

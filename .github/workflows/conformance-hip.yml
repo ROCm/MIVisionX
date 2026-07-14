@@ -515,8 +515,13 @@ jobs:
           if-no-files-found: ignore
 
   # ===========================================================================
-  # Test Stage — all jobs run on gfx1030 against the debug+coverage build.
-  # AGO_DEFAULT_TARGET=GPU routes execution through the HIP backend.
+  # Test Stage — all jobs run against the debug+coverage build.
+  # Each suite runs TWICE: once with AGO_DEFAULT_TARGET=CPU and once with
+  # AGO_DEFAULT_TARGET=GPU (local tests use the equivalent runvx -affinity via
+  # the script --backend_type/--hardware_mode flags). The HIP build compiles and
+  # instruments BOTH the CPU HAF kernels and the HIP kernels, so running only the
+  # GPU target left every CPU-path line uncovered and understated HIP coverage.
+  # Exercising both targets covers both code paths; both are hard gates.
   # Each job uploads profraw files for the coverage-summary-hip job.
   # ===========================================================================
 
@@ -552,10 +557,16 @@ jobs:
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
-          export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/baseline_%p.profraw
-          timeout 300 ./bin/vx_test_conformance --filter="GraphBase.*:Logging.*:SmokeTestBase.*:SmokeTest.*:TargetBase.*:Target.*"
+          # Run each suite on both AGO targets. In the HIP build the CPU HAF
+          # kernels and the HIP kernels are both compiled/instrumented, so
+          # exercising CPU and GPU covers both code paths (not just GPU).
+          for target in CPU GPU; do
+            echo "::group::baseline (AGO_DEFAULT_TARGET=$target)"
+            AGO_DEFAULT_TARGET=$target timeout 300 ./bin/vx_test_conformance --filter="GraphBase.*:Logging.*:SmokeTestBase.*:SmokeTest.*:TargetBase.*:Target.*"
+            echo "::endgroup::"
+          done
       - name: Upload profraw
         # Coverage data is best-effort: a transient GitHub artifact-service
         # upload timeout must not fail an otherwise-passing test job (the
@@ -598,10 +609,15 @@ jobs:
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
-          export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/graph_%p.profraw
-          timeout 600 ./bin/vx_test_conformance --filter="Graph.*:GraphCallback.*:GraphDelay.*:GraphROI.*:UserNode.*"
+          # Run each suite on both AGO targets (CPU HAF + HIP kernels are both
+          # compiled/instrumented in the HIP build).
+          for target in CPU GPU; do
+            echo "::group::graph (AGO_DEFAULT_TARGET=$target)"
+            AGO_DEFAULT_TARGET=$target timeout 600 ./bin/vx_test_conformance --filter="Graph.*:GraphCallback.*:GraphDelay.*:GraphROI.*:UserNode.*"
+            echo "::endgroup::"
+          done
       - name: Upload profraw
         # Coverage data is best-effort: a transient GitHub artifact-service
         # upload timeout must not fail an otherwise-passing test job (the
@@ -644,10 +660,15 @@ jobs:
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
-          export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/data_objects_%p.profraw
-          timeout 300 ./bin/vx_test_conformance --filter="Scalar.*:Array.*:ObjectArray.*:Matrix.*:Convolution.*:Distribution.*:LUT.*:Histogram.*"
+          # Run each suite on both AGO targets (CPU HAF + HIP kernels are both
+          # compiled/instrumented in the HIP build).
+          for target in CPU GPU; do
+            echo "::group::data-objects (AGO_DEFAULT_TARGET=$target)"
+            AGO_DEFAULT_TARGET=$target timeout 300 ./bin/vx_test_conformance --filter="Scalar.*:Array.*:ObjectArray.*:Matrix.*:Convolution.*:Distribution.*:LUT.*:Histogram.*"
+            echo "::endgroup::"
+          done
       - name: Upload profraw
         # Coverage data is best-effort: a transient GitHub artifact-service
         # upload timeout must not fail an otherwise-passing test job (the
@@ -690,10 +711,15 @@ jobs:
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
-          export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/image_ops_%p.profraw
-          timeout 600 ./bin/vx_test_conformance --filter="Image.*:vxCopyImagePatch.*:vxMapImagePatch.*:vxCreateImageFromChannel.*:vxCopyRemapPatch.*:vxMapRemapPatch.*"
+          # Run each suite on both AGO targets (CPU HAF + HIP kernels are both
+          # compiled/instrumented in the HIP build).
+          for target in CPU GPU; do
+            echo "::group::image-ops (AGO_DEFAULT_TARGET=$target)"
+            AGO_DEFAULT_TARGET=$target timeout 600 ./bin/vx_test_conformance --filter="Image.*:vxCopyImagePatch.*:vxMapImagePatch.*:vxCreateImageFromChannel.*:vxCopyRemapPatch.*:vxMapRemapPatch.*"
+            echo "::endgroup::"
+          done
       - name: Upload profraw
         # Coverage data is best-effort: a transient GitHub artifact-service
         # upload timeout must not fail an otherwise-passing test job (the
@@ -736,10 +762,15 @@ jobs:
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
-          export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_color_%p.profraw
-          timeout 300 ./bin/vx_test_conformance --filter="ColorConvert.*:ChannelExtract.*:ChannelCombine.*:vxConvertDepth.*:vxuConvertDepth.*"
+          # Run each suite on both AGO targets (CPU HAF + HIP kernels are both
+          # compiled/instrumented in the HIP build).
+          for target in CPU GPU; do
+            echo "::group::vision-color (AGO_DEFAULT_TARGET=$target)"
+            AGO_DEFAULT_TARGET=$target timeout 300 ./bin/vx_test_conformance --filter="ColorConvert.*:ChannelExtract.*:ChannelCombine.*:vxConvertDepth.*:vxuConvertDepth.*"
+            echo "::endgroup::"
+          done
       - name: Upload profraw
         # Coverage data is best-effort: a transient GitHub artifact-service
         # upload timeout must not fail an otherwise-passing test job (the
@@ -833,10 +864,15 @@ jobs:
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
-          export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_arithmetic_%p.profraw
-          timeout 600 ./bin/vx_test_conformance --filter="vxAddSub.*:vxuAddSub.*:vxMultiply.*:vxuMultiply.*:vxBinOp8u.*:vxuBinOp8u.*:vxBinOp16s.*:vxuBinOp16s.*:vxBinOp1u.*:vxuBinOp1u.*:vxNot.*:vxuNot.*:WeightedAverage.*:Threshold.*"
+          # Run each suite on both AGO targets (CPU HAF + HIP kernels are both
+          # compiled/instrumented in the HIP build).
+          for target in CPU GPU; do
+            echo "::group::vision-arithmetic (AGO_DEFAULT_TARGET=$target)"
+            AGO_DEFAULT_TARGET=$target timeout 600 ./bin/vx_test_conformance --filter="vxAddSub.*:vxuAddSub.*:vxMultiply.*:vxuMultiply.*:vxBinOp8u.*:vxuBinOp8u.*:vxBinOp16s.*:vxuBinOp16s.*:vxBinOp1u.*:vxuBinOp1u.*:vxNot.*:vxuNot.*:WeightedAverage.*:Threshold.*"
+            echo "::endgroup::"
+          done
       - name: Upload profraw
         # Coverage data is best-effort: a transient GitHub artifact-service
         # upload timeout must not fail an otherwise-passing test job (the
@@ -879,10 +915,15 @@ jobs:
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
-          export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_geometric_%p.profraw
-          timeout 600 ./bin/vx_test_conformance --filter="Scale.*:WarpAffine.*:WarpPerspective.*:Remap.*:HalfScaleGaussian.*"
+          # Run each suite on both AGO targets (CPU HAF + HIP kernels are both
+          # compiled/instrumented in the HIP build).
+          for target in CPU GPU; do
+            echo "::group::vision-geometric (AGO_DEFAULT_TARGET=$target)"
+            AGO_DEFAULT_TARGET=$target timeout 600 ./bin/vx_test_conformance --filter="Scale.*:WarpAffine.*:WarpPerspective.*:Remap.*:HalfScaleGaussian.*"
+            echo "::endgroup::"
+          done
       - name: Upload profraw
         # Coverage data is best-effort: a transient GitHub artifact-service
         # upload timeout must not fail an otherwise-passing test job (the
@@ -925,10 +966,15 @@ jobs:
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
-          export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_features_%p.profraw
-          timeout 600 ./bin/vx_test_conformance --filter="HarrisCorners.*:FastCorners.*:vxCanny.*:vxuCanny.*"
+          # Run each suite on both AGO targets (CPU HAF + HIP kernels are both
+          # compiled/instrumented in the HIP build).
+          for target in CPU GPU; do
+            echo "::group::vision-features (AGO_DEFAULT_TARGET=$target)"
+            AGO_DEFAULT_TARGET=$target timeout 600 ./bin/vx_test_conformance --filter="HarrisCorners.*:FastCorners.*:vxCanny.*:vxuCanny.*"
+            echo "::endgroup::"
+          done
       - name: Upload profraw
         # Coverage data is best-effort: a transient GitHub artifact-service
         # upload timeout must not fail an otherwise-passing test job (the
@@ -971,10 +1017,15 @@ jobs:
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
-          export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_statistics_%p.profraw
-          timeout 300 ./bin/vx_test_conformance --filter="MeanStdDev.*:MinMaxLoc.*:Integral.*"
+          # Run each suite on both AGO targets (CPU HAF + HIP kernels are both
+          # compiled/instrumented in the HIP build).
+          for target in CPU GPU; do
+            echo "::group::vision-statistics (AGO_DEFAULT_TARGET=$target)"
+            AGO_DEFAULT_TARGET=$target timeout 300 ./bin/vx_test_conformance --filter="MeanStdDev.*:MinMaxLoc.*:Integral.*"
+            echo "::endgroup::"
+          done
       - name: Upload profraw
         # Coverage data is best-effort: a transient GitHub artifact-service
         # upload timeout must not fail an otherwise-passing test job (the
@@ -1017,10 +1068,15 @@ jobs:
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
           export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
-          export AGO_DEFAULT_TARGET=GPU
           export AGO_LOG_STDERR=1
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_pyramid_%p.profraw
-          timeout 300 ./bin/vx_test_conformance --filter="GaussianPyramid.*:LaplacianPyramid.*:LaplacianReconstruct.*:OptFlowPyrLK.*"
+          # Run each suite on both AGO targets (CPU HAF + HIP kernels are both
+          # compiled/instrumented in the HIP build).
+          for target in CPU GPU; do
+            echo "::group::vision-pyramid (AGO_DEFAULT_TARGET=$target)"
+            AGO_DEFAULT_TARGET=$target timeout 300 ./bin/vx_test_conformance --filter="GaussianPyramid.*:LaplacianPyramid.*:LaplacianReconstruct.*:OptFlowPyrLK.*"
+            echo "::endgroup::"
+          done
       - name: Upload profraw
         # Coverage data is best-effort: a transient GitHub artifact-service
         # upload timeout must not fail an otherwise-passing test job (the
@@ -1059,7 +1115,6 @@ jobs:
           export INSTALL_PATH=$GITHUB_WORKSPACE/install
           export LD_LIBRARY_PATH=$INSTALL_PATH/lib:${ROCM_PATH}/lib
           export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
-          export AGO_DEFAULT_TARGET=GPU
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/api_%p.profraw
 
           FAILED_TESTS=()
@@ -1080,16 +1135,22 @@ jobs:
             "coverage_boost:openvx_coverage_boost"
             "vision_coverage:openvx_vision_coverage"
           )
-          for entry in "${API_EXECUTABLES[@]}"; do
-            dir="${entry%%:*}"
-            exe="${entry##*:}"
-            echo "::group::Running ${exe}"
-            chmod +x build/api_tests/${dir}/${exe}
-            if ! ./build/api_tests/${dir}/${exe}; then
-              echo "::error::${exe} FAILED"
-              FAILED_TESTS+=("${exe}")
-            fi
-            echo "::endgroup::"
+          # Run the API test set on both AGO targets. In the HIP build the CPU
+          # HAF kernels and the HIP kernels are both compiled/instrumented, so
+          # exercising CPU and GPU covers both code paths (not just GPU).
+          for target in CPU GPU; do
+            export AGO_DEFAULT_TARGET=$target
+            for entry in "${API_EXECUTABLES[@]}"; do
+              dir="${entry%%:*}"
+              exe="${entry##*:}"
+              echo "::group::Running ${exe} (AGO_DEFAULT_TARGET=$target)"
+              chmod +x build/api_tests/${dir}/${exe}
+              if ! ./build/api_tests/${dir}/${exe}; then
+                echo "::error::${exe} FAILED (target=$target)"
+                FAILED_TESTS+=("${exe}[${target}]")
+              fi
+              echo "::endgroup::"
+            done
           done
           if [ ${#FAILED_TESTS[@]} -ne 0 ]; then
             echo "::error::The following API tests failed: ${FAILED_TESTS[*]}"
@@ -1134,9 +1195,18 @@ jobs:
           mkdir -p profraw
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib
           export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
-          export AGO_DEFAULT_TARGET=GPU
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/gdf_%p.profraw
           chmod +x install/bin/runvx
+          # Run the GDF suite on both backends: --backend_type CPU exercises the
+          # CPU HAF kernels, HIP exercises the HIP kernels. Both are compiled and
+          # instrumented in the HIP build, so this covers both code paths.
+          # runOpenVX.py sets runvx -affinity from --backend_type (CPU->CPU,
+          # HIP->GPU), so no AGO_DEFAULT_TARGET override is needed here.
+          python3 tests/amd_openvx_gdfs/runOpenVX.py \
+            --runvx_directory $GITHUB_WORKSPACE/install/bin \
+            --num_frames 10 \
+            --backend_type CPU \
+            --hidden no
           python3 tests/amd_openvx_gdfs/runOpenVX.py \
             --runvx_directory $GITHUB_WORKSPACE/install/bin \
             --num_frames 10 \
@@ -1181,15 +1251,29 @@ jobs:
           mkdir -p profraw
           export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib
           export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
-          export AGO_DEFAULT_TARGET=GPU
           export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/vision_%p.profraw
           chmod +x install/bin/runvx
-          python3 tests/vision_tests/runVisionTests.py \
-            --runvx_directory $GITHUB_WORKSPACE/install/bin --num_frames 10
-          python3 tests/vision_tests/runVisionTests.py \
-            --runvx_directory $GITHUB_WORKSPACE/install/bin --num_frames 10 --width 5 --height 3
-          python3 tests/vision_tests/runVisionTests.py \
-            --runvx_directory $GITHUB_WORKSPACE/install/bin --num_frames 10 --width 10 --height 10
+          # Run the vision node sweeps on both targets. runVisionTests.py drives
+          # runvx -affinity from --hardware_mode: CPU exercises the CPU HAF
+          # kernels, GPU (--backend_type HIP) exercises the HIP kernels — both
+          # compiled/instrumented in the HIP build.
+          #   CPU pair: --hardware_mode CPU --backend_type CPU  (script defaults)
+          #   GPU pair: --hardware_mode GPU --backend_type HIP
+          run_vision () {
+            # $1=hardware_mode $2=backend_type ; remaining args = size flags
+            local hw="$1" be="$2"; shift 2
+            echo "::group::vision nodes (hardware_mode=$hw backend_type=$be $*)"
+            python3 tests/vision_tests/runVisionTests.py \
+              --runvx_directory $GITHUB_WORKSPACE/install/bin \
+              --hardware_mode "$hw" --backend_type "$be" --num_frames 10 "$@"
+            echo "::endgroup::"
+          }
+          for pair in "CPU CPU" "GPU HIP"; do
+            set -- $pair
+            run_vision "$1" "$2"
+            run_vision "$1" "$2" --width 5 --height 3
+            run_vision "$1" "$2" --width 10 --height 10
+          done
       - name: Upload profraw
         # Coverage data is best-effort: a transient GitHub artifact-service
         # upload timeout must not fail an otherwise-passing test job (the
@@ -1201,6 +1285,265 @@ jobs:
           name: profraw-hip-vision-tests
           path: profraw/
           if-no-files-found: ignore
+
+  # ===========================================================================
+  # Benchmark Stage — GPU/HIP counterpart of the CPU workflow's `benchmark` job.
+  # Compares AMD OpenVX (MIVisionX, HIP backend) vs OpenCV on the same GPU
+  # runner, then cross-verifies both impls emit the same pixels so the speedup
+  # numbers are honest apples-to-apples. Mirrors the CPU `benchmark` job; the
+  # differences are all GPU-specific: amdclang toolchain, AGO_DEFAULT_TARGET=GPU,
+  # 4K resolution, and the 40-kernel GPU parity set (the two Laplacian kernels
+  # are excluded here for the SAME reason perf-gate-hip excludes them — a known
+  # HIP synchronisation bug produces 200-300ms outliers; they stay covered by
+  # the HIP CTS vision-pyramid job, just not by this timing comparison).
+  # ===========================================================================
+
+  benchmark-hip:
+    name: Release OpenVX vs OpenCV benchmark (HIP)
+    runs-on:
+      group: linux-shark42-runner-group
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-20260710
+      options: --device /dev/kfd --device /dev/dri
+    env:
+      # 40 vision kernels with a stable 1:1 GPU implementation compared apples-
+      # to-apples against OpenCV. Same set as perf-gate-hip: it is the CPU
+      # benchmark's 42-kernel getVisionParityKernels()+LaplacianReconstruct set
+      # MINUS LaplacianPyramid / LaplacianReconstruct, which have a known HIP
+      # synchronisation bug causing 200-300ms outliers that would corrupt the
+      # timing comparison. Keep in sync with perf-gate-hip's PARITY_KERNELS.
+      PARITY_KERNELS: "And,Or,Xor,Not,AbsDiff,Add,Subtract,Multiply,Box3x3,Gaussian3x3,Median3x3,Erode3x3,Dilate3x3,Sobel3x3,CustomConvolution,NonLinearFilter,ColorConvert_RGB2IYUV,ChannelExtract,ChannelCombine,ConvertDepth,ScaleImage_Half,WarpAffine,WarpPerspective,Remap,Histogram,EqualizeHist,MeanStdDev,MinMaxLoc,IntegralImage,GaussianPyramid,HalfScaleGaussian,CannyEdgeDetector,HarrisCorners,FastCorners,OpticalFlowPyrLK,Magnitude,Phase,TableLookup,Threshold_Binary,WeightedAverage"
+    needs:
+      - build-hip
+      - baseline-hip
+      - graph-hip
+      - data-objects-hip
+      - image-ops-hip
+      - vision-color-hip
+      - vision-filters-hip
+      - vision-arithmetic-hip
+      - vision-geometric-hip
+      - vision-features-hip
+      - vision-statistics-hip
+      - vision-pyramid-hip
+      - api-tests-hip
+      - gdf-tests-hip
+    if: always() && needs.build-hip.result == 'success' && needs.baseline-hip.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install benchmark dependencies
+        run: |
+          apt-get update -qq
+          # python3-numpy is required by scripts/cross_verify_outputs.py;
+          # libopencv-dev makes the parent CMake auto-include opencv-mark/.
+          apt-get install -y --no-install-recommends build-essential cmake git \
+            python3 python3-numpy libopencv-dev
+          pkg-config --modversion opencv4 || true
+
+      - name: Validate ROCm
+        run: |
+          rocminfo
+          amd-smi || true
+
+      - name: Download AMD OpenVX HIP Release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip
+          path: ${{ github.workspace }}/artifacts
+
+      - name: Clone openvx-mark (vendor-agnostic benchmark suite + opencv-mark companion)
+        run: |
+          git clone --depth 1 https://github.com/kiritigowda/openvx-mark.git \
+            $GITHUB_WORKSPACE/openvx-mark
+
+      - name: Build openvx-mark + opencv-mark (single source tree, identical flags)
+        run: |
+          # Parent CMake auto-includes opencv-mark/ when libopencv-dev is found,
+          # producing two binaries from one configure pass — guarantees both
+          # link the same bench_core static lib (timer, stats, JSON schema) so
+          # only the backing implementation differs. Built with amdclang so
+          # openvx-mark links the HIP-backend libopenvx cleanly.
+          mkdir -p $GITHUB_WORKSPACE/openvx-mark/build
+          cd $GITHUB_WORKSPACE/openvx-mark/build
+          cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
+            -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++" \
+            -DOPENVX_INCLUDES=$GITHUB_WORKSPACE/amd_openvx/openvx/include \
+            -DOPENVX_LIB_DIR=$GITHUB_WORKSPACE/artifacts/build/lib \
+            ..
+          cmake --build . -j$(nproc)
+          test -x ./openvx-mark \
+            || { echo "ERROR: openvx-mark not built"; exit 1; }
+          test -x ./opencv-mark/opencv-mark \
+            || { echo "ERROR: opencv-mark not built — libopencv-dev likely not detected by CMake"; exit 1; }
+          ./openvx-mark --help | head -3 || true
+          ./opencv-mark/opencv-mark --help | head -3 || true
+
+      - name: Timer self-test (both binaries)
+        run: |
+          cd $GITHUB_WORKSPACE/openvx-mark/build
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/artifacts/build/lib:${ROCM_PATH}/lib
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
+          # Catches a sloppy runner clock before we trust a single timing number.
+          ./openvx-mark --validate-timing
+          ./opencv-mark/opencv-mark --validate-timing
+
+      - name: Bench MIVisionX (40 vision kernels, 4K × 20, GPU)
+        run: |
+          cd $GITHUB_WORKSPACE/openvx-mark/build
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/artifacts/build/lib:${ROCM_PATH}/lib
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
+          export AGO_DEFAULT_TARGET=GPU
+          # Explicit `--kernel "$PARITY_KERNELS"` runs exactly the 40 GPU-parity
+          # kernels with a 1:1 OpenCV equivalent. `--skip-pipelines` matches the
+          # parity semantics (graph mode is the default). 4K is the GPU-scale
+          # resolution (matches perf-gate-hip); warmup uses the same kernel set
+          # so the `--warmup 5` JIT/cache warmup matters.
+          ./openvx-mark --resolution 4K --iterations 5 --warmup 0 --threads 1 \
+            --kernel "$PARITY_KERNELS" --skip-pipelines \
+            --output-dir /tmp/warmup-mivisionx-throwaway \
+            >/dev/null 2>&1 || true
+          ./openvx-mark --kernel "$PARITY_KERNELS" --skip-pipelines \
+            --resolution 4K --iterations 20 --warmup 5 --threads 1 \
+            --output-dir results-mivisionx
+          # Sentinel-kernel dump for downstream cross_verify_outputs.py.
+          # Runs the kernel set ONCE (no timing, no warmup) so it's cheap.
+          ./openvx-mark --dump-outputs dump-mivisionx --seed 42
+
+      - name: Bench OpenCV (40 vision kernels, 4K × 20)
+        run: |
+          cd $GITHUB_WORKSPACE/openvx-mark/build
+          # Same explicit 40-kernel set as the MIVisionX side so the two reports
+          # join 1:1 in the pairwise comparison below. OpenCV runs on CPU; this
+          # is the honest "AMD OpenVX GPU vs OpenCV" comparison the CPU workflow
+          # does on the CPU backend. `--threads 1` pins OpenCV to one thread.
+          ./opencv-mark/opencv-mark --resolution 4K --iterations 5 --warmup 0 --threads 1 \
+            --kernel "$PARITY_KERNELS" --skip-pipelines \
+            --output-dir /tmp/warmup-opencv-throwaway \
+            >/dev/null 2>&1 || true
+          ./opencv-mark/opencv-mark --kernel "$PARITY_KERNELS" --skip-pipelines \
+            --resolution 4K --iterations 20 --warmup 5 --threads 1 \
+            --output-dir results-opencv
+          ./opencv-mark/opencv-mark --dump-outputs dump-opencv --seed 42
+
+      - name: Summarize speedup (AMD OpenVX HIP vs OpenCV, 40 vision kernels)
+        if: always()
+        run: |
+          set -euo pipefail
+          cd $GITHUB_WORKSPACE/openvx-mark
+          OPENVX=build/results-mivisionx/benchmark_results.json
+          OPENCV=build/results-opencv/benchmark_results.json
+          if [ ! -f "$OPENVX" ] || [ ! -f "$OPENCV" ]; then
+            {
+              echo "# AMD OpenVX vs OpenCV — vision kernel speedup (HIP / GPU backend)"
+              echo ""
+              echo "_Missing benchmark results — cannot render the speedup summary._"
+              echo "- AMD OpenVX results: $([ -f "$OPENVX" ] && echo found || echo missing)"
+              echo "- OpenCV results: $([ -f "$OPENCV" ] && echo found || echo missing)"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          mkdir -p comparisons
+          # Rich per-kernel detail report (md + csv) — kept for the uploaded
+          # `benchmark-comparison-hip` artifact. speedup = throughput(arg2)/throughput(arg1),
+          # so OpenCV first + MIVisionX second reads as "MIVisionX over OpenCV".
+          python3 scripts/compare_reports.py "$OPENCV" "$OPENVX" \
+            --output comparisons/mivisionx-over-opencv
+
+          # Intuitive, plain-English step summary leading with the bottom line.
+          python3 $GITHUB_WORKSPACE/.github/scripts/benchmark_summary.py \
+            "$OPENVX" "$OPENCV" \
+            --candidate-label "AMD OpenVX (MIVisionX, HIP)" \
+            --baseline-label "OpenCV" \
+            --expected-kernels 40 \
+            --summary-out "$GITHUB_STEP_SUMMARY"
+
+      - name: Cross-impl numerical verification (OpenCV ↔ MIVisionX)
+        if: always()
+        run: |
+          set -euo pipefail
+          cd $GITHUB_WORKSPACE/openvx-mark
+          OPENCV_DUMP=build/dump-opencv
+          VX_DUMP=build/dump-mivisionx
+          mkdir -p comparisons
+          # Rendered as a collapsed appendix below the speedup headline: it's
+          # the proof the speedups are honest (same pixels out of both impls),
+          # not the headline a reviewer reads first.
+          {
+            echo ""
+            echo "---"
+            echo ""
+            echo "<details><summary><b>Numerical verification</b> (OpenCV ↔ MIVisionX HIP) — proof the speedups are honest</summary>"
+            echo ""
+            echo "Sentinel kernel suite (no timing, no warmup) dumped by"
+            echo "\`--dump-outputs\` on each binary; \`scripts/cross_verify_outputs.py\`"
+            echo "loads both dumps and computes max-abs-diff + PSNR + exact-%"
+            echo "per kernel against per-kernel tolerance rules. Proves the"
+            echo "speedup table above is honest apples-to-apples and not"
+            echo "\"OpenCV is faster because it's silently computing the"
+            echo "wrong thing\"."
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ ! -d "$OPENCV_DUMP" ] || [ ! -d "$VX_DUMP" ]; then
+            {
+              echo "_Skipped — dump directory missing ($VX_DUMP or $OPENCV_DUMP)._"
+              echo ""
+              echo "</details>"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          set +e
+          python3 scripts/cross_verify_outputs.py \
+            "$OPENCV_DUMP" "$VX_DUMP" \
+            --left-label "OpenCV" --right-label "MIVisionX" \
+            --json comparisons/cross-verify-mivisionx.json \
+            >> "$GITHUB_STEP_SUMMARY"
+          rc=$?
+          set -e
+          {
+            echo ""
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$rc" -ne 0 ]; then
+            echo "::warning::Cross-impl verification flagged ≥1 divergence — see job summary"
+          fi
+
+      - name: Upload per-impl benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-hip
+          path: |
+            ${{ github.workspace }}/openvx-mark/build/results-mivisionx/
+            ${{ github.workspace }}/openvx-mark/build/results-opencv/
+          if-no-files-found: ignore
+          retention-days: 90
+
+      - name: Upload pairwise comparison
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-comparison-hip
+          path: ${{ github.workspace }}/openvx-mark/comparisons/
+          if-no-files-found: ignore
+          retention-days: 90
+
+      # Sentinel kernel dumps — uploaded so a reviewer can re-run
+      # scripts/cross_verify_outputs.py locally against either pair
+      # without rebuilding any binary, and so the raw .bin files are
+      # inspectable after the fact for any divergence the verifier flagged.
+      - name: Upload sentinel output dumps
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cross-verify-dumps-hip
+          path: |
+            ${{ github.workspace }}/openvx-mark/build/dump-mivisionx/
+            ${{ github.workspace }}/openvx-mark/build/dump-opencv/
+          if-no-files-found: ignore
+          retention-days: 90
 
   # ===========================================================================
   # Coverage Stage — merge profraw from gfx1030 test jobs and generate report.

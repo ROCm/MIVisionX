@@ -150,7 +150,7 @@ jobs:
         env:
           INSTALL_PREFIX: ${{ github.workspace }}/install
         run: |
-          git clone --depth 1 -b openvx_1.3 https://github.com/KhronosGroup/OpenVX-cts.git
+          git clone --depth 1 -b openvx_1.3.2 https://github.com/KhronosGroup/OpenVX-cts.git
           cd OpenVX-cts
           mkdir -p build && cd build
           cmake .. \

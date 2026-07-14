@@ -77,7 +77,7 @@ class Defaults:
     """Compile-time defaults that are referenced in multiple places."""
 
     CTS_REPO: str = "https://github.com/KhronosGroup/OpenVX-cts.git"
-    CTS_BRANCH: str = "openvx_1.3"
+    CTS_BRANCH: str = "openvx_1.3.2"
     HIP_LIB: str = "/opt/rocm/lib/libamdhip64.so"
     LINUX_LINK_LIBS: Tuple[str, ...] = ("pthread", "dl", "m", "rt")
     PARALLEL_JOBS: int = 8

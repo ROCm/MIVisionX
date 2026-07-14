@@ -12,7 +12,7 @@ The MIVisionX test suite validates the proper installation, functionality, and p
 
 These tests focus on the fundamental OpenVX specification and AMD's implementation.
 
-* **[OpenVX Conformance Tests](openvx_conformance_tests)**: Runs the official OpenVX 1.3 Conformance tests for the Vision Feature Set, targeting both CPU and GPU (OpenCL & HIP backend) implementations.
+* **[OpenVX Conformance Tests](openvx_conformance_tests)**: Runs the official OpenVX 1.3.2 Conformance tests for the Vision Feature Set, targeting both CPU and GPU (OpenCL & HIP backend) implementations.
 * **[AMD OpenVX GDF Tests](amd_openvx_gdfs)**: Exercises AMD OpenVX functionality across CPU and GPU backends using `RunVX`.
 * **[Vision Tests](vision_tests)**: Conducts tests on OpenVX vision functions for both verification and performance assessment.
 

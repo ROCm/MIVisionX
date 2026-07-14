@@ -28,7 +28,7 @@ if(NOT DEFINED CMAKE_CXX_COMPILER AND EXISTS "${ROCM_PATH}/lib/llvm/bin/amdclang
     set(CMAKE_C_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang)
     set(CMAKE_CXX_COMPILER ${ROCM_PATH}/lib/llvm/bin/amdclang++)
 endif()
-set(VERSION "1.3.0")
+set(VERSION "1.3.2")
 
 project(openvx VERSION ${VERSION} LANGUAGES CXX)
 

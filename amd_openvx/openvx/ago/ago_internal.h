@@ -34,7 +34,7 @@ THE SOFTWARE.
 //
 
 // version
-#define AGO_VERSION "1.3.0"
+#define AGO_VERSION "1.3.2"
 
 // debug configuration
 #define ENABLE_DEBUG_MESSAGES                 0 // 0:disable 1:enable
@@ -324,6 +324,7 @@ struct AgoConfigImage {
     vx_bool isVirtual;
     vx_bool isUniform;
     vx_size uniform[4];
+    vx_pixel_value_t uniform_pixel_value; // full pixel value from vxCreateUniformImage, returned by VX_IMAGE_UNIFORM_VALUE query
     vx_bool isROI;
     vx_rectangle_t rect_roi;
     vx_rectangle_t rect_valid;

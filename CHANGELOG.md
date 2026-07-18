@@ -12,7 +12,8 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 * `MIVISIONX_HIP_CU_COUNT` environment variable to limit the number of compute units used by HIP kernels at runtime
 
 ### Fixed
-* CTS MinMaxLoc count-scalar type: `ovxKernel_MinMaxLoc` and all `agoKernel_MinMaxLoc_*` sub-kernels now declare and write count outputs as `VX_TYPE_SIZE` instead of `VX_TYPE_UINT32`, matching the OpenVX 1.3.2 spec and Khronos CTS
+* MinMaxLoc count-scalar type: `ovxKernel_MinMaxLoc` and all `agoKernel_MinMaxLoc_*` sub-kernels now declare and write count outputs as `VX_TYPE_SIZE` instead of `VX_TYPE_UINT32`, matching the OpenVX 1.3.2 spec and Khronos CTS
+* Updated `tests/openvx_api_tests/vxu_api/vxu_api.cpp` and all 17 MinMaxLoc GDF files in `tests/amd_openvx_gdfs/cpu/` to use `VX_TYPE_SIZE` / `scalar:SIZE` for count scalars
 
 ### Changed
 * README and sub-library documentation updated to explicitly state OpenVX **1.3.2** conformance throughout; spec links updated to the 1.3.2 URL

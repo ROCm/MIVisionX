@@ -4,7 +4,7 @@
 
 <p align="center"><img width="70%" src="https://raw.githubusercontent.com/ROCm/MIVisionX/develop/docs/data/MIVisionX.png" /></p>
 
-AMD MIVisionX is a computer vision toolkit built around a highly optimized, conformant open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX&trade; 1.3</a> specification. As of the `4.0.0` release, MIVisionX ships three components: the [AMD OpenVX&trade;](amd_openvx/README.md) engine, the [AMD RPP](amd_openvx_extensions/amd_rpp/README.md) OpenVX extension, and the [RunVX](utilities/runvx/README.md#amd-runvx) graph executor — across `CPU`, `HIP`, and `OpenCL` backends.
+AMD MIVisionX is a computer vision toolkit built around a highly optimized, conformant open-source implementation of the <a href="https://registry.khronos.org/OpenVX/specs/1.3.2/html/OpenVX_Specification_1_3_2.html" target="_blank">Khronos OpenVX&trade; 1.3.2</a> specification. As of the `4.0.0` release, MIVisionX ships three components: the [AMD OpenVX&trade;](amd_openvx/README.md) engine, the [AMD RPP](amd_openvx_extensions/amd_rpp/README.md) OpenVX extension, and the [RunVX](utilities/runvx/README.md#amd-runvx) graph executor — across `CPU`, `HIP`, and `OpenCL` backends.
 
 ## AMD OpenVX&trade; Extensions
 

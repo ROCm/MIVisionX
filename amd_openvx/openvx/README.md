@@ -1,6 +1,6 @@
 # AMD OpenVX&trade; Library
 
-AMD OpenVX&trade; library is a highly optimized open-source implementation of the [Khronos OpenVX 1.3](https://registry.khronos.org/OpenVX/specs/1.3/html/OpenVX_Specification_1_3.html) computer vision specification. This directory contains the core library source code.
+AMD OpenVX&trade; library is a highly optimized open-source implementation of the [Khronos OpenVX 1.3.2](https://registry.khronos.org/OpenVX/specs/1.3.2/html/OpenVX_Specification_1_3_2.html) computer vision specification. This directory contains the core library source code.
 
 ## Libraries
 

@@ -4,6 +4,6 @@ data minval = scalar:UINT8,0
 data maxval = scalar:UINT8,0
 data minloc = array:VX_TYPE_COORDINATES2D,1000
 data maxloc = array:VX_TYPE_COORDINATES2D,1000
-data mincount = scalar:UINT32,0
-data maxcount = scalar:UINT32,0
+data mincount = scalar:SIZE,0
+data maxcount = scalar:SIZE,0
 node org.khronos.openvx.minmaxloc input_1 minval maxval minloc maxloc mincount maxcount

@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-"""Build and run OpenVX 1.3 Conformance Tests (CTS) for AMD MIVisionX.
+"""Build and run OpenVX 1.3.2 Conformance Tests (CTS) for AMD MIVisionX.
 
 This script automates:
   1. Building MIVisionX for one or more backends (HOST / OCL / HIP).
@@ -51,9 +51,9 @@ import sys
 # ---------------------------------------------------------------------------
 
 __author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2018 - 2024, AMD MIVisionX - Conformance System Report"
+__copyright__ = "Copyright 2018 - 2026, AMD MIVisionX - Conformance System Report"
 __license__ = "MIT"
-__version__ = "1.4.0"
+__version__ = "1.4.1"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "mivisionx.support@amd.com"
 __status__ = "Shipping"
@@ -77,7 +77,7 @@ class Defaults:
     """Compile-time defaults that are referenced in multiple places."""
 
     CTS_REPO: str = "https://github.com/KhronosGroup/OpenVX-cts.git"
-    CTS_BRANCH: str = "openvx_1.3"
+    CTS_BRANCH: str = "openvx_1.3.2"
     HIP_LIB: str = "/opt/rocm/lib/libamdhip64.so"
     LINUX_LINK_LIBS: Tuple[str, ...] = ("pthread", "dl", "m", "rt")
     PARALLEL_JOBS: int = 8
@@ -302,7 +302,7 @@ def write_system_report(
             f.write(f"* OpenVX {key} Library\n")
             write_formatted(out, f)
         f.write("\n")
-        f.write(f"\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2024 -- runConformanceTests.py V-{__version__}**\n")
+        f.write(f"\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2026 -- runConformanceTests.py V-{__version__}**\n")
 
 
 # ---------------------------------------------------------------------------
@@ -359,7 +359,7 @@ def configure_and_build_cts(
             "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
             f"-DOPENVX_INCLUDES={openvx_include}",
             openvx_libs_arg,
-            # The OpenVX 1.3 CTS hardcodes -O3 for C sources. GCC 13 on WSL can
+            # The OpenVX 1.3.2 CTS hardcodes -O3 for C sources. GCC 13 on WSL can
             # miscompile test_array.c's small-type verifier at that level even
             # when the implementation returns the correct array bytes.
             "-DOPENVX_CFLAGS=-O0",

@@ -849,6 +849,10 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateUniformImage(vx_context context, vx_ui
         }
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
+            // Preserve the full pixel value for the VX_IMAGE_UNIFORM_VALUE query.
+            // The per-channel u.img.uniform[] is lossy (clamped to component sizes),
+            // so keep the caller's vx_pixel_value_t verbatim.
+            data->u.img.uniform_pixel_value = *value;
             agoGenerateDataName(context, "image-uniform", data->name);
             agoAddData(&context->dataList, data);
             // if data has children, add them too
@@ -1285,6 +1289,25 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryImage(vx_image image_, vx_enum attribu
                 if (size == sizeof(vx_enum)) {
                     *(vx_enum *)ptr = image->import_type;
                     status = VX_SUCCESS;
+                }
+                break;
+            case VX_IMAGE_IS_UNIFORM:
+                if (size == sizeof(vx_bool)) {
+                    *(vx_bool *)ptr = image->u.img.isUniform;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_IMAGE_UNIFORM_VALUE:
+                // Only uniform images carry a uniform value; for all other images
+                // the attribute is not supported (per OpenVX 1.3.1 spec and CTS).
+                if (size == sizeof(vx_pixel_value_t)) {
+                    if (image->u.img.isUniform) {
+                        *(vx_pixel_value_t *)ptr = image->u.img.uniform_pixel_value;
+                        status = VX_SUCCESS;
+                    }
+                    else {
+                        status = VX_ERROR_NOT_SUPPORTED;
+                    }
                 }
                 break;
             case VX_IMAGE_SIZE:

@@ -157,13 +157,13 @@ if (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
     add_library(vx_rpp SHARED ${SOURCES})
     set_target_properties(vx_rpp PROPERTIES LINKER_LANGUAGE CXX)
     set_target_properties(vx_rpp PROPERTIES POSITION_INDEPENDENT_CODE ON)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGPU_SUPPORT=1 -DRPP_BACKEND_HIP=1") # Currently used by rpp. To be removed.
+    target_compile_definitions(vx_rpp PRIVATE GPU_SUPPORT=1 RPP_BACKEND_HIP=1) # Currently used by rpp. To be removed.
 else()
     message("-- ${Green}vx_rpp -- Building with CPU backend${ColourReset}")
     set(ENABLE_HIP 0)
     add_definitions(-DENABLE_HIP=${ENABLE_HIP})
     add_library(vx_rpp SHARED ${SOURCES})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGPU_SUPPORT=0" ) # Currently used by rpp. To be removed.
+    target_compile_definitions(vx_rpp PRIVATE GPU_SUPPORT=0) # Currently used by rpp. To be removed.
 endif()
 
 set(RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND 0)
@@ -176,7 +176,7 @@ endif()
 # Audio features for VX_RPP
 if((${rpp_VERSION_MAJOR} VERSION_GREATER "3") OR (${rpp_VERSION_MAJOR} VERSION_EQUAL "3" AND ${rpp_VERSION_MINOR} VERSION_GREATER_EQUAL "1" AND ${rpp_VERSION_PATCH} VERSION_GREATER_EQUAL "1")
 AND RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DAUDIO_SUPPORT=1")
+    target_compile_definitions(vx_rpp PRIVATE AUDIO_SUPPORT=1)
     message("-- ${White}vx_rpp Audio Features Included${ColourReset}")
     target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=1)
 else()
@@ -191,12 +191,21 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 else()
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} openvx)
     # -mavx2 -- Support MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX and AVX2 built-in functions and code generation.
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
+    target_compile_options(vx_rpp PRIVATE -mavx2)
 endif()
 
 target_link_libraries(vx_rpp ${LINK_LIBRARY_LIST})
 message("-- ${White}vx_rpp -- Link Libraries:${LINK_LIBRARY_LIST}${ColourReset}")
 message("-- ${White}vx_rpp -- CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}${ColourReset}")
+
+# Code coverage instrumentation (LLVM source-based coverage).
+# Applied per-target so libvx_rpp.so emits profile data for the coverage report.
+# Not applicable on Windows/MSVC (these are LLVM/amdclang flags).
+if(CODE_COVERAGE AND NOT WIN32)
+    target_compile_options(vx_rpp PRIVATE -fprofile-instr-generate -fcoverage-mapping)
+    target_link_options(vx_rpp PRIVATE -fprofile-instr-generate -fcoverage-mapping)
+    message("-- ${Green}vx_rpp -- Code coverage ENABLED (LLVM)${ColourReset}")
+endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 
 # install MIVisionX libs -- {ROCM_PATH}/lib

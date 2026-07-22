@@ -1349,8 +1349,8 @@ int ovxKernel_MinMaxLoc(AgoNode * node, AgoKernelCommand cmd)
         node->metaList[3].data.u.arr.capacity = 0;
         node->metaList[4].data.u.arr.itemtype = VX_TYPE_COORDINATES2D;
         node->metaList[4].data.u.arr.capacity = 0;
-        node->metaList[5].data.u.scalar.type = VX_TYPE_UINT32;
-        node->metaList[6].data.u.scalar.type = VX_TYPE_UINT32;
+        node->metaList[5].data.u.scalar.type = VX_TYPE_SIZE;
+        node->metaList[6].data.u.scalar.type = VX_TYPE_SIZE;
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -21353,7 +21353,7 @@ int agoKernel_MinMaxLoc_DATA_U8DATA_Loc_None_Count_Min(AgoNode * node, AgoKernel
         // set output info
         vx_meta_format meta;
         meta = &node->metaList[0];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
@@ -21400,7 +21400,7 @@ int agoKernel_MinMaxLoc_DATA_U8DATA_Loc_None_Count_Max(AgoNode * node, AgoKernel
         // set output info
         vx_meta_format meta;
         meta = &node->metaList[0];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
@@ -21447,9 +21447,9 @@ int agoKernel_MinMaxLoc_DATA_U8DATA_Loc_None_Count_MinMax(AgoNode * node, AgoKer
         // set output info
         vx_meta_format meta;
         meta = &node->metaList[0];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
         meta = &node->metaList[1];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
@@ -21490,7 +21490,7 @@ int agoKernel_MinMaxLoc_DATA_U8DATA_Loc_Min_Count_Min(AgoNode * node, AgoKernelC
         }
         else {
             iMinLoc->u.arr.numitems = min(minCount, (vx_uint32)iMinLoc->u.arr.capacity);
-            if (iMinCount) iMinCount->u.scalar.u.u = minCount;
+            if (iMinCount) iMinCount->u.scalar.u.s = minCount;
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -21506,7 +21506,7 @@ int agoKernel_MinMaxLoc_DATA_U8DATA_Loc_Min_Count_Min(AgoNode * node, AgoKernelC
         meta = &node->metaList[0];
         meta->data.u.arr.itemtype = VX_TYPE_COORDINATES2D;
         meta = &node->metaList[1];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
@@ -21548,8 +21548,8 @@ int agoKernel_MinMaxLoc_DATA_U8DATA_Loc_Min_Count_MinMax(AgoNode * node, AgoKern
         }
         else {
             iMinLoc->u.arr.numitems = min(minCount, (vx_uint32)iMinLoc->u.arr.capacity);
-            if (iMinCount) iMinCount->u.scalar.u.u = minCount;
-            if (iMaxCount) iMaxCount->u.scalar.u.u = maxCount;
+            if (iMinCount) iMinCount->u.scalar.u.s = minCount;
+            if (iMaxCount) iMaxCount->u.scalar.u.s = maxCount;
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -21565,9 +21565,9 @@ int agoKernel_MinMaxLoc_DATA_U8DATA_Loc_Min_Count_MinMax(AgoNode * node, AgoKern
         meta = &node->metaList[0];
         meta->data.u.arr.itemtype = VX_TYPE_COORDINATES2D;
         meta = &node->metaList[1];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
         meta = &node->metaList[2];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
@@ -21608,7 +21608,7 @@ int agoKernel_MinMaxLoc_DATA_U8DATA_Loc_Max_Count_Max(AgoNode * node, AgoKernelC
         }
         else {
             iMaxLoc->u.arr.numitems = min(maxCount, (vx_uint32)iMaxLoc->u.arr.capacity);
-            if (iMaxCount) iMaxCount->u.scalar.u.u = maxCount;
+            if (iMaxCount) iMaxCount->u.scalar.u.s = maxCount;
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -21624,7 +21624,7 @@ int agoKernel_MinMaxLoc_DATA_U8DATA_Loc_Max_Count_Max(AgoNode * node, AgoKernelC
         meta = &node->metaList[0];
         meta->data.u.arr.itemtype = VX_TYPE_COORDINATES2D;
         meta = &node->metaList[1];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
@@ -21666,8 +21666,8 @@ int agoKernel_MinMaxLoc_DATA_U8DATA_Loc_Max_Count_MinMax(AgoNode * node, AgoKern
         }
         else {
             iMaxLoc->u.arr.numitems = min(maxCount, (vx_uint32)iMaxLoc->u.arr.capacity);
-            if (iMaxCount) iMaxCount->u.scalar.u.u = maxCount;
-            if (iMinCount) iMinCount->u.scalar.u.u = minCount;
+            if (iMaxCount) iMaxCount->u.scalar.u.s = maxCount;
+            if (iMinCount) iMinCount->u.scalar.u.s = minCount;
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -21683,9 +21683,9 @@ int agoKernel_MinMaxLoc_DATA_U8DATA_Loc_Max_Count_MinMax(AgoNode * node, AgoKern
         meta = &node->metaList[0];
         meta->data.u.arr.itemtype = VX_TYPE_COORDINATES2D;
         meta = &node->metaList[1];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
         meta = &node->metaList[2];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
@@ -21730,8 +21730,8 @@ int agoKernel_MinMaxLoc_DATA_U8DATA_Loc_MinMax_Count_MinMax(AgoNode * node, AgoK
         else {
             iMinLoc->u.arr.numitems = min(minCount, (vx_uint32)iMinLoc->u.arr.capacity);
             iMaxLoc->u.arr.numitems = min(maxCount, (vx_uint32)iMaxLoc->u.arr.capacity);
-            if (iMinCount) iMinCount->u.scalar.u.u = minCount;
-            if (iMaxCount) iMaxCount->u.scalar.u.u = maxCount;
+            if (iMinCount) iMinCount->u.scalar.u.s = minCount;
+            if (iMaxCount) iMaxCount->u.scalar.u.s = maxCount;
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -21749,9 +21749,9 @@ int agoKernel_MinMaxLoc_DATA_U8DATA_Loc_MinMax_Count_MinMax(AgoNode * node, AgoK
         meta = &node->metaList[1];
         meta->data.u.arr.itemtype = VX_TYPE_COORDINATES2D;
         meta = &node->metaList[2];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
         meta = &node->metaList[3];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
@@ -21798,7 +21798,7 @@ int agoKernel_MinMaxLoc_DATA_S16DATA_Loc_None_Count_Min(AgoNode * node, AgoKerne
         // set output info
         vx_meta_format meta;
         meta = &node->metaList[0];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
@@ -21845,7 +21845,7 @@ int agoKernel_MinMaxLoc_DATA_S16DATA_Loc_None_Count_Max(AgoNode * node, AgoKerne
         // set output info
         vx_meta_format meta;
         meta = &node->metaList[0];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
@@ -21892,9 +21892,9 @@ int agoKernel_MinMaxLoc_DATA_S16DATA_Loc_None_Count_MinMax(AgoNode * node, AgoKe
         // set output info
         vx_meta_format meta;
         meta = &node->metaList[0];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
         meta = &node->metaList[1];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
@@ -21935,7 +21935,7 @@ int agoKernel_MinMaxLoc_DATA_S16DATA_Loc_Min_Count_Min(AgoNode * node, AgoKernel
         }
         else {
             iMinLoc->u.arr.numitems = min(minCount, (vx_uint32)iMinLoc->u.arr.capacity);
-            if (iMinCount) iMinCount->u.scalar.u.u = minCount;
+            if (iMinCount) iMinCount->u.scalar.u.s = minCount;
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -21951,7 +21951,7 @@ int agoKernel_MinMaxLoc_DATA_S16DATA_Loc_Min_Count_Min(AgoNode * node, AgoKernel
         meta = &node->metaList[0];
         meta->data.u.arr.itemtype = VX_TYPE_COORDINATES2D;
         meta = &node->metaList[1];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
@@ -21993,8 +21993,8 @@ int agoKernel_MinMaxLoc_DATA_S16DATA_Loc_Min_Count_MinMax(AgoNode * node, AgoKer
         }
         else {
             iMinLoc->u.arr.numitems = min(minCount, (vx_uint32)iMinLoc->u.arr.capacity);
-            if (iMinCount) iMinCount->u.scalar.u.u = minCount;
-            if (iMaxCount) iMaxCount->u.scalar.u.u = maxCount;
+            if (iMinCount) iMinCount->u.scalar.u.s = minCount;
+            if (iMaxCount) iMaxCount->u.scalar.u.s = maxCount;
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -22010,9 +22010,9 @@ int agoKernel_MinMaxLoc_DATA_S16DATA_Loc_Min_Count_MinMax(AgoNode * node, AgoKer
         meta = &node->metaList[0];
         meta->data.u.arr.itemtype = VX_TYPE_COORDINATES2D;
         meta = &node->metaList[1];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
         meta = &node->metaList[2];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
@@ -22053,7 +22053,7 @@ int agoKernel_MinMaxLoc_DATA_S16DATA_Loc_Max_Count_Max(AgoNode * node, AgoKernel
         }
         else {
             iMaxLoc->u.arr.numitems = min(maxCount, (vx_uint32)iMaxLoc->u.arr.capacity);
-            if (iMaxCount) iMaxCount->u.scalar.u.u = maxCount;
+            if (iMaxCount) iMaxCount->u.scalar.u.s = maxCount;
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -22069,7 +22069,7 @@ int agoKernel_MinMaxLoc_DATA_S16DATA_Loc_Max_Count_Max(AgoNode * node, AgoKernel
         meta = &node->metaList[0];
         meta->data.u.arr.itemtype = VX_TYPE_COORDINATES2D;
         meta = &node->metaList[1];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
@@ -22111,8 +22111,8 @@ int agoKernel_MinMaxLoc_DATA_S16DATA_Loc_Max_Count_MinMax(AgoNode * node, AgoKer
         }
         else {
             iMaxLoc->u.arr.numitems = min(maxCount, (vx_uint32)iMaxLoc->u.arr.capacity);
-            if (iMinCount) iMinCount->u.scalar.u.u = minCount;
-            if (iMaxCount) iMaxCount->u.scalar.u.u = maxCount;
+            if (iMinCount) iMinCount->u.scalar.u.s = minCount;
+            if (iMaxCount) iMaxCount->u.scalar.u.s = maxCount;
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -22128,9 +22128,9 @@ int agoKernel_MinMaxLoc_DATA_S16DATA_Loc_Max_Count_MinMax(AgoNode * node, AgoKer
         meta = &node->metaList[0];
         meta->data.u.arr.itemtype = VX_TYPE_COORDINATES2D;
         meta = &node->metaList[1];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
         meta = &node->metaList[2];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
@@ -22175,8 +22175,8 @@ int agoKernel_MinMaxLoc_DATA_S16DATA_Loc_MinMax_Count_MinMax(AgoNode * node, Ago
         else {
             iMinLoc->u.arr.numitems = min(minCount, (vx_uint32)iMinLoc->u.arr.capacity);
             iMaxLoc->u.arr.numitems = min(maxCount, (vx_uint32)iMaxLoc->u.arr.capacity);
-            if (iMinCount) iMinCount->u.scalar.u.u = minCount;
-            if (iMaxCount) iMaxCount->u.scalar.u.u = maxCount;
+            if (iMinCount) iMinCount->u.scalar.u.s = minCount;
+            if (iMaxCount) iMaxCount->u.scalar.u.s = maxCount;
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -22194,9 +22194,9 @@ int agoKernel_MinMaxLoc_DATA_S16DATA_Loc_MinMax_Count_MinMax(AgoNode * node, Ago
         meta = &node->metaList[1];
         meta->data.u.arr.itemtype = VX_TYPE_COORDINATES2D;
         meta = &node->metaList[2];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
         meta = &node->metaList[3];
-        meta->data.u.scalar.type = VX_TYPE_UINT32;
+        meta->data.u.scalar.type = VX_TYPE_SIZE;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;

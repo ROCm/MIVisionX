@@ -1370,7 +1370,7 @@ vx_status agoVerifyNode(AgoNode * node)
                 vx_meta_format meta = &node->metaList[arg];
                 // For user kernels without a validate callback, infer output meta from the
                 // bound object so source/sink kernels can verify.
-                if (!kernel->validate_f && data && kernel->argType[arg] && kernel->argType[arg] != VX_TYPE_REFERENCE) {
+                if (kernel->user_kernel && !kernel->validate_f && data && kernel->argType[arg] && kernel->argType[arg] != VX_TYPE_REFERENCE) {
                     meta->data.ref.type = data->ref.type;
                     meta->data.u = data->u;
                 }

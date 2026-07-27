@@ -707,10 +707,10 @@ AgoKernel * agoFindKernelByName(AgoContext * acontext, const vx_char * name)
 AgoData * agoFindDataByName(AgoContext * acontext, AgoGraph * agraph, vx_char * name)
 {
     // check for <object>[index] syntax
-    char actualName[256]; strcpy(actualName, name);
+    char actualName[256]; snprintf(actualName, sizeof(actualName), "%s", name);
     int index[4] = { -1, -1, -1, -1 }; // index >=0 indicates special object
     const char * s = strstr(name, "[");
-    if (s && name[strlen(name) - 1] == ']') {
+    if (s && name[strlen(name) - 1] == ']' && (size_t)(s - name) < sizeof(actualName)) {
         actualName[s - name] = 0;
         for (int i = 0; i < 4 && *s == '['; i++) {
             s++; if (*s == '-') s++;
@@ -1245,6 +1245,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         //data->u.img.isROI = vx_true_e;
         const char *s = strstr(desc, ","); if (!s) return -1;
         char master_name[128];
+        if ((size_t)(s - desc) >= sizeof(master_name)) return -1;
         memcpy(master_name, desc, s - desc); master_name[s - desc] = 0;
         s++;
         if (sscanf(s, "%u,%u,%u,%u", &data->u.img.rect_roi.start_x, &data->u.img.rect_roi.start_y, &data->u.img.rect_roi.end_x, &data->u.img.rect_roi.end_y) != 4) return -1;
@@ -1335,7 +1336,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->ref.type = VX_TYPE_PYRAMID;
         memcpy(&data->u.pyr.format, desc, sizeof(data->u.pyr.format));
         char scale[64] = "";
-        if (sscanf(desc + 5, "%d,%d," VX_FMT_SIZE ",%s", &data->u.pyr.width, &data->u.pyr.height, &data->u.pyr.levels, scale) != 4) return -1;
+        if (sscanf(desc + 5, "%d,%d," VX_FMT_SIZE ",%63s", &data->u.pyr.width, &data->u.pyr.height, &data->u.pyr.levels, scale) != 4) return -1;
         if (!strncmp(scale, "HALF", 4)) data->u.pyr.scale = VX_SCALE_PYRAMID_HALF;
         else if (!strncmp(scale, "ORB", 3)) data->u.pyr.scale = VX_SCALE_PYRAMID_ORB;
         else data->u.pyr.scale = (vx_float32)atof(scale);
@@ -1394,6 +1395,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->ref.type = VX_TYPE_ARRAY;
         const char *s = strstr(desc, ","); if (!s) return -1;
         char data_type[64];
+        if ((size_t)(s - desc) >= sizeof(data_type)) return -1;
         memcpy(data_type, desc, s - desc); data_type[s - desc] = 0;
         (void)sscanf(++s, "" VX_FMT_SIZE "", &data->u.arr.capacity);
         data->u.arr.itemtype = agoName2Enum(data_type);
@@ -1472,6 +1474,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->ref.type = VX_TYPE_OBJECT_ARRAY;
         const char *s = strstr(desc, ","); if (!s) return -1;
         char data_type[64];
+        if ((size_t)(s - desc) >= sizeof(data_type)) return -1;
         memcpy(data_type, desc, s - desc); data_type[s - desc] = 0;
         (void)sscanf(++s, "" VX_FMT_SIZE "", &data->u.objarr.numitems);
         data->u.objarr.itemtype = agoName2Enum(data_type);
@@ -1522,6 +1525,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->ref.type = VX_TYPE_LUT;
         const char *s = strstr(desc, ","); if (!s) return -1;
         char data_type[64];
+        if ((size_t)(s - desc) >= sizeof(data_type)) return -1;
         memcpy(data_type, desc, s - desc); data_type[s - desc] = 0;
         data->u.lut.type = agoName2Enum(data_type);
         if (data->u.lut.type != VX_TYPE_UINT8 && data->u.lut.type != VX_TYPE_INT16)
@@ -1670,6 +1674,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->ref.type = VX_TYPE_MATRIX;
         const char *s = strstr(desc, ","); if (!s) return -1;
         char data_type[64];
+        if ((size_t)(s - desc) >= sizeof(data_type)) return -1;
         memcpy(data_type, desc, s - desc); data_type[s - desc] = 0;
         data->u.mat.type = agoName2Enum(data_type);
         if (data->u.mat.type != VX_TYPE_INT32 && data->u.mat.type != VX_TYPE_FLOAT32 && data->u.mat.type != VX_TYPE_UINT8) {
@@ -1715,6 +1720,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->ref.type = VX_TYPE_SCALAR;
         const char *s = strstr(desc, ","); if (!s) return -1;
         char data_type[64];
+        if ((size_t)(s - desc) >= sizeof(data_type)) return -1;
         memcpy(data_type, desc, s - desc); data_type[s - desc] = 0;
         s++;
         data->u.scalar.type = agoName2Enum(data_type);
@@ -1879,7 +1885,8 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
             data->u.tensor.start[i] = 0;
             data->u.tensor.end[i] = data->u.tensor.dims[i];
             data->u.tensor.stride[i] = data->size;
-            data->size *= data->u.tensor.dims[i];
+            if (__builtin_mul_overflow(data->size, (vx_size)data->u.tensor.dims[i], &data->size))
+                return -1;
             // make sure that the size and stride[1] are multiple of 4:: commending out since it breaks fp16
 /*
             if (i == 0 && (data->size & 3)) {
@@ -1952,7 +1959,8 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
             data->u.tensor.dims[i] = end[i] - start[i];
             data->u.tensor.stride[i] = dataMaster->u.tensor.stride[i];
             data->u.tensor.offset += start[i] * dataMaster->u.tensor.stride[i];
-            data->size *= data->u.tensor.dims[i];
+            if (__builtin_mul_overflow(data->size, (vx_size)data->u.tensor.dims[i], &data->size))
+                return -1;
         }
         for (vx_size i = data->u.tensor.num_dims; i < AGO_MAX_TENSOR_DIMENSIONS; i++) {
             data->u.tensor.start[i] = 0;
@@ -2426,10 +2434,12 @@ int agoDataSanityCheckAndUpdate(AgoData * data)
             //   - make sure that the stride is multiple of 16 bytes
             if (data->import_type == VX_IMPORT_TYPE_NONE) {
                 data->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->u.img.width, data));
-                data->size = ALIGN16(data->u.img.height) * data->u.img.stride_in_bytes;
+                if (__builtin_mul_overflow((vx_size)ALIGN16(data->u.img.height), (vx_size)data->u.img.stride_in_bytes, &data->size))
+                    return -1;
             }
             else {
-                data->size = (vx_size)((unsigned long)(data->u.img.height * data->u.img.stride_in_bytes));
+                if (__builtin_mul_overflow((vx_size)data->u.img.height, (vx_size)data->u.img.stride_in_bytes, &data->size))
+                    return -1;
             }
             if (!data->size)
                 return -1;
@@ -2549,7 +2559,11 @@ int agoDataSanityCheckAndUpdate(AgoData * data)
         else
             data->u.remap.remap_fractional_bits = AGO_REMAP_FRACTIONAL_BITS;
         // calculate other attributes and buffer size
-        data->size = (vx_size)((unsigned long)(data->u.remap.dst_width * data->u.remap.dst_height) * sizeof(ago_coord2d_ushort_t));
+        vx_size remap_bytes;
+        if (__builtin_mul_overflow((vx_size)data->u.remap.dst_width, (vx_size)data->u.remap.dst_height, &remap_bytes) ||
+            __builtin_mul_overflow(remap_bytes, (vx_size)sizeof(ago_coord2d_ushort_t), &remap_bytes))
+            return -1;
+        data->size = remap_bytes;
         if (!data->size)
             return -1;
     }

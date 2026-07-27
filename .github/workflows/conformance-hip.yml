@@ -284,6 +284,8 @@ jobs:
             -DOPENVX_INCLUDES="$GITHUB_WORKSPACE/amd_openvx/openvx/include" \
             -DOPENVX_LIBRARIES="$GITHUB_WORKSPACE/install/lib/libopenvx.so;$GITHUB_WORKSPACE/install/lib/libvxu.so;pthread;dl;m;rt" \
             -DOPENVX_CONFORMANCE_VISION=ON \
+            -DOPENVX_USE_PIPELINING=ON \
+            -DOPENVX_USE_STREAMING=ON \
             -DCMAKE_C_STANDARD_LIBRARIES="-L${ROCM_PATH}/lib -lamdhip64" \
             -DCMAKE_CXX_STANDARD_LIBRARIES="-L${ROCM_PATH}/lib -lamdhip64" \
             -DCMAKE_EXE_LINKER_FLAGS="-Wl,-rpath-link,${ROCM_PATH}/lib"
@@ -1028,6 +1030,88 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: profraw-hip-vision-pyramid
+          path: profraw/
+          if-no-files-found: ignore
+
+  pipelining-hip:
+    name: Pipelining (HIP)
+    runs-on:
+      group: linux-shark42-runner-group
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-20260710
+      options: --device /dev/kfd --device /dev/dri
+    needs: build-hip-debug
+    steps:
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Validate ROCm
+        run: |
+          rocminfo
+          amd-smi || true
+      - name: Run pipelining tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
+          export AGO_LOG_STDERR=1
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/pipelining_%p.profraw
+          for target in CPU GPU; do
+            echo "::group::pipelining (AGO_DEFAULT_TARGET=$target)"
+            AGO_DEFAULT_TARGET=$target timeout 5400 ./bin/vx_test_conformance --filter="GraphPipeline.*"
+            echo "::endgroup::"
+          done
+      - name: Upload profraw
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-pipelining
+          path: profraw/
+          if-no-files-found: ignore
+
+  streaming-hip:
+    name: Streaming (HIP)
+    runs-on:
+      group: linux-shark42-runner-group
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-20260710
+      options: --device /dev/kfd --device /dev/dri
+    needs: build-hip-debug
+    steps:
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Validate ROCm
+        run: |
+          rocminfo
+          amd-smi || true
+      - name: Run streaming tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
+          export AGO_LOG_STDERR=1
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/streaming_%p.profraw
+          for target in CPU GPU; do
+            echo "::group::streaming (AGO_DEFAULT_TARGET=$target)"
+            AGO_DEFAULT_TARGET=$target timeout 900 ./bin/vx_test_conformance --filter="GraphStreaming.*"
+            echo "::endgroup::"
+          done
+      - name: Upload profraw
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-streaming
           path: profraw/
           if-no-files-found: ignore
 

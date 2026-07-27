@@ -158,7 +158,9 @@ jobs:
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DOPENVX_INCLUDES="${{ github.workspace }}/amd_openvx/openvx/include" \
             -DOPENVX_LIBRARIES="${INSTALL_PREFIX}/lib/libopenvx.so;${INSTALL_PREFIX}/lib/libvxu.so;pthread;dl;m;rt" \
-            -DOPENVX_CONFORMANCE_VISION=ON
+            -DOPENVX_CONFORMANCE_VISION=ON \
+            -DOPENVX_USE_PIPELINING=ON \
+            -DOPENVX_USE_STREAMING=ON
           make -j$(nproc)
 
       - name: Upload debug build artifacts
@@ -634,6 +636,60 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: profraw-vision-pyramid
+          path: profraw/
+          if-no-files-found: ignore
+
+  pipelining-cpu:
+    name: Pipelining (CPU)
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run pipelining tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/pipelining_%p.profraw
+          timeout 5400 ./bin/vx_test_conformance --filter="GraphPipeline.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-pipelining
+          path: profraw/
+          if-no-files-found: ignore
+
+  streaming-cpu:
+    name: Streaming (CPU)
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run streaming tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/streaming_%p.profraw
+          timeout 900 ./bin/vx_test_conformance --filter="GraphStreaming.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-streaming
           path: profraw/
           if-no-files-found: ignore
 

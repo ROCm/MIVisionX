@@ -325,6 +325,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryContext(vx_context context, vx_enum at
                     status = VX_SUCCESS;
                 }
                 break;
+            case VX_CONTEXT_EVENT_TIMEOUT:
+                if (size == sizeof(vx_uint32)) {
+                    AgoContextEventSystem * evsys = agoGetContextEventSystem(context);
+                    *(vx_uint32 *)ptr = evsys ? evsys->timeout_ms : VX_TIMEOUT_WAIT_FOREVER;
+                    status = VX_SUCCESS;
+                }
+                break;
             default:
                 status = VX_ERROR_NOT_SUPPORTED;
                 break;
@@ -354,6 +361,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetContextAttribute(vx_context context, vx_
         CAgoLock lock(context->cs);
         switch (attribute)
         {
+        case VX_CONTEXT_EVENT_TIMEOUT:
+            if (size == sizeof(vx_uint32)) {
+                AgoContextEventSystem * evsys = agoGetContextEventSystem(context);
+                evsys->timeout_ms = *(const vx_uint32 *)ptr;
+                status = VX_SUCCESS;
+            }
+            break;
         case VX_CONTEXT_ATTRIBUTE_IMMEDIATE_BORDER_MODE:
             if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
             if (size == sizeof(vx_border_mode_t)) {
@@ -2539,6 +2553,18 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryKernel(vx_kernel kernel, vx_enum attri
                     status = VX_SUCCESS;
                 }
                 break;
+            case VX_KERNEL_PIPEUP_OUTPUT_DEPTH:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = kernel->pipeup_output_depth;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_KERNEL_PIPEUP_INPUT_DEPTH:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = kernel->pipeup_input_depth;
+                    status = VX_SUCCESS;
+                }
+                break;
             default:
                 status = VX_ERROR_NOT_SUPPORTED;
                 break;
@@ -2658,7 +2684,7 @@ VX_API_ENTRY vx_kernel VX_API_CALL vxAddUserKernel(vx_context context,
     vx_kernel_deinitialize_f deinit)
 {
     vx_kernel kernel = NULL;
-    if (agoIsValidContext(context) && numParams > 0 && numParams <= AGO_MAX_PARAMS && func_ptr && validate) {
+    if (agoIsValidContext(context) && numParams > 0 && numParams <= AGO_MAX_PARAMS && func_ptr) {
         CAgoLock lock(context->cs);
         // make sure there are no kernels with the same name
         if (!agoFindKernelByEnum(context, enumeration) && !agoFindKernelByName(context, name)) {
@@ -2782,9 +2808,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxRemoveKernel(vx_kernel kernel)
     vx_status status = VX_ERROR_INVALID_REFERENCE;
     if (agoIsValidKernel(kernel)) {
         status = VX_ERROR_INVALID_PARAMETERS;
-        // release if the kernel is not finalized and not a built-in kernel or user kernel with validate_f without external references
+        // release if the kernel is not finalized or is an externally registered user kernel
         if (!kernel->finalized ||
-            (kernel->validate_f && kernel->external_kernel && (kernel->flags & AGO_KERNEL_FLAG_GROUP_USER) /*&&
+            (kernel->external_kernel && (kernel->flags & AGO_KERNEL_FLAG_GROUP_USER) /*&&
              kernel->ref.internal_count < 2 && kernel->ref.external_count == 0*/))
         {
             CAgoLock lock(kernel->ref.context->cs);
@@ -2820,6 +2846,20 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enu
                 if (size == sizeof(vx_size)) {
                     kernel->localDataSize = *(vx_size *)ptr;
                     status = VX_SUCCESS;
+                }
+                break;
+            case VX_KERNEL_PIPEUP_OUTPUT_DEPTH:
+                if (size == sizeof(vx_uint32)) {
+                    vx_uint32 v = *(const vx_uint32 *)ptr;
+                    if (v < 1 || kernel->finalized) status = VX_ERROR_INVALID_PARAMETERS;
+                    else { kernel->pipeup_output_depth = v; status = VX_SUCCESS; }
+                }
+                break;
+            case VX_KERNEL_PIPEUP_INPUT_DEPTH:
+                if (size == sizeof(vx_uint32)) {
+                    vx_uint32 v = *(const vx_uint32 *)ptr;
+                    if (v < 1 || kernel->finalized) status = VX_ERROR_INVALID_PARAMETERS;
+                    else { kernel->pipeup_input_depth = v; status = VX_SUCCESS; }
                 }
                 break;
             case VX_KERNEL_ATTRIBUTE_AMD_NODE_REGEN_CALLBACK:
@@ -3158,6 +3198,39 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryGraph(vx_graph graph, vx_enum attribut
                     status = VX_SUCCESS;
                 }
                 break;
+#if OPENVX_USE_PIPELINING
+            case VX_GRAPH_SCHEDULE_MODE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = graph->pipelining ? graph->pipelining->schedule_mode : VX_GRAPH_SCHEDULE_MODE_NORMAL;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_GRAPH_TIMEOUT:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = graph->pipelining ? graph->pipelining->timeout_ms : VX_TIMEOUT_WAIT_FOREVER;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_GRAPH_EVENT_TIMEOUT:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = graph->pipelining ? graph->pipelining->event_timeout_ms : VX_TIMEOUT_WAIT_FOREVER;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_GRAPH_PIPELINE_DEPTH:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = graph->pipelining ? graph->pipelining->pipeline_depth : 1;
+                    status = VX_SUCCESS;
+                }
+                break;
+#else
+            case VX_GRAPH_SCHEDULE_MODE:
+            case VX_GRAPH_TIMEOUT:
+            case VX_GRAPH_EVENT_TIMEOUT:
+            case VX_GRAPH_PIPELINE_DEPTH:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+#endif
             case VX_GRAPH_ATTRIBUTE_AMD_OPTIMIZER_FLAGS:
                 if (size == sizeof(vx_uint32)) {
                     *(vx_uint32 *)ptr = graph->optimizer_flags;
@@ -3247,6 +3320,35 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetGraphAttribute(vx_graph graph, vx_enum a
             CAgoLock lock(graph->cs);
             switch (attribute)
             {
+#if OPENVX_USE_PIPELINING
+            case VX_GRAPH_TIMEOUT:
+                if (size == sizeof(vx_uint32)) {
+                    AgoGraphPipeliningState * pipe = agoGetGraphPipeliningState(graph);
+                    pipe->timeout_ms = *(const vx_uint32 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_GRAPH_EVENT_TIMEOUT:
+                if (size == sizeof(vx_uint32)) {
+                    AgoGraphPipeliningState * pipe = agoGetGraphPipeliningState(graph);
+                    pipe->event_timeout_ms = *(const vx_uint32 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_GRAPH_PIPELINE_DEPTH:
+                if (size == sizeof(vx_uint32)) {
+                    AgoGraphPipeliningState * pipe = agoGetGraphPipeliningState(graph);
+                    pipe->pipeline_depth = *(const vx_uint32 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+#else
+            case VX_GRAPH_TIMEOUT:
+            case VX_GRAPH_EVENT_TIMEOUT:
+            case VX_GRAPH_PIPELINE_DEPTH:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+#endif
             case VX_GRAPH_ATTRIBUTE_AMD_IMPORT_FROM_TEXT:
                 if (size == sizeof(AgoGraphImportInfo)) {
                     status = VX_SUCCESS;
@@ -3494,6 +3596,18 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryNode(vx_node node, vx_enum attribute, 
                     status = VX_SUCCESS;
                 }
                 break;
+#if OPENVX_USE_PIPELINING
+            case VX_NODE_STATE:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = node->node_state;
+                    status = VX_SUCCESS;
+                }
+                break;
+#else
+            case VX_NODE_STATE:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+#endif
             case VX_NODE_ATTRIBUTE_AMD_AFFINITY:
                 if (size == sizeof(AgoTargetAffinityInfo_)) {
                     *(AgoTargetAffinityInfo_ *)ptr = node->attr_affinity;
@@ -3524,7 +3638,6 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryNode(vx_node node, vx_enum attribute, 
             }
             break;
 #endif
-            default:
                 status = VX_ERROR_NOT_SUPPORTED;
                 break;
             }
@@ -4483,6 +4596,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryReference(vx_reference ref, vx_enum at
             case VX_REFERENCE_COUNT:
                 if (size == sizeof(vx_uint32)) {
                     *(vx_uint32 *)ptr = ref->external_count;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_REFERENCE_ENQUEUE_COUNT:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = 0;
                     status = VX_SUCCESS;
                 }
                 break;

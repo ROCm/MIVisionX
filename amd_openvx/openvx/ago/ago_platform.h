@@ -33,6 +33,7 @@ THE SOFTWARE.
 #define _USE_MATH_DEFINES
 #include <VX/vx.h>
 #include <VX/vx_compatibility.h>
+#include <VX/vx_khr_pipelining.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -49,6 +50,10 @@ THE SOFTWARE.
 #include <functional>
 #include <chrono>
 #include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <deque>
+#include <atomic>
 
 #if _WIN32
 #include <Windows.h>

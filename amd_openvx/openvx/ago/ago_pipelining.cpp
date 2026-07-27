@@ -367,17 +367,23 @@ static void agoApplyQueuedRefsToBindings(AgoGraph * graph,
     consumed_refs.assign(bindings.size(), nullptr);
     for (size_t i = 0; i < bindings.size(); i++) {
         AgoGraphParameterQueue * q = agoGetGraphParameterQueue(pipe, (vx_uint32)i);
-
-        if (!q || q->ready_refs.empty()) {
+        if (!q)
             continue;
+
+        AgoData * ref = nullptr;
+        {
+            std::lock_guard<std::mutex> lock(q->mtx);
+            if (!q->ready_refs.empty()) {
+                ref = q->ready_refs.front();
+                q->ready_refs.pop_front();
+                q->consumed_refs.push_back(ref);
+            }
         }
-        AgoData * ref = q->ready_refs.front();
-        q->ready_refs.pop_front();
-        q->consumed_refs.push_back(ref);
+        if (!ref)
+            continue;
+
         consumed_refs[i] = ref;
-        if (ref) {
-            agoRetainData(graph, ref, false);
-        }
+        agoRetainData(graph, ref, false);
         bindings[i].queued = ref;
         if (bindings[i].original) {
             agoApplyDataRefSwapWithSiblings(graph, bindings[i].original, ref);
@@ -446,11 +452,6 @@ int agoExecutePipelinedGraphOnce(AgoGraph * graph)
 
     // Move consumed refs to done queues and wake waiters.
     agoMoveConsumedRefsToDone(graph);
-    {
-        AgoGraphParameterQueue * q0 = agoGetGraphParameterQueue(pipe, 0);
-        AgoGraphParameterQueue * q1 = agoGetGraphParameterQueue(pipe, 1);
-
-    }
 
     // Emit node completion events for all user-registered nodes. This covers
     // the case where graph optimization rewrote the user-visible nodes.
@@ -483,6 +484,7 @@ static int agoExecuteGraphQueueManual(AgoGraph * graph)
         for (auto& q : pipe->param_queues) {
             if (!q->enabled)
                 continue;
+            std::lock_guard<std::mutex> lock(q->mtx);
             if (q->ready_refs.empty()) {
                 all_ready = false;
                 break;
@@ -521,6 +523,7 @@ static void agoGraphQueueAutoExecutorLoop(AgoGraph * graph)
             for (auto& q : pipe->param_queues) {
                 if (!q->enabled)
                     continue;
+                std::lock_guard<std::mutex> qlock(q->mtx);
                 if (q->ready_refs.empty()) {
                     all_ready = false;
                     break;

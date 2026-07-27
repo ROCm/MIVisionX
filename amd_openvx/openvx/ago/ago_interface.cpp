@@ -3000,9 +3000,12 @@ int agoWaitGraph(AgoGraph * graph)
                     for (;;) {
                         bool any_ready = false;
                         for (auto& q : pipe->param_queues) {
-                            if (q->enabled && !q->ready_refs.empty()) {
-                                any_ready = true;
-                                break;
+                            if (q->enabled) {
+                                std::lock_guard<std::mutex> qlock(q->mtx);
+                                if (!q->ready_refs.empty()) {
+                                    any_ready = true;
+                                    break;
+                                }
                             }
                         }
                         if (!any_ready)
@@ -3023,9 +3026,12 @@ int agoWaitGraph(AgoGraph * graph)
                 for (;;) {
                     bool any_ready = false;
                     for (auto& q : pipe->param_queues) {
-                        if (q->enabled && !q->ready_refs.empty()) {
-                            any_ready = true;
-                            break;
+                        if (q->enabled) {
+                            std::lock_guard<std::mutex> qlock(q->mtx);
+                            if (!q->ready_refs.empty()) {
+                                any_ready = true;
+                                break;
+                            }
                         }
                     }
                     if (!any_ready)

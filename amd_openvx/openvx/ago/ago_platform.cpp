@@ -354,10 +354,9 @@ DWORD WaitForSingleObject(HANDLE h, DWORD dwMilliseconds)
 			vx_semaphore * sem = (vx_semaphore *)h;
 			{
 				unique_lock<mutex> lk(sem->mtx);
-				sem->cv.wait(lk); // TBD: implement with timeout
-			}
-			{
-				lock_guard<mutex> lk(sem->mtx);
+				// Wait only if the semaphore count is currently zero; otherwise
+				// a notification that arrived before this wait would be lost.
+				sem->cv.wait(lk, [&sem]() { return sem->count > 0; });
 				sem->count--;
 			}
 		}

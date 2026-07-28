@@ -364,8 +364,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetContextAttribute(vx_context context, vx_
         case VX_CONTEXT_EVENT_TIMEOUT:
             if (size == sizeof(vx_uint32)) {
                 AgoContextEventSystem * evsys = agoGetContextEventSystem(context);
-                evsys->timeout_ms = *(const vx_uint32 *)ptr;
-                status = VX_SUCCESS;
+                if (evsys) {
+                    evsys->timeout_ms = *(const vx_uint32 *)ptr;
+                    status = VX_SUCCESS;
+                } else {
+                    status = VX_ERROR_NOT_SUPPORTED;
+                }
             }
             break;
         case VX_CONTEXT_ATTRIBUTE_IMMEDIATE_BORDER_MODE:
@@ -2553,6 +2557,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryKernel(vx_kernel kernel, vx_enum attri
                     status = VX_SUCCESS;
                 }
                 break;
+#if OPENVX_USE_PIPELINING
             case VX_KERNEL_PIPEUP_OUTPUT_DEPTH:
                 if (size == sizeof(vx_uint32)) {
                     *(vx_uint32 *)ptr = kernel->pipeup_output_depth;
@@ -2565,6 +2570,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryKernel(vx_kernel kernel, vx_enum attri
                     status = VX_SUCCESS;
                 }
                 break;
+#endif
             default:
                 status = VX_ERROR_NOT_SUPPORTED;
                 break;
@@ -2848,6 +2854,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enu
                     status = VX_SUCCESS;
                 }
                 break;
+#if OPENVX_USE_PIPELINING
             case VX_KERNEL_PIPEUP_OUTPUT_DEPTH:
                 if (size == sizeof(vx_uint32)) {
                     vx_uint32 v = *(const vx_uint32 *)ptr;
@@ -2862,6 +2869,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enu
                     else { kernel->pipeup_input_depth = v; status = VX_SUCCESS; }
                 }
                 break;
+#endif
             case VX_KERNEL_ATTRIBUTE_AMD_NODE_REGEN_CALLBACK:
                 if (size == sizeof(void *)) {
                     if (!kernel->finalized) {
@@ -3638,6 +3646,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryNode(vx_node node, vx_enum attribute, 
             }
             break;
 #endif
+            default:
                 status = VX_ERROR_NOT_SUPPORTED;
                 break;
             }
@@ -4601,7 +4610,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryReference(vx_reference ref, vx_enum at
                 break;
             case VX_REFERENCE_ENQUEUE_COUNT:
                 if (size == sizeof(vx_uint32)) {
+#if OPENVX_USE_PIPELINING
+                    *(vx_uint32 *)ptr = agoGetReferenceEnqueueCount(ref->context, ref);
+#else
                     *(vx_uint32 *)ptr = 0;
+#endif
                     status = VX_SUCCESS;
                 }
                 break;

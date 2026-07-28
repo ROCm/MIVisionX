@@ -31,20 +31,24 @@ static void agoGraphThreadFunction(LPVOID graph_)
 #endif
 {
     AgoGraph * graph = (AgoGraph *)graph_;
-    while (WaitForSingleObject(graph->hSemToThread, INFINITE) == WAIT_OBJECT_0) {
-        graph->threadThreadWaitState = 2;
-        if (graph->threadThreadTerminationState)
+    for (;;) {
+        DWORD w = WaitForSingleObject(graph->hSemToThread, INFINITE);
+        graph->threadThreadWaitState.store(2);
+        if (graph->threadThreadTerminationState.load())
             break;
+        // Ignore spurious/error returns from the semaphore wait and retry.
+        if (w != WAIT_OBJECT_0)
+            continue;
 
         // execute graph
         graph->status = agoProcessGraph(graph);
 
         // inform caller
-        graph->threadExecuteCount++;
+        graph->threadExecuteCount.fetch_add(1);
         ReleaseSemaphore(graph->hSemFromThread, 1, nullptr);
     }
     // inform caller about termination
-    graph->threadThreadTerminationState = 2;
+    graph->threadThreadTerminationState.store(2);
     ReleaseSemaphore(graph->hSemFromThread, 1, nullptr);
 #if _WIN32
     return 0;
@@ -171,9 +175,9 @@ int agoReleaseGraph(AgoGraph * agraph)
         EnterCriticalSection(&agraph->cs);
         // stop graph thread
         if (agraph->hThread) {
-            agraph->threadThreadTerminationState = 1;
+            agraph->threadThreadTerminationState.store(1);
             ReleaseSemaphore(agraph->hSemToThread, 1, nullptr);
-            while (agraph->threadThreadTerminationState == 1) {
+            while (agraph->threadThreadTerminationState.load() == 1) {
                 // give a chance for the thread to run in case it is waititng
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 ReleaseSemaphore(agraph->hSemToThread, 1, nullptr);
@@ -2951,7 +2955,7 @@ int agoScheduleGraph(AgoGraph * graph)
     vx_status status = VX_ERROR_INVALID_REFERENCE;
     if (agoIsValidGraph(graph)) {
         status = VX_SUCCESS;
-        graph->threadScheduleCount++;
+        graph->threadScheduleCount.fetch_add(1);
         if (graph->hThread) {
             if (!graph->verified) {
                 // make sure to verify the graph in master thread
@@ -3045,18 +3049,16 @@ int agoWaitGraph(AgoGraph * graph)
                 return status;
             }
         }
-        graph->threadWaitCount++;
-        if (graph->threadScheduleCount <= 0) // the graph was never scheduled so return VX_FAILURE
+        graph->threadWaitCount.fetch_add(1);
+        if (graph->threadScheduleCount.load() <= 0) // the graph was never scheduled so return VX_FAILURE
             return VX_FAILURE;
         if (graph->hThread) {
-            graph->threadThreadWaitState = 1;
-            while (graph->threadThreadWaitState == 1) {
+            graph->threadThreadWaitState.store(1);
+            while (graph->threadThreadWaitState.load() == 1) {
                 // wait for the agoGraphThreadFunction to be done
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                // release the semaphore in case the agoScheduleGraph was called before the agoGraphThreadFunction
-                ReleaseSemaphore(graph->hSemToThread, 1, nullptr);
             }
-            while (graph->threadExecuteCount < graph->threadScheduleCount) {
+            while (graph->threadExecuteCount.load() < graph->threadScheduleCount.load()) {
                 if (WaitForSingleObject(graph->hSemFromThread, INFINITE) != WAIT_OBJECT_0) {
                     agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoWaitGraph: WaitForSingleObject failed\n");
                     status = VX_FAILURE;

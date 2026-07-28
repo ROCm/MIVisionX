@@ -678,6 +678,7 @@ struct AgoGraphParameterQueue {
     vx_uint32 index;
     vx_uint32 max_depth;
     bool enabled;
+    AgoGraphParameterQueue() : index(0), max_depth(0), enabled(false) {}
 };
 
 struct AgoGraphPipeliningState {
@@ -695,6 +696,8 @@ struct AgoGraphPipeliningState {
     std::mutex execution_mtx;
     std::thread executor_thread;
     std::atomic<bool> executor_stop;
+    std::mutex enqueue_mtx;
+    std::condition_variable enqueue_cv;
     std::vector<std::unique_ptr<AgoGraphParameterQueue>> param_queues;
 public:
     AgoGraphPipeliningState();
@@ -738,7 +741,7 @@ struct AgoGraph {
     AgoGraph * next;
     CRITICAL_SECTION cs;
     HANDLE hThread, hSemToThread, hSemFromThread;
-    vx_int32 threadScheduleCount, threadExecuteCount, threadWaitCount, threadThreadTerminationState, threadThreadWaitState;
+    std::atomic<vx_int32> threadScheduleCount, threadExecuteCount, threadWaitCount, threadThreadTerminationState, threadThreadWaitState;
     AgoDataList dataList;
     AgoNodeList nodeList;
     vx_bool isReadyToExecute;
@@ -987,12 +990,15 @@ void agoStartGraphStreamingThread(AgoGraph * graph);
 void agoPushEvent(AgoContext * context, const AgoEvent& evt);
 int agoExecuteGraphPipelined(AgoGraph * graph);
 int agoExecutePipelinedGraphOnce(AgoGraph * graph);
+int agoExecuteGraphQueueManual(AgoGraph * graph);
 // event notifications
 void agoNotifyGraphCompleted(AgoGraph * graph);
 void agoNotifyNodeCompleted(AgoGraph * graph, AgoNode * node);
 void agoNotifyNodeError(AgoGraph * graph, AgoNode * node, vx_status status);
 void agoNotifyGraphParameterConsumed(AgoGraph * graph, vx_uint32 graph_parameter_index);
 bool agoGraphHasNodeEventRegistrations(AgoGraph * graph);
+vx_uint32 agoGetReferenceEnqueueCount(AgoContext * context, AgoReference * ref);
+void agoRemoveEventRegistrations(AgoContext * context, vx_reference ref);
 
 #if (ENABLE_OPENCL || ENABLE_HIP)
 int agoGpuOclAllocBuffers(AgoGraph * graph);

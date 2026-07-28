@@ -159,8 +159,7 @@ jobs:
             -DOPENVX_INCLUDES="${{ github.workspace }}/amd_openvx/openvx/include" \
             -DOPENVX_LIBRARIES="${INSTALL_PREFIX}/lib/libopenvx.so;${INSTALL_PREFIX}/lib/libvxu.so;pthread;dl;m;rt" \
             -DOPENVX_CONFORMANCE_VISION=ON \
-            -DOPENVX_USE_PIPELINING=ON \
-            -DOPENVX_USE_STREAMING=ON
+            -DOPENVX_USE_PIPELINING=ON
           make -j$(nproc)
 
       - name: Upload debug build artifacts

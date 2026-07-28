@@ -60,6 +60,10 @@ static void agoStopGraphPipeliningExecutor(AgoGraph * graph)
         return;
 
     pipe->executor_stop.store(true);
+    {
+        std::lock_guard<std::mutex> lock(pipe->enqueue_mtx);
+        pipe->enqueue_cv.notify_all();
+    }
     if (pipe->executor_thread.joinable()) {
         pipe->executor_thread.join();
     }
@@ -134,7 +138,7 @@ static vx_uint32 agoFindEventAppValue(AgoContext * context, vx_reference ref, vx
     return 0;
 }
 
-static void agoRemoveEventRegistrations(AgoContext * context, vx_reference ref)
+void agoRemoveEventRegistrations(AgoContext * context, vx_reference ref)
 {
     AgoContextEventSystem * evsys = agoGetContextEventSystem(context);
     if (!evsys)
@@ -143,6 +147,32 @@ static void agoRemoveEventRegistrations(AgoContext * context, vx_reference ref)
     auto& regs = evsys->registrations;
     regs.erase(std::remove_if(regs.begin(), regs.end(),
         [ref](const AgoEventRegistration& reg) { return reg.ref == ref; }), regs.end());
+}
+
+vx_uint32 agoGetReferenceEnqueueCount(AgoContext * context, AgoReference * ref)
+{
+    if (!context || !ref)
+        return 0;
+    CAgoLock lock(context->cs);
+    vx_uint32 count = 0;
+    for (AgoGraph * graph = context->graphList.head; graph; graph = graph->next) {
+        AgoGraphPipeliningState * pipe = graph->pipelining;
+        if (!pipe)
+            continue;
+        for (auto& qptr : pipe->param_queues) {
+            AgoGraphParameterQueue * q = qptr.get();
+            if (!q || !q->enabled)
+                continue;
+            std::lock_guard<std::mutex> qlock(q->mtx);
+            for (AgoData * d : q->ready_refs)
+                if ((AgoReference *)d == ref) ++count;
+            for (AgoData * d : q->consumed_refs)
+                if ((AgoReference *)d == ref) ++count;
+            for (AgoData * d : q->done_refs)
+                if ((AgoReference *)d == ref) ++count;
+        }
+    }
+    return count;
 }
 
 // Event helpers
@@ -471,7 +501,7 @@ int agoExecutePipelinedGraphOnce(AgoGraph * graph)
 // QUEUE_MANUAL: drain all ready queues, executing one graph instance per
 // complete set of ready refs.
 //
-static int agoExecuteGraphQueueManual(AgoGraph * graph)
+int agoExecuteGraphQueueManual(AgoGraph * graph)
 {
     AgoGraphPipeliningState * pipe = graph->pipelining;
     if (!pipe)
@@ -512,6 +542,17 @@ static void agoGraphQueueAutoExecutorLoop(AgoGraph * graph)
     if (!pipe)
         return;
 
+    auto anyReady = [&pipe]() -> bool {
+        for (auto& q : pipe->param_queues) {
+            if (!q->enabled)
+                continue;
+            std::lock_guard<std::mutex> qlock(q->mtx);
+            if (!q->ready_refs.empty())
+                return true;
+        }
+        return false;
+    };
+
     while (!pipe->executor_stop.load()) {
         {
             CAgoLock lock(graph->cs);
@@ -531,9 +572,14 @@ static void agoGraphQueueAutoExecutorLoop(AgoGraph * graph)
             }
             if (all_ready) {
                 agoExecutePipelinedGraphOnce(graph);
+                continue;
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        // Nothing to do: block until a ref is enqueued or we're asked to stop.
+        std::unique_lock<std::mutex> elock(pipe->enqueue_mtx);
+        pipe->enqueue_cv.wait_for(elock, std::chrono::milliseconds(1), [&pipe, &anyReady]() {
+            return pipe->executor_stop.load() || anyReady();
+        });
     }
 }
 
@@ -575,22 +621,8 @@ int agoExecuteGraphPipelined(AgoGraph * graph)
     }
 
     if (pipe->schedule_mode == VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO) {
-        // QUEUE_AUTO runs via the background executor; synchronous entry just
-        // makes sure any currently queued refs are processed and returns.
-        // Wait a short while for executor progress.
-        for (int i = 0; i < 10; i++) {
-            bool any_ready = false;
-            for (auto& q : pipe->param_queues) {
-                std::lock_guard<std::mutex> qlock(q->mtx);
-                if (!q->ready_refs.empty()) {
-                    any_ready = true;
-                    break;
-                }
-            }
-            if (!any_ready)
-                break;
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
+        // QUEUE_AUTO runs via the background executor; synchronous entry has
+        // nothing to do because the executor wakes whenever refs are enqueued.
         return VX_SUCCESS;
     }
 
@@ -644,4 +676,6 @@ int agoExecuteGraphPipelined(AgoGraph *) { return VX_ERROR_NOT_SUPPORTED; }
 int agoExecutePipelinedGraphOnce(AgoGraph *) { return VX_ERROR_NOT_SUPPORTED; }
 void agoStartGraphPipeliningAutoExecutor(AgoGraph *) {}
 void agoStartGraphStreamingThread(AgoGraph *) {}
+vx_uint32 agoGetReferenceEnqueueCount(AgoContext *, AgoReference *) { return 0; }
+void agoRemoveEventRegistrations(AgoContext *, vx_reference) {}
 #endif

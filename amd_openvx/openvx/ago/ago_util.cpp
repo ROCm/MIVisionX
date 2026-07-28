@@ -3301,6 +3301,8 @@ AgoData::AgoData()
 }
 AgoData::~AgoData()
 {
+    if (ref.context)
+        agoRemoveEventRegistrations(ref.context, (vx_reference)this);
 #if ENABLE_OPENCL
     agoGpuOclReleaseData(this);
 #elif ENABLE_HIP
@@ -3313,6 +3315,10 @@ AgoData::~AgoData()
     if (reserved_allocated) {
         agoReleaseMemory(reserved_allocated);
         reserved_allocated = nullptr;
+    }
+    if (children) {
+        delete[] children;
+        children = nullptr;
     }
 }
 AgoMetaFormat::AgoMetaFormat()
@@ -3389,6 +3395,8 @@ AgoNode::AgoNode()
 }
 AgoNode::~AgoNode()
 {
+    if (ref.context)
+        agoRemoveEventRegistrations(ref.context, (vx_reference)this);
     agoShutdownNode(this);
     if (valid_rect_inputs) {
         delete[] valid_rect_inputs;
@@ -3415,7 +3423,7 @@ AgoNode::~AgoNode()
 }
 AgoGraph::AgoGraph()
     : next{ nullptr }, hThread{ nullptr }, hSemToThread{ nullptr }, hSemFromThread{ nullptr },
-      threadScheduleCount{ 0 }, threadExecuteCount{ 0 }, threadWaitCount{ 0 }, threadThreadTerminationState{ 0 },
+      threadScheduleCount{ 0 }, threadExecuteCount{ 0 }, threadWaitCount{ 0 }, threadThreadTerminationState{ 0 }, threadThreadWaitState{ 0 },
       isReadyToExecute{ vx_false_e }, detectedInvalidNode{ false }, status{ VX_SUCCESS },
       virtualDataGenerationCount{ 0 }, optimizer_flags{ AGO_GRAPH_OPTIMIZER_FLAGS_DEFAULT }, verified{ false }, enable_performance_profiling{ false }, execFrameCount{ 0 }, pipelining{ nullptr }
 #if ENABLE_OPENCL
@@ -3442,6 +3450,9 @@ AgoGraph::~AgoGraph()
         delete pipelining;
         pipelining = nullptr;
     }
+
+    if (ref.context)
+        agoRemoveEventRegistrations(ref.context, (vx_reference)this);
 
     // decrement auto age delays
     for (auto it = autoAgeDelayList.begin(); it != autoAgeDelayList.end(); it++) {

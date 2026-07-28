@@ -190,6 +190,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxGraphParameterEnqueueReadyRef(
             std::lock_guard<std::mutex> lock(q->mtx);
             q->ready_refs.push_back((AgoData *)refs[i]);
         }
+        {
+            std::lock_guard<std::mutex> lock(pipe->enqueue_mtx);
+            pipe->enqueue_cv.notify_all();
+        }
         status = VX_SUCCESS;
     }
     return status;
@@ -217,9 +221,15 @@ VX_API_ENTRY vx_status VX_API_CALL vxGraphParameterDequeueDoneRef(
             return VX_ERROR_INVALID_PARAMETERS;
 
         std::unique_lock<std::mutex> lock(q->mtx);
-        while (q->done_refs.empty()) {
-            q->done_cv.wait(lock);
+        if (pipe->timeout_ms == VX_TIMEOUT_WAIT_FOREVER) {
+            q->done_cv.wait(lock, [q]() { return !q->done_refs.empty(); });
+        } else {
+            if (!q->done_cv.wait_for(lock, std::chrono::milliseconds(pipe->timeout_ms),
+                                       [q]() { return !q->done_refs.empty(); }))
+                return VX_FAILURE;
         }
+        if (q->done_refs.empty())
+            return VX_FAILURE;
         vx_uint32 count = 0;
         while (count < max_refs && !q->done_refs.empty()) {
             refs[count] = (vx_reference)q->done_refs.front();
@@ -294,8 +304,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxWaitEvent(vx_context context, vx_event_t *e
         if (evsys->events.empty())
             return VX_FAILURE;
     } else {
-        while (evsys->events.empty()) {
-            evsys->events_cv.wait(lock);
+        if (evsys->timeout_ms == VX_TIMEOUT_WAIT_FOREVER) {
+            evsys->events_cv.wait(lock, [&evsys]() { return !evsys->events.empty(); });
+        } else {
+            if (!evsys->events_cv.wait_for(lock, std::chrono::milliseconds(evsys->timeout_ms),
+                                             [&evsys]() { return !evsys->events.empty(); }))
+                return VX_FAILURE;
         }
     }
     if (evsys->events.empty())

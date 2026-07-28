@@ -3474,7 +3474,7 @@ AgoGraph::~AgoGraph()
 AgoContext::AgoContext()
     : perfNormFactor{ 0 }, dataGenerationCount{ 0 }, nextUserStructId{ VX_TYPE_USER_STRUCT_START }, nextUserKernelId{ 0 }, nextUserLibraryId{ 1 },
       num_active_modules{ 0 }, num_active_references{ 0 }, callback_log{ nullptr }, callback_reentrant{ vx_false_e },
-      thread_config{ CONFIG_THREAD_DEFAULT }, importing_module_index_plus1{ 0 }, graph_garbage_data{ nullptr }, graph_garbage_node{ nullptr }, graph_garbage_list{ nullptr }, events{ nullptr }
+      thread_config{ CONFIG_THREAD_DEFAULT }, importing_module_index_plus1{ 0 }, graph_garbage_data{ nullptr }, graph_garbage_node{ nullptr }, graph_garbage_list{ nullptr }, events{ new AgoContextEventSystem() }
 #if ENABLE_OPENCL
 #if defined(CL_VERSION_2_0)
       , opencl_svmcaps{ 0 }
@@ -3613,7 +3613,7 @@ AgoGraphPipeliningState::~AgoGraphPipeliningState()
 }
 
 AgoContextEventSystem::AgoContextEventSystem()
-    : enabled{ true }, timeout_ms{ VX_TIMEOUT_WAIT_FOREVER }
+    : enabled{ false }, timeout_ms{ VX_TIMEOUT_WAIT_FOREVER }
 {
 }
 

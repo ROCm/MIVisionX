@@ -581,6 +581,7 @@ int agoExecuteGraphPipelined(AgoGraph * graph)
         for (int i = 0; i < 10; i++) {
             bool any_ready = false;
             for (auto& q : pipe->param_queues) {
+                std::lock_guard<std::mutex> qlock(q->mtx);
                 if (!q->ready_refs.empty()) {
                     any_ready = true;
                     break;

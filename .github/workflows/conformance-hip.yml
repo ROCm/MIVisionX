@@ -1033,7 +1033,7 @@ jobs:
           if-no-files-found: ignore
 
   pipelining-hip:
-    name: KHR EXT: Pipelining (HIP)
+    name: KHR EXT - Pipelining (HIP)
     runs-on:
       group: linux-shark39-runner-group
     container:
@@ -1074,7 +1074,7 @@ jobs:
           if-no-files-found: ignore
 
   streaming-hip:
-    name: KHR EXT: Streaming (HIP)
+    name: KHR EXT - Streaming (HIP)
     runs-on:
       group: linux-shark39-runner-group
     container:

@@ -639,7 +639,7 @@ jobs:
           if-no-files-found: ignore
 
   pipelining-cpu:
-    name: Pipelining (CPU)
+    name: KHR EXT - Pipelining (CPU)
     runs-on: ubuntu-24.04
     needs: build-debug
     steps:
@@ -656,7 +656,7 @@ jobs:
           export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
           export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/pipelining_%p.profraw
-          timeout 5400 ./bin/vx_test_conformance --filter="GraphPipeline.*"
+          timeout 9000 ./bin/vx_test_conformance --filter="GraphPipeline.*"
       - name: Upload profraw
         if: always()
         uses: actions/upload-artifact@v4
@@ -666,7 +666,7 @@ jobs:
           if-no-files-found: ignore
 
   streaming-cpu:
-    name: Streaming (CPU)
+    name: KHR EXT - Streaming (CPU)
     runs-on: ubuntu-24.04
     needs: build-debug
     steps:

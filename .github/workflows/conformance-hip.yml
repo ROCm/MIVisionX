@@ -1033,9 +1033,9 @@ jobs:
           if-no-files-found: ignore
 
   pipelining-hip:
-    name: Pipelining (HIP)
+    name: KHR EXT: Pipelining (HIP)
     runs-on:
-      group: linux-shark42-runner-group
+      group: linux-shark39-runner-group
     container:
       image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
@@ -1074,9 +1074,9 @@ jobs:
           if-no-files-found: ignore
 
   streaming-hip:
-    name: Streaming (HIP)
+    name: KHR EXT: Streaming (HIP)
     runs-on:
-      group: linux-shark42-runner-group
+      group: linux-shark39-runner-group
     container:
       image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri

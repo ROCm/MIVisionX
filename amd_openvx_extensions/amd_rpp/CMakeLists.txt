@@ -154,14 +154,14 @@ list(APPEND SOURCES
 if (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND "${rpp_BACKEND_TYPE}" STREQUAL "HIP" AND HIP_FOUND)
     message("-- ${Green}vx_rpp -- Building with HIP${ColourReset}")
     set(ENABLE_HIP 1)
-    add_definitions(-DENABLE_HIP=${ENABLE_HIP} -DRPP_BACKEND_HIP=1 -D__HIP_PLATFORM_AMD__)
     include_directories(${ROCM_PATH}/include)
     link_directories(${HIP_PATH}/lib)
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} hip::host)
     add_library(vx_rpp SHARED ${SOURCES})
     set_target_properties(vx_rpp PROPERTIES LINKER_LANGUAGE CXX)
     set_target_properties(vx_rpp PROPERTIES POSITION_INDEPENDENT_CODE ON)
-    target_compile_definitions(vx_rpp PRIVATE GPU_SUPPORT=1 RPP_BACKEND_HIP=1) # Currently used by rpp. To be removed.
+    target_compile_definitions(vx_rpp PRIVATE ENABLE_HIP=${ENABLE_HIP} RPP_BACKEND_HIP=1 __HIP_PLATFORM_AMD__)
+    target_compile_definitions(vx_rpp PRIVATE GPU_SUPPORT=1) # Currently used by rpp. To be removed.
 else()
     message("-- ${Green}vx_rpp -- Building with CPU backend${ColourReset}")
     set(ENABLE_HIP 0)

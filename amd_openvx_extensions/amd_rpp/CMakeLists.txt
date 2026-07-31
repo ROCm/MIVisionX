@@ -49,13 +49,17 @@ message("-- \t${White}rpp_VERSION -- ${rpp_VERSION}${ColourReset}")
 message("-- \t${White}rpp_VERSION_MAJOR -- ${rpp_VERSION_MAJOR}${ColourReset}")
 message("-- \t${White}rpp_VERSION_MINOR -- ${rpp_VERSION_MINOR}${ColourReset}")
 message("-- \t${White}rpp_VERSION_PATCH -- ${rpp_VERSION_PATCH}${ColourReset}")
+message("-- \t${White}rpp_BACKEND_TYPE -- ${rpp_BACKEND_TYPE}${ColourReset}")
 
 # RPP supports the CPU and HIP backends only (OpenCL backend support has been dropped in RPP).
 # When the MIVisionX core is built with the OpenCL backend, vx_rpp is built in CPU-only mode.
+# When RPP is installed with CPU backend only, vx_rpp is built in CPU-only mode regardless of MIVisionX backend.
 set(OpenCL_FOUND FALSE)
-if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
+if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND "${rpp_BACKEND_TYPE}" STREQUAL "HIP")
     list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip)
     find_package(HIP REQUIRED)
+elseif(GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND NOT "${rpp_BACKEND_TYPE}" STREQUAL "HIP")
+    message("-- ${Yellow}vx_rpp -- MIVisionX built with HIP backend, but RPP installed with ${rpp_BACKEND_TYPE} backend${ColourReset}")
 endif()
 
 include_directories(../../amd_openvx/openvx/include/ include)
@@ -147,7 +151,7 @@ list(APPEND SOURCES
         source/internal_publishKernels.cpp
     )
 
-if (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
+if (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND "${rpp_BACKEND_TYPE}" STREQUAL "HIP" AND HIP_FOUND)
     message("-- ${Green}vx_rpp -- Building with HIP${ColourReset}")
     set(ENABLE_HIP 1)
     add_definitions(-DENABLE_HIP=${ENABLE_HIP} -DRPP_BACKEND_HIP=1 -D__HIP_PLATFORM_AMD__)
@@ -161,8 +165,8 @@ if (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
 else()
     message("-- ${Green}vx_rpp -- Building with CPU backend${ColourReset}")
     set(ENABLE_HIP 0)
-    add_definitions(-DENABLE_HIP=${ENABLE_HIP})
     add_library(vx_rpp SHARED ${SOURCES})
+    target_compile_definitions(vx_rpp PRIVATE ENABLE_HIP=${ENABLE_HIP})
     target_compile_definitions(vx_rpp PRIVATE GPU_SUPPORT=0) # Currently used by rpp. To be removed.
 endif()
 

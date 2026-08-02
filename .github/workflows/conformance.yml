@@ -159,7 +159,8 @@ jobs:
             -DOPENVX_INCLUDES="${{ github.workspace }}/amd_openvx/openvx/include" \
             -DOPENVX_LIBRARIES="${INSTALL_PREFIX}/lib/libopenvx.so;${INSTALL_PREFIX}/lib/libvxu.so;pthread;dl;m;rt" \
             -DOPENVX_CONFORMANCE_VISION=ON \
-            -DOPENVX_USE_PIPELINING=ON
+            -DOPENVX_USE_PIPELINING=ON \
+            -DOPENVX_USE_STREAMING=ON
           make -j$(nproc)
 
       - name: Upload debug build artifacts
@@ -656,7 +657,7 @@ jobs:
           export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
           export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
           export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/pipelining_%p.profraw
-          timeout 9000 ./bin/vx_test_conformance --filter="GraphPipeline.*"
+          timeout 1800 ./bin/vx_test_conformance --filter="GraphPipeline.*"
       - name: Upload profraw
         if: always()
         uses: actions/upload-artifact@v4

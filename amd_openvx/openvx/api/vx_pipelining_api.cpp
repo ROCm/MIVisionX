@@ -55,10 +55,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetGraphScheduleConfig(
         if (!pipe)
             return VX_FAILURE;
 
-        CAgoLock lock(graph->cs);
-
-        // Stop any active executor before reconfiguring.
+        // Stop any active executor before reconfiguring. This has to happen outside
+        // graph->cs because the executor runs the graph inside that section.
         agoStopGraphPipelining(graph);
+
+        CAgoLock lock(graph->cs);
 
         pipe->schedule_mode = graph_schedule_mode;
         pipe->param_queues.clear();
@@ -481,11 +482,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxStopGraphStreaming(vx_graph graph)
         AgoGraphPipeliningState * pipe = agoGetGraphPipeliningState(graph);
         if (!pipe)
             return VX_FAILURE;
-        CAgoLock lock(graph->cs);
+        // The streaming thread executes the graph under graph->cs, so it has to be
+        // joined before that section is entered.
         pipe->streaming_stop.store(true);
         if (pipe->streaming_thread.joinable()) {
             pipe->streaming_thread.join();
         }
+        CAgoLock lock(graph->cs);
         pipe->streaming_enabled = false;
         status = VX_SUCCESS;
     }

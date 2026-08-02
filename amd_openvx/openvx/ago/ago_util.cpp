@@ -3423,7 +3423,7 @@ AgoNode::~AgoNode()
 }
 AgoGraph::AgoGraph()
     : next{ nullptr }, hThread{ nullptr }, hSemToThread{ nullptr }, hSemFromThread{ nullptr },
-      threadScheduleCount{ 0 }, threadExecuteCount{ 0 }, threadWaitCount{ 0 }, threadThreadTerminationState{ 0 }, threadThreadWaitState{ 0 },
+      threadScheduleCount{ 0 }, threadExecuteCount{ 0 }, threadCompletionCount{ 0 }, threadWaitCount{ 0 }, threadThreadTerminationState{ 0 },
       isReadyToExecute{ vx_false_e }, detectedInvalidNode{ false }, status{ VX_SUCCESS },
       virtualDataGenerationCount{ 0 }, optimizer_flags{ AGO_GRAPH_OPTIMIZER_FLAGS_DEFAULT }, verified{ false }, enable_performance_profiling{ false }, execFrameCount{ 0 }, pipelining{ nullptr }
 #if ENABLE_OPENCL

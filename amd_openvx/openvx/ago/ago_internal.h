@@ -741,7 +741,10 @@ struct AgoGraph {
     AgoGraph * next;
     CRITICAL_SECTION cs;
     HANDLE hThread, hSemToThread, hSemFromThread;
-    std::atomic<vx_int32> threadScheduleCount, threadExecuteCount, threadWaitCount, threadThreadTerminationState, threadThreadWaitState;
+    // threadScheduleCount counts executions handed to the graph thread, threadExecuteCount
+    // counts executions it finished, and threadCompletionCount counts the completions already
+    // claimed by a waiter -- one completion token on hSemFromThread per scheduled execution.
+    std::atomic<vx_int32> threadScheduleCount, threadExecuteCount, threadCompletionCount, threadWaitCount, threadThreadTerminationState;
     AgoDataList dataList;
     AgoNodeList nodeList;
     vx_bool isReadyToExecute;

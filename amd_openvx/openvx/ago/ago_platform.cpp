@@ -281,7 +281,9 @@ typedef struct {
 
 typedef struct {
     int type;   // should be VX_CRITICAL_SECTION
-    mutex mtx;
+    // recursive to match Win32 CRITICAL_SECTION semantics: several call paths
+    // re-enter the same section, e.g. agoProcessGraph -> vxVerifyGraph
+    recursive_mutex mtx;
 } vx_critical_section;
 
 
@@ -289,7 +291,7 @@ typedef struct {
 void EnterCriticalSection(CRITICAL_SECTION* cs)
 {
     vx_critical_section * crit_sec = (vx_critical_section *)*cs;
-    std::lock_guard<std::mutex> lock(crit_sec->mtx);
+    crit_sec->mtx.lock();
 }
 
 // Emulates LeaveCriticalSection for non_windows platform

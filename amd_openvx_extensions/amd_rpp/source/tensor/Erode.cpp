@@ -119,12 +119,12 @@ static vx_status VX_CALLBACK processErode(vx_node node, const vx_reference *para
     if (status != VX_SUCCESS) return status;
 #if ENABLE_HIP
     RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
-    RppStatus rpp_status = rppt_erode(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->kernelSize, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
 #else
     if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
         return VX_ERROR_NOT_IMPLEMENTED;
-    RppStatus rpp_status = rppt_erode_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->kernelSize, data->pSrcRoi, data->roiType, data->handle->rppHandle);
+    RppBackend backend = RPP_HOST_BACKEND;
 #endif
+    RppStatus rpp_status = rppt_erode(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->kernelSize, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
     return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 }
 

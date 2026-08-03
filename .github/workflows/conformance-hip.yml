@@ -302,21 +302,31 @@ jobs:
           strip --strip-debug OpenVX-cts/build/bin/vx_test_conformance 2>/dev/null || true
           strip --strip-debug OpenVX-cts/build/lib/*.so* 2>/dev/null || true
 
+      - name: Pack test bundle
+        run: |
+          # Ship one tarball rather than the raw tree. upload-artifact cannot
+          # represent symlinks, so it would expand libopenvx.so, .so.1 and
+          # .so.1.3.2 into three identical copies (same for libvxu) — ~74 MB of
+          # duplication on its own, and ~1800 individual files for each of the
+          # 16 consuming jobs to fetch and write. tar keeps the symlinks and
+          # turns the download into a single stream. It also makes truncation
+          # loud: a short tarball fails to extract instead of silently leaving
+          # part of test_data missing and surfacing as a bogus test failure.
+          tar -czf test-bundle-hip.tar.gz \
+            install/ \
+            build/api_tests/ \
+            OpenVX-cts/build/bin/vx_test_conformance \
+            OpenVX-cts/build/lib/ \
+            OpenVX-cts/test_data/
+          ls -lh test-bundle-hip.tar.gz
+
       - name: Upload debug build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-hip-debug
-          # Upload the full install tree: the libs (lib/), runvx (bin/) and the
-          # sample GDFs + data under share/ are all used by various test jobs.
-          # The artifact size is already controlled by the two-arch GPU_TARGETS
-          # build and the debug-symbol strip above (device code + DWARF were the
-          # bulk); include/ and share/ are small by comparison.
-          path: |
-            install/
-            build/api_tests/
-            OpenVX-cts/build/bin/vx_test_conformance
-            OpenVX-cts/build/lib/
-            OpenVX-cts/test_data/
+          path: test-bundle-hip.tar.gz
+          # Already gzipped; re-compressing in the zip only costs time.
+          compression-level: 0
           retention-days: 1
 
   # ===========================================================================
@@ -529,6 +539,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -577,6 +589,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -624,6 +638,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -671,6 +687,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -718,6 +736,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -765,6 +785,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -812,6 +834,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -859,6 +883,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -906,6 +932,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -953,6 +981,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -1000,6 +1030,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -1046,6 +1078,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -1087,6 +1121,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -1131,6 +1167,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -1208,6 +1246,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Install python3
         run: |
           apt-get update -qq
@@ -1264,6 +1304,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Install python3
         run: |
           apt-get update -qq
@@ -1625,6 +1667,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
 
       - name: Download all HIP profraw artifacts
         uses: actions/download-artifact@v4

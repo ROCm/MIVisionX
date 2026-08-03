@@ -368,6 +368,55 @@ static void agoApplyDataRefSwapWithSiblings(AgoGraph * graph, AgoData * original
     }
 }
 
+// Graph verification reserves a device buffer for every data object that was
+// bound to a GPU node parameter at verification time. Queued references come
+// from the application afterwards, so once they are substituted into the graph
+// they still have none and the node would launch against a null device
+// pointer. Reserve buffers for the newly bound references using the same rules
+// verification applies, after all substitutions are in place.
+static int agoAllocGpuBuffersForQueuedRefs(AgoGraph * graph)
+{
+#if (ENABLE_OPENCL||ENABLE_HIP)
+    for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
+        if (node->attr_affinity.device_type != AGO_KERNEL_FLAG_DEVICE_GPU &&
+            !node->akernel->opencl_buffer_access_enable)
+            continue;
+        for (vx_uint32 i = 0; i < node->paramCount; i++) {
+            AgoData * data = node->paramList[i];
+            if (!data || data->isVirtual)
+                continue;
+#if ENABLE_OPENCL
+            if (data->opencl_buffer)
+                continue;
+#else
+            if (data->hip_memory)
+                continue;
+#endif
+            if (agoIsPartOfDelay(data)) {
+                int siblingTrace[AGO_MAX_DEPTH_FROM_DELAY_OBJECT], siblingTraceCount = 0;
+                data = agoGetSiblingTraceToDelayForUpdate(data, siblingTrace, siblingTraceCount);
+                if (!data)
+                    return VX_FAILURE;
+            }
+#if ENABLE_OPENCL
+            if (agoGpuOclAllocBuffer(data) < 0)
+#else
+            if (agoGpuHipAllocBuffer(data) < 0)
+#endif
+            {
+                agoAddLogEntry(&graph->ref, VX_FAILURE,
+                    "ERROR: agoAllocGpuBuffersForQueuedRefs: GPU buffer allocation failed for node %s arg#%d\n",
+                    node->akernel->name, i);
+                return VX_FAILURE;
+            }
+        }
+    }
+#else
+    (void)graph;
+#endif
+    return VX_SUCCESS;
+}
+
 static std::vector<AgoParamBinding> agoCollectGraphParameterBindings(AgoGraph * graph)
 {
     std::vector<AgoParamBinding> bindings;
@@ -467,8 +516,12 @@ int agoExecutePipelinedGraphOnce(AgoGraph * graph)
     std::vector<AgoData *> consumed_refs;
     agoApplyQueuedRefsToBindings(graph, pipe, bindings, consumed_refs);
 
-    // Execute the graph synchronously using the normal path.
-    int status = agoExecuteGraph(graph);
+    // Back the newly substituted references with device memory, then execute
+    // the graph synchronously using the normal path.
+    int status = agoAllocGpuBuffersForQueuedRefs(graph);
+    if (status == VX_SUCCESS) {
+        status = agoExecuteGraph(graph);
+    }
 
     // Restore original bindings so the next execution sees the static defaults.
     agoRestoreBindings(graph, bindings);

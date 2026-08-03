@@ -2936,6 +2936,9 @@ int agoProcessGraph(AgoGraph * graph)
         }
         // execute graph if possible
         if (status == VX_SUCCESS) {
+            // The pipelined path reports completion for each of the executions it
+            // runs, so only a plain execution still has to be reported here.
+            bool reportCompletion = false;
             if (graph->verified && graph->pipelining) {
                 AgoGraphPipeliningState * pipe = graph->pipelining;
                 if (pipe->schedule_mode == VX_GRAPH_SCHEDULE_MODE_QUEUE_MANUAL ||
@@ -2945,6 +2948,7 @@ int agoProcessGraph(AgoGraph * graph)
                 }
                 else if (graph->isReadyToExecute) {
                     status = agoExecuteGraph(graph);
+                    reportCompletion = true;
                 }
                 else {
                     agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoProcessGraph: not verified (%d) or not ready to execute (%d)\n", graph->verified, graph->isReadyToExecute);
@@ -2955,11 +2959,19 @@ int agoProcessGraph(AgoGraph * graph)
                 // For non-streaming execution, pre-fill source-node pipeup queues.
                 agoPreFillSourceNodePipeup(graph);
                 status = agoExecuteGraph(graph);
+                reportCompletion = true;
             }
             else {
                 agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoProcessGraph: not verified (%d) or not ready to execute (%d)\n", graph->verified, graph->isReadyToExecute);
                 status = VX_FAILURE;
             }
+            // vx_khr_pipelining 1.1: a graph completion event is generated every
+            // time a graph execution completes, for an abandoned execution as well
+            // as a successful one. Nothing is reported where no execution was
+            // attempted. Events still only reach applications that registered for
+            // them, so this is silent for everyone else.
+            if (reportCompletion)
+                agoNotifyGraphCompleted(graph);
         }
     }
     return status;

@@ -123,19 +123,30 @@ static AgoGraphParameterQueue * agoGetGraphParameterQueue(AgoGraphPipeliningStat
 
 //
 
-static vx_uint32 agoFindEventAppValue(AgoContext * context, vx_reference ref, vx_enum event_type, vx_uint32 graph_parameter_index)
+// The framework only reports events for references the application asked about
+// through vxRegisterEvent, so the lookup has to say whether a registration
+// exists at all -- not just hand back an app_value that defaults to zero.
+static bool agoFindEventRegistration(AgoContext * context, vx_reference ref, vx_enum event_type,
+                                     vx_uint32 graph_parameter_index, vx_uint32 * app_value)
 {
     AgoContextEventSystem * evsys = agoGetContextEventSystem(context);
     if (!evsys)
-        return 0;
+        return false;
     std::lock_guard<std::mutex> lock(evsys->registrations_mtx);
     for (const auto& reg : evsys->registrations) {
         if (reg.ref == ref && reg.event_type == event_type &&
             (event_type != VX_EVENT_GRAPH_PARAMETER_CONSUMED || reg.graph_parameter_index == graph_parameter_index)) {
-            return reg.app_value;
+            if (app_value)
+                *app_value = reg.app_value;
+            return true;
         }
     }
-    return 0;
+    return false;
+}
+
+vx_uint64 agoEventTimestampNs()
+{
+    return agoCurrentTimestampNs();
 }
 
 void agoRemoveEventRegistrations(AgoContext * context, vx_reference ref)
@@ -202,10 +213,13 @@ void agoNotifyGraphCompleted(AgoGraph * graph)
     AgoContextEventSystem * evsys = agoGetContextEventSystem(graph->ref.context);
     if (!evsys || !evsys->enabled)
         return;
+    vx_uint32 app_value = 0;
+    if (!agoFindEventRegistration(graph->ref.context, (vx_reference)graph, VX_EVENT_GRAPH_COMPLETED, 0, &app_value))
+        return;
     AgoEvent evt;
     evt.event_type = VX_EVENT_GRAPH_COMPLETED;
     evt.timestamp = agoCurrentTimestampNs();
-    evt.app_value = agoFindEventAppValue(graph->ref.context, (vx_reference)graph, VX_EVENT_GRAPH_COMPLETED, 0);
+    evt.app_value = app_value;
     evt.graph = graph;
     evt.node = nullptr;
     evt.graph_parameter_index = 0;
@@ -221,10 +235,13 @@ void agoNotifyNodeCompleted(AgoGraph * graph, AgoNode * node)
     AgoContextEventSystem * evsys = agoGetContextEventSystem(graph->ref.context);
     if (!evsys || !evsys->enabled)
         return;
+    vx_uint32 app_value = 0;
+    if (!agoFindEventRegistration(graph->ref.context, (vx_reference)node, VX_EVENT_NODE_COMPLETED, 0, &app_value))
+        return;
     AgoEvent evt;
     evt.event_type = VX_EVENT_NODE_COMPLETED;
     evt.timestamp = agoCurrentTimestampNs();
-    evt.app_value = agoFindEventAppValue(graph->ref.context, (vx_reference)node, VX_EVENT_NODE_COMPLETED, 0);
+    evt.app_value = app_value;
     evt.graph = graph;
     evt.node = node;
     evt.graph_parameter_index = 0;
@@ -240,16 +257,33 @@ void agoNotifyNodeError(AgoGraph * graph, AgoNode * node, vx_status status)
     AgoContextEventSystem * evsys = agoGetContextEventSystem(graph->ref.context);
     if (!evsys || !evsys->enabled)
         return;
+    vx_uint32 app_value = 0;
+    if (!agoFindEventRegistration(graph->ref.context, (vx_reference)node, VX_EVENT_NODE_ERROR, 0, &app_value))
+        return;
     AgoEvent evt;
     evt.event_type = VX_EVENT_NODE_ERROR;
     evt.timestamp = agoCurrentTimestampNs();
-    evt.app_value = agoFindEventAppValue(graph->ref.context, (vx_reference)node, VX_EVENT_NODE_ERROR, 0);
+    evt.app_value = app_value;
     evt.graph = graph;
     evt.node = node;
     evt.graph_parameter_index = 0;
     evt.status = status;
     evt.user_parameter = nullptr;
     agoInternalPushEvent(graph->ref.context, evt);
+}
+
+// Nodes that survived graph optimization report completion from the executor
+// itself. This covers the ones that did not: optimization can rewrite the
+// user-visible nodes into internal ones, and the application still registered
+// against the originals. Nodes still present in nodeList are skipped here
+// because they have already reported, otherwise they would report twice.
+static bool agoIsNodeInGraph(AgoGraph * graph, AgoNode * node)
+{
+    for (AgoNode * n = graph->nodeList.head; n; n = n->next) {
+        if (n == node)
+            return true;
+    }
+    return false;
 }
 
 static void agoEmitRegisteredNodeEvents(AgoGraph * graph, vx_enum event_type, vx_status err_status)
@@ -265,6 +299,8 @@ static void agoEmitRegisteredNodeEvents(AgoGraph * graph, vx_enum event_type, vx
             continue;
         AgoReference * r = (AgoReference *)reg.ref;
         if (!r || r->type != VX_TYPE_NODE || r->scope != (vx_reference)graph)
+            continue;
+        if (agoIsNodeInGraph(graph, (AgoNode *)r))
             continue;
         AgoEvent evt;
         evt.event_type = event_type;
@@ -286,10 +322,14 @@ void agoNotifyGraphParameterConsumed(AgoGraph * graph, vx_uint32 graph_parameter
     AgoContextEventSystem * evsys = agoGetContextEventSystem(graph->ref.context);
     if (!evsys || !evsys->enabled)
         return;
+    vx_uint32 app_value = 0;
+    if (!agoFindEventRegistration(graph->ref.context, (vx_reference)graph, VX_EVENT_GRAPH_PARAMETER_CONSUMED,
+                                  graph_parameter_index, &app_value))
+        return;
     AgoEvent evt;
     evt.event_type = VX_EVENT_GRAPH_PARAMETER_CONSUMED;
     evt.timestamp = agoCurrentTimestampNs();
-    evt.app_value = agoFindEventAppValue(graph->ref.context, (vx_reference)graph, VX_EVENT_GRAPH_PARAMETER_CONSUMED, graph_parameter_index);
+    evt.app_value = app_value;
     evt.graph = graph;
     evt.node = nullptr;
     evt.graph_parameter_index = graph_parameter_index;
@@ -485,14 +525,20 @@ static void agoMoveConsumedRefsToDone(AgoGraph * graph)
     if (!pipe)
         return;
     for (auto& q : pipe->param_queues) {
-        std::lock_guard<std::mutex> lock(q->mtx);
-
-        while (!q->consumed_refs.empty()) {
-            q->done_refs.push_back(q->consumed_refs.front());
-            q->consumed_refs.pop_front();
+        vx_uint32 moved = 0;
+        {
+            std::lock_guard<std::mutex> lock(q->mtx);
+            while (!q->consumed_refs.empty()) {
+                q->done_refs.push_back(q->consumed_refs.front());
+                q->consumed_refs.pop_front();
+                moved++;
+            }
         }
-        if (!q->done_refs.empty()) {
-            // Notify that a reference at this parameter was consumed during this execution.
+        // One event per reference actually consumed by this execution. Keying off
+        // done_refs instead would keep reporting for as long as the application
+        // leaves anything undequeued, including for parameters that consumed
+        // nothing this time round.
+        for (vx_uint32 i = 0; i < moved; i++) {
             agoNotifyGraphParameterConsumed(graph, q->index);
         }
     }
@@ -561,6 +607,7 @@ int agoExecuteGraphQueueManual(AgoGraph * graph)
         return VX_FAILURE;
 
     int overall_status = VX_SUCCESS;
+    vx_uint32 batches = 0;
     for (;;) {
         // Check if every enabled queue has at least one ready ref.
         bool all_ready = true;
@@ -578,10 +625,19 @@ int agoExecuteGraphQueueManual(AgoGraph * graph)
             break;
 
         int status = agoExecutePipelinedGraphOnce(graph);
+        batches++;
         if (status != VX_SUCCESS) {
             overall_status = status;
             break;
         }
+    }
+    // In this mode references for every graph parameter have to be enqueued
+    // before the graph is scheduled; if nothing could run, say so instead of
+    // reporting a successful schedule that did no work.
+    if (overall_status == VX_SUCCESS && batches == 0) {
+        agoAddLogEntry(&graph->ref, VX_FAILURE,
+            "ERROR: vxScheduleGraph: QUEUE_MANUAL requires a ready reference at every enqueued graph parameter\n");
+        return VX_FAILURE;
     }
     return overall_status;
 }
@@ -731,4 +787,5 @@ void agoStartGraphPipeliningAutoExecutor(AgoGraph *) {}
 void agoStartGraphStreamingThread(AgoGraph *) {}
 vx_uint32 agoGetReferenceEnqueueCount(AgoContext *, AgoReference *) { return 0; }
 void agoRemoveEventRegistrations(AgoContext *, vx_reference) {}
+vx_uint64 agoEventTimestampNs() { return 0; }
 #endif

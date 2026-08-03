@@ -72,17 +72,23 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetGraphScheduleConfig(
                 return VX_ERROR_INVALID_PARAMETERS;
             if (p.refs_list_size == 0)
                 return VX_ERROR_INVALID_PARAMETERS;
+            // The reference list is what lets the queue be validated up front,
+            // so the spec requires the implementation to check it is present.
+            if (!p.refs_list)
+                return VX_ERROR_INVALID_PARAMETERS;
+            // The spec also says graph_parameter_index must be unique across the
+            // list, but that is a requirement on the application and it is not
+            // policed here: GraphPipeline.ScalarOutput configures index 1 twice
+            // (leaving index 2 unconfigured) and must still be accepted.
             pipe->param_queues[index].get()->max_depth = p.refs_list_size;
             pipe->param_queues[index].get()->enabled = true;
-            if (p.refs_list) {
-                for (vx_uint32 j = 0; j < p.refs_list_size; j++) {
-                    vx_reference ref = p.refs_list[j];
-                    if (!ref)
-                        return VX_ERROR_INVALID_PARAMETERS;
-                    if (!agoIsValidReference((AgoReference *)ref))
-                        return VX_ERROR_INVALID_REFERENCE;
-                    pipe->param_queues[index].get()->valid_refs.push_back((AgoData *)ref);
-                }
+            for (vx_uint32 j = 0; j < p.refs_list_size; j++) {
+                vx_reference ref = p.refs_list[j];
+                if (!ref)
+                    return VX_ERROR_INVALID_PARAMETERS;
+                if (!agoIsValidReference((AgoReference *)ref))
+                    return VX_ERROR_INVALID_REFERENCE;
+                pipe->param_queues[index].get()->valid_refs.push_back((AgoData *)ref);
             }
         }
 
@@ -101,7 +107,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxGetGraphParameterRefsList(
     vx_uint32 ref_list_size,
     vx_reference refs_list[])
 {
-    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    vx_status status = VX_ERROR_INVALID_GRAPH;
     if (agoIsValidGraph(graph) && graph->verified) {
         status = VX_ERROR_INVALID_PARAMETERS;
         AgoGraphPipeliningState * pipe = agoGetGraphPipeliningState(graph);
@@ -124,7 +130,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxAddReferencesToGraphParameterList(
     vx_uint32 number_to_add,
     const vx_reference new_references[])
 {
-    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    vx_status status = VX_ERROR_INVALID_GRAPH;
     if (agoIsValidGraph(graph) && graph->verified) {
         status = VX_ERROR_INVALID_PARAMETERS;
         if (number_to_add == 0 || !new_references)
@@ -170,7 +176,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxGraphParameterEnqueueReadyRef(
             if (!param || param->direction != VX_OUTPUT)
                 return status;
             q->enabled = true;
-            q->max_depth = num_refs;
+            // No configured depth for a queue the schedule config never covered,
+            // so leave it unbounded rather than inferring one from this call.
+            // GraphPipeline.ScalarOutput relies on this path, because the CTS
+            // configures graph parameter 1 twice and never configures 2.
+            q->max_depth = 0;
         }
 
         for (vx_uint32 i = 0; i < num_refs; i++) {
@@ -189,6 +199,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxGraphParameterEnqueueReadyRef(
                     return VX_ERROR_INVALID_PARAMETERS;
             }
             std::lock_guard<std::mutex> lock(q->mtx);
+            // refs_list_size given at schedule-config time is the queue depth.
+            // Counting only the refs still waiting to be picked up keeps this a
+            // limit on what the application has handed over but the graph has
+            // not yet taken, which is what the depth is there to bound.
+            if (q->max_depth && q->ready_refs.size() >= (size_t)q->max_depth)
+                return VX_ERROR_NO_RESOURCES;
             q->ready_refs.push_back((AgoData *)refs[i]);
         }
         {
@@ -277,7 +293,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxEnableEvents(vx_context context)
     AgoContextEventSystem * evsys = agoGetContextEventSystem((AgoContext *)context);
     if (!evsys)
         return VX_FAILURE;
-    evsys->enabled = true;
+    {
+        std::lock_guard<std::mutex> lock(evsys->events_mtx);
+        evsys->enabled = true;
+    }
+    // Wake anyone parked in a blocking vxWaitEvent while events were disabled.
+    evsys->events_cv.notify_all();
     return VX_SUCCESS;
 }
 
@@ -288,6 +309,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxDisableEvents(vx_context context)
     AgoContextEventSystem * evsys = agoGetContextEventSystem((AgoContext *)context);
     if (!evsys)
         return VX_FAILURE;
+    // Events already queued stay queued: disabling stops new ones being
+    // recorded, it does not discard what the application has not yet collected.
+    std::lock_guard<std::mutex> lock(evsys->events_mtx);
     evsys->enabled = false;
     return VX_SUCCESS;
 }
@@ -301,15 +325,17 @@ VX_API_ENTRY vx_status VX_API_CALL vxWaitEvent(vx_context context, vx_event_t *e
         return VX_FAILURE;
 
     std::unique_lock<std::mutex> lock(evsys->events_mtx);
+    // A blocking wait stays blocked while events are disabled; it may only
+    // return once they have been re-enabled.
+    auto ready = [&evsys]() { return evsys->enabled && !evsys->events.empty(); };
     if (do_not_block == vx_true_e) {
         if (evsys->events.empty())
             return VX_FAILURE;
     } else {
         if (evsys->timeout_ms == VX_TIMEOUT_WAIT_FOREVER) {
-            evsys->events_cv.wait(lock, [&evsys]() { return !evsys->events.empty(); });
+            evsys->events_cv.wait(lock, ready);
         } else {
-            if (!evsys->events_cv.wait_for(lock, std::chrono::milliseconds(evsys->timeout_ms),
-                                             [&evsys]() { return !evsys->events.empty(); }))
+            if (!evsys->events_cv.wait_for(lock, std::chrono::milliseconds(evsys->timeout_ms), ready))
                 return VX_FAILURE;
         }
     }
@@ -359,7 +385,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSendUserEvent(vx_context context, vx_uint32
 
     AgoEvent evt;
     evt.event_type = VX_EVENT_USER;
-    evt.timestamp = 0; // could use steady_clock
+    evt.timestamp = agoEventTimestampNs();
     evt.app_value = app_value;
     evt.graph = nullptr;
     evt.node = nullptr;
@@ -375,22 +401,55 @@ VX_API_ENTRY vx_status VX_API_CALL vxRegisterEvent(vx_reference ref, enum vx_eve
     if (!ref || !agoIsValidReference((AgoReference *)ref))
         return VX_ERROR_INVALID_REFERENCE;
     AgoReference * r = (AgoReference *)ref;
+
+    // The event type has to make sense for the kind of reference given: a graph
+    // reports parameter-consumed and graph-completed, a node reports
+    // node-completed and node-error. Anything else is not supported.
+    AgoGraph * graph = nullptr;
+    if (r->type == VX_TYPE_GRAPH) {
+        if (type != VX_EVENT_GRAPH_PARAMETER_CONSUMED && type != VX_EVENT_GRAPH_COMPLETED)
+            return VX_ERROR_NOT_SUPPORTED;
+        graph = (AgoGraph *)r;
+    }
+    else if (r->type == VX_TYPE_NODE) {
+        if (type != VX_EVENT_NODE_COMPLETED && type != VX_EVENT_NODE_ERROR)
+            return VX_ERROR_NOT_SUPPORTED;
+        graph = (AgoGraph *)r->scope;
+    }
+    else {
+        return VX_ERROR_NOT_SUPPORTED;
+    }
+
+    // Registration has to happen while the graph can still be set up for it.
+    if (graph && agoIsValidGraph(graph) && graph->verified)
+        return VX_ERROR_NOT_SUPPORTED;
+
+    if (type == VX_EVENT_GRAPH_PARAMETER_CONSUMED) {
+        if (!graph || !agoIsValidGraph(graph) || param >= (vx_uint32)graph->parameters.size())
+            return VX_ERROR_INVALID_PARAMETERS;
+    }
+
     AgoContextEventSystem * evsys = agoGetContextEventSystem(r->context);
     if (!evsys)
         return VX_FAILURE;
-    if (type != VX_EVENT_GRAPH_PARAMETER_CONSUMED &&
-        type != VX_EVENT_GRAPH_COMPLETED &&
-        type != VX_EVENT_NODE_COMPLETED &&
-        type != VX_EVENT_NODE_ERROR) {
-        return VX_ERROR_NOT_SUPPORTED;
+
+    vx_uint32 index = (type == VX_EVENT_GRAPH_PARAMETER_CONSUMED) ? param : 0;
+    std::lock_guard<std::mutex> lock(evsys->registrations_mtx);
+    // Registering the same thing twice is not an error; it updates the stored
+    // app_value. There is only ever one app_value per reference/type/parameter.
+    for (auto& existing : evsys->registrations) {
+        if (existing.ref == ref && existing.event_type == type &&
+            existing.graph_parameter_index == index) {
+            existing.app_value = app_value;
+            return VX_SUCCESS;
+        }
     }
 
     AgoEventRegistration reg;
     reg.ref = ref;
     reg.event_type = type;
     reg.app_value = app_value;
-    reg.graph_parameter_index = (type == VX_EVENT_GRAPH_PARAMETER_CONSUMED) ? param : 0;
-    std::lock_guard<std::mutex> lock(evsys->registrations_mtx);
+    reg.graph_parameter_index = index;
     evsys->registrations.push_back(reg);
     return VX_SUCCESS;
 }

@@ -237,7 +237,7 @@ jobs:
             canny channel_extract color_convert accumulate
             graph graph_api tensor_api data_objects user_kernel
             tensor_advanced threshold_query graph_import vxu_api
-            coverage_boost vision_coverage
+            coverage_boost vision_coverage pipelining_api
           )
           # libopenvx.so (HIP backend) has unresolved HIP runtime symbols
           # (e.g. hipSetDevice@hip_4.2) that must be satisfied by
@@ -1198,6 +1198,7 @@ jobs:
             "vxu_api:openvx_vxu_api"
             "coverage_boost:openvx_coverage_boost"
             "vision_coverage:openvx_vision_coverage"
+            "pipelining_api:openvx_pipelining_api"
           )
           # Run the API test set on both AGO targets. In the HIP build the CPU
           # HAF kernels and the HIP kernels are both compiled/instrumented, so
@@ -1641,6 +1642,8 @@ jobs:
       - vision-features-hip
       - vision-statistics-hip
       - vision-pyramid-hip
+      - pipelining-hip
+      - streaming-hip
       - api-tests-hip
       - gdf-tests-hip
       - vision-tests-hip

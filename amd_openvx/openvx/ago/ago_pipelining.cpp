@@ -588,10 +588,9 @@ int agoExecutePipelinedGraphOnce(AgoGraph * graph)
         agoEmitRegisteredNodeEvents(graph, VX_EVENT_NODE_COMPLETED, VX_SUCCESS);
     }
 
-    // Emit graph completion event.
-    if (status == VX_SUCCESS) {
-        agoNotifyGraphCompleted(graph);
-    }
+    // vx_khr_pipelining 1.1: graph completion is reported for an abandoned
+    // execution as well as a successful one, so this is not gated on status.
+    agoNotifyGraphCompleted(graph);
 
     return status;
 }

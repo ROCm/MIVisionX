@@ -134,7 +134,7 @@ jobs:
             canny channel_extract color_convert accumulate
             graph graph_api tensor_api data_objects user_kernel
             tensor_advanced threshold_query graph_import vxu_api
-            coverage_boost vision_coverage
+            coverage_boost vision_coverage pipelining_api
           )
           for test_dir in "${API_TESTS[@]}"; do
             echo "::group::Building ${test_dir}"
@@ -731,6 +731,7 @@ jobs:
             "vxu_api:openvx_vxu_api"
             "coverage_boost:openvx_coverage_boost"
             "vision_coverage:openvx_vision_coverage"
+            "pipelining_api:openvx_pipelining_api"
           )
           for entry in "${API_EXECUTABLES[@]}"; do
             dir="${entry%%:*}"
@@ -1132,6 +1133,8 @@ jobs:
       - vision-features
       - vision-statistics
       - vision-pyramid
+      - pipelining-cpu
+      - streaming-cpu
       - api-tests
       - gdf-tests
       - vision-tests

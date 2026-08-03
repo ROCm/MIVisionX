@@ -28,6 +28,54 @@ THE SOFTWARE.
 
 #if OPENVX_USE_PIPELINING
 
+// Records the reference lists supplied by a post-verify vxSetGraphScheduleConfig
+// call. The queues themselves were already set up before verify, so this must not
+// disturb them beyond replacing the set of references allowed at each parameter.
+static vx_status updateGraphScheduleRefsList(
+    vx_graph graph,
+    vx_enum graph_schedule_mode,
+    AgoGraphPipeliningState * pipe,
+    vx_uint32 graph_parameters_list_size,
+    const vx_graph_parameter_queue_params_t graph_parameters_queue_params_list[])
+{
+    CAgoLock lock(graph->cs);
+    // Only the reference lists may differ from the call made before verify, so a
+    // different schedule mode is a reconfiguration and cannot be honoured now.
+    if (pipe->schedule_mode != graph_schedule_mode)
+        return VX_ERROR_INVALID_PARAMETERS;
+    if (pipe->param_queues.size() != graph->parameters.size())
+        return VX_FAILURE;
+    for (vx_uint32 i = 0; i < graph_parameters_list_size; i++) {
+        const vx_graph_parameter_queue_params_t & p = graph_parameters_queue_params_list[i];
+        vx_uint32 index = p.graph_parameter_index;
+        if (index >= (vx_uint32)graph->parameters.size())
+            return VX_ERROR_INVALID_PARAMETERS;
+        if (p.refs_list_size == 0)
+            return VX_ERROR_INVALID_PARAMETERS;
+        AgoGraphParameterQueue * q = pipe->param_queues[index].get();
+        // Queuing has to have been requested for this parameter before verify;
+        // this call may only fill in references, not enable a new queue.
+        if (!q || !q->enabled)
+            return VX_ERROR_INVALID_PARAMETERS;
+        if (!p.refs_list)
+            continue;
+        std::vector<AgoData *> refs;
+        refs.reserve(p.refs_list_size);
+        for (vx_uint32 j = 0; j < p.refs_list_size; j++) {
+            vx_reference ref = p.refs_list[j];
+            if (!ref)
+                return VX_ERROR_INVALID_PARAMETERS;
+            if (!agoIsValidReference((AgoReference *)ref))
+                return VX_ERROR_INVALID_REFERENCE;
+            refs.push_back((AgoData *)ref);
+        }
+        // Built separately so a bad entry late in the list leaves the queue's
+        // existing references untouched.
+        q->valid_refs = std::move(refs);
+    }
+    return VX_SUCCESS;
+}
+
 VX_API_ENTRY vx_status VX_API_CALL vxSetGraphScheduleConfig(
     vx_graph graph,
     vx_enum graph_schedule_mode,
@@ -35,7 +83,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetGraphScheduleConfig(
     const vx_graph_parameter_queue_params_t graph_parameters_queue_params_list[])
 {
     vx_status status = VX_ERROR_INVALID_REFERENCE;
-    if (agoIsValidGraph(graph) && !graph->verified) {
+    if (agoIsValidGraph(graph)) {
         if ((graph_schedule_mode != VX_GRAPH_SCHEDULE_MODE_NORMAL) &&
             (graph_schedule_mode != VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO) &&
             (graph_schedule_mode != VX_GRAPH_SCHEDULE_MODE_QUEUE_MANUAL)) {
@@ -55,6 +103,16 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetGraphScheduleConfig(
         if (!pipe)
             return VX_FAILURE;
 
+        if (graph->verified) {
+            // vx_khr_pipelining 1.1: the application may call this again after
+            // verify with everything unchanged except refs_list, which is how it
+            // hands over the references when they were not available earlier.
+            // Nothing may be reconfigured now, so this only records the lists.
+            return updateGraphScheduleRefsList(graph, graph_schedule_mode, pipe,
+                                               graph_parameters_list_size,
+                                               graph_parameters_queue_params_list);
+        }
+
         // Stop any active executor before reconfiguring. This has to happen outside
         // graph->cs because the executor runs the graph inside that section.
         agoStopGraphPipelining(graph);
@@ -72,23 +130,24 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetGraphScheduleConfig(
                 return VX_ERROR_INVALID_PARAMETERS;
             if (p.refs_list_size == 0)
                 return VX_ERROR_INVALID_PARAMETERS;
-            // The reference list is what lets the queue be validated up front,
-            // so the spec requires the implementation to check it is present.
-            if (!p.refs_list)
-                return VX_ERROR_INVALID_PARAMETERS;
+            // vx_khr_pipelining 1.1: called before vxVerifyGraph, refs_list may
+            // be NULL when the application does not have the handles yet, while
+            // refs_list_size must always be given. So only the size is required.
             // The spec also says graph_parameter_index must be unique across the
             // list, but that is a requirement on the application and it is not
             // policed here: GraphPipeline.ScalarOutput configures index 1 twice
             // (leaving index 2 unconfigured) and must still be accepted.
             pipe->param_queues[index].get()->max_depth = p.refs_list_size;
             pipe->param_queues[index].get()->enabled = true;
-            for (vx_uint32 j = 0; j < p.refs_list_size; j++) {
-                vx_reference ref = p.refs_list[j];
-                if (!ref)
-                    return VX_ERROR_INVALID_PARAMETERS;
-                if (!agoIsValidReference((AgoReference *)ref))
-                    return VX_ERROR_INVALID_REFERENCE;
-                pipe->param_queues[index].get()->valid_refs.push_back((AgoData *)ref);
+            if (p.refs_list) {
+                for (vx_uint32 j = 0; j < p.refs_list_size; j++) {
+                    vx_reference ref = p.refs_list[j];
+                    if (!ref)
+                        return VX_ERROR_INVALID_PARAMETERS;
+                    if (!agoIsValidReference((AgoReference *)ref))
+                        return VX_ERROR_INVALID_REFERENCE;
+                    pipe->param_queues[index].get()->valid_refs.push_back((AgoData *)ref);
+                }
             }
         }
 
@@ -325,9 +384,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxWaitEvent(vx_context context, vx_event_t *e
         return VX_FAILURE;
 
     std::unique_lock<std::mutex> lock(evsys->events_mtx);
-    // A blocking wait stays blocked while events are disabled; it may only
-    // return once they have been re-enabled.
-    auto ready = [&evsys]() { return evsys->enabled && !evsys->events.empty(); };
+    // vx_khr_pipelining 1.1: events generated before vxDisableEvents are still
+    // returned here, so the wait must not require events to be enabled. What
+    // disabling does is stop new ones being recorded, which agoPushEvent already
+    // handles, so nothing further can arrive until they are re-enabled.
+    auto ready = [&evsys]() { return !evsys->events.empty(); };
     if (do_not_block == vx_true_e) {
         if (evsys->events.empty())
             return VX_FAILURE;

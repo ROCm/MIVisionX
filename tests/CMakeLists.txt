@@ -291,6 +291,19 @@ add_test(
 )
 set_property(TEST openvx_vision_coverage PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
 
+# 11_l - pipelining_api - graph pipelining/streaming/event extension API test
+add_test(
+  NAME
+    openvx_pipelining_api
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/pipelining_api"
+                              "${CMAKE_CURRENT_BINARY_DIR}/pipelining_api"
+            --build-generator "${CMAKE_GENERATOR}"
+            --test-command "openvx_pipelining_api"
+)
+set_property(TEST openvx_pipelining_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+
 # 12 - canny - vision graph force to CPU
 add_test(NAME openvx_canny_CPU 
               COMMAND openvx_canny 

@@ -31,20 +31,23 @@ static void agoGraphThreadFunction(LPVOID graph_)
 #endif
 {
     AgoGraph * graph = (AgoGraph *)graph_;
-    while (WaitForSingleObject(graph->hSemToThread, INFINITE) == WAIT_OBJECT_0) {
-        graph->threadThreadWaitState = 2;
-        if (graph->threadThreadTerminationState)
+    for (;;) {
+        DWORD w = WaitForSingleObject(graph->hSemToThread, INFINITE);
+        if (graph->threadThreadTerminationState.load())
             break;
+        // Ignore spurious/error returns from the semaphore wait and retry.
+        if (w != WAIT_OBJECT_0)
+            continue;
 
         // execute graph
         graph->status = agoProcessGraph(graph);
 
         // inform caller
-        graph->threadExecuteCount++;
+        graph->threadExecuteCount.fetch_add(1);
         ReleaseSemaphore(graph->hSemFromThread, 1, nullptr);
     }
     // inform caller about termination
-    graph->threadThreadTerminationState = 2;
+    graph->threadThreadTerminationState.store(2);
     ReleaseSemaphore(graph->hSemFromThread, 1, nullptr);
 #if _WIN32
     return 0;
@@ -159,8 +162,32 @@ AgoGraph * agoCreateGraph(AgoContext * acontext)
     return (AgoGraph *)agraph;
 }
 
+// Signals the graph scheduling thread to exit and waits for it to do so. Must be called
+// without holding the graph or context critical section: the thread executes the graph
+// inside both of them, so joining it from within either one deadlocks.
+static void agoStopGraphThread(AgoGraph * agraph)
+{
+    if (!agraph->hThread || agraph->threadThreadTerminationState.load() == 2)
+        return;
+    agraph->threadThreadTerminationState.store(1);
+    ReleaseSemaphore(agraph->hSemToThread, 1, nullptr);
+    while (agraph->threadThreadTerminationState.load() == 1) {
+        // give a chance for the thread to run in case it is waititng
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        ReleaseSemaphore(agraph->hSemToThread, 1, nullptr);
+    }
+}
+
 int agoReleaseGraph(AgoGraph * agraph)
 {
+    // Stop every thread that executes this graph before taking any lock, so that the
+    // graph is not being torn down underneath them and so that joining them cannot
+    // deadlock against a section they are trying to enter.
+    if (agraph->ref.external_count <= 1) {
+        agoStopGraphPipelining(agraph);
+        agoStopGraphThread(agraph);
+    }
+
     CAgoLock lock(agraph->ref.context->cs);
 
     int status = 0;
@@ -169,15 +196,7 @@ int agoReleaseGraph(AgoGraph * agraph)
         agraph->ref.context->num_active_references--;
     if (agraph->ref.external_count == 0) {
         EnterCriticalSection(&agraph->cs);
-        // stop graph thread
         if (agraph->hThread) {
-            agraph->threadThreadTerminationState = 1;
-            ReleaseSemaphore(agraph->hSemToThread, 1, nullptr);
-            while (agraph->threadThreadTerminationState == 1) {
-                // give a chance for the thread to run in case it is waititng
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                ReleaseSemaphore(agraph->hSemToThread, 1, nullptr);
-            }
             if (agraph->hSemToThread) {
                 CloseHandle(agraph->hSemToThread);
             }
@@ -1368,8 +1387,15 @@ vx_status agoVerifyNode(AgoNode * node)
         if (data) {
             if ((kernel->argConfig[arg] & (AGO_KERNEL_ARG_INPUT_FLAG | AGO_KERNEL_ARG_OUTPUT_FLAG)) == AGO_KERNEL_ARG_OUTPUT_FLAG) {
                 vx_meta_format meta = &node->metaList[arg];
+                // For user kernels without a validate callback, infer output meta from the
+                // bound object so source/sink kernels can verify.
+                if (kernel->user_kernel && !kernel->validate_f && data && kernel->argType[arg] && kernel->argType[arg] != VX_TYPE_REFERENCE) {
+                    meta->data.ref.type = data->ref.type;
+                    meta->data.u = data->u;
+                }
                 if (kernel->argType[arg] && kernel->argType[arg] != VX_TYPE_REFERENCE && (meta->data.ref.type != kernel->argType[arg])) {
                     agoAddLogEntry(&kernel->ref, VX_ERROR_INVALID_TYPE, "ERROR: agoVerifyGraph: kernel %s: output argument type mismatch for argument#%d\n", kernel->name, arg);
+
                     return VX_ERROR_INVALID_TYPE;
                 }
                 else if (meta->data.ref.type == VX_TYPE_IMAGE) {
@@ -1520,6 +1546,7 @@ vx_status agoVerifyNode(AgoNode * node)
                     // make sure that the data come from output validator matches with object
                     if (data->u.arr.itemtype != meta->data.u.arr.itemtype) {
                         agoAddLogEntry(&kernel->ref, VX_ERROR_INVALID_TYPE, "ERROR: agoVerifyGraph: kernel %s: invalid array type for argument#%d\n", kernel->name, arg);
+
                         return VX_ERROR_INVALID_TYPE;
                     }
                     else if (!data->u.arr.capacity || (meta->data.u.arr.capacity && meta->data.u.arr.capacity > data->u.arr.capacity)) {
@@ -1552,6 +1579,7 @@ vx_status agoVerifyNode(AgoNode * node)
                     // make sure that the data come from output validator matches with object
                     if (data->u.objarr.itemtype != meta->data.u.objarr.itemtype) {
                         agoAddLogEntry(&kernel->ref, VX_ERROR_INVALID_TYPE, "ERROR: agoVerifyGraph: kernel %s: invalid object-array type for argument#%d\n", kernel->name, arg);
+
                         return VX_ERROR_INVALID_TYPE;
                     }
                     else if (!data->u.objarr.numitems || (meta->data.u.objarr.numitems && meta->data.u.objarr.numitems > data->u.objarr.numitems)) {
@@ -1572,6 +1600,7 @@ vx_status agoVerifyNode(AgoNode * node)
                     // make sure that the data come from output validator matches with object
                     if (data->u.scalar.type != meta->data.u.scalar.type) {
                         agoAddLogEntry(&kernel->ref, VX_ERROR_INVALID_TYPE, "ERROR: agoVerifyGraph: kernel %s: invalid type for argument#%d\n", kernel->name, arg);
+
                         return VX_ERROR_INVALID_TYPE;
                     }
                 }
@@ -1579,6 +1608,7 @@ vx_status agoVerifyNode(AgoNode * node)
                     // make sure that the data come from output validator matches with object
                     if ((data->u.mat.type != meta->data.u.mat.type) || (data->u.mat.columns != meta->data.u.mat.columns) || (data->u.mat.rows != meta->data.u.mat.rows)) {
                         agoAddLogEntry(&kernel->ref, VX_ERROR_INVALID_TYPE, "ERROR: agoVerifyGraph: kernel %s: invalid matrix meta for argument#%d\n", kernel->name, arg);
+
                         return VX_ERROR_INVALID_TYPE;
                     }
                 }
@@ -1588,6 +1618,7 @@ vx_status agoVerifyNode(AgoNode * node)
                 else if (meta->data.ref.type == VX_TYPE_THRESHOLD) {
                     if ((data->u.thr.thresh_type != meta->data.u.thr.thresh_type)) {
                         agoAddLogEntry(&kernel->ref, VX_ERROR_INVALID_TYPE, "ERROR: agoVerifyGraph: kernel %s: invalid threshold meta for argument#%d\n", kernel->name, arg);
+
                         return VX_ERROR_INVALID_TYPE;
                     }
                 }
@@ -1609,6 +1640,7 @@ vx_status agoVerifyNode(AgoNode * node)
                     }
                     if (mismatched) {
                         agoAddLogEntry(&kernel->ref, VX_ERROR_INVALID_TYPE, "ERROR: agoVerifyGraph: kernel %s: invalid tensor meta for argument#%d\n", kernel->name, arg);
+
                         return VX_ERROR_INVALID_TYPE;
                     }
                 }
@@ -1623,6 +1655,7 @@ vx_status agoVerifyNode(AgoNode * node)
                 }
                 else if (kernel->argType[arg]) {
                     agoAddLogEntry(&kernel->ref, VX_ERROR_INVALID_TYPE, "ERROR: agoVerifyGraph: kernel %s: invalid type for argument#%d\n", kernel->name, arg);
+
                     return VX_ERROR_INVALID_TYPE;
                 }
             }
@@ -1696,7 +1729,6 @@ int agoVerifyGraph(AgoGraph * graph)
         graph->enable_node_level_gpu_flush = false;
     }
 #endif
-
     return status;
 }
 
@@ -1837,11 +1869,11 @@ vx_status agoComputeImageValidRectangleOutputs(AgoGraph * graph)
             AgoData * data = node->paramList[i];
             if (data && param->direction == VX_OUTPUT) {
                 if (data->ref.type == VX_TYPE_IMAGE) {
-                    printf("valid_rect [ %5d %5d %5d %5d ] image %s\n", data->u.img.rect_valid.start_x, data->u.img.rect_valid.start_y, data->u.img.rect_valid.end_x, data->u.img.rect_valid.end_y, data->name.c_str());
+                    fprintf(stderr,"valid_rect [ %5d %5d %5d %5d ] image %s\n", data->u.img.rect_valid.start_x, data->u.img.rect_valid.start_y, data->u.img.rect_valid.end_x, data->u.img.rect_valid.end_y, data->name.c_str());
                 }
                 else if (data->ref.type == VX_TYPE_PYRAMID) {
                     for (vx_size level = 0; level < data->u.pyr.levels; level++) {
-                        printf("valid_rect [ %5d %5d %5d %5d ] pyrL%d %s\n", data->children[level]->u.img.rect_valid.start_x, data->children[level]->u.img.rect_valid.start_y, data->children[level]->u.img.rect_valid.end_x, data->children[level]->u.img.rect_valid.end_y, (int)level, data->name.c_str());
+                        fprintf(stderr,"valid_rect [ %5d %5d %5d %5d ] pyrL%d %s\n", data->children[level]->u.img.rect_valid.start_x, data->children[level]->u.img.rect_valid.start_y, data->children[level]->u.img.rect_valid.end_x, data->children[level]->u.img.rect_valid.end_y, (int)level, data->name.c_str());
                     }
                 }
             }
@@ -2483,8 +2515,10 @@ int agoExecuteGraph(AgoGraph * graph)
                 if (status) {
                     if (status == VX_ERROR_GRAPH_ABANDONED)
                         agoAddLogEntry((vx_reference)graph, VX_FAILURE, "INFO: kernel %s exec returned graph_stopped status: VX_ERROR_GRAPH_ABANDONED (%d)\n", kernel->name, status);
-                    else
+                    else {
+                        agoNotifyNodeError(graph, node, status);
                         agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: kernel %s exec failed (%d:%s)\n", kernel->name, status, agoEnum2Name(status));
+                    }
                     return status;
                 }
                 agoPerfCaptureStop(&node->perf);
@@ -2525,6 +2559,7 @@ int agoExecuteGraph(AgoGraph * graph)
                         return VX_ERROR_GRAPH_ABANDONED;
                     }
                 }
+                agoNotifyNodeCompleted(graph, node);
             }
         }
     }
@@ -2552,6 +2587,11 @@ int agoExecuteGraph(AgoGraph * graph)
         }
 #endif
     }
+    // Notify completion for GPU nodes launched in this graph execution.
+    for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
+        if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU)
+            agoNotifyNodeCompleted(graph, node);
+    }
     agoPerfProfileEntry(graph, ago_profile_type_wait_end, &graph->ref);
     graph->gpu_perf_total.kernel_enqueue += graph->gpu_perf.kernel_enqueue;
     graph->gpu_perf_total.kernel_wait += graph->gpu_perf.kernel_wait;
@@ -2572,7 +2612,14 @@ int agoExecuteGraph(AgoGraph * graph)
 
     if (status == VX_SUCCESS)
         graph->state = VX_GRAPH_STATE_COMPLETED;
-
+    // Advance streaming node state for each executed node.
+    for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
+        node->node_exec_count++;
+        vx_uint32 threshold = node->pipeup_output_depth > 0 ? (node->pipeup_output_depth - 1) : 0;
+        if (node->node_exec_count >= threshold && node->node_state == VX_NODE_STATE_PIPEUP) {
+            node->node_state = VX_NODE_STATE_STEADY;
+        }
+    }
     return status;
 }
 
@@ -2843,6 +2890,40 @@ vx_status agoGraphDumpPerformanceProfile(AgoGraph * graph, const char * fileName
     return VX_SUCCESS;
 }
 
+static void agoPreFillSourceNodePipeup(AgoGraph * graph)
+{
+    for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
+        vx_uint32 depth = node->pipeup_output_depth;
+        if (depth <= 1)
+            continue;
+        // source nodes have no input parameters
+        bool has_input = false;
+        for (vx_uint32 i = 0; i < node->paramCount; i++) {
+            if (node->parameters[i].direction == VX_INPUT) {
+                has_input = true;
+                break;
+            }
+        }
+        if (has_input)
+            continue;
+        // execute the node in pipeup state until one frame before steady
+        vx_uint32 target = depth > 0 ? (depth - 1) : 0;
+
+        AgoKernel * kernel = node->akernel;
+        while (node->node_exec_count < target) {
+            vx_status s = VX_SUCCESS;
+            if (kernel && kernel->kernel_f) {
+                s = kernel->kernel_f(node, (vx_reference *)node->paramList, node->paramCount);
+            }
+            if (s != VX_SUCCESS)
+                break;
+            node->node_exec_count++;
+        }
+        if (node->node_exec_count >= target && node->node_state == VX_NODE_STATE_PIPEUP)
+            node->node_state = VX_NODE_STATE_STEADY;
+    }
+}
+
 int agoProcessGraph(AgoGraph * graph)
 {
     vx_status status = VX_ERROR_INVALID_REFERENCE;
@@ -2855,13 +2936,42 @@ int agoProcessGraph(AgoGraph * graph)
         }
         // execute graph if possible
         if (status == VX_SUCCESS) {
-            if (graph->verified && graph->isReadyToExecute) {
+            // The pipelined path reports completion for each of the executions it
+            // runs, so only a plain execution still has to be reported here.
+            bool reportCompletion = false;
+            if (graph->verified && graph->pipelining) {
+                AgoGraphPipeliningState * pipe = graph->pipelining;
+                if (pipe->schedule_mode == VX_GRAPH_SCHEDULE_MODE_QUEUE_MANUAL ||
+                    pipe->schedule_mode == VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO ||
+                    pipe->streaming_enabled) {
+                    status = agoExecuteGraphPipelined(graph);
+                }
+                else if (graph->isReadyToExecute) {
+                    status = agoExecuteGraph(graph);
+                    reportCompletion = true;
+                }
+                else {
+                    agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoProcessGraph: not verified (%d) or not ready to execute (%d)\n", graph->verified, graph->isReadyToExecute);
+                    status = VX_FAILURE;
+                }
+            }
+            else if (graph->verified && graph->isReadyToExecute) {
+                // For non-streaming execution, pre-fill source-node pipeup queues.
+                agoPreFillSourceNodePipeup(graph);
                 status = agoExecuteGraph(graph);
+                reportCompletion = true;
             }
             else {
                 agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoProcessGraph: not verified (%d) or not ready to execute (%d)\n", graph->verified, graph->isReadyToExecute);
                 status = VX_FAILURE;
             }
+            // vx_khr_pipelining 1.1: a graph completion event is generated every
+            // time a graph execution completes, for an abandoned execution as well
+            // as a successful one. Nothing is reported where no execution was
+            // attempted. Events still only reach applications that registered for
+            // them, so this is silent for everyone else.
+            if (reportCompletion)
+                agoNotifyGraphCompleted(graph);
         }
     }
     return status;
@@ -2872,7 +2982,6 @@ int agoScheduleGraph(AgoGraph * graph)
     vx_status status = VX_ERROR_INVALID_REFERENCE;
     if (agoIsValidGraph(graph)) {
         status = VX_SUCCESS;
-        graph->threadScheduleCount++;
         if (graph->hThread) {
             if (!graph->verified) {
                 // make sure to verify the graph in master thread
@@ -2880,13 +2989,18 @@ int agoScheduleGraph(AgoGraph * graph)
                 status = vxVerifyGraph(graph);
             }
             if (status == VX_SUCCESS) {
+                // count the request before waking the graph thread, so a waiter can
+                // never observe the completion token without the matching request
+                graph->threadScheduleCount.fetch_add(1);
                 // inform graph thread to execute
                 if (!ReleaseSemaphore(graph->hSemToThread, 1, nullptr)) {
+                    graph->threadScheduleCount.fetch_sub(1);
                     status = VX_ERROR_NO_RESOURCES;
                 }
             }
         }
         else {
+            graph->threadScheduleCount.fetch_add(1);
             status = agoProcessGraph(graph);
         }
     }
@@ -2898,23 +3012,95 @@ int agoWaitGraph(AgoGraph * graph)
     vx_status status = VX_ERROR_INVALID_REFERENCE;
     if (agoIsValidGraph(graph)) {
         status = VX_SUCCESS;
-        graph->threadWaitCount++;
-        if (graph->threadScheduleCount <= 0) // the graph was never scheduled so return VX_FAILURE
+        if (graph->pipelining) {
+            AgoGraphPipeliningState * pipe = graph->pipelining;
+            // Streaming graphs are driven by the streaming thread; vxWaitGraph just
+            // needs to observe that no execution is active. There is only something
+            // to wait for once that thread is actually running: a graph with
+            // streaming enabled but never started has no execution in flight, and
+            // waiting for a stop that nobody will request would never return.
+            if (pipe->streaming_enabled) {
+                if (pipe->streaming_thread.joinable()) {
+                    while (!pipe->streaming_stop.load()) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                    }
+                    // wait for streaming thread to finish
+                    if (pipe->streaming_thread.joinable())
+                        pipe->streaming_thread.join();
+                }
+                return status;
+            }
+            // QUEUE_AUTO: stop the background executor, drain any refs that were
+            // enqueued but not yet processed, then restart the executor so future
+            // enqueues continue to be handled automatically.
+            if (pipe->schedule_mode == VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO) {
+                agoStopGraphPipelining(graph);
+                {
+                    CAgoLock lock(graph->cs);
+                    for (;;) {
+                        bool any_ready = false;
+                        for (auto& q : pipe->param_queues) {
+                            if (q->enabled) {
+                                std::lock_guard<std::mutex> qlock(q->mtx);
+                                if (!q->ready_refs.empty()) {
+                                    any_ready = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!any_ready)
+                            break;
+                        int exec_status = agoExecutePipelinedGraphOnce(graph);
+                        if (exec_status != VX_SUCCESS) {
+                            status = exec_status;
+                            break;
+                        }
+                    }
+                }
+                agoStartGraphPipeliningAutoExecutor(graph);
+                return status;
+            }
+            // QUEUE_MANUAL without a graph thread: drain synchronously.
+            if (!graph->hThread && pipe->schedule_mode == VX_GRAPH_SCHEDULE_MODE_QUEUE_MANUAL) {
+                CAgoLock lock(graph->cs);
+                for (;;) {
+                    bool any_ready = false;
+                    for (auto& q : pipe->param_queues) {
+                        if (q->enabled) {
+                            std::lock_guard<std::mutex> qlock(q->mtx);
+                            if (!q->ready_refs.empty()) {
+                                any_ready = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!any_ready)
+                        break;
+                    int exec_status = agoExecuteGraphPipelined(graph);
+                    if (exec_status != VX_SUCCESS) {
+                        status = exec_status;
+                        break;
+                    }
+                }
+                return status;
+            }
+        }
+        graph->threadWaitCount.fetch_add(1);
+        if (graph->threadScheduleCount.load() <= 0) // the graph was never scheduled so return VX_FAILURE
             return VX_FAILURE;
         if (graph->hThread) {
-            graph->threadThreadWaitState = 1;
-            while (graph->threadThreadWaitState == 1) {
-                // wait for the agoGraphThreadFunction to be done
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                // release the semaphore in case the agoScheduleGraph was called before the agoGraphThreadFunction
-                ReleaseSemaphore(graph->hSemToThread, 1, nullptr);
-            }
-            while (graph->threadExecuteCount < graph->threadScheduleCount) {
+            // The graph thread posts exactly one completion token per scheduled execution,
+            // so claim a token for every execution scheduled so far that no earlier wait has
+            // accounted for. Counting tokens rather than polling thread state keeps this
+            // correct no matter whether the graph thread runs before or after this call.
+            vx_int32 target = graph->threadScheduleCount.load();
+            while (graph->threadCompletionCount.load() < target) {
                 if (WaitForSingleObject(graph->hSemFromThread, INFINITE) != WAIT_OBJECT_0) {
                     agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoWaitGraph: WaitForSingleObject failed\n");
                     status = VX_FAILURE;
                     break;
                 }
+                graph->threadCompletionCount.fetch_add(1);
             }
         }
         if(status == VX_SUCCESS)

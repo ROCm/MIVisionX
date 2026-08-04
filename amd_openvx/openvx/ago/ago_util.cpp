@@ -3020,6 +3020,7 @@ AgoNode * agoCreateNode(AgoGraph * graph, AgoKernel * kernel)
     node->attr_affinity = graph->attr_affinity;
     node->ref.internal_count = 1;
     node->akernel = kernel;
+    node->pipeup_output_depth = kernel->pipeup_output_depth;
     node->attr_border_mode.mode = VX_BORDER_MODE_UNDEFINED;
     node->localDataSize = kernel->localDataSize;
     node->localDataPtr = NULL;
@@ -3316,6 +3317,8 @@ AgoData::AgoData()
 }
 AgoData::~AgoData()
 {
+    if (ref.context)
+        agoRemoveEventRegistrations(ref.context, (vx_reference)this);
 #if ENABLE_OPENCL
     agoGpuOclReleaseData(this);
 #elif ENABLE_HIP
@@ -3328,6 +3331,10 @@ AgoData::~AgoData()
     if (reserved_allocated) {
         agoReleaseMemory(reserved_allocated);
         reserved_allocated = nullptr;
+    }
+    if (children) {
+        delete[] children;
+        children = nullptr;
     }
 }
 AgoMetaFormat::AgoMetaFormat()
@@ -3347,7 +3354,8 @@ AgoKernel::AgoKernel()
       kernel_f{ nullptr }, validate_f{ nullptr }, input_validate_f{ nullptr }, output_validate_f{ nullptr }, initialize_f{ nullptr }, deinitialize_f{ nullptr },
       query_target_support_f{ nullptr }, opencl_codegen_callback_f{ nullptr }, regen_callback_f{ nullptr }, opencl_global_work_update_callback_f{ nullptr },
       gpu_buffer_update_callback_f{ nullptr }, gpu_buffer_update_param_index{ 0 },
-      opencl_buffer_access_enable{ vx_false_e }, importing_module_index_plus1{ 0 }
+      opencl_buffer_access_enable{ vx_false_e }, importing_module_index_plus1{ 0 },
+      pipeup_output_depth{ 1 }, pipeup_input_depth{ 1 }
 {
     memset(&name, 0, sizeof(name));
     memset(&argConfig, 0, sizeof(argConfig));
@@ -3378,7 +3386,8 @@ AgoSuperNode::~AgoSuperNode()
 AgoNode::AgoNode()
     : next{ nullptr }, akernel{ nullptr }, flags{ 0 }, localDataSize{ 0 }, localDataPtr{ nullptr }, localDataPtr_allocated{ nullptr },
       valid_rect_reset{ vx_true_e }, valid_rect_num_inputs{ 0 }, valid_rect_num_outputs{ 0 }, valid_rect_inputs{ nullptr }, valid_rect_outputs{ nullptr },
-      paramCount{ 0 }, callback{ nullptr }, supernode{ nullptr }, initialized{ false }, target_support_flags{ 0 }, hierarchical_level{ 0 }, status{ VX_SUCCESS }
+      paramCount{ 0 }, callback{ nullptr }, supernode{ nullptr }, initialized{ false }, target_support_flags{ 0 }, hierarchical_level{ 0 }, status{ VX_SUCCESS },
+      node_state{ VX_NODE_STATE_PIPEUP }, node_exec_count{ 0 }, pipeup_output_depth{ 0 }
     , drama_divide_invoked{ false }
 #if ENABLE_OPENCL
     , opencl_type{ 0 }, opencl_param_mem2reg_mask{ 0 }, opencl_param_discard_mask{ 0 }, opencl_param_as_value_mask{ 0 },
@@ -3402,6 +3411,8 @@ AgoNode::AgoNode()
 }
 AgoNode::~AgoNode()
 {
+    if (ref.context)
+        agoRemoveEventRegistrations(ref.context, (vx_reference)this);
     agoShutdownNode(this);
     if (valid_rect_inputs) {
         delete[] valid_rect_inputs;
@@ -3428,9 +3439,9 @@ AgoNode::~AgoNode()
 }
 AgoGraph::AgoGraph()
     : next{ nullptr }, hThread{ nullptr }, hSemToThread{ nullptr }, hSemFromThread{ nullptr },
-      threadScheduleCount{ 0 }, threadExecuteCount{ 0 }, threadWaitCount{ 0 }, threadThreadTerminationState{ 0 },
+      threadScheduleCount{ 0 }, threadExecuteCount{ 0 }, threadCompletionCount{ 0 }, threadWaitCount{ 0 }, threadThreadTerminationState{ 0 },
       isReadyToExecute{ vx_false_e }, detectedInvalidNode{ false }, status{ VX_SUCCESS },
-      virtualDataGenerationCount{ 0 }, optimizer_flags{ AGO_GRAPH_OPTIMIZER_FLAGS_DEFAULT }, verified{ false }, enable_performance_profiling{ false }, execFrameCount{ 0 }
+      virtualDataGenerationCount{ 0 }, optimizer_flags{ AGO_GRAPH_OPTIMIZER_FLAGS_DEFAULT }, verified{ false }, enable_performance_profiling{ false }, execFrameCount{ 0 }, pipelining{ nullptr }
 #if ENABLE_OPENCL
     , supernodeList{ nullptr }, opencl_cmdq{ nullptr }, opencl_device{ nullptr }
     , enable_node_level_gpu_flush{ true }
@@ -3449,6 +3460,16 @@ AgoGraph::AgoGraph()
 }
 AgoGraph::~AgoGraph()
 {
+    // stop and cleanup pipelining state
+    if (pipelining) {
+        agoStopGraphPipelining(this);
+        delete pipelining;
+        pipelining = nullptr;
+    }
+
+    if (ref.context)
+        agoRemoveEventRegistrations(ref.context, (vx_reference)this);
+
     // decrement auto age delays
     for (auto it = autoAgeDelayList.begin(); it != autoAgeDelayList.end(); it++) {
         if ((agoIsValidData(*it, VX_TYPE_DELAY) || agoIsValidData(*it, VX_TYPE_OBJECT_ARRAY)) && (*it)->ref.internal_count > 0)
@@ -3480,7 +3501,7 @@ AgoGraph::~AgoGraph()
 AgoContext::AgoContext()
     : perfNormFactor{ 0 }, dataGenerationCount{ 0 }, nextUserStructId{ VX_TYPE_USER_STRUCT_START }, nextUserKernelId{ 0 }, nextUserLibraryId{ 1 },
       num_active_modules{ 0 }, num_active_references{ 0 }, callback_log{ nullptr }, callback_reentrant{ vx_false_e },
-      thread_config{ CONFIG_THREAD_DEFAULT }, importing_module_index_plus1{ 0 }, graph_garbage_data{ nullptr }, graph_garbage_node{ nullptr }, graph_garbage_list{ nullptr }
+      thread_config{ CONFIG_THREAD_DEFAULT }, importing_module_index_plus1{ 0 }, graph_garbage_data{ nullptr }, graph_garbage_node{ nullptr }, graph_garbage_list{ nullptr }, events{ new AgoContextEventSystem() }
 #if ENABLE_OPENCL
 #if defined(CL_VERSION_2_0)
       , opencl_svmcaps{ 0 }
@@ -3584,6 +3605,12 @@ AgoContext::~AgoContext()
     // remove kernel objects
     agoResetKernelList(&kernelList);
 
+    // cleanup event system
+    if (events) {
+        delete events;
+        events = nullptr;
+    }
+
 #if ENABLE_OPENCL
     if (opencl_mem_alloc_count > 0) {
         agoAddLogEntry(&ref, VX_SUCCESS, "OK: OpenCL buffer usage: " VX_FMT_SIZE ", " VX_FMT_SIZE "/" VX_FMT_SIZE "\n",
@@ -3598,4 +3625,25 @@ AgoContext::~AgoContext()
 
     // critical section
     DeleteCriticalSection(&cs);
+}
+
+AgoGraphPipeliningState::AgoGraphPipeliningState()
+    : schedule_mode{ VX_GRAPH_SCHEDULE_MODE_NORMAL }, timeout_ms{ VX_TIMEOUT_WAIT_FOREVER },
+      event_timeout_ms{ VX_TIMEOUT_WAIT_FOREVER }, pipeline_depth{ 1 },
+      streaming_enabled{ false }, trigger_node{ nullptr }, streaming_stop{ false },
+      active_executions{ 0 }, executor_stop{ false }
+{
+}
+
+AgoGraphPipeliningState::~AgoGraphPipeliningState()
+{
+}
+
+AgoContextEventSystem::AgoContextEventSystem()
+    : enabled{ false }, timeout_ms{ VX_TIMEOUT_WAIT_FOREVER }
+{
+}
+
+AgoContextEventSystem::~AgoContextEventSystem()
+{
 }

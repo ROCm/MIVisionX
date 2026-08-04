@@ -3015,14 +3015,19 @@ int agoWaitGraph(AgoGraph * graph)
         if (graph->pipelining) {
             AgoGraphPipeliningState * pipe = graph->pipelining;
             // Streaming graphs are driven by the streaming thread; vxWaitGraph just
-            // needs to observe that no execution is active.
+            // needs to observe that no execution is active. There is only something
+            // to wait for once that thread is actually running: a graph with
+            // streaming enabled but never started has no execution in flight, and
+            // waiting for a stop that nobody will request would never return.
             if (pipe->streaming_enabled) {
-                while (!pipe->streaming_stop.load()) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                if (pipe->streaming_thread.joinable()) {
+                    while (!pipe->streaming_stop.load()) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                    }
+                    // wait for streaming thread to finish
+                    if (pipe->streaming_thread.joinable())
+                        pipe->streaming_thread.join();
                 }
-                // wait for streaming thread to finish
-                if (pipe->streaming_thread.joinable())
-                    pipe->streaming_thread.join();
                 return status;
             }
             // QUEUE_AUTO: stop the background executor, drain any refs that were

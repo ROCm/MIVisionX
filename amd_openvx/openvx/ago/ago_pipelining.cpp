@@ -43,14 +43,13 @@ AgoGraphPipeliningState * agoGetGraphPipeliningState(AgoGraph * graph)
     return graph->pipelining;
 }
 
+// The context owns its event system for its whole lifetime: it is created with
+// the context and cleared when the context is destroyed. Creating one on demand
+// here would resurrect it during teardown, so callers get whatever the context
+// has and treat null as "no longer available".
 AgoContextEventSystem * agoGetContextEventSystem(AgoContext * context)
 {
-    if (!context)
-        return nullptr;
-    if (!context->events) {
-        context->events = new AgoContextEventSystem();
-    }
-    return context->events;
+    return context ? context->events : nullptr;
 }
 
 static void agoStopGraphPipeliningExecutor(AgoGraph * graph)
@@ -86,32 +85,6 @@ static vx_uint64 agoCurrentTimestampNs()
     auto now = std::chrono::steady_clock::now();
     auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
     return (vx_uint64)ns;
-}
-
-bool agoGraphHasNodeEventRegistrations(AgoGraph * graph)
-{
-    if (!graph || !graph->ref.context)
-        return false;
-    AgoContextEventSystem * evsys = agoGetContextEventSystem(graph->ref.context);
-    if (!evsys)
-        return false;
-    std::lock_guard<std::mutex> lock(evsys->registrations_mtx);
-    for (const auto& reg : evsys->registrations) {
-        if (reg.event_type == VX_EVENT_NODE_COMPLETED || reg.event_type == VX_EVENT_NODE_ERROR) {
-            AgoReference * r = (AgoReference *)reg.ref;
-            if (r && r->type == VX_TYPE_NODE && r->scope == (vx_reference)graph)
-                return true;
-        }
-    }
-    return false;
-}
-
-static bool agoIsPipeliningGraph(AgoGraph * graph)
-{
-    AgoGraphPipeliningState * pipe = graph ? graph->pipelining : nullptr;
-    if (!pipe)
-        return false;
-    return pipe->schedule_mode != VX_GRAPH_SCHEDULE_MODE_NORMAL || pipe->streaming_enabled;
 }
 
 static AgoGraphParameterQueue * agoGetGraphParameterQueue(AgoGraphPipeliningState * pipe, vx_uint32 index)
@@ -650,15 +623,19 @@ static void agoGraphQueueAutoExecutorLoop(AgoGraph * graph)
     if (!pipe)
         return;
 
-    auto anyReady = [&pipe]() -> bool {
+    // An execution needs a ready reference at every enabled queue, so that is the
+    // condition to wait for as well. Waking on a single ready reference instead
+    // would return immediately and spin at full speed for as long as the
+    // application has enqueued to some graph parameters but not yet to all.
+    auto allReady = [&pipe]() -> bool {
         for (auto& q : pipe->param_queues) {
             if (!q->enabled)
                 continue;
             std::lock_guard<std::mutex> qlock(q->mtx);
-            if (!q->ready_refs.empty())
-                return true;
+            if (q->ready_refs.empty())
+                return false;
         }
-        return false;
+        return true;
     };
 
     while (!pipe->executor_stop.load()) {
@@ -666,27 +643,15 @@ static void agoGraphQueueAutoExecutorLoop(AgoGraph * graph)
             CAgoLock lock(graph->cs);
             if (pipe->schedule_mode != VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO)
                 break;
-
-            // Wait until all enabled queues have at least one ready ref.
-            bool all_ready = true;
-            for (auto& q : pipe->param_queues) {
-                if (!q->enabled)
-                    continue;
-                std::lock_guard<std::mutex> qlock(q->mtx);
-                if (q->ready_refs.empty()) {
-                    all_ready = false;
-                    break;
-                }
-            }
-            if (all_ready) {
+            if (allReady()) {
                 agoExecutePipelinedGraphOnce(graph);
                 continue;
             }
         }
         // Nothing to do: block until a ref is enqueued or we're asked to stop.
         std::unique_lock<std::mutex> elock(pipe->enqueue_mtx);
-        pipe->enqueue_cv.wait_for(elock, std::chrono::milliseconds(1), [&pipe, &anyReady]() {
-            return pipe->executor_stop.load() || anyReady();
+        pipe->enqueue_cv.wait_for(elock, std::chrono::milliseconds(1), [&pipe, &allReady]() {
+            return pipe->executor_stop.load() || allReady();
         });
     }
 }
@@ -774,7 +739,6 @@ void agoStartGraphStreamingThread(AgoGraph * graph)
 AgoGraphPipeliningState * agoGetGraphPipeliningState(AgoGraph *) { return nullptr; }
 AgoContextEventSystem * agoGetContextEventSystem(AgoContext *) { return nullptr; }
 void agoStopGraphPipelining(AgoGraph *) {}
-bool agoGraphHasNodeEventRegistrations(AgoGraph *) { return false; }
 void agoPushEvent(AgoContext *, const AgoEvent&) {}
 void agoNotifyGraphCompleted(AgoGraph *) {}
 void agoNotifyNodeCompleted(AgoGraph *, AgoNode *) {}

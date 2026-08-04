@@ -49,4 +49,7 @@ include_directories (${ROCM_PATH}/include/mivisionx)
 link_directories    (${ROCM_PATH}/lib)
 
 add_executable(openvx_pipelining_api pipelining_api.cpp)
-target_link_libraries(${PROJECT_NAME} openvx)
+
+# The queueing tests drive the API from more than one thread.
+find_package(Threads REQUIRED)
+target_link_libraries(${PROJECT_NAME} openvx Threads::Threads)

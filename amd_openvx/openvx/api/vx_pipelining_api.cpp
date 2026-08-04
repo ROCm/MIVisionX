@@ -71,6 +71,7 @@ static vx_status updateGraphScheduleRefsList(
         }
         // Built separately so a bad entry late in the list leaves the queue's
         // existing references untouched.
+        std::lock_guard<std::mutex> qlock(q->mtx);
         q->valid_refs = std::move(refs);
     }
     return VX_SUCCESS;
@@ -137,8 +138,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetGraphScheduleConfig(
             // list, but that is a requirement on the application and it is not
             // policed here: GraphPipeline.ScalarOutput configures index 1 twice
             // (leaving index 2 unconfigured) and must still be accepted.
-            pipe->param_queues[index].get()->max_depth = p.refs_list_size;
-            pipe->param_queues[index].get()->enabled = true;
+            AgoGraphParameterQueue * q = pipe->param_queues[index].get();
+            std::lock_guard<std::mutex> qlock(q->mtx);
+            q->max_depth = p.refs_list_size;
+            q->enabled = true;
             if (p.refs_list) {
                 for (vx_uint32 j = 0; j < p.refs_list_size; j++) {
                     vx_reference ref = p.refs_list[j];
@@ -146,7 +149,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetGraphScheduleConfig(
                         return VX_ERROR_INVALID_PARAMETERS;
                     if (!agoIsValidReference((AgoReference *)ref))
                         return VX_ERROR_INVALID_REFERENCE;
-                    pipe->param_queues[index].get()->valid_refs.push_back((AgoData *)ref);
+                    q->valid_refs.push_back((AgoData *)ref);
                 }
             }
         }
@@ -172,6 +175,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxGetGraphParameterRefsList(
         AgoGraphPipeliningState * pipe = agoGetGraphPipeliningState(graph);
         if (pipe && param < (vx_uint32)pipe->param_queues.size() && refs_list) {
             AgoGraphParameterQueue * q = pipe->param_queues[param].get();
+            std::lock_guard<std::mutex> qlock(q->mtx);
             if (ref_list_size >= (vx_uint32)q->valid_refs.size()) {
                 for (size_t i = 0; i < q->valid_refs.size(); i++) {
                     refs_list[i] = (vx_reference)q->valid_refs[i];
@@ -197,6 +201,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxAddReferencesToGraphParameterList(
         AgoGraphPipeliningState * pipe = agoGetGraphPipeliningState(graph);
         if (pipe && graph_parameter_index < (vx_uint32)pipe->param_queues.size()) {
             AgoGraphParameterQueue * q = pipe->param_queues[graph_parameter_index].get();
+            std::lock_guard<std::mutex> qlock(q->mtx);
             for (vx_uint32 i = 0; i < number_to_add; i++) {
                 if (!new_references[i] || !agoIsValidReference((AgoReference *)new_references[i]))
                     return VX_ERROR_INVALID_REFERENCE;
@@ -242,29 +247,37 @@ VX_API_ENTRY vx_status VX_API_CALL vxGraphParameterEnqueueReadyRef(
             q->max_depth = 0;
         }
 
-        for (vx_uint32 i = 0; i < num_refs; i++) {
-            if (!refs[i] || !agoIsValidReference((AgoReference *)refs[i]))
-                return VX_ERROR_INVALID_REFERENCE;
-            // If valid_refs is configured, reject refs not in the list.
-            if (!q->valid_refs.empty()) {
-                bool found = false;
-                for (AgoData * valid : q->valid_refs) {
-                    if ((vx_reference)valid == refs[i]) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found)
-                    return VX_ERROR_INVALID_PARAMETERS;
-            }
+        {
+            // The whole check-and-push is under the queue lock, so a concurrent
+            // vxSetGraphScheduleConfig or vxAddReferencesToGraphParameterList
+            // cannot swap valid_refs out from under the search below. The lock is
+            // released before enqueue_mtx is taken: the QUEUE_AUTO executor waits
+            // on enqueue_cv with a predicate that takes q->mtx, so acquiring the
+            // two in the other order here would deadlock against it.
             std::lock_guard<std::mutex> lock(q->mtx);
-            // refs_list_size given at schedule-config time is the queue depth.
-            // Counting only the refs still waiting to be picked up keeps this a
-            // limit on what the application has handed over but the graph has
-            // not yet taken, which is what the depth is there to bound.
-            if (q->max_depth && q->ready_refs.size() >= (size_t)q->max_depth)
-                return VX_ERROR_NO_RESOURCES;
-            q->ready_refs.push_back((AgoData *)refs[i]);
+            for (vx_uint32 i = 0; i < num_refs; i++) {
+                if (!refs[i] || !agoIsValidReference((AgoReference *)refs[i]))
+                    return VX_ERROR_INVALID_REFERENCE;
+                // If valid_refs is configured, reject refs not in the list.
+                if (!q->valid_refs.empty()) {
+                    bool found = false;
+                    for (AgoData * valid : q->valid_refs) {
+                        if ((vx_reference)valid == refs[i]) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                        return VX_ERROR_INVALID_PARAMETERS;
+                }
+                // refs_list_size given at schedule-config time is the queue depth.
+                // Counting only the refs still waiting to be picked up keeps this a
+                // limit on what the application has handed over but the graph has
+                // not yet taken, which is what the depth is there to bound.
+                if (q->max_depth && q->ready_refs.size() >= (size_t)q->max_depth)
+                    return VX_ERROR_NO_RESOURCES;
+                q->ready_refs.push_back((AgoData *)refs[i]);
+            }
         }
         {
             std::lock_guard<std::mutex> lock(pipe->enqueue_mtx);

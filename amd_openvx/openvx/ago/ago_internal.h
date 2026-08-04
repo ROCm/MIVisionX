@@ -1004,7 +1004,6 @@ void agoNotifyGraphCompleted(AgoGraph * graph);
 void agoNotifyNodeCompleted(AgoGraph * graph, AgoNode * node);
 void agoNotifyNodeError(AgoGraph * graph, AgoNode * node, vx_status status);
 void agoNotifyGraphParameterConsumed(AgoGraph * graph, vx_uint32 graph_parameter_index);
-bool agoGraphHasNodeEventRegistrations(AgoGraph * graph);
 vx_uint32 agoGetReferenceEnqueueCount(AgoContext * context, AgoReference * ref);
 void agoRemoveEventRegistrations(AgoContext * context, vx_reference ref);
 vx_uint64 agoEventTimestampNs();

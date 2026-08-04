@@ -1164,7 +1164,7 @@ int agoLoadModule(AgoContext * context, const char * module)
         status = VX_ERROR_INVALID_PARAMETERS;
         // Module names resolve to lib<name>.so via the loader search path; reject
         // path separators and ".." so only a bare module name can be loaded.
-        if (!module || strpbrk(module, "/\\") || strstr(module, "..")) {
+        if (!module || module[0] == '\0' || strpbrk(module, "/\\") || strstr(module, "..")) {
             agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoLoadModule: invalid module name '%s' (path separators and '..' are not allowed)\n", module ? module : "(null)");
             return VX_ERROR_INVALID_PARAMETERS;
         }

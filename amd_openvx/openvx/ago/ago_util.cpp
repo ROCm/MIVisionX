@@ -707,7 +707,9 @@ AgoKernel * agoFindKernelByName(AgoContext * acontext, const vx_char * name)
 AgoData * agoFindDataByName(AgoContext * acontext, AgoGraph * agraph, vx_char * name)
 {
     // check for <object>[index] syntax
-    char actualName[256]; snprintf(actualName, sizeof(actualName), "%s", name);
+    char actualName[256];
+    if (!name || strlen(name) >= sizeof(actualName)) return NULL;
+    snprintf(actualName, sizeof(actualName), "%s", name);
     int index[4] = { -1, -1, -1, -1 }; // index >=0 indicates special object
     const char * s = strstr(name, "[");
     if (s && name[strlen(name) - 1] == ']' && (size_t)(s - name) < sizeof(actualName)) {
@@ -716,7 +718,7 @@ AgoData * agoFindDataByName(AgoContext * acontext, AgoGraph * agraph, vx_char * 
             s++; if (*s == '-') s++;
             index[i] = atoi(s);
             for (; *s != ']'; s++) {
-                if (!(*s >= '0' || *s <= '9')) return NULL;
+                if (!(*s >= '0' && *s <= '9')) return NULL;
             }
             if (*s != ']') return NULL;
             s++;

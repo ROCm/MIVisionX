@@ -709,8 +709,8 @@ static int test_vxuMinMaxLoc(vx_context context) {
     vx_scalar maxVal = vxCreateScalar(context, VX_TYPE_UINT8, NULL);
     vx_array  minLoc = vxCreateArray(context, VX_TYPE_COORDINATES2D, 1);
     vx_array  maxLoc = vxCreateArray(context, VX_TYPE_COORDINATES2D, 1);
-    vx_scalar minCount = vxCreateScalar(context, VX_TYPE_UINT32, NULL);
-    vx_scalar maxCount = vxCreateScalar(context, VX_TYPE_UINT32, NULL);
+    vx_scalar minCount = vxCreateScalar(context, VX_TYPE_SIZE, NULL);
+    vx_scalar maxCount = vxCreateScalar(context, VX_TYPE_SIZE, NULL);
     CHECK_NULL(src, "src");
 
     CHECK_STATUS(vxuMinMaxLoc(context, src, minVal, maxVal, minLoc, maxLoc, minCount, maxCount));

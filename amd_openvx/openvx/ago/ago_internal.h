@@ -668,6 +668,11 @@ struct AgoNodeList {
     AgoNode * tail;
     AgoNode * trash;
 };
+// mtx guards every field below it, including valid_refs, which the application
+// can replace after verify while an executor thread is reading it. It is the
+// innermost lock in the pipelining paths -- graph->cs, context->cs and
+// enqueue_mtx are all taken before it -- so no other lock may be acquired while
+// it is held.
 struct AgoGraphParameterQueue {
     std::mutex mtx;
     std::condition_variable done_cv;

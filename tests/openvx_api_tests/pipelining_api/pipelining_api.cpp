@@ -36,6 +36,8 @@ THE SOFTWARE.
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <atomic>
+#include <thread>
 #include <vector>
 #include <VX/vx.h>
 #include <VX/vx_khr_pipelining.h>
@@ -779,6 +781,20 @@ static int test_attributes()
         EXPECT_TRUE(depth >= 1, "pipeline depth is at least one");
     }
 
+    // A null pointer has to be rejected rather than dereferenced, for the
+    // attributes this extension adds as much as for any other.
+    {
+        vx_uint32 timeout = 100;
+        EXPECT_STATUS(vxSetContextAttribute(context, VX_CONTEXT_EVENT_TIMEOUT, nullptr, sizeof(timeout)),
+                      VX_ERROR_INVALID_PARAMETERS, "set VX_CONTEXT_EVENT_TIMEOUT with null ptr");
+        EXPECT_STATUS(vxQueryContext(context, VX_CONTEXT_EVENT_TIMEOUT, nullptr, sizeof(timeout)),
+                      VX_ERROR_INVALID_PARAMETERS, "query VX_CONTEXT_EVENT_TIMEOUT with null ptr");
+        EXPECT_STATUS(vxSetGraphAttribute(g.graph, VX_GRAPH_TIMEOUT, nullptr, sizeof(timeout)),
+                      VX_ERROR_INVALID_PARAMETERS, "set VX_GRAPH_TIMEOUT with null ptr");
+        EXPECT_STATUS(vxQueryGraph(g.graph, VX_GRAPH_PIPELINE_DEPTH, nullptr, sizeof(timeout)),
+                      VX_ERROR_INVALID_PARAMETERS, "query VX_GRAPH_PIPELINE_DEPTH with null ptr");
+    }
+
     release_not_graph(g);
     vxReleaseContext(&context);
     return errors;
@@ -966,6 +982,87 @@ static int test_queue_auto()
 }
 
 // ---------------------------------------------------------------------------
+// Test 12: handing over references while another thread enqueues
+//
+// A post-verify vxSetGraphScheduleConfig replaces the reference list a queue
+// accepts, and the application is free to enqueue from a different thread at the
+// same time. Nothing here blocks, so a failure shows up as a wrong status or a
+// crash rather than a hung test -- and if the queue lock were ever taken around
+// the enqueue notification, this would deadlock against the QUEUE_AUTO executor.
+// ---------------------------------------------------------------------------
+static int test_concurrent_refs_handover()
+{
+    int errors = 0;
+    printf("\n=== Test 12: concurrent refs_list handover ===\n");
+
+    const int ITERATIONS = 200;
+
+    vx_context context = vxCreateContext();
+    set_event_timeout(context);
+    NotGraph g = make_not_graph(context, 2);
+    CHECK_STATUS(fill_u8_image(g.in, 0x11));
+
+    vx_reference in_ref  = (vx_reference)g.in;
+    vx_reference out_ref = (vx_reference)g.out;
+    vx_graph_parameter_queue_params_t q[2];
+    memset(q, 0, sizeof(q));
+    q[0].graph_parameter_index = 0;
+    q[0].refs_list_size = 1;
+    q[0].refs_list = &in_ref;
+    q[1].graph_parameter_index = 1;
+    q[1].refs_list_size = 1;
+    q[1].refs_list = &out_ref;
+
+    CHECK_STATUS(vxSetGraphScheduleConfig(g.graph, VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO, 2, q));
+    {
+        vx_uint32 timeout = WAIT_TIMEOUT_MS;
+        CHECK_STATUS(vxSetGraphAttribute(g.graph, VX_GRAPH_TIMEOUT, &timeout, sizeof(timeout)));
+    }
+    EXPECT_STATUS(vxVerifyGraph(g.graph), VX_SUCCESS, "vxVerifyGraph");
+
+    std::atomic<int> handover_failures(0);
+    std::thread handover([&]() {
+        for (int i = 0; i < ITERATIONS; i++) {
+            if (vxSetGraphScheduleConfig(g.graph, VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO, 2, q) != VX_SUCCESS)
+                handover_failures++;
+            vx_reference seen[4] = { nullptr, nullptr, nullptr, nullptr };
+            if (vxGetGraphParameterRefsList(g.graph, 0, 4, seen) != VX_SUCCESS)
+                handover_failures++;
+            if (vxAddReferencesToGraphParameterList(g.graph, 0, 1, &in_ref) != VX_SUCCESS)
+                handover_failures++;
+        }
+    });
+
+    int bad_status = 0;
+    for (int i = 0; i < ITERATIONS; i++) {
+        // The reference stays in the list throughout, so the only outcomes are
+        // acceptance or a full queue -- never a rejection of the reference.
+        vx_status si = vxGraphParameterEnqueueReadyRef(g.graph, 0, &in_ref, 1);
+        vx_status so = vxGraphParameterEnqueueReadyRef(g.graph, 1, &out_ref, 1);
+        if (si != VX_SUCCESS && si != VX_ERROR_NO_RESOURCES) bad_status++;
+        if (so != VX_SUCCESS && so != VX_ERROR_NO_RESOURCES) bad_status++;
+
+        // Drain whatever the executor finished, without ever waiting for it.
+        for (vx_uint32 p = 0; p < 2; p++) {
+            vx_uint32 done = 0;
+            if (vxGraphParameterCheckDoneRef(g.graph, p, &done) == VX_SUCCESS && done > 0) {
+                vx_reference deq = nullptr;
+                vx_uint32 num = 0;
+                vxGraphParameterDequeueDoneRef(g.graph, p, &deq, 1, &num);
+            }
+        }
+    }
+    handover.join();
+
+    EXPECT_TRUE(bad_status == 0, "enqueue during handover never rejects a listed reference");
+    EXPECT_TRUE(handover_failures.load() == 0, "refs_list handover succeeds alongside enqueueing");
+
+    release_not_graph(g);
+    vxReleaseContext(&context);
+    return errors;
+}
+
+// ---------------------------------------------------------------------------
 // main
 // ---------------------------------------------------------------------------
 int main()
@@ -1003,6 +1100,7 @@ int main()
     total_errors += test_manual_queue_end_to_end();
     total_errors += test_streaming();
     total_errors += test_queue_auto();
+    total_errors += test_concurrent_refs_handover();
 
     printf("\n===================================================\n");
     if (total_errors == 0) {

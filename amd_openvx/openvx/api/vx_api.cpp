@@ -362,6 +362,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetContextAttribute(vx_context context, vx_
         switch (attribute)
         {
         case VX_CONTEXT_EVENT_TIMEOUT:
+            if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
             if (size == sizeof(vx_uint32)) {
                 AgoContextEventSystem * evsys = agoGetContextEventSystem(context);
                 if (evsys) {

@@ -237,7 +237,7 @@ jobs:
             canny channel_extract color_convert accumulate
             graph graph_api tensor_api data_objects user_kernel
             tensor_advanced threshold_query graph_import vxu_api
-            coverage_boost vision_coverage
+            coverage_boost vision_coverage pipelining_api
           )
           # libopenvx.so (HIP backend) has unresolved HIP runtime symbols
           # (e.g. hipSetDevice@hip_4.2) that must be satisfied by
@@ -284,6 +284,8 @@ jobs:
             -DOPENVX_INCLUDES="$GITHUB_WORKSPACE/amd_openvx/openvx/include" \
             -DOPENVX_LIBRARIES="$GITHUB_WORKSPACE/install/lib/libopenvx.so;$GITHUB_WORKSPACE/install/lib/libvxu.so;pthread;dl;m;rt" \
             -DOPENVX_CONFORMANCE_VISION=ON \
+            -DOPENVX_USE_PIPELINING=ON \
+            -DOPENVX_USE_STREAMING=ON \
             -DCMAKE_C_STANDARD_LIBRARIES="-L${ROCM_PATH}/lib -lamdhip64" \
             -DCMAKE_CXX_STANDARD_LIBRARIES="-L${ROCM_PATH}/lib -lamdhip64" \
             -DCMAKE_EXE_LINKER_FLAGS="-Wl,-rpath-link,${ROCM_PATH}/lib"
@@ -300,21 +302,31 @@ jobs:
           strip --strip-debug OpenVX-cts/build/bin/vx_test_conformance 2>/dev/null || true
           strip --strip-debug OpenVX-cts/build/lib/*.so* 2>/dev/null || true
 
+      - name: Pack test bundle
+        run: |
+          # Ship one tarball rather than the raw tree. upload-artifact cannot
+          # represent symlinks, so it would expand libopenvx.so, .so.1 and
+          # .so.1.3.2 into three identical copies (same for libvxu) — ~74 MB of
+          # duplication on its own, and ~1800 individual files for each of the
+          # 16 consuming jobs to fetch and write. tar keeps the symlinks and
+          # turns the download into a single stream. It also makes truncation
+          # loud: a short tarball fails to extract instead of silently leaving
+          # part of test_data missing and surfacing as a bogus test failure.
+          tar -czf test-bundle-hip.tar.gz \
+            install/ \
+            build/api_tests/ \
+            OpenVX-cts/build/bin/vx_test_conformance \
+            OpenVX-cts/build/lib/ \
+            OpenVX-cts/test_data/
+          ls -lh test-bundle-hip.tar.gz
+
       - name: Upload debug build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-hip-debug
-          # Upload the full install tree: the libs (lib/), runvx (bin/) and the
-          # sample GDFs + data under share/ are all used by various test jobs.
-          # The artifact size is already controlled by the two-arch GPU_TARGETS
-          # build and the debug-symbol strip above (device code + DWARF were the
-          # bulk); include/ and share/ are small by comparison.
-          path: |
-            install/
-            build/api_tests/
-            OpenVX-cts/build/bin/vx_test_conformance
-            OpenVX-cts/build/lib/
-            OpenVX-cts/test_data/
+          path: test-bundle-hip.tar.gz
+          # Already gzipped; re-compressing in the zip only costs time.
+          compression-level: 0
           retention-days: 1
 
   # ===========================================================================
@@ -527,6 +539,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -575,6 +589,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -622,6 +638,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -669,6 +687,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -716,6 +736,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -763,6 +785,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -810,6 +834,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -857,6 +883,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -904,6 +932,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -951,6 +981,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -998,6 +1030,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -1031,6 +1065,92 @@ jobs:
           path: profraw/
           if-no-files-found: ignore
 
+  pipelining-hip:
+    name: KHR EXT - Pipelining (HIP)
+    runs-on:
+      group: linux-shark39-runner-group
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-20260710
+      options: --device /dev/kfd --device /dev/dri
+    needs: build-hip-debug
+    steps:
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
+      - name: Validate ROCm
+        run: |
+          rocminfo
+          amd-smi || true
+      - name: Run pipelining tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
+          export AGO_LOG_STDERR=1
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/pipelining_%p.profraw
+          for target in CPU GPU; do
+            echo "::group::pipelining (AGO_DEFAULT_TARGET=$target)"
+            AGO_DEFAULT_TARGET=$target timeout 1800 ./bin/vx_test_conformance --filter="GraphPipeline.*"
+            echo "::endgroup::"
+          done
+      - name: Upload profraw
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-pipelining
+          path: profraw/
+          if-no-files-found: ignore
+
+  streaming-hip:
+    name: KHR EXT - Streaming (HIP)
+    runs-on:
+      group: linux-shark39-runner-group
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-20260710
+      options: --device /dev/kfd --device /dev/dri
+    needs: build-hip-debug
+    steps:
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
+      - name: Validate ROCm
+        run: |
+          rocminfo
+          amd-smi || true
+      - name: Run streaming tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib:${ROCM_PATH}/lib:$GITHUB_WORKSPACE/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=$GITHUB_WORKSPACE/OpenVX-cts/test_data/
+          export HIP_VISIBLE_DEVICES=0  # ROCR_VISIBLE_DEVICES already pins the assigned GPU; the runner also sets HIP_VISIBLE_DEVICES to the same host index, which stacks and yields hipErrorNoDevice on index-1 GPUs. After ROCR filtering the device is index 0 for HIP.
+          export AGO_LOG_STDERR=1
+          export LLVM_PROFILE_FILE=$GITHUB_WORKSPACE/profraw/streaming_%p.profraw
+          for target in CPU GPU; do
+            echo "::group::streaming (AGO_DEFAULT_TARGET=$target)"
+            AGO_DEFAULT_TARGET=$target timeout 900 ./bin/vx_test_conformance --filter="GraphStreaming.*"
+            echo "::endgroup::"
+          done
+      - name: Upload profraw
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-hip-streaming
+          path: profraw/
+          if-no-files-found: ignore
+
   # --- Local Tests (API + GDF) ---
 
   api-tests-hip:
@@ -1047,6 +1167,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Validate ROCm
         run: |
           rocminfo
@@ -1076,6 +1198,7 @@ jobs:
             "vxu_api:openvx_vxu_api"
             "coverage_boost:openvx_coverage_boost"
             "vision_coverage:openvx_vision_coverage"
+            "pipelining_api:openvx_pipelining_api"
           )
           # Run the API test set on both AGO targets. In the HIP build the CPU
           # HAF kernels and the HIP kernels are both compiled/instrumented, so
@@ -1124,6 +1247,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Install python3
         run: |
           apt-get update -qq
@@ -1180,6 +1305,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
       - name: Install python3
         run: |
           apt-get update -qq
@@ -1515,6 +1642,8 @@ jobs:
       - vision-features-hip
       - vision-statistics-hip
       - vision-pyramid-hip
+      - pipelining-hip
+      - streaming-hip
       - api-tests-hip
       - gdf-tests-hip
       - vision-tests-hip
@@ -1541,6 +1670,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-hip-debug
+
+      - name: Unpack test bundle
+        run: tar -xzf test-bundle-hip.tar.gz
 
       - name: Download all HIP profraw artifacts
         uses: actions/download-artifact@v4

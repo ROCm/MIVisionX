@@ -546,6 +546,8 @@ struct AgoKernel {
     vx_uint32 gpu_buffer_update_param_index;
     vx_bool opencl_buffer_access_enable;
     vx_uint32 importing_module_index_plus1;
+    vx_uint32 pipeup_output_depth;
+    vx_uint32 pipeup_input_depth;
 public:
     AgoKernel();
     ~AgoKernel();
@@ -616,6 +618,9 @@ struct AgoNode {
     vx_uint32 hierarchical_level;
     vx_status status;
     vx_perf_t perf;
+    vx_uint32 node_state;
+    vx_uint32 node_exec_count;
+    vx_uint32 pipeup_output_depth;
     vx_bool local_data_change_is_enabled;
     vx_bool local_data_set_by_implementation;
     struct { bool enable; int paramIndexScalar; int paramIndexArray; } gpu_scalar_array_output_sync;
@@ -663,13 +668,88 @@ struct AgoNodeList {
     AgoNode * tail;
     AgoNode * trash;
 };
+// mtx guards every field below it, including valid_refs, which the application
+// can replace after verify while an executor thread is reading it. It is the
+// innermost lock in the pipelining paths -- graph->cs, context->cs and
+// enqueue_mtx are all taken before it -- so no other lock may be acquired while
+// it is held.
+struct AgoGraphParameterQueue {
+    std::mutex mtx;
+    std::condition_variable done_cv;
+    std::deque<AgoData *> ready_refs;
+    std::deque<AgoData *> consumed_refs;
+    std::deque<AgoData *> done_refs;
+    std::vector<AgoData *> valid_refs;
+    vx_uint32 index;
+    vx_uint32 max_depth;
+    bool enabled;
+    AgoGraphParameterQueue() : index(0), max_depth(0), enabled(false) {}
+};
+
+struct AgoGraphPipeliningState {
+    vx_enum schedule_mode;
+    vx_uint32 timeout_ms;
+    vx_uint32 event_timeout_ms;
+    vx_uint32 pipeline_depth;
+    bool streaming_enabled;
+    AgoNode * trigger_node;
+    std::atomic<bool> streaming_stop;
+    std::thread streaming_thread;
+    std::atomic<uint32_t> active_executions;
+    std::mutex active_mtx;
+    std::condition_variable active_cv;
+    std::mutex execution_mtx;
+    std::thread executor_thread;
+    std::atomic<bool> executor_stop;
+    std::mutex enqueue_mtx;
+    std::condition_variable enqueue_cv;
+    std::vector<std::unique_ptr<AgoGraphParameterQueue>> param_queues;
+public:
+    AgoGraphPipeliningState();
+    ~AgoGraphPipeliningState();
+};
+
+struct AgoEvent {
+    vx_enum event_type;
+    vx_uint64 timestamp;
+    vx_uint64 app_value;
+    AgoGraph * graph;
+    AgoNode * node;
+    vx_uint32 graph_parameter_index;
+    vx_status status;
+    void * user_parameter;
+};
+
+struct AgoEventRegistration {
+    vx_reference ref;
+    vx_enum event_type;
+    vx_uint32 app_value;
+    vx_uint32 graph_parameter_index;
+};
+
+struct AgoContextEventSystem {
+    std::mutex events_mtx;
+    std::condition_variable events_cv;
+    std::deque<AgoEvent> events;
+    std::mutex registrations_mtx;
+    std::vector<AgoEventRegistration> registrations;
+    bool enabled;
+    vx_uint32 timeout_ms;
+public:
+    AgoContextEventSystem();
+    ~AgoContextEventSystem();
+};
+
 struct AgoGraph {
     AgoReference ref;
     std::string name;
     AgoGraph * next;
     CRITICAL_SECTION cs;
     HANDLE hThread, hSemToThread, hSemFromThread;
-    vx_int32 threadScheduleCount, threadExecuteCount, threadWaitCount, threadThreadTerminationState, threadThreadWaitState;
+    // threadScheduleCount counts executions handed to the graph thread, threadExecuteCount
+    // counts executions it finished, and threadCompletionCount counts the completions already
+    // claimed by a waiter -- one completion token on hSemFromThread per scheduled execution.
+    std::atomic<vx_int32> threadScheduleCount, threadExecuteCount, threadCompletionCount, threadWaitCount, threadThreadTerminationState;
     AgoDataList dataList;
     AgoNodeList nodeList;
     vx_bool isReadyToExecute;
@@ -707,6 +787,7 @@ struct AgoGraph {
     bool enable_performance_profiling;
     std::vector<AgoProfileEntry> performance_profile;
     std::map<std::string,void *> moduleHandle;
+    AgoGraphPipeliningState * pipelining;
 public:
     AgoGraph();
     ~AgoGraph();
@@ -791,6 +872,7 @@ struct AgoContext {
     vx_size hip_mem_release_count;
 #endif
     AgoTargetAffinityInfo_ attr_affinity;
+    AgoContextEventSystem * events;
 public:
     AgoContext();
     ~AgoContext();
@@ -907,6 +989,24 @@ void agoPerfCopyNormalize(AgoContext * context, vx_perf_t * perfDst, vx_perf_t *
 // log
 void agoRegisterLogCallback(vx_context context, vx_log_callback_f callback, vx_bool reentrant);
 void agoAddLogEntry(AgoReference * ref, vx_status status, const char *message, ...);
+// pipelining
+AgoGraphPipeliningState * agoGetGraphPipeliningState(AgoGraph * graph);
+AgoContextEventSystem * agoGetContextEventSystem(AgoContext * context);
+void agoStopGraphPipelining(AgoGraph * graph);
+void agoStartGraphPipeliningAutoExecutor(AgoGraph * graph);
+void agoStartGraphStreamingThread(AgoGraph * graph);
+void agoPushEvent(AgoContext * context, const AgoEvent& evt);
+int agoExecuteGraphPipelined(AgoGraph * graph);
+int agoExecutePipelinedGraphOnce(AgoGraph * graph);
+int agoExecuteGraphQueueManual(AgoGraph * graph);
+// event notifications
+void agoNotifyGraphCompleted(AgoGraph * graph);
+void agoNotifyNodeCompleted(AgoGraph * graph, AgoNode * node);
+void agoNotifyNodeError(AgoGraph * graph, AgoNode * node, vx_status status);
+void agoNotifyGraphParameterConsumed(AgoGraph * graph, vx_uint32 graph_parameter_index);
+vx_uint32 agoGetReferenceEnqueueCount(AgoContext * context, AgoReference * ref);
+void agoRemoveEventRegistrations(AgoContext * context, vx_reference ref);
+vx_uint64 agoEventTimestampNs();
 
 #if (ENABLE_OPENCL || ENABLE_HIP)
 int agoGpuOclAllocBuffers(AgoGraph * graph);

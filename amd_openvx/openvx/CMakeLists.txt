@@ -32,6 +32,13 @@ set(VERSION "1.3.2")
 
 project(openvx VERSION ${VERSION} LANGUAGES CXX)
 
+option(OPENVX_USE_PIPELINING "Enable OpenVX Graph Pipelining/Streaming/Event extension (vx_khr_pipelining)" ON)
+if(OPENVX_USE_PIPELINING)
+    add_definitions(-DOPENVX_USE_PIPELINING=1)
+else()
+    add_definitions(-DOPENVX_USE_PIPELINING=0)
+endif()
+
 include_directories(include ago api)
 
 list(APPEND SOURCES
@@ -63,6 +70,7 @@ list(APPEND SOURCES
     ago/ago_interface.cpp
     ago/ago_kernel_api.cpp
     ago/ago_kernel_list.cpp
+    ago/ago_pipelining.cpp
     ago/ago_platform.cpp
     ago/ago_util.cpp
     ago/ago_util_opencl.cpp
@@ -70,6 +78,7 @@ list(APPEND SOURCES
     api/vxu.cpp
     api/vx_api.cpp
     api/vx_nodes.cpp
+    api/vx_pipelining_api.cpp
 )
 
 add_library(openvx SHARED ${SOURCES})

@@ -23,6 +23,29 @@ THE SOFTWARE.
 #define _CRT_SECURE_NO_WARNINGS
 #include "vxImage.h"
 
+// The filename from the GDF is used as an snprintf format string. Allow only integer
+// conversions (%d, %03d, ...) and %%; reject everything else so %n and %s can't get in.
+// maxConversions caps the number of integer conversions so the template can never consume
+// more varargs than the call site actually passes (reading missing varargs is UB).
+static bool IsSafeFilenameTemplate(const char * fmt, int maxConversions)
+{
+	if (!fmt) return false;
+	int conversions = 0;
+	for (const char * p = fmt; *p; p++) {
+		if (*p != '%') continue;
+		p++;
+		if (*p == '%') continue;                       // literal %% escape
+		if (*p == '\0') return false;                  // trailing bare '%'
+		while (*p == '-' || *p == '+' || *p == ' ' || *p == '#' || *p == '0') p++; // flags
+		while (*p >= '0' && *p <= '9') p++;            // field width
+		if (*p == '.') { p++; while (*p >= '0' && *p <= '9') p++; } // precision
+		while (*p == 'l' || *p == 'h') p++;            // length modifiers
+		if (!strchr("diouxX", *p)) return false;       // only integer conversions allowed
+		if (++conversions > maxConversions) return false; // must not exceed args passed by caller
+	}
+	return true;
+}
+
 ///////////////////////////////////////////////////////////////////////
 // class CVxParamImage
 //
@@ -797,6 +820,7 @@ int CVxParamImage::ReadFrame(int frameNumber)
 	if (!m_fpRead) {
 		if (m_fileNameRead.length() > 0) {
 			char fileName[MAX_FILE_NAME_LENGTH];
+			if (!IsSafeFilenameTemplate(m_fileNameRead.c_str(), 3)) ReportError("ERROR: unsafe filename template: %s\n", m_fileNameRead.c_str());
 			snprintf(fileName, sizeof(fileName), m_fileNameRead.c_str(), frameNumber, m_width, m_height);
 			m_fpRead = fopen(fileName, "rb"); if (!m_fpRead) ReportError("ERROR: unable to open: %s\n", fileName);
 			if (!m_fileNameForReadHasIndex && m_captureFrameStart > 0) {
@@ -1082,6 +1106,7 @@ int CVxParamImage::ViewFrame(int frameNumber)
 					colorIndex++;
 				// get list of keypoints from the user specified file
 				char fileName[512];
+				if (!IsSafeFilenameTemplate(it->c_str(), 1)) ReportError("ERROR: unsafe filename template: %s\n", it->c_str());
 				snprintf(fileName, sizeof(fileName), it->c_str(), frameNumber);
 				FILE * fp = fopen(fileName, "r");
 				if (!fp) ReportError("ERROR: unable to open '%s'\n", fileName);
@@ -1154,6 +1179,7 @@ int CVxParamImage::WriteFrame(int frameNumber)
 	if (!m_fpWrite) {
 		if (m_fileNameWrite.length() > 0 && !m_usingWriter) {
 			char fileName[MAX_FILE_NAME_LENGTH];
+			if (!IsSafeFilenameTemplate(m_fileNameWrite.c_str(), 3)) ReportError("ERROR: unsafe filename template: %s\n", m_fileNameWrite.c_str());
 			snprintf(fileName, sizeof(fileName), m_fileNameWrite.c_str(), frameNumber, m_width, m_height);
 #if ENABLE_OPENCV
             // check if openCV imwrite need to be used

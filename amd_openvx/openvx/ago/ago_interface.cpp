@@ -763,7 +763,7 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
                                 group = atoi(&szGroup[1]);
                             }
                             node->attr_affinity.group = group;
-                            (void)sscanf(&arg[2 + p][14], "%s", device);
+                            (void)sscanf(&arg[2 + p][14], "%63s", device);
                             if (!strncmp(device, "CPU", 3)) {
                                 node->attr_affinity.device_type = AGO_KERNEL_FLAG_DEVICE_CPU;
                                 node->attr_affinity.device_info = atoi(&device[3]);
@@ -801,11 +801,11 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
                             }
                         }
                         else if (strcmp(arg[2 + p], "null") != 0) {
-                            char name[128]; strcpy(name, arg[2 + p]);
+                            char name[128]; snprintf(name, sizeof(name), "%s", arg[2 + p]);
                             // check if there is an name alias
                             for (std::vector< std::pair< std::string, std::string > >::iterator it = aliases.begin(); it != aliases.end(); ++it) {
                                 if (!strcmp(it->first.c_str(), name)) {
-                                    strcpy(name, it->second.c_str());
+                                    snprintf(name, sizeof(name), "%s", it->second.c_str());
                                     if (name[0] == '$') {
                                         int index = atoi(&name[1]) - 1;
                                         if (index >= 0 && index < num_ref) {
@@ -843,6 +843,11 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
                         }
                         if (data) {
                             if (node) {
+                                if (p >= AGO_MAX_PARAMS) {
+                                    agoAddLogEntry(&agraph->ref, VX_FAILURE, "ERROR: agoReadGraph: line %d: number of arguments exceeded MAX(%d)\n>>>> %s\n", lineno, AGO_MAX_PARAMS, lineCopy);
+                                    agraph->status = -1;
+                                    break;
+                                }
                                 node->paramList[p] = data;
                                 // check if specified data type is correct
                                 // NOTE: kernel can specify to ignore this checking by setting argType[] to ZERO
@@ -904,7 +909,7 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
                     if (dumpToConsole) agoAddLogEntry(NULL, VX_SUCCESS, "%s", line);
                     agoUpdateLine(line, vars, localPrefix);
                     char word[256];
-                    if (sscanf(line, "%s", word) == 1 && !strcmp(word, "endmacro"))
+                    if (sscanf(line, "%255s", word) == 1 && !strcmp(word, "endmacro"))
                         break;
                     str_end = str;
                 }
@@ -1176,6 +1181,12 @@ int agoLoadModule(AgoContext * context, const char * module)
     if (agoIsValidContext(context)) {
         CAgoLock lock(context->cs);
         status = VX_ERROR_INVALID_PARAMETERS;
+        // Module names resolve to lib<name>.so via the loader search path; reject
+        // path separators and ".." so only a bare module name can be loaded.
+        if (!module || module[0] == '\0' || strpbrk(module, "/\\") || strstr(module, "..")) {
+            agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoLoadModule: invalid module name '%s' (path separators and '..' are not allowed)\n", module ? module : "(null)");
+            return VX_ERROR_INVALID_PARAMETERS;
+        }
         char filePath[1024]; snprintf(filePath, sizeof(filePath), SHARED_LIBRARY_PREFIX "%s" SHARED_LIBRARY_EXTENSION, module);
         for (vx_uint32 index = 0; index < context->num_active_modules; index++) {
             if (strcmp(filePath, context->modules[index].module_path) == 0) {

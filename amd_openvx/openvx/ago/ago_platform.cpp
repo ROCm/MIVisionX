@@ -281,7 +281,9 @@ typedef struct {
 
 typedef struct {
     int type;   // should be VX_CRITICAL_SECTION
-    mutex mtx;
+    // recursive to match Win32 CRITICAL_SECTION semantics: several call paths
+    // re-enter the same section, e.g. agoProcessGraph -> vxVerifyGraph
+    recursive_mutex mtx;
 } vx_critical_section;
 
 
@@ -289,7 +291,7 @@ typedef struct {
 void EnterCriticalSection(CRITICAL_SECTION* cs)
 {
     vx_critical_section * crit_sec = (vx_critical_section *)*cs;
-    std::lock_guard<std::mutex> lock(crit_sec->mtx);
+    crit_sec->mtx.lock();
 }
 
 // Emulates LeaveCriticalSection for non_windows platform
@@ -354,10 +356,9 @@ DWORD WaitForSingleObject(HANDLE h, DWORD dwMilliseconds)
 			vx_semaphore * sem = (vx_semaphore *)h;
 			{
 				unique_lock<mutex> lk(sem->mtx);
-				sem->cv.wait(lk); // TBD: implement with timeout
-			}
-			{
-				lock_guard<mutex> lk(sem->mtx);
+				// Wait only if the semaphore count is currently zero; otherwise
+				// a notification that arrived before this wait would be lost.
+				sem->cv.wait(lk, [&sem]() { return sem->count > 0; });
 				sem->count--;
 			}
 		}

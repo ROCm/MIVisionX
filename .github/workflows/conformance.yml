@@ -134,7 +134,7 @@ jobs:
             canny channel_extract color_convert accumulate
             graph graph_api tensor_api data_objects user_kernel
             tensor_advanced threshold_query graph_import vxu_api
-            coverage_boost vision_coverage
+            coverage_boost vision_coverage pipelining_api
           )
           for test_dir in "${API_TESTS[@]}"; do
             echo "::group::Building ${test_dir}"
@@ -158,7 +158,9 @@ jobs:
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DOPENVX_INCLUDES="${{ github.workspace }}/amd_openvx/openvx/include" \
             -DOPENVX_LIBRARIES="${INSTALL_PREFIX}/lib/libopenvx.so;${INSTALL_PREFIX}/lib/libvxu.so;pthread;dl;m;rt" \
-            -DOPENVX_CONFORMANCE_VISION=ON
+            -DOPENVX_CONFORMANCE_VISION=ON \
+            -DOPENVX_USE_PIPELINING=ON \
+            -DOPENVX_USE_STREAMING=ON
           make -j$(nproc)
 
       - name: Upload debug build artifacts
@@ -637,6 +639,60 @@ jobs:
           path: profraw/
           if-no-files-found: ignore
 
+  pipelining-cpu:
+    name: KHR EXT - Pipelining (CPU)
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run pipelining tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/pipelining_%p.profraw
+          timeout 1800 ./bin/vx_test_conformance --filter="GraphPipeline.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-pipelining
+          path: profraw/
+          if-no-files-found: ignore
+
+  streaming-cpu:
+    name: KHR EXT - Streaming (CPU)
+    runs-on: ubuntu-24.04
+    needs: build-debug
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download debug build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-debug
+      - name: Run streaming tests
+        run: |
+          mkdir -p profraw
+          chmod +x OpenVX-cts/build/bin/vx_test_conformance
+          cd OpenVX-cts/build
+          export LD_LIBRARY_PATH=${{ github.workspace }}/install/lib:${{ github.workspace }}/OpenVX-cts/build/lib
+          export VX_TEST_DATA_PATH=${{ github.workspace }}/OpenVX-cts/test_data/
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/profraw/streaming_%p.profraw
+          timeout 900 ./bin/vx_test_conformance --filter="GraphStreaming.*"
+      - name: Upload profraw
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profraw-streaming
+          path: profraw/
+          if-no-files-found: ignore
+
   # --- Local Tests (API + GDF) ---
 
   api-tests:
@@ -675,6 +731,7 @@ jobs:
             "vxu_api:openvx_vxu_api"
             "coverage_boost:openvx_coverage_boost"
             "vision_coverage:openvx_vision_coverage"
+            "pipelining_api:openvx_pipelining_api"
           )
           for entry in "${API_EXECUTABLES[@]}"; do
             dir="${entry%%:*}"
@@ -1076,6 +1133,8 @@ jobs:
       - vision-features
       - vision-statistics
       - vision-pyramid
+      - pipelining-cpu
+      - streaming-cpu
       - api-tests
       - gdf-tests
       - vision-tests

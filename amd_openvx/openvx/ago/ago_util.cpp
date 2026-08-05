@@ -707,16 +707,18 @@ AgoKernel * agoFindKernelByName(AgoContext * acontext, const vx_char * name)
 AgoData * agoFindDataByName(AgoContext * acontext, AgoGraph * agraph, vx_char * name)
 {
     // check for <object>[index] syntax
-    char actualName[256]; strcpy(actualName, name);
+    char actualName[256];
+    if (!name || strlen(name) >= sizeof(actualName)) return NULL;
+    snprintf(actualName, sizeof(actualName), "%s", name);
     int index[4] = { -1, -1, -1, -1 }; // index >=0 indicates special object
     const char * s = strstr(name, "[");
-    if (s && name[strlen(name) - 1] == ']') {
+    if (s && name[strlen(name) - 1] == ']' && (size_t)(s - name) < sizeof(actualName)) {
         actualName[s - name] = 0;
         for (int i = 0; i < 4 && *s == '['; i++) {
             s++; if (*s == '-') s++;
             index[i] = atoi(s);
             for (; *s != ']'; s++) {
-                if (!(*s >= '0' || *s <= '9')) return NULL;
+                if (!(*s >= '0' && *s <= '9')) return NULL;
             }
             if (*s != ']') return NULL;
             s++;
@@ -1245,6 +1247,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         //data->u.img.isROI = vx_true_e;
         const char *s = strstr(desc, ","); if (!s) return -1;
         char master_name[128];
+        if ((size_t)(s - desc) >= sizeof(master_name)) return -1;
         memcpy(master_name, desc, s - desc); master_name[s - desc] = 0;
         s++;
         if (sscanf(s, "%u,%u,%u,%u", &data->u.img.rect_roi.start_x, &data->u.img.rect_roi.start_y, &data->u.img.rect_roi.end_x, &data->u.img.rect_roi.end_y) != 4) return -1;
@@ -1335,7 +1338,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->ref.type = VX_TYPE_PYRAMID;
         memcpy(&data->u.pyr.format, desc, sizeof(data->u.pyr.format));
         char scale[64] = "";
-        if (sscanf(desc + 5, "%d,%d," VX_FMT_SIZE ",%s", &data->u.pyr.width, &data->u.pyr.height, &data->u.pyr.levels, scale) != 4) return -1;
+        if (sscanf(desc + 5, "%d,%d," VX_FMT_SIZE ",%63s", &data->u.pyr.width, &data->u.pyr.height, &data->u.pyr.levels, scale) != 4) return -1;
         if (!strncmp(scale, "HALF", 4)) data->u.pyr.scale = VX_SCALE_PYRAMID_HALF;
         else if (!strncmp(scale, "ORB", 3)) data->u.pyr.scale = VX_SCALE_PYRAMID_ORB;
         else data->u.pyr.scale = (vx_float32)atof(scale);
@@ -1394,6 +1397,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->ref.type = VX_TYPE_ARRAY;
         const char *s = strstr(desc, ","); if (!s) return -1;
         char data_type[64];
+        if ((size_t)(s - desc) >= sizeof(data_type)) return -1;
         memcpy(data_type, desc, s - desc); data_type[s - desc] = 0;
         (void)sscanf(++s, "" VX_FMT_SIZE "", &data->u.arr.capacity);
         data->u.arr.itemtype = agoName2Enum(data_type);
@@ -1472,6 +1476,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->ref.type = VX_TYPE_OBJECT_ARRAY;
         const char *s = strstr(desc, ","); if (!s) return -1;
         char data_type[64];
+        if ((size_t)(s - desc) >= sizeof(data_type)) return -1;
         memcpy(data_type, desc, s - desc); data_type[s - desc] = 0;
         (void)sscanf(++s, "" VX_FMT_SIZE "", &data->u.objarr.numitems);
         data->u.objarr.itemtype = agoName2Enum(data_type);
@@ -1522,6 +1527,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->ref.type = VX_TYPE_LUT;
         const char *s = strstr(desc, ","); if (!s) return -1;
         char data_type[64];
+        if ((size_t)(s - desc) >= sizeof(data_type)) return -1;
         memcpy(data_type, desc, s - desc); data_type[s - desc] = 0;
         data->u.lut.type = agoName2Enum(data_type);
         if (data->u.lut.type != VX_TYPE_UINT8 && data->u.lut.type != VX_TYPE_INT16)
@@ -1670,6 +1676,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->ref.type = VX_TYPE_MATRIX;
         const char *s = strstr(desc, ","); if (!s) return -1;
         char data_type[64];
+        if ((size_t)(s - desc) >= sizeof(data_type)) return -1;
         memcpy(data_type, desc, s - desc); data_type[s - desc] = 0;
         data->u.mat.type = agoName2Enum(data_type);
         if (data->u.mat.type != VX_TYPE_INT32 && data->u.mat.type != VX_TYPE_FLOAT32 && data->u.mat.type != VX_TYPE_UINT8) {
@@ -1715,6 +1722,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->ref.type = VX_TYPE_SCALAR;
         const char *s = strstr(desc, ","); if (!s) return -1;
         char data_type[64];
+        if ((size_t)(s - desc) >= sizeof(data_type)) return -1;
         memcpy(data_type, desc, s - desc); data_type[s - desc] = 0;
         s++;
         data->u.scalar.type = agoName2Enum(data_type);
@@ -1879,7 +1887,8 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
             data->u.tensor.start[i] = 0;
             data->u.tensor.end[i] = data->u.tensor.dims[i];
             data->u.tensor.stride[i] = data->size;
-            data->size *= data->u.tensor.dims[i];
+            if (__builtin_mul_overflow(data->size, (vx_size)data->u.tensor.dims[i], &data->size))
+                return -1;
             // make sure that the size and stride[1] are multiple of 4:: commending out since it breaks fp16
 /*
             if (i == 0 && (data->size & 3)) {
@@ -1952,7 +1961,8 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
             data->u.tensor.dims[i] = end[i] - start[i];
             data->u.tensor.stride[i] = dataMaster->u.tensor.stride[i];
             data->u.tensor.offset += start[i] * dataMaster->u.tensor.stride[i];
-            data->size *= data->u.tensor.dims[i];
+            if (__builtin_mul_overflow(data->size, (vx_size)data->u.tensor.dims[i], &data->size))
+                return -1;
         }
         for (vx_size i = data->u.tensor.num_dims; i < AGO_MAX_TENSOR_DIMENSIONS; i++) {
             data->u.tensor.start[i] = 0;
@@ -2426,10 +2436,12 @@ int agoDataSanityCheckAndUpdate(AgoData * data)
             //   - make sure that the stride is multiple of 16 bytes
             if (data->import_type == VX_IMPORT_TYPE_NONE) {
                 data->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->u.img.width, data));
-                data->size = ALIGN16(data->u.img.height) * data->u.img.stride_in_bytes;
+                if (__builtin_mul_overflow((vx_size)ALIGN16(data->u.img.height), (vx_size)data->u.img.stride_in_bytes, &data->size))
+                    return -1;
             }
             else {
-                data->size = (vx_size)((unsigned long)(data->u.img.height * data->u.img.stride_in_bytes));
+                if (__builtin_mul_overflow((vx_size)data->u.img.height, (vx_size)data->u.img.stride_in_bytes, &data->size))
+                    return -1;
             }
             if (!data->size)
                 return -1;
@@ -2549,7 +2561,11 @@ int agoDataSanityCheckAndUpdate(AgoData * data)
         else
             data->u.remap.remap_fractional_bits = AGO_REMAP_FRACTIONAL_BITS;
         // calculate other attributes and buffer size
-        data->size = (vx_size)((unsigned long)(data->u.remap.dst_width * data->u.remap.dst_height) * sizeof(ago_coord2d_ushort_t));
+        vx_size remap_bytes;
+        if (__builtin_mul_overflow((vx_size)data->u.remap.dst_width, (vx_size)data->u.remap.dst_height, &remap_bytes) ||
+            __builtin_mul_overflow(remap_bytes, (vx_size)sizeof(ago_coord2d_ushort_t), &remap_bytes))
+            return -1;
+        data->size = remap_bytes;
         if (!data->size)
             return -1;
     }
@@ -3004,6 +3020,7 @@ AgoNode * agoCreateNode(AgoGraph * graph, AgoKernel * kernel)
     node->attr_affinity = graph->attr_affinity;
     node->ref.internal_count = 1;
     node->akernel = kernel;
+    node->pipeup_output_depth = kernel->pipeup_output_depth;
     node->attr_border_mode.mode = VX_BORDER_MODE_UNDEFINED;
     node->localDataSize = kernel->localDataSize;
     node->localDataPtr = NULL;
@@ -3300,6 +3317,8 @@ AgoData::AgoData()
 }
 AgoData::~AgoData()
 {
+    if (ref.context)
+        agoRemoveEventRegistrations(ref.context, (vx_reference)this);
 #if ENABLE_OPENCL
     agoGpuOclReleaseData(this);
 #elif ENABLE_HIP
@@ -3312,6 +3331,10 @@ AgoData::~AgoData()
     if (reserved_allocated) {
         agoReleaseMemory(reserved_allocated);
         reserved_allocated = nullptr;
+    }
+    if (children) {
+        delete[] children;
+        children = nullptr;
     }
 }
 AgoMetaFormat::AgoMetaFormat()
@@ -3331,7 +3354,8 @@ AgoKernel::AgoKernel()
       kernel_f{ nullptr }, validate_f{ nullptr }, input_validate_f{ nullptr }, output_validate_f{ nullptr }, initialize_f{ nullptr }, deinitialize_f{ nullptr },
       query_target_support_f{ nullptr }, opencl_codegen_callback_f{ nullptr }, regen_callback_f{ nullptr }, opencl_global_work_update_callback_f{ nullptr },
       gpu_buffer_update_callback_f{ nullptr }, gpu_buffer_update_param_index{ 0 },
-      opencl_buffer_access_enable{ vx_false_e }, importing_module_index_plus1{ 0 }
+      opencl_buffer_access_enable{ vx_false_e }, importing_module_index_plus1{ 0 },
+      pipeup_output_depth{ 1 }, pipeup_input_depth{ 1 }
 {
     memset(&name, 0, sizeof(name));
     memset(&argConfig, 0, sizeof(argConfig));
@@ -3362,7 +3386,8 @@ AgoSuperNode::~AgoSuperNode()
 AgoNode::AgoNode()
     : next{ nullptr }, akernel{ nullptr }, flags{ 0 }, localDataSize{ 0 }, localDataPtr{ nullptr }, localDataPtr_allocated{ nullptr },
       valid_rect_reset{ vx_true_e }, valid_rect_num_inputs{ 0 }, valid_rect_num_outputs{ 0 }, valid_rect_inputs{ nullptr }, valid_rect_outputs{ nullptr },
-      paramCount{ 0 }, callback{ nullptr }, supernode{ nullptr }, initialized{ false }, target_support_flags{ 0 }, hierarchical_level{ 0 }, status{ VX_SUCCESS }
+      paramCount{ 0 }, callback{ nullptr }, supernode{ nullptr }, initialized{ false }, target_support_flags{ 0 }, hierarchical_level{ 0 }, status{ VX_SUCCESS },
+      node_state{ VX_NODE_STATE_PIPEUP }, node_exec_count{ 0 }, pipeup_output_depth{ 0 }
     , drama_divide_invoked{ false }
 #if ENABLE_OPENCL
     , opencl_type{ 0 }, opencl_param_mem2reg_mask{ 0 }, opencl_param_discard_mask{ 0 }, opencl_param_as_value_mask{ 0 },
@@ -3386,6 +3411,8 @@ AgoNode::AgoNode()
 }
 AgoNode::~AgoNode()
 {
+    if (ref.context)
+        agoRemoveEventRegistrations(ref.context, (vx_reference)this);
     agoShutdownNode(this);
     if (valid_rect_inputs) {
         delete[] valid_rect_inputs;
@@ -3412,9 +3439,9 @@ AgoNode::~AgoNode()
 }
 AgoGraph::AgoGraph()
     : next{ nullptr }, hThread{ nullptr }, hSemToThread{ nullptr }, hSemFromThread{ nullptr },
-      threadScheduleCount{ 0 }, threadExecuteCount{ 0 }, threadWaitCount{ 0 }, threadThreadTerminationState{ 0 },
+      threadScheduleCount{ 0 }, threadExecuteCount{ 0 }, threadCompletionCount{ 0 }, threadWaitCount{ 0 }, threadThreadTerminationState{ 0 },
       isReadyToExecute{ vx_false_e }, detectedInvalidNode{ false }, status{ VX_SUCCESS },
-      virtualDataGenerationCount{ 0 }, optimizer_flags{ AGO_GRAPH_OPTIMIZER_FLAGS_DEFAULT }, verified{ false }, enable_performance_profiling{ false }, execFrameCount{ 0 }
+      virtualDataGenerationCount{ 0 }, optimizer_flags{ AGO_GRAPH_OPTIMIZER_FLAGS_DEFAULT }, verified{ false }, enable_performance_profiling{ false }, execFrameCount{ 0 }, pipelining{ nullptr }
 #if ENABLE_OPENCL
     , supernodeList{ nullptr }, opencl_cmdq{ nullptr }, opencl_device{ nullptr }
     , enable_node_level_gpu_flush{ true }
@@ -3433,6 +3460,16 @@ AgoGraph::AgoGraph()
 }
 AgoGraph::~AgoGraph()
 {
+    // stop and cleanup pipelining state
+    if (pipelining) {
+        agoStopGraphPipelining(this);
+        delete pipelining;
+        pipelining = nullptr;
+    }
+
+    if (ref.context)
+        agoRemoveEventRegistrations(ref.context, (vx_reference)this);
+
     // decrement auto age delays
     for (auto it = autoAgeDelayList.begin(); it != autoAgeDelayList.end(); it++) {
         if ((agoIsValidData(*it, VX_TYPE_DELAY) || agoIsValidData(*it, VX_TYPE_OBJECT_ARRAY)) && (*it)->ref.internal_count > 0)
@@ -3464,7 +3501,7 @@ AgoGraph::~AgoGraph()
 AgoContext::AgoContext()
     : perfNormFactor{ 0 }, dataGenerationCount{ 0 }, nextUserStructId{ VX_TYPE_USER_STRUCT_START }, nextUserKernelId{ 0 }, nextUserLibraryId{ 1 },
       num_active_modules{ 0 }, num_active_references{ 0 }, callback_log{ nullptr }, callback_reentrant{ vx_false_e },
-      thread_config{ CONFIG_THREAD_DEFAULT }, importing_module_index_plus1{ 0 }, graph_garbage_data{ nullptr }, graph_garbage_node{ nullptr }, graph_garbage_list{ nullptr }
+      thread_config{ CONFIG_THREAD_DEFAULT }, importing_module_index_plus1{ 0 }, graph_garbage_data{ nullptr }, graph_garbage_node{ nullptr }, graph_garbage_list{ nullptr }, events{ new AgoContextEventSystem() }
 #if ENABLE_OPENCL
 #if defined(CL_VERSION_2_0)
       , opencl_svmcaps{ 0 }
@@ -3568,6 +3605,12 @@ AgoContext::~AgoContext()
     // remove kernel objects
     agoResetKernelList(&kernelList);
 
+    // cleanup event system
+    if (events) {
+        delete events;
+        events = nullptr;
+    }
+
 #if ENABLE_OPENCL
     if (opencl_mem_alloc_count > 0) {
         agoAddLogEntry(&ref, VX_SUCCESS, "OK: OpenCL buffer usage: " VX_FMT_SIZE ", " VX_FMT_SIZE "/" VX_FMT_SIZE "\n",
@@ -3582,4 +3625,25 @@ AgoContext::~AgoContext()
 
     // critical section
     DeleteCriticalSection(&cs);
+}
+
+AgoGraphPipeliningState::AgoGraphPipeliningState()
+    : schedule_mode{ VX_GRAPH_SCHEDULE_MODE_NORMAL }, timeout_ms{ VX_TIMEOUT_WAIT_FOREVER },
+      event_timeout_ms{ VX_TIMEOUT_WAIT_FOREVER }, pipeline_depth{ 1 },
+      streaming_enabled{ false }, trigger_node{ nullptr }, streaming_stop{ false },
+      active_executions{ 0 }, executor_stop{ false }
+{
+}
+
+AgoGraphPipeliningState::~AgoGraphPipeliningState()
+{
+}
+
+AgoContextEventSystem::AgoContextEventSystem()
+    : enabled{ false }, timeout_ms{ VX_TIMEOUT_WAIT_FOREVER }
+{
+}
+
+AgoContextEventSystem::~AgoContextEventSystem()
+{
 }

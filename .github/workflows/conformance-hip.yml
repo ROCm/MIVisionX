@@ -97,8 +97,7 @@ jobs:
   # Release build of the PR (or push) branch — used by perf-gate
   build-hip:
     name: Build AMD OpenVX (HIP, Release)
-    runs-on:
-      group: linux-shark39-runner-group
+    runs-on: [controller-mode:docker]
     container:
       image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
@@ -142,8 +141,7 @@ jobs:
   build-hip-main:
     name: Build AMD OpenVX (HIP, Release, main)
     if: github.event_name == 'pull_request'
-    runs-on:
-      group: linux-shark39-runner-group
+    runs-on: [controller-mode:docker]
     container:
       image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
@@ -192,8 +190,7 @@ jobs:
   # profraw flow is identical to the CPU workflow.
   build-hip-debug:
     name: Build AMD OpenVX (HIP, Debug + Coverage)
-    runs-on:
-      group: linux-shark39-runner-group
+    runs-on: [controller-mode:docker]
     container:
       image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
@@ -337,8 +334,7 @@ jobs:
   perf-gate-hip:
     name: Perf gate HIP (PR vs main)
     if: github.event_name == 'pull_request'
-    runs-on:
-      group: linux-shark39-runner-group
+    runs-on: [controller-mode:docker]
     container:
       image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
@@ -527,8 +523,7 @@ jobs:
 
   baseline-hip:
     name: Baseline (HIP)
-    runs-on:
-      group: linux-shark39-runner-group
+    runs-on: [controller-mode:docker]
     container:
       image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
@@ -577,8 +572,7 @@ jobs:
 
   graph-hip:
     name: Graph (HIP)
-    runs-on:
-      group: linux-shark39-runner-group
+    runs-on: [controller-mode:docker]
     container:
       image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
@@ -675,8 +669,7 @@ jobs:
 
   image-ops-hip:
     name: Image ops (HIP)
-    runs-on:
-      group: linux-shark39-runner-group
+    runs-on: [controller-mode:docker]
     container:
       image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
@@ -724,8 +717,7 @@ jobs:
 
   vision-color-hip:
     name: Vision color (HIP)
-    runs-on:
-      group: linux-shark39-runner-group
+    runs-on: [controller-mode:docker]
     container:
       image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
@@ -773,8 +765,7 @@ jobs:
 
   vision-filters-hip:
     name: Vision filters (HIP)
-    runs-on:
-      group: linux-shark39-runner-group
+    runs-on: [controller-mode:docker]
     container:
       image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
@@ -822,8 +813,7 @@ jobs:
 
   vision-arithmetic-hip:
     name: Vision arithmetic (HIP)
-    runs-on:
-      group: linux-shark39-runner-group
+    runs-on: [controller-mode:docker]
     container:
       image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
@@ -871,8 +861,7 @@ jobs:
 
   vision-geometric-hip:
     name: Vision geometric (HIP)
-    runs-on:
-      group: linux-shark39-runner-group
+    runs-on: [controller-mode:docker]
     container:
       image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri
@@ -920,8 +909,7 @@ jobs:
 
   vision-features-hip:
     name: Vision features (HIP)
-    runs-on:
-      group: linux-shark39-runner-group
+    runs-on: [controller-mode:docker]
     container:
       image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri

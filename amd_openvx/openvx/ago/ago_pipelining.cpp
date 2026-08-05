@@ -422,6 +422,13 @@ static int agoAllocGpuBuffersForQueuedRefs(AgoGraph * graph)
                     node->akernel->name, i);
                 return VX_FAILURE;
             }
+            // A device buffer reserved here holds nothing yet, so an input has
+            // to be treated as one whose host copy is the newer of the two.
+            if (node->parameters[i].direction == VX_INPUT ||
+                node->parameters[i].direction == (vx_direction_e)VX_BIDIRECTIONAL) {
+                data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+            }
         }
     }
 #else
@@ -603,10 +610,22 @@ int agoExecuteGraphQueueManual(AgoGraph * graph)
             break;
         }
     }
+    // Executions beyond the one this request asked for belong to requests that
+    // have not been serviced yet, so they are credited rather than lost.
+    if (batches > 1)
+        pipe->manual_executions_credited.fetch_add(batches - 1);
+
     // In this mode references for every graph parameter have to be enqueued
     // before the graph is scheduled; if nothing could run, say so instead of
-    // reporting a successful schedule that did no work.
+    // reporting a successful schedule that did no work. An earlier request that
+    // ran ahead is the one case where empty queues are not the application's
+    // doing, and the credit it left behind is what distinguishes the two.
     if (overall_status == VX_SUCCESS && batches == 0) {
+        uint32_t credited = pipe->manual_executions_credited.load();
+        while (credited > 0) {
+            if (pipe->manual_executions_credited.compare_exchange_weak(credited, credited - 1))
+                return VX_SUCCESS;
+        }
         agoAddLogEntry(&graph->ref, VX_FAILURE,
             "ERROR: vxScheduleGraph: QUEUE_MANUAL requires a ready reference at every enqueued graph parameter\n");
         return VX_FAILURE;

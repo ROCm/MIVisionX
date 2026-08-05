@@ -703,6 +703,10 @@ struct AgoGraphPipeliningState {
     std::atomic<bool> executor_stop;
     std::mutex enqueue_mtx;
     std::condition_variable enqueue_cv;
+    // QUEUE_MANUAL runs every complete set it finds in one go, so a request can
+    // carry out work that later requests were made for. Those executions are
+    // credited here and spent by the requests that find nothing left to do.
+    std::atomic<uint32_t> manual_executions_credited;
     std::vector<std::unique_ptr<AgoGraphParameterQueue>> param_queues;
 public:
     AgoGraphPipeliningState();

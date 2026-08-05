@@ -2012,6 +2012,261 @@ static int test_streaming_explicit_execution()
 }
 
 // ---------------------------------------------------------------------------
+// Test 26: a queued image handed from a CPU stage to a GPU stage
+//
+// A pipelined application is usually a chain of stage graphs with a target per
+// stage, and the image between two stages is the output queue of one and the
+// input queue of the next. When the producing stage runs on the CPU and the
+// consuming stage on the GPU, the buffer the consumer reads is one the host
+// wrote, and it only holds the right thing if the device copy is refreshed from
+// it first. Nothing about that is visible in a status code, so the only way to
+// assert it is to check the data.
+//
+// Two NOT nodes in series return the original value, which makes the expected
+// output exact and independent of how either device rounds or handles borders.
+// ---------------------------------------------------------------------------
+static int test_cross_device_stage_handover()
+{
+    int errors = 0;
+    printf("\n=== Test 26: a queued image handed from a cpu stage to a gpu stage ===\n");
+
+    const vx_uint32 DEPTH = 3;
+    const int FRAMES = 12;
+
+    vx_context context = vxCreateContext();
+    set_event_timeout(context);
+
+    // A build without GPU support has nothing to hand over, so say so and stop.
+    {
+        vx_graph probe = vxCreateGraph(context);
+        vx_image in = vxCreateImage(context, IMG_W, IMG_H, VX_DF_IMAGE_U8);
+        vx_image out = vxCreateImage(context, IMG_W, IMG_H, VX_DF_IMAGE_U8);
+        vx_node node = vxNotNode(probe, in, out);
+        vx_status usable = vxSetNodeTarget(node, VX_TARGET_STRING, "gpu");
+        if (usable == VX_SUCCESS)
+            usable = vxVerifyGraph(probe);
+        vxReleaseNode(&node);
+        vxReleaseImage(&in);
+        vxReleaseImage(&out);
+        vxReleaseGraph(&probe);
+        if (usable != VX_SUCCESS) {
+            printf("  SKIP: this build has no usable gpu target\n");
+            vxReleaseContext(&context);
+            return 0;
+        }
+    }
+
+    // stage 0 writes middle[] on the cpu, stage 1 reads it on the gpu
+    std::vector<vx_image> first(DEPTH), middle(DEPTH), last(DEPTH);
+    for (vx_uint32 i = 0; i < DEPTH; i++) {
+        first[i]  = vxCreateImage(context, IMG_W, IMG_H, VX_DF_IMAGE_U8);
+        middle[i] = vxCreateImage(context, IMG_W, IMG_H, VX_DF_IMAGE_U8);
+        last[i]   = vxCreateImage(context, IMG_W, IMG_H, VX_DF_IMAGE_U8);
+    }
+
+    vx_graph stage[2];
+    vx_node node[2];
+    const char * target[2] = { "cpu", "gpu" };
+    vx_image * queues[3] = { first.data(), middle.data(), last.data() };
+
+    for (int s = 0; s < 2; s++) {
+        stage[s] = vxCreateGraph(context);
+        node[s] = vxNotNode(stage[s], queues[s][0], queues[s + 1][0]);
+        CHECK_NOT_NULL(node[s], "stage node");
+        CHECK_STATUS(vxSetNodeTarget(node[s], VX_TARGET_STRING, target[s]));
+        for (vx_uint32 p = 0; p < 2; p++) {
+            vx_parameter param = vxGetParameterByIndex(node[s], p);
+            CHECK_STATUS(vxAddParameterToGraph(stage[s], param));
+            CHECK_STATUS(vxReleaseParameter(&param));
+        }
+    }
+
+    std::vector<std::vector<vx_reference>> refs(3);
+    for (int q = 0; q < 3; q++)
+        for (vx_uint32 i = 0; i < DEPTH; i++)
+            refs[q].push_back((vx_reference)queues[q][i]);
+
+    for (int s = 0; s < 2; s++) {
+        vx_graph_parameter_queue_params_t q[2];
+        memset(q, 0, sizeof(q));
+        q[0].graph_parameter_index = 0;
+        q[0].refs_list_size = DEPTH;
+        q[0].refs_list = refs[s].data();
+        q[1].graph_parameter_index = 1;
+        q[1].refs_list_size = DEPTH;
+        q[1].refs_list = refs[s + 1].data();
+        CHECK_STATUS(vxSetGraphScheduleConfig(stage[s], VX_GRAPH_SCHEDULE_MODE_QUEUE_AUTO, 2, q));
+        vx_uint32 timeout = WAIT_TIMEOUT_MS;
+        CHECK_STATUS(vxSetGraphAttribute(stage[s], VX_GRAPH_TIMEOUT, &timeout, sizeof(timeout)));
+        EXPECT_STATUS(vxVerifyGraph(stage[s]), VX_SUCCESS, "a stage graph verifies");
+    }
+
+    // The stages are never waited on in the pass that fed them, so both are
+    // working on different frames for most of the run.
+    std::vector<vx_uint8> expected;
+    vx_uint32 inFlight[2] = { 0, 0 };
+    int submitted = 0, collected = 0, wrong = 0;
+
+    for (vx_uint32 i = 0; i < DEPTH && submitted < FRAMES; i++) {
+        vx_uint8 value = (vx_uint8)(0x10 + submitted);
+        CHECK_STATUS(fill_u8_image(first[i], value));
+        expected.push_back(value);
+        vx_reference r = (vx_reference)first[i];
+        CHECK_STATUS(vxGraphParameterEnqueueReadyRef(stage[0], 0, &r, 1));
+        r = (vx_reference)middle[i];
+        CHECK_STATUS(vxGraphParameterEnqueueReadyRef(stage[0], 1, &r, 1));
+        r = (vx_reference)last[i];
+        CHECK_STATUS(vxGraphParameterEnqueueReadyRef(stage[1], 1, &r, 1));
+        submitted++;
+        inFlight[0]++;
+    }
+
+    while (collected < submitted) {
+        if (inFlight[1]) {
+            vx_reference done = nullptr, freed = nullptr;
+            vx_uint32 got = 0;
+            CHECK_STATUS(vxGraphParameterDequeueDoneRef(stage[1], 1, &done, 1, &got));
+            CHECK_STATUS(vxGraphParameterDequeueDoneRef(stage[1], 0, &freed, 1, &got));
+            inFlight[1]--;
+            // not applied twice, so the value that went in is the value that
+            // has to come out
+            if (!u8_image_is_uniform((vx_image)done, expected[collected]))
+                wrong++;
+            collected++;
+            CHECK_STATUS(vxGraphParameterEnqueueReadyRef(stage[0], 1, &freed, 1));
+            CHECK_STATUS(vxGraphParameterEnqueueReadyRef(stage[1], 1, &done, 1));
+        }
+        if (inFlight[0]) {
+            vx_reference done = nullptr, freed = nullptr;
+            vx_uint32 got = 0;
+            CHECK_STATUS(vxGraphParameterDequeueDoneRef(stage[0], 1, &done, 1, &got));
+            CHECK_STATUS(vxGraphParameterDequeueDoneRef(stage[0], 0, &freed, 1, &got));
+            inFlight[0]--;
+            CHECK_STATUS(vxGraphParameterEnqueueReadyRef(stage[1], 0, &done, 1));
+            inFlight[1]++;
+            if (submitted < FRAMES) {
+                vx_uint8 value = (vx_uint8)(0x10 + submitted);
+                CHECK_STATUS(fill_u8_image((vx_image)freed, value));
+                expected.push_back(value);
+                CHECK_STATUS(vxGraphParameterEnqueueReadyRef(stage[0], 0, &freed, 1));
+                submitted++;
+                inFlight[0]++;
+            }
+        }
+    }
+
+    EXPECT_TRUE(collected == FRAMES, "every frame came back out of the chain");
+    EXPECT_TRUE(wrong == 0, "a gpu stage sees what a cpu stage wrote to a queued image");
+    if (wrong)
+        printf("  %d of %d frames held the wrong data\n", wrong, collected);
+
+    for (int s = 0; s < 2; s++) {
+        vxReleaseNode(&node[s]);
+        vxReleaseGraph(&stage[s]);
+    }
+    for (vx_uint32 i = 0; i < DEPTH; i++) {
+        vxReleaseImage(&first[i]);
+        vxReleaseImage(&middle[i]);
+        vxReleaseImage(&last[i]);
+    }
+    vxReleaseContext(&context);
+    return errors;
+}
+
+// ---------------------------------------------------------------------------
+// Test 27: one schedule request per enqueued set in QUEUE_MANUAL
+//
+// A request runs every complete set of references it finds, and it is serviced
+// on the graph's own thread. An application that enqueues a set and schedules it
+// can therefore have one request do the work of several, leaving the others with
+// empty queues through no fault of their own. Nothing about that is an error, so
+// the run has to come back clean, which is checked by counting logged failures.
+// ---------------------------------------------------------------------------
+static std::atomic<int> g_logged_failures{0};
+
+// Implementations log informational entries as well, so only the ones carrying a
+// failure status say that something went wrong.
+static void VX_CALLBACK count_logged_failures(vx_context, vx_reference, vx_status status,
+                                              const vx_char string[])
+{
+    if (status != VX_SUCCESS) {
+        g_logged_failures.fetch_add(1);
+        printf("  LOG: %s", string ? string : "(null)");
+    }
+}
+
+static int test_manual_schedule_per_enqueued_set()
+{
+    int errors = 0;
+    printf("\n=== Test 27: a schedule request per enqueued set in QUEUE_MANUAL ===\n");
+
+    const vx_uint32 DEPTH = 3;
+
+    vx_context context = vxCreateContext();
+    set_event_timeout(context);
+    g_logged_failures.store(0);
+    vxRegisterLogCallback(context, count_logged_failures, vx_false_e);
+
+    NotGraph g = make_not_graph(context, 2);
+    std::vector<vx_image> in(DEPTH), out(DEPTH);
+    std::vector<vx_reference> inRefs, outRefs;
+    for (vx_uint32 i = 0; i < DEPTH; i++) {
+        in[i]  = vxCreateImage(context, IMG_W, IMG_H, VX_DF_IMAGE_U8);
+        out[i] = vxCreateImage(context, IMG_W, IMG_H, VX_DF_IMAGE_U8);
+        CHECK_STATUS(fill_u8_image(in[i], (vx_uint8)(0x11 * (i + 1))));
+        inRefs.push_back((vx_reference)in[i]);
+        outRefs.push_back((vx_reference)out[i]);
+    }
+
+    vx_graph_parameter_queue_params_t q[2];
+    memset(q, 0, sizeof(q));
+    q[0].graph_parameter_index = 0;
+    q[0].refs_list_size = DEPTH;
+    q[0].refs_list = inRefs.data();
+    q[1].graph_parameter_index = 1;
+    q[1].refs_list_size = DEPTH;
+    q[1].refs_list = outRefs.data();
+
+    CHECK_STATUS(vxSetGraphScheduleConfig(g.graph, VX_GRAPH_SCHEDULE_MODE_QUEUE_MANUAL, 2, q));
+    {
+        vx_uint32 timeout = WAIT_TIMEOUT_MS;
+        CHECK_STATUS(vxSetGraphAttribute(g.graph, VX_GRAPH_TIMEOUT, &timeout, sizeof(timeout)));
+    }
+    EXPECT_STATUS(vxVerifyGraph(g.graph), VX_SUCCESS, "vxVerifyGraph");
+
+    for (vx_uint32 i = 0; i < DEPTH; i++) {
+        CHECK_STATUS(vxGraphParameterEnqueueReadyRef(g.graph, 0, &inRefs[i], 1));
+        CHECK_STATUS(vxGraphParameterEnqueueReadyRef(g.graph, 1, &outRefs[i], 1));
+        EXPECT_STATUS(vxScheduleGraph(g.graph), VX_SUCCESS, "a request per enqueued set");
+    }
+    EXPECT_STATUS(vxWaitGraph(g.graph), VX_SUCCESS, "vxWaitGraph");
+
+    vx_uint32 collected = 0, wrong = 0;
+    for (vx_uint32 i = 0; i < DEPTH; i++) {
+        vx_reference done = nullptr, freed = nullptr;
+        vx_uint32 got = 0;
+        CHECK_STATUS(vxGraphParameterDequeueDoneRef(g.graph, 1, &done, 1, &got));
+        CHECK_STATUS(vxGraphParameterDequeueDoneRef(g.graph, 0, &freed, 1, &got));
+        collected++;
+        if (!u8_image_is_uniform((vx_image)done, (vx_uint8)~(0x11 * (i + 1))))
+            wrong++;
+    }
+
+    EXPECT_TRUE(collected == DEPTH, "every enqueued set ran");
+    EXPECT_TRUE(wrong == 0, "each execution used the set it was enqueued with");
+    EXPECT_TRUE(g_logged_failures.load() == 0, "no request was reported as an error");
+
+    vxRegisterLogCallback(context, nullptr, vx_false_e);
+    release_not_graph(g);
+    for (vx_uint32 i = 0; i < DEPTH; i++) {
+        vxReleaseImage(&in[i]);
+        vxReleaseImage(&out[i]);
+    }
+    vxReleaseContext(&context);
+    return errors;
+}
+
+// ---------------------------------------------------------------------------
 // main
 // ---------------------------------------------------------------------------
 int main()
@@ -2074,6 +2329,8 @@ int main()
     total_errors += test_user_node_under_pipelining();
     total_errors += test_roi_of_queued_image();
     total_errors += test_streaming_explicit_execution();
+    total_errors += test_cross_device_stage_handover();
+    total_errors += test_manual_schedule_per_enqueued_set();
 
     printf("\n===================================================\n");
     if (total_errors == 0) {

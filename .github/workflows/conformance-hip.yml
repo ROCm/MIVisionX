@@ -97,7 +97,8 @@ jobs:
   # Release build of the PR (or push) branch — used by perf-gate
   build-hip:
     name: Build AMD OpenVX (HIP, Release)
-    runs-on: [controller-mode:docker]
+    runs-on:
+      group: linux-*
     container:
       image: mivisionx/ubuntu-24.04:rocm-20260710
       options: --device /dev/kfd --device /dev/dri

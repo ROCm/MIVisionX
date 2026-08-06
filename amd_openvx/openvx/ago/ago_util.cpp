@@ -3631,7 +3631,7 @@ AgoGraphPipeliningState::AgoGraphPipeliningState()
     : schedule_mode{ VX_GRAPH_SCHEDULE_MODE_NORMAL }, timeout_ms{ VX_TIMEOUT_WAIT_FOREVER },
       event_timeout_ms{ VX_TIMEOUT_WAIT_FOREVER }, pipeline_depth{ 1 },
       streaming_enabled{ false }, trigger_node{ nullptr }, streaming_stop{ false },
-      active_executions{ 0 }, executor_stop{ false }, manual_executions_credited{ 0 }
+      active_executions{ 0 }, executor_stop{ false }, manual_unclaimed_executions{ 0 }
 {
 }
 

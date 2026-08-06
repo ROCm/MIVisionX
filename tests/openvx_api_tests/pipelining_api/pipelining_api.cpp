@@ -2174,13 +2174,18 @@ static int test_cross_device_stage_handover()
 }
 
 // ---------------------------------------------------------------------------
-// Test 27: one schedule request per enqueued set in QUEUE_MANUAL
+// Test 27: a schedule request per enqueued set in QUEUE_MANUAL
 //
-// A request runs every complete set of references it finds, and it is serviced
-// on the graph's own thread. An application that enqueues a set and schedules it
-// can therefore have one request do the work of several, leaving the others with
-// empty queues through no fault of their own. Nothing about that is an error, so
-// the run has to come back clean, which is checked by counting logged failures.
+// A request runs every complete set of references it finds, which is what lets
+// an application enqueue several sets and schedule the graph once for all of
+// them. A request is also serviced on the graph's own thread, so an application
+// that instead schedules each set as it enqueues it can have one request do the
+// work of several, leaving the ones behind it with nothing to run. That is not
+// the application's doing and must not be reported as an error, which is
+// checked here by counting logged failures.
+//
+// A request the application enqueued nothing for is still an error, and that is
+// checked at the end so that accepting the first case cannot hide it.
 // ---------------------------------------------------------------------------
 static std::atomic<int> g_logged_failures{0};
 
@@ -2255,6 +2260,39 @@ static int test_manual_schedule_per_enqueued_set()
     EXPECT_TRUE(collected == DEPTH, "every enqueued set ran");
     EXPECT_TRUE(wrong == 0, "each execution used the set it was enqueued with");
     EXPECT_TRUE(g_logged_failures.load() == 0, "no request was reported as an error");
+
+    // Three requests have claimed the three executions, so a fourth has nothing
+    // to run and nothing to claim, and that is the case that stays an error.
+    // vxProcessGraph is used because it carries the status back directly.
+    EXPECT_TRUE(vxProcessGraph(g.graph) != VX_SUCCESS,
+                "a request with nothing enqueued for it is still an error");
+
+    // The other way round: everything is enqueued first and the graph is
+    // scheduled once for all of it. One request running several sets is what
+    // the mode is for, so all of them have to run, and this is checked after
+    // the case above because it deliberately leaves executions unclaimed.
+    g_logged_failures.store(0);
+    for (vx_uint32 i = 0; i < DEPTH; i++) {
+        CHECK_STATUS(vxGraphParameterEnqueueReadyRef(g.graph, 0, &inRefs[i], 1));
+        CHECK_STATUS(vxGraphParameterEnqueueReadyRef(g.graph, 1, &outRefs[i], 1));
+    }
+    EXPECT_STATUS(vxScheduleGraph(g.graph), VX_SUCCESS, "one request for every enqueued set");
+    EXPECT_STATUS(vxWaitGraph(g.graph), VX_SUCCESS, "vxWaitGraph");
+
+    collected = 0;
+    wrong = 0;
+    for (vx_uint32 i = 0; i < DEPTH; i++) {
+        vx_reference done = nullptr, freed = nullptr;
+        vx_uint32 got = 0;
+        CHECK_STATUS(vxGraphParameterDequeueDoneRef(g.graph, 1, &done, 1, &got));
+        CHECK_STATUS(vxGraphParameterDequeueDoneRef(g.graph, 0, &freed, 1, &got));
+        collected++;
+        if (!u8_image_is_uniform((vx_image)done, (vx_uint8)~(0x11 * (i + 1))))
+            wrong++;
+    }
+    EXPECT_TRUE(collected == DEPTH, "a single request ran every set that was ready");
+    EXPECT_TRUE(wrong == 0, "each of those executions used its own set");
+    EXPECT_TRUE(g_logged_failures.load() == 0, "the single request was not reported as an error");
 
     vxRegisterLogCallback(context, nullptr, vx_false_e);
     release_not_graph(g);

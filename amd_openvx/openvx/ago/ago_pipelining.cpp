@@ -576,8 +576,21 @@ int agoExecutePipelinedGraphOnce(AgoGraph * graph)
 }
 
 //
-// QUEUE_MANUAL: drain all ready queues, executing one graph instance per
-// complete set of ready refs.
+// QUEUE_MANUAL: run one graph instance per complete set of ready references.
+//
+// A request runs every set that is ready rather than just one, because an
+// application may enqueue several sets and schedule the graph once for all of
+// them, and the conformance tests require that all of them run. The number of
+// executions is therefore not the number of requests, and a request that finds
+// the queues empty has not necessarily been given nothing to do: an earlier
+// request, serviced on the graph's own thread, may already have run the set
+// this one was made for.
+//
+// The two cases cannot be told apart by looking at the queues, so they are told
+// apart by counting: every request claims one execution, and executions that no
+// request has claimed yet are carried here. A request that can neither run nor
+// claim anything is one the application never enqueued for, and only that is
+// reported as an error.
 //
 int agoExecuteGraphQueueManual(AgoGraph * graph)
 {
@@ -586,7 +599,7 @@ int agoExecuteGraphQueueManual(AgoGraph * graph)
         return VX_FAILURE;
 
     int overall_status = VX_SUCCESS;
-    vx_uint32 batches = 0;
+    vx_uint32 executions = 0;
     for (;;) {
         // Check if every enabled queue has at least one ready ref.
         bool all_ready = true;
@@ -604,33 +617,34 @@ int agoExecuteGraphQueueManual(AgoGraph * graph)
             break;
 
         int status = agoExecutePipelinedGraphOnce(graph);
-        batches++;
+        executions++;
         if (status != VX_SUCCESS) {
             overall_status = status;
             break;
         }
     }
-    // Executions beyond the one this request asked for belong to requests that
-    // have not been serviced yet, so they are credited rather than lost.
-    if (batches > 1)
-        pipe->manual_executions_credited.fetch_add(batches - 1);
+    if (overall_status != VX_SUCCESS)
+        return overall_status;
 
-    // In this mode references for every graph parameter have to be enqueued
-    // before the graph is scheduled; if nothing could run, say so instead of
-    // reporting a successful schedule that did no work. An earlier request that
-    // ran ahead is the one case where empty queues are not the application's
-    // doing, and the credit it left behind is what distinguishes the two.
-    if (overall_status == VX_SUCCESS && batches == 0) {
-        uint32_t credited = pipe->manual_executions_credited.load();
-        while (credited > 0) {
-            if (pipe->manual_executions_credited.compare_exchange_weak(credited, credited - 1))
-                return VX_SUCCESS;
-        }
-        agoAddLogEntry(&graph->ref, VX_FAILURE,
-            "ERROR: vxScheduleGraph: QUEUE_MANUAL requires a ready reference at every enqueued graph parameter\n");
-        return VX_FAILURE;
+    if (executions > 0) {
+        // This request claims one of the executions it ran and leaves the rest
+        // to the requests that were made for them.
+        if (executions > 1)
+            pipe->manual_unclaimed_executions.fetch_add(executions - 1);
+        return VX_SUCCESS;
     }
-    return overall_status;
+
+    // Nothing to run, so this request is only in order if an earlier one
+    // already ran the set it was made for.
+    uint32_t unclaimed = pipe->manual_unclaimed_executions.load();
+    while (unclaimed > 0) {
+        if (pipe->manual_unclaimed_executions.compare_exchange_weak(unclaimed, unclaimed - 1))
+            return VX_SUCCESS;
+    }
+
+    agoAddLogEntry(&graph->ref, VX_FAILURE,
+        "ERROR: vxScheduleGraph: QUEUE_MANUAL requires a ready reference at every enqueued graph parameter\n");
+    return VX_FAILURE;
 }
 
 //

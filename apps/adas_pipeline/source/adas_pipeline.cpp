@@ -124,6 +124,7 @@ struct Config
     vx_uint32 filters = 4;
     vx_uint32 frames = 300;
     vx_uint32 batch = 4;
+    bool preload = false;
     bool display = true;
     std::string dumpDir;
     vx_uint32 timeoutMs = 10000;
@@ -158,6 +159,11 @@ struct Stats
     vx_uint32 frames = 0;
     double elapsedMs = 0.0;
     double graphMs = 0.0;
+    double captureMs = 0.0;
+    // Only a stage that is a graph of its own can be timed, so this is filled
+    // in for the staged arrangement alone. Per-node timing would give the same
+    // for the others, but this implementation answers a query for a node's
+    // performance with its graph's, so there is nothing finer to be had.
     double stageMs[STAGE_COUNT] = {0.0, 0.0, 0.0};
     vx_uint32 graphCompleted = 0;
     vx_uint32 parameterConsumed = 0;
@@ -251,6 +257,8 @@ static void print_usage(const char *argv0)
            "  --depth <N>                buffers per graph parameter (default 3)\n"
            "  --frames <N>               frames to process (default 300)\n"
            "  --batch <N>                frames per enqueue in batch mode (default 4)\n"
+           "  --preload                  decode the frames into memory first, so the run\n"
+           "                             measures the pipeline and not the video decoder\n"
            "  --no-display               skip the OpenCV window, for timing runs\n"
            "  --dump <dir>               write each lane mask as a png\n"
            "  --canny <lower>,<upper>    hysteresis thresholds (default 80,100)\n"
@@ -306,6 +314,7 @@ static bool parse_args(int argc, char *argv[], Config &cfg)
         if (arg == "--video" && hasValue) cfg.videoPath = argv[++i];
         else if (arg == "--live" && hasValue) cfg.cameraId = atoi(argv[++i]);
         else if (arg == "--compare") cfg.compare = true;
+        else if (arg == "--preload") cfg.preload = true;
         else if (arg == "--no-display") cfg.display = false;
         else if (arg == "--dump" && hasValue) cfg.dumpDir = argv[++i];
         else if (arg == "--cameras" && hasValue) cfg.cameras = (vx_uint32)atoi(argv[++i]);
@@ -552,20 +561,88 @@ public:
 
     void rewind()
     {
+        m_next = 0;
         if (m_isFile)
             m_capture.set(cv::CAP_PROP_POS_FRAMES, 0);
+    }
+
+    //
+    // Decoding is host work of the same kind the pipeline is trying to overlap,
+    // and at these resolutions it costs as much as the graph does, so a run
+    // that decodes measures the decoder as much as the arrangement. Reading the
+    // frames into memory first takes that out of the comparison. Enough of them
+    // are kept to fill the budget below and then reused, which keeps the run
+    // from turning into a measurement of the machine's memory instead.
+    //
+    bool preload(const Config &cfg)
+    {
+        static const size_t budgetBytes = 512u << 20;
+        const size_t frameBytes = (size_t)cfg.width * cfg.height;
+        size_t wanted = cfg.frames ? cfg.frames : 1;
+        if (frameBytes && wanted > budgetBytes / frameBytes)
+            wanted = budgetBytes / frameBytes;
+        if (wanted < 1)
+            wanted = 1;
+
+        rewind();
+        m_frames.clear();
+        m_frames.reserve(wanted);
+        auto start = std::chrono::steady_clock::now();
+        for (size_t i = 0; i < wanted; i++)
+        {
+            cv::Mat luma;
+            if (!decode(luma))
+                break;
+            m_frames.push_back(luma);
+        }
+        m_preloadMs = std::chrono::duration<double, std::milli>(
+                          std::chrono::steady_clock::now() - start).count();
+        m_next = 0;
+        return !m_frames.empty();
     }
 
     // Files are rewound when they run out so a requested frame count can always
     // be met, which keeps timing runs comparable across modes.
     bool next(cv::Mat &luma)
     {
+        auto start = std::chrono::steady_clock::now();
+        bool ok;
+        if (!m_frames.empty())
+        {
+            // A shared header, not a copy: the caller only reads it.
+            luma = m_frames[m_next % m_frames.size()];
+            m_next++;
+            ok = true;
+        }
+        else
+        {
+            ok = decode(luma);
+        }
+        m_captureMs += std::chrono::duration<double, std::milli>(
+                           std::chrono::steady_clock::now() - start).count();
+        m_captured++;
+        return ok;
+    }
+
+    void resetTiming()
+    {
+        m_captureMs = 0.0;
+        m_captured = 0;
+    }
+
+    double captureMsPerFrame() const { return m_captured ? m_captureMs / m_captured : 0.0; }
+    double decodeMsPerFrame() const { return m_frames.empty() ? 0.0 : m_preloadMs / m_frames.size(); }
+    size_t preloadedFrames() const { return m_frames.size(); }
+
+private:
+    bool decode(cv::Mat &luma)
+    {
         cv::Mat frame;
         if (!m_capture.read(frame) || frame.empty())
         {
             if (!m_isFile)
                 return false;
-            rewind();
+            m_capture.set(cv::CAP_PROP_POS_FRAMES, 0);
             if (!m_capture.read(frame) || frame.empty())
                 return false;
         }
@@ -575,10 +652,14 @@ public:
         return true;
     }
 
-private:
     cv::VideoCapture m_capture;
     bool m_isFile = false;
     cv::Size m_size;
+    std::vector<cv::Mat> m_frames;
+    size_t m_next = 0;
+    double m_preloadMs = 0.0;
+    double m_captureMs = 0.0;
+    vx_uint32 m_captured = 0;
 };
 
 // ---------------------------------------------------------------------------
@@ -591,6 +672,20 @@ static bool abort_requested()
     if (key == ' ')
         key = cv::waitKey(0);
     return (key == 'q') || (key == 'Q') || (key == 27);
+}
+
+//
+// The input frame is kept alongside the result only so the two can be shown or
+// written together. A timing run keeps neither, which matters for the
+// comparison: the unpipelined path holds one frame and copies nothing, so
+// charging the arrangements that carry several frames for a copy their rivals
+// never make would flatter the wrong one.
+//
+static cv::Mat retain_frame(const Config &cfg, const cv::Mat &luma)
+{
+    if (!cfg.display && cfg.dumpDir.empty())
+        return cv::Mat();
+    return luma.clone();
 }
 
 //
@@ -1215,7 +1310,7 @@ static void run_queued(const Config &cfg, Pipeline &pipe, FrameSource &source, S
             write_luma(pipe.input[camera][slot], luma);
             enqueue(pipe.graph, camera, pipe.input[camera][slot]);
         }
-        hostFrames[slot] = luma.clone();
+        hostFrames[slot] = retain_frame(cfg, luma);
         enqueue(pipe.graph, laneParam, pipe.lanes[slot]);
         submitted++;
         schedule_if_manual(cfg, pipe.graph);
@@ -1242,7 +1337,7 @@ static void run_queued(const Config &cfg, Pipeline &pipe, FrameSource &source, S
                 write_luma(doneInputs[camera], luma);
                 enqueue(pipe.graph, camera, doneInputs[camera]);
             }
-            hostFrames[slot] = luma.clone();
+            hostFrames[slot] = retain_frame(cfg, luma);
             enqueue(pipe.graph, laneParam, doneLanes);
             submitted++;
             schedule_if_manual(cfg, pipe.graph);
@@ -1327,7 +1422,7 @@ static void run_staged(const Config &cfg, Pipeline &pipe, FrameSource &source, S
             write_luma(pipe.input[camera][slot], luma);
             enqueue(surroundStage, camera, pipe.input[camera][slot]);
         }
-        inFlightFrames.push_back(luma.clone());
+        inFlightFrames.push_back(retain_frame(cfg, luma));
         enqueue(surroundStage, surroundOutParam, pipe.surround[slot]);
         enqueue(detectStage, STAGE_OUTPUT, pipe.edges[slot]);
         enqueue(refineStage, STAGE_OUTPUT, pipe.lanes[slot]);
@@ -1389,7 +1484,7 @@ static void run_staged(const Config &cfg, Pipeline &pipe, FrameSource &source, S
                     write_luma(freeInputs[camera], luma);
                     enqueue(surroundStage, camera, freeInputs[camera]);
                 }
-                inFlightFrames.push_back(luma.clone());
+                inFlightFrames.push_back(retain_frame(cfg, luma));
                 ready[STAGE_SURROUND].input++;
                 submitted++;
             }
@@ -1545,6 +1640,7 @@ static Stats run_one(const Config &cfg, FrameSource &source)
 
     Stats stats;
     stats.mode = cfg.mode;
+    source.resetTiming();
     switch (cfg.mode)
     {
     case MODE_CPU:
@@ -1556,6 +1652,7 @@ static Stats run_one(const Config &cfg, FrameSource &source)
     case MODE_STREAM: run_stream(cfg, pipe, source, stats); break;
     }
     stats.graphMs = graph_avg_ms(pipe.graph);
+    stats.captureMs = source.captureMsPerFrame();
 
     release_pipeline(pipe);
     return stats;
@@ -1580,12 +1677,14 @@ static void report(const Config &cfg, const Stats &stats)
     printf("wall time             : %.1f ms\n", stats.elapsedMs);
     if (seconds > 0.0)
         printf("throughput            : %.1f fps\n", stats.frames / seconds);
+    printf("capture               : %.3f ms per frame%s\n", stats.captureMs,
+           cfg.preload ? " (preloaded)" : "");
+    if (stats.graphMs > 0.0)
+        printf("graph time            : %.3f ms per frame\n", stats.graphMs);
     if (stats.mode == MODE_STAGED)
         for (int i = 0; i < STAGE_COUNT; i++)
             printf("stage %-9s (%s) : %.3f ms per frame\n", STAGE_NAME[i],
                    stage_target(cfg, (StageIndex)i), stats.stageMs[i]);
-    else if (stats.graphMs > 0.0)
-        printf("graph time            : %.3f ms per frame\n", stats.graphMs);
     printf("events completed      : %u\n", stats.graphCompleted);
     printf("events input consumed : %u\n", stats.parameterConsumed);
     if (stats.nodeErrors)
@@ -1615,8 +1714,8 @@ static void run_comparison(Config cfg, FrameSource &source)
     printf("placement for split, queued and staged: surround %s, detect %s, refine %s\n\n",
            stage_target(stagedCfg, STAGE_SURROUND), stage_target(stagedCfg, STAGE_DETECT),
            stage_target(stagedCfg, STAGE_REFINE));
-    printf("  %-7s %-8s %-9s %-8s  %s\n", "mode", "fps", "ms/frame", "vs cpu",
-           "what runs at the same time");
+    printf("  %-7s %-8s %-9s %-9s %-8s  %s\n", "mode", "fps", "ms/frame", "capture",
+           "vs cpu", "what runs at the same time");
 
     double baseline = 0.0;
     for (size_t i = 0; i < results.size(); i++)
@@ -1633,25 +1732,32 @@ static void run_comparison(Config cfg, FrameSource &source)
         case MODE_STAGED: overlap = "capture and all three stages, on different frames"; break;
         default: break;
         }
-        printf("  %-7s %-8.1f %-9.2f %-8.2fx %s\n", mode_name(s.mode), fps,
-               s.elapsedMs / s.frames, fps / baseline, overlap);
+        printf("  %-7s %-8.1f %-9.2f %-9.2f %-8.2fx %s\n", mode_name(s.mode), fps,
+               s.elapsedMs / s.frames, s.captureMs, fps / baseline, overlap);
     }
 
+    if (cfg.preload)
+        printf("\n  frames were decoded up front, so the capture column is a memory read\n");
+
     const Stats &staged = results[count - 1];
-    double slowest = 0.0, total = 0.0;
-    printf("\n  staged stage times: ");
+    double total = 0.0;
+    printf("\n  staged stage graphs: ");
     for (int i = 0; i < STAGE_COUNT; i++)
     {
         printf("%s (%s) %.2f ms%s", STAGE_NAME[i], stage_target(stagedCfg, (StageIndex)i),
                staged.stageMs[i], (i + 1 < STAGE_COUNT) ? ", " : "\n");
         total += staged.stageMs[i];
-        if (staged.stageMs[i] > slowest)
-            slowest = staged.stageMs[i];
     }
-    if (slowest > 0.0)
-        printf("  those stages sum to %.2f ms, and the slowest is %.2f ms, so pipelining them\n"
-               "  is worth up to %.2fx before the host is accounted for\n",
-               total, slowest, total / slowest);
+
+    // How much of the work is in the air at once, which is the whole point of
+    // the arrangement. It is deliberately not phrased as a ceiling: the two
+    // stages sharing the gpu still overlap on it, so a sum per device predicts
+    // a floor the pipeline goes straight through.
+    const double achieved = staged.elapsedMs / staged.frames;
+    if (achieved > 0.0)
+        printf("  they sum to %.2f ms of graph time per frame and the pipeline delivered a\n"
+               "  frame every %.2f ms, so %.2fx of that work was in flight at once\n",
+               total, achieved, total / achieved);
     printf("\n");
 }
 
@@ -1670,6 +1776,17 @@ int main(int argc, char *argv[])
         printf("ERROR: unable to open %s\n",
                cfg.videoPath.empty() ? "the capture device" : cfg.videoPath.c_str());
         return 1;
+    }
+
+    if (cfg.preload)
+    {
+        if (!source.preload(cfg))
+        {
+            printf("ERROR: no frames could be read from the source\n");
+            return 1;
+        }
+        printf("preloaded %zu frames, %.3f ms per frame to decode\n",
+               source.preloadedFrames(), source.decodeMsPerFrame());
     }
 
     if (cfg.compare)

@@ -14,14 +14,13 @@ camera luma x N ->  stage 0  -> surround ->  stage 1  -> edges ->  stage 2  -> l
 ```
 
 Stage 0 and stage 2 are many pixel-parallel operations per frame, which is what
-keeps a GPU busy for a useful length of time. Stage 1 is the detector, which on
-a desktop part runs faster on the CPU than on the GPU. The default placement is
-therefore GPU, CPU, GPU, and every hand-off between stages crosses a device.
+keeps a GPU busy for a useful length of time. Stage 1 is the detector, a single
+node. The default placement is GPU, CPU, GPU, so every hand-off between stages
+crosses a device; `--place` moves any stage to either device.
 
 Run one frame at a time and only one compute unit works while the other waits,
 so a frame costs the sum of the stages. Pipeline the stages and each one works
-on a different frame at the same time, so a frame costs only as much as the
-slowest stage.
+on a different frame at the same time.
 
 ## Building
 
@@ -37,49 +36,63 @@ make -j
 ## Seeing what pipelining is worth
 
 `--compare` runs the same frames through every arrangement and prints one
-table. Measured on a gfx942 with a 32 core host, 300 frames per mode:
+table. Everything below was measured on a Radeon RX 7900 XT (gfx1100) with a
+Ryzen 9 7900X, ROCm 7.11, HIP backend, at 1920x1080 with 6 cameras and 8 filter
+orientations, 300 frames per mode, queue depth 3.
+
+Decoding each frame as it goes, which is what a run against a video file does:
 
 ```
-$ adasPipeline --video drive.mp4 --compare --size 1920x1080 --cameras 6 --filters 8
-
-  mode    fps      ms/frame  vs cpu    what runs at the same time
-  cpu     15.3     65.40     1.00    x nothing, one stage at a time
-  gpu     223.5    4.47      14.62   x nothing, one stage at a time
-  split   189.0    5.29      12.36   x nothing, the devices take turns
-  queued  337.8    2.96      22.09   x capture against the graph
-  staged  348.8    2.87      22.81   x capture and all three stages, on different frames
-
-  staged stage times: surround (gpu) 1.35 ms, detect (cpu) 1.60 ms, refine (gpu) 1.25 ms
+  mode    fps      ms/frame  capture   vs cpu    what runs at the same time
+  cpu     14.6     68.50     1.89      1.00    x nothing, one stage at a time
+  gpu     203.8    4.91      1.75      13.96   x nothing, one stage at a time
+  split   183.2    5.46      1.51      12.55   x nothing, the devices take turns
+  queued  300.7    3.33      1.88      20.60   x capture against the graph
+  staged  351.6    2.84      1.77      24.08   x capture and all three stages
 ```
 
-Reading the ladder from the bottom up is the point of the application:
-
-- `split` is *slower* than `gpu` even though it uses both devices. Splitting
-  work across devices without pipelining only adds hand-off cost, because the
-  devices take turns rather than working at the same time. This is the trap the
-  extension exists to solve.
-- `queued` gives the graph several frames through queued parameters, so the
-  host captures and converts the next frame while the graph works on earlier
-  ones. That alone is worth about 1.8x over `split`.
-- `staged` gives each stage its own graph, so all three run at once on
-  different frames. The stage times show why it helps: they sum to 4.20 ms but
-  the slowest is 1.60 ms, so the pipeline can approach 2.6x the unpipelined
-  rate before host costs are counted.
-
-Balance matters more than raw device speed. `--cameras` sets how much work
-stage 0 carries and `--filters` how much stage 2 carries, so the two devices
-can be brought into the same range; a pipeline is only as fast as its slowest
-stage, so an unbalanced split wastes whatever headroom the other stage has.
-At 6 cameras and 8 orientations the three stages here are within 30% of each
-other, which is roughly where the arrangement pays off best.
-
-`--depth` sets how many frames may be in flight. Two is enough to get most of
-the benefit and more than three does not help:
+The `capture` column is the time spent inside the frame source per frame, and
+at this resolution it is comparable to the time the graph takes. A run like
+this measures the video decoder as much as it measures the pipeline, which is
+what `--preload` is for: it reads the frames into memory up front, so what is
+left is the pipeline.
 
 ```
-depth 1 : 203.7 fps      depth 3 : 356.3 fps
-depth 2 : 372.1 fps      depth 6 : 353.6 fps
+  mode    fps      ms/frame  capture   vs cpu    what runs at the same time
+  cpu     15.6     63.92     0.00      1.00    x nothing, one stage at a time
+  gpu     473.1    2.11      0.00      30.24   x nothing, one stage at a time
+  split   305.7    3.27      0.00      19.54   x nothing, the devices take turns
+  queued  361.6    2.77      0.00      23.11   x capture against the graph
+  staged  596.3    1.68      0.00      38.11   x capture and all three stages
+
+  staged stage graphs: surround (gpu) 1.22 ms, detect (cpu) 1.31 ms, refine (gpu) 1.15 ms
+  they sum to 3.67 ms of graph time per frame and the pipeline delivered a
+  frame every 1.68 ms, so 2.18x of that work was in flight at once
 ```
+
+Reading the second table is the point of the application:
+
+- `split` is *slower* than `gpu` even though it uses both devices, 3.27 ms
+  against 2.11 ms. Splitting work across devices without pipelining only adds
+  the hand-off, because the devices take turns rather than working at once.
+  This is the trap the extension exists to solve, and it survives taking the
+  decoder out of the picture.
+- `queued` gives the same graph several frames through queued parameters, which
+  buys back most of that loss (2.77 ms) even with nothing to decode, because
+  the host still has six camera images to write and one to read per frame and
+  can now do it while the graph runs.
+- `staged` gives each stage its own graph, so the three overlap on different
+  frames: 1.68 ms per frame, faster than putting everything on the GPU. The
+  three stage graphs are within 15% of each other, which is what makes the
+  arrangement worth it - a pipeline is only as fast as its slowest stage.
+
+Note that the three stages sum to 3.67 ms while a frame comes out every
+1.68 ms, and that this is *less* than the 2.37 ms the two GPU stages sum to.
+Work from the two stage graphs sharing the GPU overlaps on the device as well,
+so a floor worked out per device would be wrong.
+
+`--cameras` sets how much work stage 0 carries and `--filters` how much stage 2
+carries, so the two devices can be brought into the same range.
 
 ## Modes
 
@@ -88,16 +101,16 @@ depth 2 : 372.1 fps      depth 6 : 353.6 fps
 | `cpu`     | one graph, every stage on the CPU, one frame at a time |
 | `gpu`     | one graph, every stage on the GPU, one frame at a time |
 | `split`   | one graph, stages split across the devices, still one frame at a time |
-| `queued`  | the split graph with queued parameters, so capture overlaps the graph |
+| `queued`  | the split graph with queued parameters, so the host overlaps the graph |
 | `staged`  | one graph per stage, all three overlapped across frames |
 | `batch`   | several frames handed over in one enqueue call |
 | `stream`  | `vxStartGraphStreaming`, the framework re-runs the graph itself |
 
-Useful options: `--place <d,d,d>` to move stages between devices,
-`--schedule manual` to drive the queues with `vxScheduleGraph` instead of
-letting the framework do it, `--no-display` for timing runs, `--dump <dir>` to
-write each lane mask as a PNG, and `--live <id>` for a camera instead of a file.
-`--help` lists the rest.
+Useful options: `--preload` to take the video decoder out of the measurement,
+`--place <d,d,d>` to move stages between devices, `--schedule manual` to drive
+the queues with `vxScheduleGraph` instead of letting the framework do it,
+`--no-display` for timing runs, `--dump <dir>` to write each lane mask as a
+PNG, and `--live <id>` for a camera instead of a file. `--help` lists the rest.
 
 Streaming mode reports more graph completions than frames supplied. That is
 expected: the framework re-runs the graph as fast as the stages allow, whether
@@ -121,16 +134,14 @@ b = [np.array(Image.open(f)) for f in sorted(glob.glob('/tmp/staged/*.png'))]
 print(sum(np.array_equal(x[6:-6,6:-6], y[6:-6,6:-6]) for x, y in zip(a, b)), 'of', len(a))"
 ```
 
-Every frame matches, on either backend and at any queue depth. The six pixels
-have to be excluded because the edge detector's border pixels are undefined by
-specification and this implementation leaves them unwritten, so they hold
-whatever the buffer they landed in held before. The filter bank is 9x9 and sits
-between a dilate and an erode, which carries that undefined content six pixels
-in. It is not a pipelining artefact: running the *same* mode twice differs in
-the same six pixels and nowhere else, because a freshly allocated device buffer
-starts out with different contents each run.
+The border has to be excluded because the edge detector's border pixels are
+undefined by specification and this implementation leaves them unwritten, so
+they hold whatever the buffer they landed in held before. The filter bank is
+9x9 and sits between a dilate and an erode, which carries that undefined
+content six pixels in. Running the *same* mode twice differs in those pixels
+too, so it is not a pipelining artefact.
 
-## Two things worth knowing before writing one of these
+## Three things worth knowing before writing one of these
 
 **A queued graph parameter rebinds exactly one node parameter.** A graph
 parameter stands for one parameter of one node, so when a queue swaps a buffer
@@ -142,14 +153,16 @@ orientation, so it feeds the whole bank from a single node that owns the queued
 input. Adding one graph parameter per consumer and enqueuing the same reference
 to each would work too, at the cost of a queue each.
 
-**Not every node has a GPU implementation, and there is no signal when one
-does not.** Node affinity reports back whatever was requested even after
-verification, so the only way to tell that a node fell back to the CPU is that
-its time does not change. On this hardware `remap`, `gaussian`, `convolve`,
-`warp_perspective`, `dilate`, `erode`, `scale`, `integral`, `fast_corners` and
-`optical_flow_lk` are genuinely accelerated, while `median`, `harris_corners`
-and `equalize_histogram` take the same time on either device. Colour
-conversions *from* RGB to luma are not implemented for HIP either, and the
-optimizer fuses `color_convert` and `channel_extract` into one such kernel, so
-a pipeline fed RGB will always do that part on the CPU. This one takes luma
-directly, which is also what automotive cameras deliver.
+**A node cannot be timed on its own.** Asking a node for
+`VX_NODE_PERFORMANCE` returns its *graph's* time in this implementation, for
+every node alike: the single Canny node of a CPU run reports 63.742 ms, the
+same figure the graph reports, and each of the 24 nodes in stage 0 reports it
+as well. So the per-stage times above are only available for the staged
+arrangement, where a stage is a graph. There is no way through the API to ask
+where the time went inside a single graph.
+
+**Node affinity is reported back as requested, whether or not it was honoured.**
+Querying a node's target after verification returns whatever was asked for, so
+a node with no implementation for the requested device falls back silently and
+the only hint is that its time does not change. Worth checking a new pipeline
+stage against both placements before believing it runs where it was put.

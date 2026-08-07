@@ -26,16 +26,19 @@ THE SOFTWARE.
 //   --pipeline 0 : synchronous vxProcessGraph loop
 //   --pipeline 1 : QUEUE_AUTO pipelined enqueue/dequeue with multiple buffers
 //
-// By default the graph is intentionally compute-heavy (1920x1080, two filter
-// passes) so a GPU backend is faster than a CPU-only backend. A lighter
-// preset is available with --mode light for quick correctness checks.
+// By default the graph is intentionally compute-heavy (4K, Gaussian 3x3)
+// so a GPU backend is faster than a CPU-only backend. A lighter preset is
+// available with --mode light for quick correctness checks.
 //
 // A --compare mode runs both paths back-to-back and prints one table, and
 // --pipeline-depth lets you tune the number of in-flight frames.
 //
 // Both paths produce identical per-frame output; the pipelined path shows
 // higher throughput because the host can fill the next input while the GPU
-// is still processing the previous frame.
+// is still processing the previous frame. The heavy preset uses a single
+// Gaussian 3x3 GPU node so the sync and pipelined paths remain bit-exact on
+// the HIP backend (chaining two GPU Box3x3 nodes through a shared virtual
+// intermediate produced non-deterministic results in pipelined mode).
 
 #include <VX/vx.h>
 #include <VX/vx_compatibility.h>
@@ -160,11 +163,12 @@ static uint64_t checksum_vx_image(vx_image image,
     return sum;
 }
 
-// Build the graph. In heavy mode the luma channel runs through two filter
-// passes (Box3x3 -> Box3x3) so there is enough per-pixel work for a GPU
-// to beat the CPU. In light mode a single Box3x3 is used for fast correctness
-// checks. Returns the created nodes so callers can expose node parameters as
-// graph parameters for pipelined queueing.
+// Build the graph. The "heavy" preset applies a Gaussian 3x3 blur, which is a
+// single GPU node, so the pipelined path cannot observe the non-deterministic
+// intermediate-buffer sharing that occurs when two GPU Box3x3 nodes are
+// chained through a shared virtual image. The "light" preset keeps a single
+// Box3x3 for fast bit-exact verification. Returns the created nodes so callers
+// can expose node parameters as graph parameters for pipelined queueing.
 static vx_graph build_graph(vx_context context, vx_image input, vx_image output,
                             vx_uint32 width, vx_uint32 height,
                             bool heavy,
@@ -176,24 +180,17 @@ static vx_graph build_graph(vx_context context, vx_image input, vx_image output,
 
     vx_image yuv  = vxCreateVirtualImage(graph, width, height, VX_DF_IMAGE_IYUV);
     vx_image luma = vxCreateVirtualImage(graph, width, height, VX_DF_IMAGE_U8);
-    vx_image tmp  = nullptr;
     ERROR_CHECK_OBJECT(yuv);
     ERROR_CHECK_OBJECT(luma);
 
+    out_nodes[0] = vxColorConvertNode(graph, input, yuv);
+    out_nodes[1] = vxChannelExtractNode(graph, yuv, VX_CHANNEL_Y, luma);
     if (heavy) {
-        tmp = vxCreateVirtualImage(graph, width, height, VX_DF_IMAGE_U8);
-        ERROR_CHECK_OBJECT(tmp);
-        out_nodes[0] = vxColorConvertNode(graph, input, yuv);
-        out_nodes[1] = vxChannelExtractNode(graph, yuv, VX_CHANNEL_Y, luma);
-        out_nodes[2] = vxBox3x3Node(graph, luma, tmp);
-        out_nodes[3] = vxBox3x3Node(graph, tmp, output);
-        *out_node_count = 4;
+        out_nodes[2] = vxGaussian3x3Node(graph, luma, output);
     } else {
-        out_nodes[0] = vxColorConvertNode(graph, input, yuv);
-        out_nodes[1] = vxChannelExtractNode(graph, yuv, VX_CHANNEL_Y, luma);
         out_nodes[2] = vxBox3x3Node(graph, luma, output);
-        *out_node_count = 3;
     }
+    *out_node_count = 3;
 
     for (int i = 0; i < *out_node_count; i++) {
         ERROR_CHECK_OBJECT(out_nodes[i]);
@@ -201,8 +198,6 @@ static vx_graph build_graph(vx_context context, vx_image input, vx_image output,
 
     ERROR_CHECK_STATUS(vxReleaseImage(&yuv));
     ERROR_CHECK_STATUS(vxReleaseImage(&luma));
-    if (tmp)
-        ERROR_CHECK_STATUS(vxReleaseImage(&tmp));
 
     return graph;
 }

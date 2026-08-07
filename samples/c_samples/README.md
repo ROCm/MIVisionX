@@ -52,7 +52,7 @@ are provided:
 
 * **Heavy (default)** — sized so the GPU has enough work to outperform the CPU:
   ```
-  RGB input -> ColorConvert -> IYUV -> ChannelExtract(Y) -> Box3x3 -> Box3x3 -> U8 output
+  RGB input -> ColorConvert -> IYUV -> ChannelExtract(Y) -> Gaussian3x3 -> U8 output
   ```
 * **Light** — one filter pass for fast runs and bit-exact verification:
   ```
@@ -114,19 +114,18 @@ increases.
 * **Hide CPU preprocessing.** Color conversion and channel extraction run on
   the CPU and can overlap with the previous frame's GPU convolution.
 
-The sample prints a per-mode aggregate checksum and reports fps. The **light**
-preset is designed to produce identical checksums for the synchronous and
-pipelined paths, giving a quick correctness check. The **heavy** preset is
-designed for throughput comparison and GPU-vs-CPU benchmarking.
+The sample prints a per-mode aggregate checksum and reports fps. Both presets
+are designed to produce identical checksums for the synchronous and pipelined
+paths, giving a quick correctness check.
 
 ### Why the heavy preset matters
 
 On very small inputs, a GPU backend can appear slower than the CPU backend
 because the per-frame launch and data-transfer overhead dominates the actual
-compute time. The heavy preset uses a higher default resolution (1920×1080)
-and two filter passes so the GPU has enough work to amortize that overhead. On
-a discrete GPU this typically makes the HIP backend faster than the CPU-only
-backend, and the pipelined path faster than the synchronous path.
+compute time. The heavy preset raises the default resolution to 3840×2160
+and uses a Gaussian 3x3 filter so the GPU has enough work to amortize that
+overhead. On a discrete GPU this typically makes the HIP backend faster than
+the CPU-only backend, and the pipelined path faster than the synchronous path.
 
 ### Tuning tips
 
@@ -162,17 +161,10 @@ lessons learned in the larger ADAS pipeline app (PR #1730):
   costs, split the work into separate graphs per stage, or profile the overall
   arrangement instead.
 
-* **Heavy preset checksums may differ between sync and pipe.** On the HIP
-  backend the heavy preset in `pipelining` can produce slightly different
-  aggregate checksums for sync vs. pipelined mode. This is caused by internal
-  framework tiling/fusion scheduling, not by the sample logic. Use the light
-  preset or the hybrid sample when you need bit-exact sync vs. pipe
-  verification.
-
 * **Small inputs hide GPU speed-up.** On tiny frames, the per-frame GPU launch
   and data-transfer cost can dominate the compute, making the CPU backend look
-  faster than HIP. Both samples default to 1920×1080 and the hybrid sample adds
-  an extra filter pass to give the GPU enough work to amortize that overhead.
+  faster than HIP. Both samples default to 3840×2160 and the hybrid sample adds
+  extra filter passes to give the GPU enough work to amortize that overhead.
 
 ## Hybrid CPU+GPU Graph Pipelining
 

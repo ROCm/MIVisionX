@@ -226,15 +226,15 @@ static void usage(const char *name)
            "4k=3840x2160\n");
     printf("  --pipeline-depth D Number of in-flight frames (%u-%u, default %u)\n",
            PIPELINE_DEPTH_MIN, PIPELINE_DEPTH_MAX, PIPELINE_DEPTH_DEFAULT);
-    printf("  --mode heavy       Use two filter passes (default); shows GPU speed-up\n");
-    printf("  --mode light       Use one filter pass; faster, good for correctness\n");
+    printf("  --mode heavy       Use Gaussian 3x3 filter (default); shows GPU speed-up\n");
+    printf("  --mode light       Use Box3x3 filter; faster, good for correctness\n");
     printf("  --frames N         Process N frames per mode (default %u)\n", FRAME_COUNT);
     printf("  --width W          Override input width\n");
     printf("  --height H         Override input height\n");
     printf("\n");
     printf("The sample uses a mixed CPU+GPU vision graph:\n");
-    printf("  heavy: RGB -> ColorConvert -> ChannelExtract(Y) -> Box3x3 -> "
-           "Box3x3 -> U8 output\n");
+    printf("  heavy: RGB -> ColorConvert -> ChannelExtract(Y) -> Gaussian3x3 -> "
+           "U8 output\n");
     printf("  light: RGB -> ColorConvert -> ChannelExtract(Y) -> Box3x3 -> "
            "U8 output\n");
     printf("\n");
@@ -577,8 +577,6 @@ int main(int argc, char **argv)
             printf("Checksums differ: sync=%llu pipe=%llu\n",
                    static_cast<unsigned long long>(sync_sum),
                    static_cast<unsigned long long>(pipe_sum));
-            printf("(This is expected for the heavy preset due to internal "
-                   "framework scheduling/fusion differences.)\n");
         }
     } else {
         run_one(context, opt, opt.pipeline, checksums);

@@ -60,9 +60,9 @@ are provided:
   ```
 
 `ColorConvert` and `ChannelExtract` are lightweight color-space operations,
-while `Box3x3` is a heavier 2D convolution. MIVisionX automatically schedules
-nodes on the best available target (CPU or GPU), so this graph naturally mixes
-host-side work with device-side work.
+while `Box3x3` and `Gaussian3x3` are heavier 2D convolutions. MIVisionX
+automatically schedules nodes on the best available target (CPU or GPU), so
+this graph naturally mixes host-side work with device-side work.
 
 Resolution presets are selectable with `--resolution hd|fhd|qhd|4k`:
 

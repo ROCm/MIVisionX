@@ -26,7 +26,7 @@ THE SOFTWARE.
 // The graph is a three-stage chain:
 //   CPU: ColorConvert + ChannelExtract(Y)
 //   GPU: Box3x3 -> Box3x3 -> Box3x3
-//   CPU: Threshold (U1) -> Convert back to U8
+//   CPU: Threshold (U8) -> Box3x3
 //
 // Pinning the heavy filter chain to the GPU ("GPU" maps to HIP on a HIP
 // backend) and adding a final CPU stage makes the cross-target hand-off

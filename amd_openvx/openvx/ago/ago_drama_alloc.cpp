@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 
 #include "ago_internal.h"
+#include "ago_roctx.h"
 
 #if ENABLE_HIP
 #include <hip/hip_runtime_api.h>
@@ -70,6 +71,11 @@ static hipError_t agoCreateHipStreamWithCuLimit(hipStream_t * stream, AgoContext
     }
 
     long actualCu = wgpMode ? requestedMaskBits * 2 : requestedMaskBits;
+    char markerMsg[128];
+    snprintf(markerMsg, sizeof(markerMsg),
+             "MIVisionX: create HIP stream (requested %ld CUs, actual %ld, maskBits %ld/%d)",
+             requestedCu, actualCu, requestedMaskBits, maxMaskBits);
+    AGO_ROCTX_MARK(markerMsg);
     hipError_t err = hipExtStreamCreateWithCUMask(stream, maskWords, cuMask.data());
     if (err != hipSuccess) {
         agoAddLogEntry(&context->ref, VX_SUCCESS,

@@ -1527,16 +1527,20 @@ int agoDramaDivideRemapNode(AgoNodeList * nodeList, AgoNode * anode)
 		}
 	}
 	else if (anode->paramList[0]->u.img.format == VX_DF_IMAGE_RGB && anode->paramList[1]->u.img.format == VX_DF_IMAGE_RGB) {
-		if (anode->attr_border_mode.mode == VX_BORDER_MODE_UNDEFINED && interpolation == VX_INTERPOLATION_TYPE_BILINEAR) 
-			new_kernel_id = VX_KERNEL_AMD_REMAP_U24_U24_BILINEAR;
+		if (anode->attr_border_mode.mode == VX_BORDER_MODE_UNDEFINED) {
+			if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_REMAP_U24_U24_NEAREST;
+			else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) new_kernel_id = VX_KERNEL_AMD_REMAP_U24_U24_BILINEAR;
+		}
 	}
 	else if (anode->paramList[0]->u.img.format == VX_DF_IMAGE_RGB && anode->paramList[1]->u.img.format == VX_DF_IMAGE_RGBX) {
 		if (anode->attr_border_mode.mode == VX_BORDER_MODE_UNDEFINED && interpolation == VX_INTERPOLATION_TYPE_BILINEAR)
 			new_kernel_id = VX_KERNEL_AMD_REMAP_U24_U32_BILINEAR;
 	}
 	else if (anode->paramList[0]->u.img.format == VX_DF_IMAGE_RGBX && anode->paramList[1]->u.img.format == VX_DF_IMAGE_RGBX) {
-		if (anode->attr_border_mode.mode == VX_BORDER_MODE_UNDEFINED && interpolation == VX_INTERPOLATION_TYPE_BILINEAR)
-			new_kernel_id = VX_KERNEL_AMD_REMAP_U32_U32_BILINEAR;
+		if (anode->attr_border_mode.mode == VX_BORDER_MODE_UNDEFINED) {
+			if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_REMAP_U32_U32_NEAREST;
+			else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) new_kernel_id = VX_KERNEL_AMD_REMAP_U32_U32_BILINEAR;
+		}
 	}
 	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
 }

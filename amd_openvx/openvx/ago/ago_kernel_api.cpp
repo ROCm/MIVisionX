@@ -18670,12 +18670,83 @@ int agoKernel_Remap_U24_U24_Bilinear(AgoNode * node, AgoKernelCommand cmd)
 #endif
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-            | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
-            ;
+                    ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        AgoData * iMap = node->paramList[2];
+        if (HipExec_Remap_RGB_RGB_Bilinear(
+            node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
+            oImg->hip_memory + oImg->gpu_buffer_offset, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width, iImg->u.img.height,
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, iImg->size,
+            (ago_coord2d_ushort_t *)iMap->hip_memory,
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
+            status = VX_FAILURE;
+        }
+    }
+#endif
+    return status;
+}
+
+int agoKernel_Remap_U24_U24_Nearest(AgoNode * node, AgoKernelCommand cmd)
+{
+    vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+    if (cmd == ago_kernel_cmd_execute) {
+        // not implemented yet
+    }
+    else if (cmd == ago_kernel_cmd_validate) {
+        status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_RGB, VX_DF_IMAGE_RGB);
+        if (!status) {
+            if (node->paramList[1]->u.img.width != node->paramList[2]->u.remap.src_width ||
+                node->paramList[1]->u.img.height != node->paramList[2]->u.remap.src_height)
+                return VX_ERROR_INVALID_DIMENSION;
+            vx_meta_format meta;
+            meta = &node->metaList[0];
+            meta->data.u.img.width = node->paramList[2]->u.remap.dst_width;
+            meta->data.u.img.height = node->paramList[2]->u.remap.dst_height;
+            meta->data.u.img.format = VX_DF_IMAGE_RGB;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+        status = VX_SUCCESS;
+    }
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
+#if ENABLE_HIP
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
+#endif
+                    ;
+        status = VX_SUCCESS;
+    }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        AgoData * iMap = node->paramList[2];
+        if (HipExec_Remap_RGB_RGB_Nearest(
+            node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
+            oImg->hip_memory + oImg->gpu_buffer_offset, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width, iImg->u.img.height,
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, iImg->size,
+            (ago_coord2d_ushort_t *)iMap->hip_memory,
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
+            status = VX_FAILURE;
+        }
+    }
+#endif
     return status;
 }
 
@@ -18930,12 +19001,83 @@ int agoKernel_Remap_U32_U32_Bilinear(AgoNode * node, AgoKernelCommand cmd)
 #endif
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
-            | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
-            ;
+                    ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        AgoData * iMap = node->paramList[2];
+        if (HipExec_Remap_RGBX_RGBX_Bilinear(
+            node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
+            oImg->hip_memory + oImg->gpu_buffer_offset, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width, iImg->u.img.height,
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, iImg->size,
+            (ago_coord2d_ushort_t *)iMap->hip_memory,
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
+            status = VX_FAILURE;
+        }
+    }
+#endif
+    return status;
+}
+
+int agoKernel_Remap_U32_U32_Nearest(AgoNode * node, AgoKernelCommand cmd)
+{
+    vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+    if (cmd == ago_kernel_cmd_execute) {
+        // not implemented yet
+    }
+    else if (cmd == ago_kernel_cmd_validate) {
+        status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_RGBX, VX_DF_IMAGE_RGBX);
+        if (!status) {
+            if (node->paramList[1]->u.img.width != node->paramList[2]->u.remap.src_width ||
+                node->paramList[1]->u.img.height != node->paramList[2]->u.remap.src_height)
+                return VX_ERROR_INVALID_DIMENSION;
+            vx_meta_format meta;
+            meta = &node->metaList[0];
+            meta->data.u.img.width = node->paramList[2]->u.remap.dst_width;
+            meta->data.u.img.height = node->paramList[2]->u.remap.dst_height;
+            meta->data.u.img.format = VX_DF_IMAGE_RGBX;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+        status = VX_SUCCESS;
+    }
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
+#if ENABLE_HIP
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
+#endif
+                    ;
+        status = VX_SUCCESS;
+    }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        AgoData * iMap = node->paramList[2];
+        if (HipExec_Remap_RGBX_RGBX_Nearest(
+            node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
+            oImg->hip_memory + oImg->gpu_buffer_offset, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width, iImg->u.img.height,
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, iImg->size,
+            (ago_coord2d_ushort_t *)iMap->hip_memory,
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
+            status = VX_FAILURE;
+        }
+    }
+#endif
     return status;
 }
 

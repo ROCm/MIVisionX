@@ -569,13 +569,17 @@ int agoDramaDivideScaleImageNode(AgoNodeList * nodeList, AgoNode * anode)
 	SANITY_CHECK_DATA_TYPE(anode->paramList[0], VX_TYPE_IMAGE);
 	SANITY_CHECK_DATA_TYPE(anode->paramList[1], VX_TYPE_IMAGE);
 	SANITY_CHECK_DATA_TYPE(anode->paramList[2], VX_TYPE_SCALAR);
-	if (anode->paramList[0]->u.img.format != VX_DF_IMAGE_U8 || anode->paramList[1]->u.img.format != VX_DF_IMAGE_U8) return -1;
+	vx_df_image srcFmt = anode->paramList[0]->u.img.format;
+	vx_df_image dstFmt = anode->paramList[1]->u.img.format;
+	if (dstFmt != srcFmt) return -1;
+	if (srcFmt != VX_DF_IMAGE_U8 && srcFmt != VX_DF_IMAGE_RGB && srcFmt != VX_DF_IMAGE_RGBX) return -1;
 	// save parameters
 	AgoData * paramList[AGO_MAX_PARAMS]; memcpy(paramList, anode->paramList, sizeof(paramList));
 	// check for special no-scale case
 	vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
 	if ((paramList[0]->u.img.width == paramList[1]->u.img.width) && (paramList[0]->u.img.height == paramList[1]->u.img.height)) {
-		// just perform copy
+		// just perform copy (U8 only for now)
+		if (srcFmt != VX_DF_IMAGE_U8) return -1;
 		anode->paramList[0] = paramList[1];
 		anode->paramList[1] = paramList[0];
 		anode->paramCount = 2;
@@ -587,31 +591,45 @@ int agoDramaDivideScaleImageNode(AgoNodeList * nodeList, AgoNode * anode)
 		anode->paramList[0] = paramList[1];
 		anode->paramList[1] = paramList[0];
 		anode->paramCount = 2;
-		if (anode->attr_border_mode.mode == VX_BORDER_MODE_UNDEFINED) {
-			if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_NEAREST;
-			else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_BILINEAR;
-			else if (interpolation == VX_INTERPOLATION_TYPE_AREA) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA;
-		}
-		else if (anode->attr_border_mode.mode == VX_BORDER_MODE_REPLICATE) {
-			if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_NEAREST; // TBD remove -- this should be an error
-			else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_BILINEAR_REPLICATE;
-			else if (interpolation == VX_INTERPOLATION_TYPE_AREA) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA; // TBD remove -- this should be an error
-		}
-		else if (anode->attr_border_mode.mode == VX_BORDER_MODE_CONSTANT) {
-			if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_NEAREST; // TBD remove -- this should be an error
-			else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) {
-				new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_BILINEAR_CONSTANT;
-				// create scalar object for border mode
-				AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
-				char desc[64]; snprintf(desc, sizeof(desc), "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
-				AgoData * dataBorder = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
-				if (!dataBorder) return -1;
-				agoGenerateVirtualDataName(agraph, "scalar", dataBorder->name);
-				agoAddData(&agraph->dataList, dataBorder);
-				// make it 3rd argument
-				anode->paramList[anode->paramCount++] = dataBorder;
+		if (srcFmt == VX_DF_IMAGE_U8) {
+			if (anode->attr_border_mode.mode == VX_BORDER_MODE_UNDEFINED) {
+				if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_NEAREST;
+				else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_BILINEAR;
+				else if (interpolation == VX_INTERPOLATION_TYPE_AREA) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA;
 			}
-			else if (interpolation == VX_INTERPOLATION_TYPE_AREA) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA; // TBD remove -- this should be an error
+			else if (anode->attr_border_mode.mode == VX_BORDER_MODE_REPLICATE) {
+				if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_NEAREST; // TBD remove -- this should be an error
+				else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_BILINEAR_REPLICATE;
+				else if (interpolation == VX_INTERPOLATION_TYPE_AREA) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA; // TBD remove -- this should be an error
+			}
+			else if (anode->attr_border_mode.mode == VX_BORDER_MODE_CONSTANT) {
+				if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_NEAREST; // TBD remove -- this should be an error
+				else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) {
+					new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_BILINEAR_CONSTANT;
+					// create scalar object for border mode
+					AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
+					char desc[64]; snprintf(desc, sizeof(desc), "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
+					AgoData * dataBorder = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
+					if (!dataBorder) return -1;
+					agoGenerateVirtualDataName(agraph, "scalar", dataBorder->name);
+					agoAddData(&agraph->dataList, dataBorder);
+					// make it 3rd argument
+					anode->paramList[anode->paramCount++] = dataBorder;
+				}
+				else if (interpolation == VX_INTERPOLATION_TYPE_AREA) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA; // TBD remove -- this should be an error
+			}
+		}
+		else if (srcFmt == VX_DF_IMAGE_RGB) {
+			if (anode->attr_border_mode.mode == VX_BORDER_MODE_UNDEFINED) {
+				if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_RGB_RGB_NEAREST;
+				else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_RGB_RGB_BILINEAR;
+			}
+		}
+		else if (srcFmt == VX_DF_IMAGE_RGBX) {
+			if (anode->attr_border_mode.mode == VX_BORDER_MODE_UNDEFINED) {
+				if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_RGBX_RGBX_NEAREST;
+				else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_RGBX_RGBX_BILINEAR;
+			}
 		}
 	}
 	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);

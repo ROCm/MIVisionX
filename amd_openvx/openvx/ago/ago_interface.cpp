@@ -2328,7 +2328,7 @@ int agoExecuteGraph(AgoGraph * graph)
         while (enode && enode->hierarchical_level == hierarchical_level)
             enode = enode->next;
         // RAII guard ensures the level range is popped on every exit path.
-        AgoRocTx::Range _level_range(levelRangeName);
+        AGO_ROCTX_RANGE(levelRangeName);
 #if ENABLE_OPENCL
         // process GPU nodes at current hierarchical level
         for (auto node = snode; node != enode; node = node->next) {
@@ -2337,7 +2337,7 @@ int agoExecuteGraph(AgoGraph * graph)
                 char nodeRangeName[128];
                 snprintf(nodeRangeName, sizeof(nodeRangeName), "MIVisionX: GPU node %s",
                          (node->akernel && node->akernel->name[0] != '\0') ? node->akernel->name : "unknown");
-                AgoRocTx::Range _node_range(nodeRangeName);
+                AGO_ROCTX_RANGE(nodeRangeName);
                 agoPerfProfileEntry(graph, ago_profile_type_launch_begin, &node->ref);
                 agoPerfCaptureStart(&node->perf);
                 // make sure that all input buffers are synched
@@ -2389,8 +2389,8 @@ int agoExecuteGraph(AgoGraph * graph)
             if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU) {
                 bool launched = true;
                 node->hip_stream0 = graph->hip_stream0;
-                AgoRocTx::Range _node_range((node->akernel && node->akernel->name[0] != '\0') ?
-                                            node->akernel->name : "MIVisionX: GPU node unknown");
+                AGO_ROCTX_RANGE((node->akernel && node->akernel->name[0] != '\0') ?
+                                  node->akernel->name : "MIVisionX: GPU node unknown");
                 agoPerfProfileEntry(graph, ago_profile_type_launch_begin, &node->ref);
                 agoPerfCaptureStart(&node->perf);
                 // make sure that all input buffers are synched
@@ -2525,8 +2525,8 @@ int agoExecuteGraph(AgoGraph * graph)
                 // execute node
                 agoPerfProfileEntry(graph, ago_profile_type_exec_begin, &node->ref);
                 agoPerfCaptureStart(&node->perf);
-                AgoRocTx::Range _node_range((node->akernel && node->akernel->name[0] != '\0') ?
-                                            node->akernel->name : "MIVisionX: CPU node unknown");
+                AGO_ROCTX_RANGE((node->akernel && node->akernel->name[0] != '\0') ?
+                                  node->akernel->name : "MIVisionX: CPU node unknown");
                 AgoKernel * kernel = node->akernel;
                 status = VX_SUCCESS;
                 if (kernel->func) {
@@ -2587,7 +2587,6 @@ int agoExecuteGraph(AgoGraph * graph)
                 agoNotifyNodeCompleted(graph, node);
             }
         }
-        AGO_ROCTX_POP();
     }
 #if (ENABLE_OPENCL||ENABLE_HIP)
     agoPerfProfileEntry(graph, ago_profile_type_wait_begin, &graph->ref);

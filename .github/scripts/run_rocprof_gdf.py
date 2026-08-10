@@ -97,7 +97,9 @@ def run_rocprof(
         "--kernel-trace",
         "--summary",
         "--summary-units", "usec",
-        "--output-format", "csv",
+        # csv drives the markdown summary parsing below; pftrace is the
+        # Perfetto protobuf trace, viewable at ui.perfetto.dev.
+        "--output-format", "csv", "pftrace",
         "--output-directory", str(per_gdf_dir),
         "--",
         str(runvx),
@@ -255,8 +257,12 @@ def parse_marker_ranges(csv_dir: Path) -> List[RangeStat]:
 
 
 def parse_kernel_dispatches(csv_dir: Path) -> List[KernelStat]:
-    """Parse rocprofv3 kernel_dispatch_trace.csv into kernel statistics."""
-    kernel_file = next(csv_dir.glob("*_kernel_dispatch_trace.csv"), None)
+    """Parse rocprofv3 kernel trace csv into kernel statistics."""
+    # rocprofv3 names this *_kernel_trace.csv; older builds used
+    # *_kernel_dispatch_trace.csv. Accept either.
+    kernel_file = next(csv_dir.glob("*_kernel_trace.csv"), None)
+    if kernel_file is None:
+        kernel_file = next(csv_dir.glob("*_kernel_dispatch_trace.csv"), None)
     if kernel_file is None:
         return []
 
@@ -316,7 +322,7 @@ def build_summary(
     lines.append("# Profile a GDF")
     lines.append("export MIVISIONX_ROCPROF=1")
     lines.append(
-        "rocprofv3 --marker-trace --kernel-trace --summary --output-format csv \\"
+        "rocprofv3 --marker-trace --kernel-trace --summary --output-format csv pftrace \\"
     )
     lines.append("  --output-directory ./rocprof_results -- \\")
     lines.append("  ./build/bin/runvx -dump-gdf -frames:10 -affinity:GPU \\")
@@ -403,13 +409,16 @@ def discover_gdfs(gdf_root: Path, categories: Optional[List[str]]) -> List[Path]
             gdfs.extend(sorted((gdf_root / cat).glob("*.gdf")))
         return gdfs
 
-    # Default showcase set: a representative, fast kernel from each category.
+    # Default showcase set: a representative, fast kernel from each category,
+    # plus one multi-node graph to capture inter-node ranges in the trace.
     default = [
         "color/ColorConvert_RGB_RGBX.gdf",
         "arithmetic/Add_U8_U8U8_Sat.gdf",
         "filter/Box_U8_U8_3x3.gdf",
         "geometric/ScaleImage_U8_U8_Bilinear.gdf",
         "geometric/Remap_U8_U8_Bilinear.gdf",
+        "vision_profile/42_scale_nv12_to_rgb.gdf",
+        "vision_profile/29_opticalFlowLK.gdf",
     ]
     return [gdf_root / p for p in default if (gdf_root / p).is_file()]
 

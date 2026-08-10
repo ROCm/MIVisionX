@@ -32,6 +32,7 @@ THE SOFTWARE.
 
 #include <roctracer/roctx.h>
 #include <atomic>
+#include <cstdio>
 #include <cstdlib>
 
 namespace AgoRocTx {
@@ -68,15 +69,48 @@ namespace AgoRocTx {
     };
 }
 
-#define AGO_ROCTX_RANGE(name) AgoRocTx::Range _ago_roctx_range(name)
-#define AGO_ROCTX_MARK(msg)        do { if (AgoRocTx::enabled()) roctxMark(msg); } while(0)
-#define AGO_ROCTX_PUSH(msg)        do { if (AgoRocTx::enabled()) roctxRangePush(msg); } while(0)
-#define AGO_ROCTX_POP()            do { if (AgoRocTx::enabled()) roctxRangePop(); } while(0)
+// Helpers for generating unique identifiers per macro expansion so multiple
+// ranges can coexist in the same scope without redefinition errors.
+#define AGO_ROCTX_PASTE(a, b) a ## b
+#define AGO_ROCTX_PASTE2(a, b) AGO_ROCTX_PASTE(a, b)
+#define AGO_ROCTX_UNIQUE(prefix) AGO_ROCTX_PASTE2(prefix, __COUNTER__)
+
+#define AGO_ROCTX_RANGE(name) AgoRocTx::Range AGO_ROCTX_UNIQUE(_ago_roctx_range_)(name)
+#define AGO_ROCTX_MARK(msg)   do { if (AgoRocTx::enabled()) roctxMark(msg); } while(0)
+#define AGO_ROCTX_PUSH(msg)   do { if (AgoRocTx::enabled()) roctxRangePush(msg); } while(0)
+#define AGO_ROCTX_POP()       do { if (AgoRocTx::enabled()) roctxRangePop(); } while(0)
+
+// Formatted variants that only pay for snprintf when tracing is compiled in
+// and enabled at runtime. The buffer and RAII range share a unique prefix.
+#define AGO_ROCTX_RANGE_FMT(...) \
+    AGO_ROCTX_RANGE_FMT_IMPL(AGO_ROCTX_UNIQUE(_ago_roctx_fmt_), __VA_ARGS__)
+
+#define AGO_ROCTX_RANGE_FMT_IMPL(prefix, ...) \
+    char AGO_ROCTX_PASTE2(prefix, _buf)[256]; \
+    AgoRocTx::Range AGO_ROCTX_PASTE2(prefix, _range)( \
+        AgoRocTx::enabled() \
+            ? (snprintf(AGO_ROCTX_PASTE2(prefix, _buf), sizeof(AGO_ROCTX_PASTE2(prefix, _buf)), __VA_ARGS__), \
+               AGO_ROCTX_PASTE2(prefix, _buf)) \
+            : nullptr)
+
+#define AGO_ROCTX_MARK_FMT(...) \
+    AGO_ROCTX_MARK_FMT_IMPL(AGO_ROCTX_UNIQUE(_ago_roctx_fmt_), __VA_ARGS__)
+
+#define AGO_ROCTX_MARK_FMT_IMPL(prefix, ...) \
+    do { \
+        if (AgoRocTx::enabled()) { \
+            char AGO_ROCTX_PASTE2(prefix, _buf)[256]; \
+            snprintf(AGO_ROCTX_PASTE2(prefix, _buf), sizeof(AGO_ROCTX_PASTE2(prefix, _buf)), __VA_ARGS__); \
+            roctxMark(AGO_ROCTX_PASTE2(prefix, _buf)); \
+        } \
+    } while(0)
 
 #else
 
 #define AGO_ROCTX_RANGE(name)      ((void)0)
+#define AGO_ROCTX_RANGE_FMT(...)   ((void)0)
 #define AGO_ROCTX_MARK(msg)        ((void)0)
+#define AGO_ROCTX_MARK_FMT(...)    ((void)0)
 #define AGO_ROCTX_PUSH(msg)        ((void)0)
 #define AGO_ROCTX_POP()            ((void)0)
 

@@ -2322,22 +2322,19 @@ int agoExecuteGraph(AgoGraph * graph)
     for (auto enode = graph->nodeList.head; enode;) {
         // get snode..enode with next hierarchical_level
         auto hierarchical_level = enode->hierarchical_level;
-        char levelRangeName[64];
-        snprintf(levelRangeName, sizeof(levelRangeName), "MIVisionX: level %u", hierarchical_level);
         auto snode = enode; enode = enode->next;
         while (enode && enode->hierarchical_level == hierarchical_level)
             enode = enode->next;
         // RAII guard ensures the level range is popped on every exit path.
-        AGO_ROCTX_RANGE(levelRangeName);
+        // Formatted lazily so we only pay for snprintf when tracing is on.
+        AGO_ROCTX_RANGE_FMT("MIVisionX: level %u", hierarchical_level);
 #if ENABLE_OPENCL
         // process GPU nodes at current hierarchical level
         for (auto node = snode; node != enode; node = node->next) {
             if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU) {
                 bool launched = true;
-                char nodeRangeName[128];
-                snprintf(nodeRangeName, sizeof(nodeRangeName), "MIVisionX: GPU node %s",
+                AGO_ROCTX_RANGE_FMT("MIVisionX: GPU node %s",
                          (node->akernel && node->akernel->name[0] != '\0') ? node->akernel->name : "unknown");
-                AGO_ROCTX_RANGE(nodeRangeName);
                 agoPerfProfileEntry(graph, ago_profile_type_launch_begin, &node->ref);
                 agoPerfCaptureStart(&node->perf);
                 // make sure that all input buffers are synched

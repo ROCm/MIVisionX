@@ -1,0 +1,235 @@
+# Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+name: ROCprof GDF profiling
+
+on:
+  push:
+    branches: [master, main, develop]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+  pull_request:
+    branches: [master, main, develop]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  ROCM_PATH: /opt/rocm
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Build Stage — two parallel builds on the ROCm container.
+  # CPU is built inside the ROCm container because MIVISIONX_ENABLE_ROCPROF=ON
+  # still requires the roctx header/library from /opt/rocm.
+  # ---------------------------------------------------------------------------
+
+  build-rocprof-cpu:
+    name: Build MIVisionX (CPU + ROCTX)
+    runs-on:
+      group: linux-shark39-runner-group
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-20260710
+      options: --device /dev/kfd --device /dev/dri
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install build dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends build-essential cmake git python3
+
+      - name: Build CPU backend with ROCTX
+        run: |
+          mkdir build && cd build
+          cmake .. \
+            -DBACKEND=CPU \
+            -DMIVISIONX_ENABLE_ROCPROF=ON \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
+            -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++"
+          make -j$(nproc)
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rocprof-build-cpu
+          path: |
+            build/lib/
+            build/bin/runvx
+            amd_openvx/openvx/include/
+          retention-days: 1
+
+  build-rocprof-hip:
+    name: Build MIVisionX (HIP + ROCTX)
+    runs-on:
+      group: linux-shark39-runner-group
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-20260710
+      options: --device /dev/kfd --device /dev/dri
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install build dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends build-essential cmake git python3
+
+      - name: Validate ROCm
+        run: |
+          rocminfo
+          amd-smi || true
+
+      - name: Build HIP backend with ROCTX
+        run: |
+          mkdir build && cd build
+          cmake .. \
+            -DBACKEND=HIP \
+            -DGPU_TARGETS="gfx1100;gfx1201" \
+            -DMIVISIONX_ENABLE_ROCPROF=ON \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
+            -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++"
+          make -j$(nproc)
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rocprof-build-hip
+          path: |
+            build/lib/
+            build/bin/runvx
+            amd_openvx/openvx/include/
+          retention-days: 1
+
+  # ---------------------------------------------------------------------------
+  # Profile Stage — run a small representative set of GDFs under rocprofv3.
+  # ---------------------------------------------------------------------------
+
+  rocprof-gdf-cpu:
+    name: Profile GDF tests (CPU)
+    runs-on:
+      group: linux-shark39-runner-group
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-20260710
+      options: --device /dev/kfd --device /dev/dri
+    needs: build-rocprof-cpu
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Download CPU build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: rocprof-build-cpu
+          path: ${{ github.workspace }}/build
+
+      - name: Make runvx executable
+        run: chmod +x ${{ github.workspace }}/build/bin/runvx
+
+      - name: Run GDF tests under rocprof
+        run: |
+          python3 .github/scripts/run_rocprof_gdf.py \
+            --runvx ${{ github.workspace }}/build/bin/runvx \
+            --backend CPU \
+            --output-dir ${{ github.workspace }}/rocprof-results-cpu \
+            --summary-out ${{ github.workspace }}/rocprof-summary-cpu.md \
+            --frames 10
+
+      - name: Write step summary
+        if: always()
+        run: cat ${{ github.workspace }}/rocprof-summary-cpu.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload profiling results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rocprof-gdf-cpu-results
+          path: |
+            ${{ github.workspace }}/rocprof-results-cpu/
+            ${{ github.workspace }}/rocprof-summary-cpu.md
+            ${{ github.workspace }}/rocprof-summary-cpu.json
+          if-no-files-found: ignore
+
+  rocprof-gdf-hip:
+    name: Profile GDF tests (HIP)
+    runs-on:
+      group: linux-shark39-runner-group
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-20260710
+      options: --device /dev/kfd --device /dev/dri
+    needs: build-rocprof-hip
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Download HIP build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: rocprof-build-hip
+          path: ${{ github.workspace }}/build
+
+      - name: Make runvx executable
+        run: chmod +x ${{ github.workspace }}/build/bin/runvx
+
+      - name: Validate ROCm
+        run: |
+          rocminfo
+          amd-smi || true
+
+      - name: Run GDF tests under rocprof
+        run: |
+          export HIP_VISIBLE_DEVICES=0
+          python3 .github/scripts/run_rocprof_gdf.py \
+            --runvx ${{ github.workspace }}/build/bin/runvx \
+            --backend HIP \
+            --output-dir ${{ github.workspace }}/rocprof-results-hip \
+            --summary-out ${{ github.workspace }}/rocprof-summary-hip.md \
+            --frames 10
+
+      - name: Write step summary
+        if: always()
+        run: cat ${{ github.workspace }}/rocprof-summary-hip.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload profiling results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rocprof-gdf-hip-results
+          path: |
+            ${{ github.workspace }}/rocprof-results-hip/
+            ${{ github.workspace }}/rocprof-summary-hip.md
+            ${{ github.workspace }}/rocprof-summary-hip.json
+          if-no-files-found: ignore

@@ -65,6 +65,19 @@ class KernelStat(NamedTuple):
     max_us: float
 
 
+class MemCopyStat(NamedTuple):
+    direction: str
+    count: int
+    total_us: float
+    total_bytes: int
+
+
+class MemAllocStat(NamedTuple):
+    operation: str
+    count: int
+    total_bytes: int
+
+
 def run_rocprof(
     *,
     rocprof: Path,
@@ -95,6 +108,10 @@ def run_rocprof(
         str(rocprof),
         "--marker-trace",
         "--kernel-trace",
+        # memory-copy-trace: host<->device copies (H2D/D2H) with byte counts.
+        # memory-allocation-trace: hipMalloc/hipFree (allocs, frees).
+        "--memory-copy-trace",
+        "--memory-allocation-trace",
         "--summary",
         "--summary-units", "usec",
         # csv drives the markdown summary parsing below; pftrace is the
@@ -290,10 +307,108 @@ def parse_kernel_dispatches(csv_dir: Path) -> List[KernelStat]:
     return stats
 
 
+def _first_field(row: Dict[str, str], *keys: str) -> str:
+    """Return the first non-empty value among the candidate column names."""
+    for key in keys:
+        value = row.get(key, "")
+        if value is not None and value.strip():
+            return value.strip()
+    return ""
+
+
+def _safe_int(value: str) -> int:
+    try:
+        return int(float(value))
+    except ValueError:
+        return 0
+
+
+def parse_memory_copies(csv_dir: Path) -> List[MemCopyStat]:
+    """Parse rocprofv3 memory_copy_trace.csv into per-direction statistics.
+
+    Column names vary across rocprofv3 versions, so several candidates are
+    probed for direction (H2D/D2H) and byte counts.
+    """
+    copy_file = next(csv_dir.glob("*_memory_copy_trace.csv"), None)
+    if copy_file is None:
+        return []
+
+    durations: Dict[str, List[float]] = defaultdict(list)
+    byte_totals: Dict[str, int] = defaultdict(int)
+    with copy_file.open(newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            direction = _first_field(
+                row, "Direction", "Operation", "Kind", "Name"
+            ) or "unknown"
+            start = _safe_float(_first_field(row, "Start_Timestamp"))
+            end = _safe_float(_first_field(row, "End_Timestamp"))
+            durations[direction].append(abs(end - start))
+            byte_totals[direction] += _safe_int(
+                _first_field(row, "Bytes", "Size", "Allocation_Size")
+            )
+
+    stats = []
+    for direction, values in sorted(durations.items()):
+        stats.append(
+            MemCopyStat(
+                direction=direction,
+                count=len(values),
+                total_us=sum(values),
+                total_bytes=byte_totals[direction],
+            )
+        )
+    return stats
+
+
+def parse_memory_allocations(csv_dir: Path) -> List[MemAllocStat]:
+    """Parse rocprofv3 memory_allocation_trace.csv into per-operation stats.
+
+    Free operations record a size of 0 (only the address is captured), so the
+    byte totals reflect allocations, while counts reflect both allocs and frees.
+    """
+    alloc_file = next(csv_dir.glob("*_memory_allocation_trace.csv"), None)
+    if alloc_file is None:
+        return []
+
+    counts: Dict[str, int] = defaultdict(int)
+    byte_totals: Dict[str, int] = defaultdict(int)
+    with alloc_file.open(newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            operation = _first_field(
+                row, "Operation", "Kind", "Function", "Name"
+            ) or "unknown"
+            counts[operation] += 1
+            byte_totals[operation] += _safe_int(
+                _first_field(row, "Allocation_Size", "Bytes", "Size")
+            )
+
+    stats = []
+    for operation, count in sorted(counts.items()):
+        stats.append(
+            MemAllocStat(
+                operation=operation,
+                count=count,
+                total_bytes=byte_totals[operation],
+            )
+        )
+    return stats
+
+
 def _format_us(us: float) -> str:
     if us >= 1000:
         return f"{us / 1000:.2f} ms"
     return f"{us:.2f} us"
+
+
+def _format_bytes(num: int) -> str:
+    value = float(num)
+    for unit in ("B", "KB", "MB", "GB"):
+        if value < 1024 or unit == "GB":
+            return f"{value:.1f} {unit}" if unit != "B" else f"{int(value)} B"
+        value /= 1024
+    return f"{value:.1f} GB"
 
 
 def build_summary(
@@ -322,7 +437,8 @@ def build_summary(
     lines.append("# Profile a GDF")
     lines.append("export MIVISIONX_ROCPROF=1")
     lines.append(
-        "rocprofv3 --marker-trace --kernel-trace --summary --output-format csv pftrace \\"
+        "rocprofv3 --marker-trace --kernel-trace --memory-copy-trace "
+        "--memory-allocation-trace --summary --output-format csv pftrace \\"
     )
     lines.append("  --output-directory ./rocprof_results -- \\")
     lines.append("  ./build/bin/runvx -dump-gdf -frames:10 -affinity:GPU \\")
@@ -336,6 +452,8 @@ def build_summary(
 
     aggregate_ranges: Dict[str, List[float]] = defaultdict(list)
     aggregate_kernels: Dict[str, List[float]] = defaultdict(list)
+    aggregate_copies: Dict[str, MemCopyStat] = {}
+    aggregate_allocs: Dict[str, MemAllocStat] = {}
     total_ok = 0
 
     for gdf, ok, csv_dir in gdf_results:
@@ -354,6 +472,27 @@ def build_summary(
                 kernel_count = sum(k.count for k in kernels)
                 for k in kernels:
                     aggregate_kernels[k.name].extend([k.total_us / max(k.count, 1)] * k.count)
+            for c in parse_memory_copies(csv_dir):
+                prev = aggregate_copies.get(c.direction)
+                if prev is None:
+                    aggregate_copies[c.direction] = c
+                else:
+                    aggregate_copies[c.direction] = MemCopyStat(
+                        direction=c.direction,
+                        count=prev.count + c.count,
+                        total_us=prev.total_us + c.total_us,
+                        total_bytes=prev.total_bytes + c.total_bytes,
+                    )
+            for a in parse_memory_allocations(csv_dir):
+                prev_a = aggregate_allocs.get(a.operation)
+                if prev_a is None:
+                    aggregate_allocs[a.operation] = a
+                else:
+                    aggregate_allocs[a.operation] = MemAllocStat(
+                        operation=a.operation,
+                        count=prev_a.count + a.count,
+                        total_bytes=prev_a.total_bytes + a.total_bytes,
+                    )
         lines.append(f"| `{gdf.name}` | {status} | {top_range} | {kernel_count} |")
         if ok:
             total_ok += 1
@@ -390,6 +529,33 @@ def build_summary(
             "_No kernel dispatch data captured. Verify that the HIP backend "
             "dispatched kernels and that rocprofv3 was able to collect traces._"
         )
+        lines.append("")
+
+    if aggregate_copies:
+        lines.append("## Aggregate memory copies (host <-> device)")
+        lines.append("")
+        lines.append("| Direction | Count | Total bytes | Total time |")
+        lines.append("|-----------|------:|------------:|-----------:|")
+        for direction, stat in sorted(
+            aggregate_copies.items(), key=lambda kv: -kv[1].total_bytes
+        ):
+            lines.append(
+                f"| `{direction}` | {stat.count} | {_format_bytes(stat.total_bytes)} "
+                f"| {_format_us(stat.total_us)} |"
+            )
+        lines.append("")
+
+    if aggregate_allocs:
+        lines.append("## Aggregate memory allocations (hipMalloc/hipFree)")
+        lines.append("")
+        lines.append("| Operation | Count | Total bytes |")
+        lines.append("|-----------|------:|------------:|")
+        for operation, stat in sorted(
+            aggregate_allocs.items(), key=lambda kv: -kv[1].total_bytes
+        ):
+            lines.append(
+                f"| `{operation}` | {stat.count} | {_format_bytes(stat.total_bytes)} |"
+            )
         lines.append("")
 
     lines.append("## Artifacts")

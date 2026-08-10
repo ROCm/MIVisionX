@@ -84,10 +84,12 @@ def run_rocprof(
     env["MIVISIONX_ROCPROF"] = "1"
     env["LD_LIBRARY_PATH"] = f"{runvx.parent.parent / 'lib'}:{env.get('LD_LIBRARY_PATH', '')}"
     if backend == "HIP":
-        # CI runners set HIP_VISIBLE_DEVICES to the host GPU index; combined
-        # with ROCR_VISIBLE_DEVICES this can yield hipErrorNoDevice. Force 0
-        # (the only device after ROCR filtering) for HIP runs.
+        # Pin to a single device for HIP runs. All three visibility vars must
+        # agree: rocprofv3 aborts (SIGABRT) if HIP_VISIBLE_DEVICES and
+        # GPU_DEVICE_ORDINAL disagree ("Conflicting visibility of agent-N").
         env["HIP_VISIBLE_DEVICES"] = "0"
+        env["ROCR_VISIBLE_DEVICES"] = "0"
+        env["GPU_DEVICE_ORDINAL"] = "0"
 
     cmd = [
         str(rocprof),
@@ -116,6 +118,9 @@ def run_rocprof(
             check=False,
             env=env,
             timeout=ROCPROF_TIMEOUT_SEC,
+            # Run from the GDF's directory so GDFs with relative input paths
+            # (e.g. Remap's inputs/remap_*.txt) resolve their data files.
+            cwd=str(gdf.parent),
         )
     except subprocess.TimeoutExpired as exc:
         log.error("rocprof timeout for %s: %s", gdf_name, exc)
@@ -404,6 +409,7 @@ def discover_gdfs(gdf_root: Path, categories: Optional[List[str]]) -> List[Path]
         "arithmetic/Add_U8_U8U8_Sat.gdf",
         "filter/Box_U8_U8_3x3.gdf",
         "geometric/ScaleImage_U8_U8_Bilinear.gdf",
+        "geometric/Remap_U8_U8_Bilinear.gdf",
     ]
     return [gdf_root / p for p in default if (gdf_root / p).is_file()]
 

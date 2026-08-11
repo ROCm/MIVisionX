@@ -1043,6 +1043,176 @@ int HafCpu_Remap_U32_U32_Nearest
 	return AGO_SUCCESS;
 }
 
+int HafCpu_Remap_U24_U24_Bilinear_Constant
+(
+	vx_uint32				  dstWidth,
+	vx_uint32				  dstHeight,
+	vx_uint8				 * pDstImage,
+	vx_uint32				  dstImageStrideInBytes,
+	vx_uint32				  srcWidth,
+	vx_uint32				  srcHeight,
+	vx_uint8				 * pSrcImage,
+	vx_uint32				  srcImageStrideInBytes,
+	ago_coord2d_ushort_t  * pMap,
+	vx_uint32				  mapStrideInBytes,
+	vx_uint8				  borderValue
+)
+{
+	for (vx_uint32 y = 0; y < dstHeight; ++y)
+	{
+		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
+		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
+		for (vx_uint32 x = 0; x < dstWidth; ++x, pd += 3, ++pMapY_X)
+		{
+			int mx, my, fx, fy;
+			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
+				mx = 1; my = 1; fx = 0; fy = 0;
+			} else {
+				mx = pMapY_X->x >> 3;
+				my = pMapY_X->y >> 3;
+				fx = pMapY_X->x & 7;
+				fy = pMapY_X->y & 7;
+			}
+			int w00 = (8 - fx) * (8 - fy), w10 = fx * (8 - fy), w01 = (8 - fx) * fy, w11 = fx * fy;
+			for (int c = 0; c < 3; ++c)
+			{
+				int v00 = ((mx		 >= 0) && (my		 >= 0) && (mx		 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)mx * 3 + c] : borderValue;
+				int v10 = ((mx + 1 >= 0) && (my		 >= 0) && (mx + 1 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)(mx + 1) * 3 + c] : borderValue;
+				int v01 = ((mx		 >= 0) && (my + 1 >= 0) && (mx		 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)mx * 3 + c] : borderValue;
+				int v11 = ((mx + 1 >= 0) && (my + 1 >= 0) && (mx + 1 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)(mx + 1) * 3 + c] : borderValue;
+				int v = (v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + 32) >> 6;
+				pd[c] = (vx_uint8)v;
+			}
+		}
+	}
+	return AGO_SUCCESS;
+}
+
+int HafCpu_Remap_U24_U24_Nearest_Constant
+(
+	vx_uint32				  dstWidth,
+	vx_uint32				  dstHeight,
+	vx_uint8				 * pDstImage,
+	vx_uint32				  dstImageStrideInBytes,
+	vx_uint32				  srcWidth,
+	vx_uint32				  srcHeight,
+	vx_uint8				 * pSrcImage,
+	vx_uint32				  srcImageStrideInBytes,
+	ago_coord2d_ushort_t  * pMap,
+	vx_uint32				  mapStrideInBytes,
+	vx_uint8				  borderValue
+)
+{
+	for (vx_uint32 y = 0; y < dstHeight; ++y)
+	{
+		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
+		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
+		for (vx_uint32 x = 0; x < dstWidth; ++x, pd += 3, ++pMapY_X)
+		{
+			int mx, my;
+			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
+				mx = 1; my = 1;
+			} else {
+				mx = (pMapY_X->x >> 3) + ((pMapY_X->x & 7) >> 2);
+				my = (pMapY_X->y >> 3) + ((pMapY_X->y & 7) >> 2);
+			}
+			for (int c = 0; c < 3; ++c)
+			{
+				if (mx >= 0 && my >= 0 && mx < (int)srcWidth && my < (int)srcHeight)
+						pd[c] = pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)mx * 3 + c];
+				else
+						pd[c] = borderValue;
+			}
+		}
+	}
+	return AGO_SUCCESS;
+}
+
+int HafCpu_Remap_U32_U32_Bilinear_Constant
+(
+	vx_uint32				  dstWidth,
+	vx_uint32				  dstHeight,
+	vx_uint8				 * pDstImage,
+	vx_uint32				  dstImageStrideInBytes,
+	vx_uint32				  srcWidth,
+	vx_uint32				  srcHeight,
+	vx_uint8				 * pSrcImage,
+	vx_uint32				  srcImageStrideInBytes,
+	ago_coord2d_ushort_t  * pMap,
+	vx_uint32				  mapStrideInBytes,
+	vx_uint8				  borderValue
+)
+{
+	for (vx_uint32 y = 0; y < dstHeight; ++y)
+	{
+		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
+		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
+		for (vx_uint32 x = 0; x < dstWidth; ++x, pd += 4, ++pMapY_X)
+		{
+			int mx, my, fx, fy;
+			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
+				mx = 1; my = 1; fx = 0; fy = 0;
+			} else {
+				mx = pMapY_X->x >> 3;
+				my = pMapY_X->y >> 3;
+				fx = pMapY_X->x & 7;
+				fy = pMapY_X->y & 7;
+			}
+			int w00 = (8 - fx) * (8 - fy), w10 = fx * (8 - fy), w01 = (8 - fx) * fy, w11 = fx * fy;
+			for (int c = 0; c < 4; ++c)
+			{
+				int v00 = ((mx		 >= 0) && (my		 >= 0) && (mx		 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)mx * 4 + c] : borderValue;
+				int v10 = ((mx + 1 >= 0) && (my		 >= 0) && (mx + 1 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)(mx + 1) * 4 + c] : borderValue;
+				int v01 = ((mx		 >= 0) && (my + 1 >= 0) && (mx		 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)mx * 4 + c] : borderValue;
+				int v11 = ((mx + 1 >= 0) && (my + 1 >= 0) && (mx + 1 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)(mx + 1) * 4 + c] : borderValue;
+				int v = (v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + 32) >> 6;
+				pd[c] = (vx_uint8)v;
+			}
+		}
+	}
+	return AGO_SUCCESS;
+}
+
+int HafCpu_Remap_U32_U32_Nearest_Constant
+(
+	vx_uint32				  dstWidth,
+	vx_uint32				  dstHeight,
+	vx_uint8				 * pDstImage,
+	vx_uint32				  dstImageStrideInBytes,
+	vx_uint32				  srcWidth,
+	vx_uint32				  srcHeight,
+	vx_uint8				 * pSrcImage,
+	vx_uint32				  srcImageStrideInBytes,
+	ago_coord2d_ushort_t  * pMap,
+	vx_uint32				  mapStrideInBytes,
+	vx_uint8				  borderValue
+)
+{
+	for (vx_uint32 y = 0; y < dstHeight; ++y)
+	{
+		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
+		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
+		for (vx_uint32 x = 0; x < dstWidth; ++x, pd += 4, ++pMapY_X)
+		{
+			int mx, my;
+			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
+				mx = 1; my = 1;
+			} else {
+				mx = (pMapY_X->x >> 3) + ((pMapY_X->x & 7) >> 2);
+				my = (pMapY_X->y >> 3) + ((pMapY_X->y & 7) >> 2);
+			}
+			for (int c = 0; c < 4; ++c)
+			{
+				if (mx >= 0 && my >= 0 && mx < (int)srcWidth && my < (int)srcHeight)
+						pd[c] = pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)mx * 4 + c];
+				else
+						pd[c] = borderValue;
+			}
+		}
+	}
+	return AGO_SUCCESS;
+}
+
 int HafCpu_Remap_U8_U8_Bilinear_Constant
 (
 	vx_uint32              dstWidth,

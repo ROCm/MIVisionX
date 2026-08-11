@@ -2033,6 +2033,40 @@ __device__ __forceinline__ float hip_bilinear_sample_RGBX(uchar *pSrc, int x0, i
     return fmaf(v1, (1.0f - fy0), v0 * fy0);
 }
 
+__device__ __forceinline__ float hip_bilinear_sample_RGB_constant(uchar *pSrc, int x0, int y0, float fx0, float fy0, int c, uint stride, uint srcWidth, uint srcHeight, uint borderValue)
+{
+    uchar *base = pSrc + y0 * stride + x0 * 3;
+    float v00, v10, v01, v11;
+    if (x0 >= 0 && y0 >= 0 && x0 < (int)srcWidth && y0 < (int)srcHeight) v00 = hip_unpack0(base[0 * (int)stride + c + 0 * 3]);
+    else v00 = hip_unpack0(borderValue);
+    if (x0 + 1 >= 0 && y0 >= 0 && x0 + 1 < (int)srcWidth && y0 < (int)srcHeight) v10 = hip_unpack0(base[0 * (int)stride + c + 1 * 3]);
+    else v10 = hip_unpack0(borderValue);
+    if (x0 >= 0 && y0 + 1 >= 0 && x0 < (int)srcWidth && y0 + 1 < (int)srcHeight) v01 = hip_unpack0(base[1 * (int)stride + c + 0 * 3]);
+    else v01 = hip_unpack0(borderValue);
+    if (x0 + 1 >= 0 && y0 + 1 >= 0 && x0 + 1 < (int)srcWidth && y0 + 1 < (int)srcHeight) v11 = hip_unpack0(base[1 * (int)stride + c + 1 * 3]);
+    else v11 = hip_unpack0(borderValue);
+    float v0 = fmaf(v10, (1.0f - fx0), v00 * fx0);
+    float v1 = fmaf(v11, (1.0f - fx0), v01 * fx0);
+    return fmaf(v1, (1.0f - fy0), v0 * fy0);
+}
+
+__device__ __forceinline__ float hip_bilinear_sample_RGBX_constant(uchar *pSrc, int x0, int y0, float fx0, float fy0, int c, uint stride, uint srcWidth, uint srcHeight, uint borderValue)
+{
+    uchar *base = pSrc + y0 * stride + x0 * 4;
+    float v00, v10, v01, v11;
+    if (x0 >= 0 && y0 >= 0 && x0 < (int)srcWidth && y0 < (int)srcHeight) v00 = hip_unpack0(base[0 * (int)stride + c + 0 * 4]);
+    else v00 = hip_unpack0(borderValue);
+    if (x0 + 1 >= 0 && y0 >= 0 && x0 + 1 < (int)srcWidth && y0 < (int)srcHeight) v10 = hip_unpack0(base[0 * (int)stride + c + 1 * 4]);
+    else v10 = hip_unpack0(borderValue);
+    if (x0 >= 0 && y0 + 1 >= 0 && x0 < (int)srcWidth && y0 + 1 < (int)srcHeight) v01 = hip_unpack0(base[1 * (int)stride + c + 0 * 4]);
+    else v01 = hip_unpack0(borderValue);
+    if (x0 + 1 >= 0 && y0 + 1 >= 0 && x0 + 1 < (int)srcWidth && y0 + 1 < (int)srcHeight) v11 = hip_unpack0(base[1 * (int)stride + c + 1 * 4]);
+    else v11 = hip_unpack0(borderValue);
+    float v0 = fmaf(v10, (1.0f - fx0), v00 * fx0);
+    float v1 = fmaf(v11, (1.0f - fx0), v01 * fx0);
+    return fmaf(v1, (1.0f - fy0), v0 * fy0);
+}
+
 __device__ __forceinline__ void hip_remap_load_sxy(int map, float *sx, float *sy, int *x0, int *y0, float *fx0, float *fy0, int srcWidth, int srcHeight)
 {
     *sx = ((float)(map & 0xffff)) * 0.125f;
@@ -2171,9 +2205,14 @@ Hip_Remap_RGB_RGB_Nearest(uint dstWidth, uint dstHeight,
         }
     }
 
-    *((uint2 *)(pDstImage + dstIdx)) = *((uint2 *)&out[0]);
-    *((uint2 *)(pDstImage + dstIdx + 8)) = make_uint2(out[1].x, out[1].y);
-    *((uint *)(pDstImage + dstIdx + 16)) = out[1].z;
+    // 8 RGB pixels = 24 contiguous bytes starting at dstIdx.
+    uint *dst = (uint *)(pDstImage + dstIdx);
+    dst[0] = out[0].x;
+    dst[1] = out[0].y;
+    dst[2] = out[0].z;
+    dst[3] = out[1].x;
+    dst[4] = out[1].y;
+    dst[5] = out[1].z;
 }
 
 int HipExec_Remap_RGB_RGB_Nearest(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -2190,6 +2229,139 @@ int HipExec_Remap_RGB_RGB_Nearest(hipStream_t stream, vx_uint32 dstWidth, vx_uin
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                         srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize,
                         (uchar *)remap, remapStrideInBytes);
+    HIP_CHECK(hipGetLastError());
+
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_Remap_RGB_RGB_Bilinear_Constant(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    uint srcWidth, uint srcHeight, const uchar *pSrcImage, uint srcImageStrideInBytes,
+    uchar *remap_, uint remapStrideInBytes, uint borderValue) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    int *remap = (int *)(remap_ + y * remapStrideInBytes + (x << 2));
+    uint dstIdx = y * dstImageStrideInBytes + x * 3;
+
+    uint3 out[2];
+    out[0] = (uint3)0;
+    out[1] = (uint3)0;
+
+    int sw = (int)srcWidth, sh = (int)srcHeight;
+    for (int i = 0; i < 8; i++) {
+        if (x + i >= dstWidth) break;
+        float sx, sy, fx0, fy0;
+        int x0, y0;
+        hip_remap_load_sxy(remap[i], &sx, &sy, &x0, &y0, &fx0, &fy0, sw, sh);
+
+        float4 f;
+        for (int c = 0; c < 3; c++) {
+            ((float *)&f)[c] = hip_bilinear_sample_RGB_constant((uchar *)pSrcImage, x0, y0, fx0, fy0, c, srcImageStrideInBytes, srcWidth, srcHeight, borderValue);
+        }
+
+        int slot = i >> 2;
+        int sub = i & 3;
+        ((uchar *)&out[slot])[sub * 3 + 0] = (uchar)(f.x + 0.5f);
+        ((uchar *)&out[slot])[sub * 3 + 1] = (uchar)(f.y + 0.5f);
+        ((uchar *)&out[slot])[sub * 3 + 2] = (uchar)(f.z + 0.5f);
+    }
+
+    uint *dst = (uint *)(pDstImage + dstIdx);
+    dst[0] = out[0].x;
+    dst[1] = out[0].y;
+    dst[2] = out[0].z;
+    dst[3] = out[1].x;
+    dst[4] = out[1].y;
+    dst[5] = out[1].z;
+}
+
+int HipExec_Remap_RGB_RGB_Bilinear_Constant(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes, vx_uint32 srcImageBufferSize,
+    ago_coord2d_ushort_t *remap, vx_uint32 remapStrideInBytes, const vx_uint8 borderValue) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
+
+    hipLaunchKernelGGL(Hip_Remap_RGB_RGB_Bilinear_Constant, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+                        srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        (uchar *)remap, remapStrideInBytes, (uint)borderValue);
+    HIP_CHECK(hipGetLastError());
+
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_Remap_RGB_RGB_Nearest_Constant(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    uint srcWidth, uint srcHeight, const uchar *pSrcImage, uint srcImageStrideInBytes,
+    uint srcImageBufferSize, uchar *remap_, uint remapStrideInBytes, uint borderValue) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    int *remap = (int *)(remap_ + y * remapStrideInBytes + (x << 2));
+    uint dstIdx = y * dstImageStrideInBytes + x * 3;
+
+    uint3 out[2];
+    out[0] = (uint3)0;
+    out[1] = (uint3)0;
+
+    int srcW1 = (int)srcWidth - 1;
+    int srcH1 = (int)srcHeight - 1;
+    for (int i = 0; i < 8; i++) {
+        if (x + i >= dstWidth) break;
+        int sx, sy;
+        hip_remap_load_sxy_nearest(remap[i], &sx, &sy, srcW1, srcH1);
+        int slot = i >> 2;
+        int sub = i & 3;
+        for (int c = 0; c < 3; c++) {
+            uint v = borderValue;
+            if (sx >= 0 && sy >= 0 && sx < (int)srcWidth && sy < (int)srcHeight) {
+                uint srcIdx = (uint)(sy * srcImageStrideInBytes + sx * 3 + c);
+                if (srcIdx < srcImageBufferSize) v = pSrcImage[srcIdx];
+            }
+            ((uchar *)&out[slot])[sub * 3 + c] = (uchar)hip_unpack0(v);
+        }
+    }
+
+    uint *dst = (uint *)(pDstImage + dstIdx);
+    dst[0] = out[0].x;
+    dst[1] = out[0].y;
+    dst[2] = out[0].z;
+    dst[3] = out[1].x;
+    dst[4] = out[1].y;
+    dst[5] = out[1].z;
+}
+
+int HipExec_Remap_RGB_RGB_Nearest_Constant(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes, vx_uint32 srcImageBufferSize,
+    ago_coord2d_ushort_t *remap, vx_uint32 remapStrideInBytes, const vx_uint8 borderValue) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
+
+    hipLaunchKernelGGL(Hip_Remap_RGB_RGB_Nearest_Constant, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+                        srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize,
+                        (uchar *)remap, remapStrideInBytes, (uint)borderValue);
     HIP_CHECK(hipGetLastError());
 
     return VX_SUCCESS;
@@ -2322,6 +2494,126 @@ int HipExec_Remap_RGBX_RGBX_Nearest(hipStream_t stream, vx_uint32 dstWidth, vx_u
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                         srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize,
                         (uchar *)remap, remapStrideInBytes);
+    HIP_CHECK(hipGetLastError());
+
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_Remap_RGBX_RGBX_Bilinear_Constant(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    uint srcWidth, uint srcHeight, const uchar *pSrcImage, uint srcImageStrideInBytes,
+    uchar *remap_, uint remapStrideInBytes, uint borderValue) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    int *remap = (int *)(remap_ + y * remapStrideInBytes + (x << 2));
+    uint dstIdx = y * dstImageStrideInBytes + x * 4;
+
+    uint4 out0 = (uint4)0;
+    uint4 out1 = (uint4)0;
+
+    int sw = (int)srcWidth, sh = (int)srcHeight;
+    for (int i = 0; i < 8; i++) {
+        if (x + i >= dstWidth) break;
+        float sx, sy, fx0, fy0;
+        int x0, y0;
+        hip_remap_load_sxy(remap[i], &sx, &sy, &x0, &y0, &fx0, &fy0, sw, sh);
+
+        float4 f;
+        for (int c = 0; c < 4; c++) {
+            ((float *)&f)[c] = hip_bilinear_sample_RGBX_constant((uchar *)pSrcImage, x0, y0, fx0, fy0, c, srcImageStrideInBytes, srcWidth, srcHeight, borderValue);
+        }
+
+        uint4 *out = (i < 4) ? &out0 : &out1;
+        ((uchar *)out)[(i & 3) * 4 + 0] = (uchar)(f.x + 0.5f);
+        ((uchar *)out)[(i & 3) * 4 + 1] = (uchar)(f.y + 0.5f);
+        ((uchar *)out)[(i & 3) * 4 + 2] = (uchar)(f.z + 0.5f);
+        ((uchar *)out)[(i & 3) * 4 + 3] = (uchar)(f.w + 0.5f);
+    }
+
+    *((uint4 *)(pDstImage + dstIdx)) = out0;
+    *((uint4 *)(pDstImage + dstIdx + 16)) = out1;
+}
+
+int HipExec_Remap_RGBX_RGBX_Bilinear_Constant(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes, vx_uint32 srcImageBufferSize,
+    ago_coord2d_ushort_t *remap, vx_uint32 remapStrideInBytes, const vx_uint8 borderValue) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
+
+    hipLaunchKernelGGL(Hip_Remap_RGBX_RGBX_Bilinear_Constant, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+                        srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        (uchar *)remap, remapStrideInBytes, (uint)borderValue);
+    HIP_CHECK(hipGetLastError());
+
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_Remap_RGBX_RGBX_Nearest_Constant(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    uint srcWidth, uint srcHeight, const uchar *pSrcImage, uint srcImageStrideInBytes,
+    uint srcImageBufferSize, uchar *remap_, uint remapStrideInBytes, uint borderValue) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    int *remap = (int *)(remap_ + y * remapStrideInBytes + (x << 2));
+    uint dstIdx = y * dstImageStrideInBytes + x * 4;
+
+    uint4 out0 = (uint4)0;
+    uint4 out1 = (uint4)0;
+
+    int srcW1 = (int)srcWidth - 1;
+    int srcH1 = (int)srcHeight - 1;
+    for (int i = 0; i < 8; i++) {
+        if (x + i >= dstWidth) break;
+        int sx, sy;
+        hip_remap_load_sxy_nearest(remap[i], &sx, &sy, srcW1, srcH1);
+        uint4 *out = (i < 4) ? &out0 : &out1;
+        for (int c = 0; c < 4; c++) {
+            uint v = borderValue;
+            if (sx >= 0 && sy >= 0 && sx < (int)srcWidth && sy < (int)srcHeight) {
+                uint srcIdx = (uint)(sy * srcImageStrideInBytes + sx * 4 + c);
+                if (srcIdx < srcImageBufferSize) v = pSrcImage[srcIdx];
+            }
+            ((uchar *)out)[(i & 3) * 4 + c] = (uchar)hip_unpack0(v);
+        }
+    }
+
+    *((uint4 *)(pDstImage + dstIdx)) = out0;
+    *((uint4 *)(pDstImage + dstIdx + 16)) = out1;
+}
+
+int HipExec_Remap_RGBX_RGBX_Nearest_Constant(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes, vx_uint32 srcImageBufferSize,
+    ago_coord2d_ushort_t *remap, vx_uint32 remapStrideInBytes, const vx_uint8 borderValue) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
+
+    hipLaunchKernelGGL(Hip_Remap_RGBX_RGBX_Nearest_Constant, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+                        srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize,
+                        (uchar *)remap, remapStrideInBytes, (uint)borderValue);
     HIP_CHECK(hipGetLastError());
 
     return VX_SUCCESS;

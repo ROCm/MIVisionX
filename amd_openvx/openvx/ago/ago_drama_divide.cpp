@@ -1531,6 +1531,19 @@ int agoDramaDivideRemapNode(AgoNodeList * nodeList, AgoNode * anode)
 			if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_REMAP_U24_U24_NEAREST;
 			else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) new_kernel_id = VX_KERNEL_AMD_REMAP_U24_U24_BILINEAR;
 		}
+		else if (anode->attr_border_mode.mode == VX_BORDER_MODE_CONSTANT) {
+			if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_REMAP_U24_U24_NEAREST_CONSTANT;
+			else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) new_kernel_id = VX_KERNEL_AMD_REMAP_U24_U24_BILINEAR_CONSTANT;
+			if (new_kernel_id != VX_KERNEL_AMD_INVALID) {
+				AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
+				char desc[64]; snprintf(desc, sizeof(desc), "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
+				AgoData * dataBorder = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
+				if (!dataBorder) return -1;
+				agoGenerateVirtualDataName(agraph, "scalar", dataBorder->name);
+				agoAddData(&agraph->dataList, dataBorder);
+				anode->paramList[anode->paramCount++] = dataBorder;
+			}
+		}
 	}
 	else if (anode->paramList[0]->u.img.format == VX_DF_IMAGE_RGB && anode->paramList[1]->u.img.format == VX_DF_IMAGE_RGBX) {
 		if (anode->attr_border_mode.mode == VX_BORDER_MODE_UNDEFINED && interpolation == VX_INTERPOLATION_TYPE_BILINEAR)
@@ -1540,6 +1553,19 @@ int agoDramaDivideRemapNode(AgoNodeList * nodeList, AgoNode * anode)
 		if (anode->attr_border_mode.mode == VX_BORDER_MODE_UNDEFINED) {
 			if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_REMAP_U32_U32_NEAREST;
 			else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) new_kernel_id = VX_KERNEL_AMD_REMAP_U32_U32_BILINEAR;
+		}
+		else if (anode->attr_border_mode.mode == VX_BORDER_MODE_CONSTANT) {
+			if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_REMAP_U32_U32_NEAREST_CONSTANT;
+			else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) new_kernel_id = VX_KERNEL_AMD_REMAP_U32_U32_BILINEAR_CONSTANT;
+			if (new_kernel_id != VX_KERNEL_AMD_INVALID) {
+				AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
+				char desc[64]; snprintf(desc, sizeof(desc), "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
+				AgoData * dataBorder = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
+				if (!dataBorder) return -1;
+				agoGenerateVirtualDataName(agraph, "scalar", dataBorder->name);
+				agoAddData(&agraph->dataList, dataBorder);
+				anode->paramList[anode->paramCount++] = dataBorder;
+			}
 		}
 	}
 	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);

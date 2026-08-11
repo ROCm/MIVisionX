@@ -1913,7 +1913,7 @@ Hip_Remap_U8_U8_Bilinear(uint dstWidth, uint dstHeight,
     f.z = hip_bilinear_sample_FXY(pSrcImage, srcImageBufferSize, srcImageStrideInBytes, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f);
     map = remap[3];
     f.w = hip_bilinear_sample_FXY(pSrcImage, srcImageBufferSize, srcImageStrideInBytes, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f);
-    dst.x = hip_pack(f);
+    dst.x = hip_pack_half_up(f);
 
     map = remap[4];
     f.x = hip_bilinear_sample_FXY(pSrcImage, srcImageBufferSize, srcImageStrideInBytes, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f);
@@ -1923,7 +1923,7 @@ Hip_Remap_U8_U8_Bilinear(uint dstWidth, uint dstHeight,
     f.z = hip_bilinear_sample_FXY(pSrcImage, srcImageBufferSize, srcImageStrideInBytes, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f);
     map = remap[7];
     f.w = hip_bilinear_sample_FXY(pSrcImage, srcImageBufferSize, srcImageStrideInBytes, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f);
-    dst.y = hip_pack(f);
+    dst.y = hip_pack_half_up(f);
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1974,7 +1974,7 @@ Hip_Remap_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     f.z = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[3];
     f.w = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
-    dst.x = hip_pack(f);
+    dst.x = hip_pack_half_up(f);
 
     map = remap[4];
     f.x = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
@@ -1984,7 +1984,7 @@ Hip_Remap_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     f.z = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[7];
     f.w = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
-    dst.y = hip_pack(f);
+    dst.y = hip_pack_half_up(f);
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }

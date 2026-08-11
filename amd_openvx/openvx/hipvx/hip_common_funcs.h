@@ -80,6 +80,19 @@ __device__ __forceinline__ uint hip_pack(float4 src) {
            __builtin_amdgcn_cvt_pk_u8_f32(src.x, 0, 0))));
 }
 
+// Round-half-up variant of hip_pack for code paths that must match the CPU
+// SSE integer rounding convention (e.g., U8 remap).  The AMDGCN cvt_pk_u8_f32
+// instruction uses round-to-nearest-even, so N.5 ties can round down.  This
+// helper converts each float with (uint)(x + 0.5f), which is floor(x + 0.5)
+// for positive x, clamps to [0,255], and then packs the bytes manually.
+__device__ __forceinline__ uint hip_pack_half_up(float4 src) {
+    uint b0 = min(max((uint)(src.x + 0.5f), 0u), 255u);
+    uint b1 = min(max((uint)(src.y + 0.5f), 0u), 255u);
+    uint b2 = min(max((uint)(src.z + 0.5f), 0u), 255u);
+    uint b3 = min(max((uint)(src.w + 0.5f), 0u), 255u);
+    return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24);
+}
+
 __device__ __forceinline__ float hip_unpack0(uint src) {
     return (float)(src & 0xFF);
 }

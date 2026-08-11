@@ -18552,7 +18552,16 @@ int agoKernel_Remap_U24_U24_Bilinear(AgoNode * node, AgoKernelCommand cmd)
 {
     vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
     if (cmd == ago_kernel_cmd_execute) {
-        // not implemented yet
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        AgoData * iMap = node->paramList[2];
+        if (HafCpu_Remap_U24_U24_Bilinear(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes,
+            (ago_coord2d_ushort_t *)iMap->buffer,
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
+            status = VX_FAILURE;
+        }
     }
     else if (cmd == ago_kernel_cmd_validate) {
         status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_RGB, VX_DF_IMAGE_RGB);
@@ -18703,7 +18712,16 @@ int agoKernel_Remap_U24_U24_Nearest(AgoNode * node, AgoKernelCommand cmd)
 {
     vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
     if (cmd == ago_kernel_cmd_execute) {
-        // not implemented yet
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        AgoData * iMap = node->paramList[2];
+        if (HafCpu_Remap_U24_U24_Nearest(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes,
+            (ago_coord2d_ushort_t *)iMap->buffer,
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
+            status = VX_FAILURE;
+        }
     }
     else if (cmd == ago_kernel_cmd_validate) {
         status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_RGB, VX_DF_IMAGE_RGB);
@@ -18885,7 +18903,16 @@ int agoKernel_Remap_U32_U32_Bilinear(AgoNode * node, AgoKernelCommand cmd)
 {
     vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
     if (cmd == ago_kernel_cmd_execute) {
-        // not implemented yet
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        AgoData * iMap = node->paramList[2];
+        if (HafCpu_Remap_U32_U32_Bilinear(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes,
+            (ago_coord2d_ushort_t *)iMap->buffer,
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
+            status = VX_FAILURE;
+        }
     }
     else if (cmd == ago_kernel_cmd_validate) {
         status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_RGBX, VX_DF_IMAGE_RGBX);
@@ -19034,7 +19061,16 @@ int agoKernel_Remap_U32_U32_Nearest(AgoNode * node, AgoKernelCommand cmd)
 {
     vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
     if (cmd == ago_kernel_cmd_execute) {
-        // not implemented yet
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        AgoData * iMap = node->paramList[2];
+        if (HafCpu_Remap_U32_U32_Nearest(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes,
+            (ago_coord2d_ushort_t *)iMap->buffer,
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
+            status = VX_FAILURE;
+        }
     }
     else if (cmd == ago_kernel_cmd_validate) {
         status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_RGBX, VX_DF_IMAGE_RGBX);

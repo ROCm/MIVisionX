@@ -2108,10 +2108,14 @@ Hip_Remap_RGB_RGB_Bilinear(uint dstWidth, uint dstHeight,
     }
 
     // 8 RGB pixels = 24 contiguous bytes starting at dstIdx.
-    // Use two vector stores: first 16 bytes, then remaining 8 bytes.
-    *((uint2 *)(pDstImage + dstIdx)) = *((uint2 *)&out[0]);
-    *((uint2 *)(pDstImage + dstIdx + 8)) = make_uint2(out[1].x, out[1].y);
-    *((uint *)(pDstImage + dstIdx + 16)) = out[1].z;
+    // Write as six uints (dstIdx is 8-byte aligned since x is a multiple of 8 and stride is aligned).
+    uint *dst = (uint *)(pDstImage + dstIdx);
+    dst[0] = out[0].x;
+    dst[1] = out[0].y;
+    dst[2] = out[0].z;
+    dst[3] = out[1].x;
+    dst[4] = out[1].y;
+    dst[5] = out[1].z;
 }
 
 int HipExec_Remap_RGB_RGB_Bilinear(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,

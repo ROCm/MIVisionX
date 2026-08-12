@@ -21,6 +21,7 @@ THE SOFTWARE.
 */
 
 #include "ago_internal.h"
+#include "ago_roctx.h"
 #include <chrono>
 
 //
@@ -528,6 +529,11 @@ int agoExecutePipelinedGraphOnce(AgoGraph * graph)
     AgoGraphPipeliningState * pipe = graph->pipelining;
     if (!pipe)
         return VX_FAILURE;
+
+    // One range per pipelined execution (manual/auto/streaming all funnel here);
+    // the agoExecuteGraph range nests inside it so the trace shows each pipeline
+    // iteration and its per-node work together.
+    AGO_ROCTX_RANGE("MIVisionX: pipelined execution");
 
     // Collect default data references bound to each graph parameter.
     std::vector<AgoParamBinding> bindings = agoCollectGraphParameterBindings(graph);

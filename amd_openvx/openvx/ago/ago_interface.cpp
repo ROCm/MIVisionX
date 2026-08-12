@@ -2022,6 +2022,9 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
     if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
         if (node->flags & AGO_KERNEL_FLAG_DEVICE_GPU) {
             if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
+                // Copy-out (device->host) of this node's output, attributed to the node.
+                AGO_ROCTX_RANGE_FMT("MIVisionX: copy-out %s",
+                         (node->akernel && node->akernel->name[0] != '\0') ? node->akernel->name : "unknown");
                 int64_t stime = agoGetClockCounter();
                 vx_size size = dataToSync->size;
                 if (dataToSync->ref.type == VX_TYPE_LUT) {
@@ -2145,6 +2148,9 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
     if (dataToSync->hip_memory && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
         if (node->flags & AGO_KERNEL_FLAG_DEVICE_GPU) {
             if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
+                // Copy-out (device->host) of this node's output, attributed to the node.
+                AGO_ROCTX_RANGE_FMT("MIVisionX: copy-out %s",
+                         (node->akernel && node->akernel->name[0] != '\0') ? node->akernel->name : "unknown");
                 int64_t stime = agoGetClockCounter();
                 vx_size size = dataToSync->size;
                 if (dataToSync->ref.type == VX_TYPE_LUT) {
@@ -2347,6 +2353,11 @@ int agoExecuteGraph(AgoGraph * graph)
                         if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT) &&
                             dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED))
                         {
+                            // Copy-in (host->device) for this input. Attributing it to
+                            // node+param lets a developer see which input drove a costly
+                            // transfer, rather than an anonymous copy in the memory trace.
+                            AGO_ROCTX_RANGE_FMT("MIVisionX: copy-in %s param%u",
+                                     (node->akernel && node->akernel->name[0] != '\0') ? node->akernel->name : "unknown", i);
                             status = agoDirective((vx_reference)dataToSync, VX_DIRECTIVE_AMD_COPY_TO_OPENCL);
                             if(status != VX_SUCCESS) {
                                 agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: agoDirective(*,VX_DIRECTIVE_AMD_COPY_TO_OPENCL) failed (%d:%s)\n", status, agoEnum2Name(status));
@@ -2400,6 +2411,11 @@ int agoExecuteGraph(AgoGraph * graph)
                         if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT) &&
                             dataToSync->hip_memory && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED))
                         {
+                            // Copy-in (host->device) for this input. Attributing it to
+                            // node+param lets a developer see which input drove a costly
+                            // transfer, rather than an anonymous copy in the memory trace.
+                            AGO_ROCTX_RANGE_FMT("MIVisionX: copy-in %s param%u",
+                                     (node->akernel && node->akernel->name[0] != '\0') ? node->akernel->name : "unknown", i);
                             status = agoDirective((vx_reference)dataToSync, VX_DIRECTIVE_AMD_COPY_TO_HIPMEM);
                             if(status != VX_SUCCESS) {
                                 agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: agoDirective(*,VX_DIRECTIVE_AMD_COPY_TO_HIPMEM) failed (%d:%s)\n", status, agoEnum2Name(status));
@@ -2586,6 +2602,12 @@ int agoExecuteGraph(AgoGraph * graph)
         }
     }
 #if (ENABLE_OPENCL||ENABLE_HIP)
+    {
+    // Per-node GPU ranges above only cover the asynchronous launch; the device
+    // does the real work here. This range bounds the actual GPU completion
+    // (stream sync / node wait), so the trace shows where kernel time lands.
+    // RAII range (not push/pop) because the wait paths below return early.
+    AGO_ROCTX_RANGE("MIVisionX: GPU sync/wait");
     agoPerfProfileEntry(graph, ago_profile_type_wait_begin, &graph->ref);
     if (nodeLaunchHierarchicalLevel > 0) {
         status = agoWaitForNodesCompletion(graph);
@@ -2615,6 +2637,7 @@ int agoExecuteGraph(AgoGraph * graph)
             agoNotifyNodeCompleted(graph, node);
     }
     agoPerfProfileEntry(graph, ago_profile_type_wait_end, &graph->ref);
+    }
     graph->gpu_perf_total.kernel_enqueue += graph->gpu_perf.kernel_enqueue;
     graph->gpu_perf_total.kernel_wait += graph->gpu_perf.kernel_wait;
     graph->gpu_perf_total.buffer_read += graph->gpu_perf.buffer_read;

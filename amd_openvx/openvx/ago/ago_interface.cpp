@@ -2545,31 +2545,26 @@ int agoExecuteGraph(AgoGraph * graph)
                 }
                 agoPerfCaptureStop(&node->perf);
                 agoPerfProfileEntry(graph, ago_profile_type_exec_end, &node->ref);
-                // mark that node outputs are dirty
+                // Mark that node outputs are dirty. This is recorded whether or
+                // not the data has device memory yet: a graph that hands its
+                // output to another graph often writes a buffer that no GPU
+                // node has bound so far, and the device copy is only reserved
+                // later, when the consuming graph binds it. Remembering that
+                // the host copy is the newer one is what makes that later
+                // binding upload it instead of reading uninitialised memory.
                 for (vx_uint32 i = 0; i < node->paramCount; i++) {
-#if ENABLE_OPENCL
+#if (ENABLE_OPENCL||ENABLE_HIP)
                     AgoData * data = node->paramList[i];
-                    if (data && data->opencl_buffer &&
+                    if (data &&
                         (node->parameters[i].direction == VX_OUTPUT || node->parameters[i].direction == (vx_direction_e)VX_BIDIRECTIONAL))
                     {
                         auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
+                        bool deviceCopyIsNewer = node->akernel->opencl_buffer_access_enable ||
+                            (data->ref.type == VX_TYPE_IMAGE && data->u.img.enableUserBufferGPU);
                         dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-                        dataToSync->buffer_sync_flags |=
-                            ((node->akernel->opencl_buffer_access_enable || data->u.img.enableUserBufferGPU)
+                        dataToSync->buffer_sync_flags |= deviceCopyIsNewer
                                 ? AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL
-                                : AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE);
-                    }
-#elif ENABLE_HIP
-                    AgoData * data = node->paramList[i];
-                    if (data && data->hip_memory &&
-                            (node->parameters[i].direction == VX_OUTPUT || node->parameters[i].direction == (vx_direction_e)VX_BIDIRECTIONAL))
-                    {
-                        auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
-                        dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-                        dataToSync->buffer_sync_flags |=
-                            ((node->akernel->opencl_buffer_access_enable || data->u.img.enableUserBufferGPU)
-                                ? AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL
-                                : AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE);
+                                : AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE;
                     }
 #endif
                 }

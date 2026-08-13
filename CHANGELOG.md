@@ -15,6 +15,10 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 ### Fixed
 * MinMaxLoc count-scalar type: `ovxKernel_MinMaxLoc` and all `agoKernel_MinMaxLoc_*` sub-kernels now declare and write count outputs as `VX_TYPE_SIZE` instead of `VX_TYPE_UINT32`, matching the OpenVX 1.3.2 spec and Khronos CTS
 * Updated `tests/openvx_api_tests/vxu_api/vxu_api.cpp` and all 17 MinMaxLoc GDF files in `tests/amd_openvx_gdfs/cpu/` to use `VX_TYPE_SIZE` / `scalar:SIZE` for count scalars
+* Pipelining - a GPU node reading an image a CPU node wrote in another graph read uninitialized device memory. A CPU node now records that the host copy is the newer one whether or not the data has device memory at the time, and a device buffer reserved for a queued reference starts out needing an upload, so the hand-off between two pipelined graphs on different targets uploads the data instead of skipping it
+* Pipelining (OpenCL) - a node working on a queued graph parameter kept the buffer argument bound at verification time, so every execution after the first wrote the wrong reference. Queued references are now re-bound per execution, as delay slots already were, for images, arrays, matrices, LUTs, remaps, tensors, and the Canny stack
+* Pipelining - `vxScheduleGraph` in `VX_GRAPH_SCHEDULE_MODE_QUEUE_MANUAL` runs every complete set of enqueued references it finds, so one request could carry out the work a later request was made for, and that later request then reported an error for the queues it found empty. Each request now claims one of the executions performed, so a request whose work an earlier one already did is accepted, while a request the application enqueued nothing for is still reported as an error
+* Tests - `tests/openvx_api_tests/pipelining_api` covers the cross-target hand-off between two pipelined graphs and the one-execution-per-enqueued-set guarantee of `QUEUE_MANUAL`
 
 ### Changed
 * README and sub-library documentation updated to explicitly state OpenVX **1.3.2** conformance throughout; spec links updated to the 1.3.2 URL

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 - 2024 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -30,24 +30,26 @@ THE SOFTWARE.
 
 #if defined(MIVISIONX_ENABLE_ROCPROF)
 
+#include "ago_platform.h"
 #include <roctracer/roctx.h>
-#include <atomic>
 #include <cstdio>
-#include <cstdlib>
 
 namespace AgoRocTx {
-    // Runtime guard: read MIVISIONX_ROCPROF once per process.
-    // 0 = uninitialized, 1 = enabled, 2 = disabled.
-    inline int getEnabledState() {
-        static std::atomic<int> state{0};
-        int s = state.load(std::memory_order_relaxed);
-        if (s != 0) return s;
-        const char* env = std::getenv("MIVISIONX_ROCPROF");
-        s = (env && (env[0] == '1' || env[0] == 't' || env[0] == 'T' || env[0] == 'y' || env[0] == 'Y')) ? 1 : 2;
-        state.store(s, std::memory_order_relaxed);
-        return s;
+    // Runtime guard: read MIVISIONX_ROCPROF once per process. The function-local
+    // static is initialized exactly once with C++11-guaranteed cross-thread
+    // ordering, so no explicit atomics are needed. agoGetEnvironmentVariable is
+    // used instead of std::getenv so the flag is honored on Windows, where the
+    // CRT and Win32 keep separate environment blocks.
+    inline bool enabled() {
+        static const bool value = []() {
+            char buf[16] = {0};
+            if (!agoGetEnvironmentVariable("MIVISIONX_ROCPROF", buf, sizeof(buf)))
+                return false;
+            const char c = buf[0];
+            return c == '1' || c == 't' || c == 'T' || c == 'y' || c == 'Y';
+        }();
+        return value;
     }
-    inline bool enabled() { return getEnabledState() == 1; }
 
     // Lightweight RAII scope guard for a range.
     // Usage: AgoRocTx::Range range("my range");

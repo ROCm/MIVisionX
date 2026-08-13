@@ -531,9 +531,9 @@ def build_summary(
         )
         lines.append("")
 
+    lines.append("## Aggregate memory copies (host <-> device)")
+    lines.append("")
     if aggregate_copies:
-        lines.append("## Aggregate memory copies (host <-> device)")
-        lines.append("")
         lines.append("| Direction | Count | Total bytes | Total time |")
         lines.append("|-----------|------:|------------:|-----------:|")
         for direction, stat in sorted(
@@ -543,11 +543,20 @@ def build_summary(
                 f"| `{direction}` | {stat.count} | {_format_bytes(stat.total_bytes)} "
                 f"| {_format_us(stat.total_us)} |"
             )
-        lines.append("")
+    elif backend == "CPU":
+        lines.append(
+            "_N/A for the CPU backend — host-to-device copies only occur on GPU runs._"
+        )
+    else:
+        lines.append(
+            "_No memory-copy data captured. Verify that the HIP backend transferred "
+            "buffers and that rocprofv3 collected the memory-copy trace._"
+        )
+    lines.append("")
 
+    lines.append("## Aggregate memory allocations (hipMalloc/hipFree)")
+    lines.append("")
     if aggregate_allocs:
-        lines.append("## Aggregate memory allocations (hipMalloc/hipFree)")
-        lines.append("")
         lines.append("| Operation | Count | Total bytes |")
         lines.append("|-----------|------:|------------:|")
         for operation, stat in sorted(
@@ -556,7 +565,16 @@ def build_summary(
             lines.append(
                 f"| `{operation}` | {stat.count} | {_format_bytes(stat.total_bytes)} |"
             )
-        lines.append("")
+    elif backend == "CPU":
+        lines.append(
+            "_N/A for the CPU backend — device allocations only occur on GPU runs._"
+        )
+    else:
+        lines.append(
+            "_No memory-allocation data captured. Verify that the HIP backend "
+            "allocated device memory and that rocprofv3 collected the trace._"
+        )
+    lines.append("")
 
     lines.append("## Artifacts")
     lines.append("")

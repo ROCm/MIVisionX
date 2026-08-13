@@ -21,6 +21,7 @@ THE SOFTWARE.
 */
 
 #include "ago_internal.h"
+#include "ago_roctx.h"
 #include <chrono>
 
 //
@@ -422,6 +423,13 @@ static int agoAllocGpuBuffersForQueuedRefs(AgoGraph * graph)
                     node->akernel->name, i);
                 return VX_FAILURE;
             }
+            // A device buffer reserved here holds nothing yet, so an input has
+            // to be treated as one whose host copy is the newer of the two.
+            if (node->parameters[i].direction == VX_INPUT ||
+                node->parameters[i].direction == (vx_direction_e)VX_BIDIRECTIONAL) {
+                data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+            }
         }
     }
 #else
@@ -529,6 +537,11 @@ int agoExecutePipelinedGraphOnce(AgoGraph * graph)
     if (!pipe)
         return VX_FAILURE;
 
+    // One range per pipelined execution (manual/auto/streaming all funnel here);
+    // the agoExecuteGraph range nests inside it so the trace shows each pipeline
+    // iteration and its per-node work together.
+    AGO_ROCTX_RANGE("MIVisionX: pipelined execution");
+
     // Collect default data references bound to each graph parameter.
     std::vector<AgoParamBinding> bindings = agoCollectGraphParameterBindings(graph);
     // Pop one ref from each configured queue and substitute into the graph.
@@ -569,8 +582,21 @@ int agoExecutePipelinedGraphOnce(AgoGraph * graph)
 }
 
 //
-// QUEUE_MANUAL: drain all ready queues, executing one graph instance per
-// complete set of ready refs.
+// QUEUE_MANUAL: run one graph instance per complete set of ready references.
+//
+// A request runs every set that is ready rather than just one, because an
+// application may enqueue several sets and schedule the graph once for all of
+// them, and the conformance tests require that all of them run. The number of
+// executions is therefore not the number of requests, and a request that finds
+// the queues empty has not necessarily been given nothing to do: an earlier
+// request, serviced on the graph's own thread, may already have run the set
+// this one was made for.
+//
+// The two cases cannot be told apart by looking at the queues, so they are told
+// apart by counting: every request claims one execution, and executions that no
+// request has claimed yet are carried here. A request that can neither run nor
+// claim anything is one the application never enqueued for, and only that is
+// reported as an error.
 //
 int agoExecuteGraphQueueManual(AgoGraph * graph)
 {
@@ -579,7 +605,7 @@ int agoExecuteGraphQueueManual(AgoGraph * graph)
         return VX_FAILURE;
 
     int overall_status = VX_SUCCESS;
-    vx_uint32 batches = 0;
+    vx_uint32 executions = 0;
     for (;;) {
         // Check if every enabled queue has at least one ready ref.
         bool all_ready = true;
@@ -597,21 +623,34 @@ int agoExecuteGraphQueueManual(AgoGraph * graph)
             break;
 
         int status = agoExecutePipelinedGraphOnce(graph);
-        batches++;
+        executions++;
         if (status != VX_SUCCESS) {
             overall_status = status;
             break;
         }
     }
-    // In this mode references for every graph parameter have to be enqueued
-    // before the graph is scheduled; if nothing could run, say so instead of
-    // reporting a successful schedule that did no work.
-    if (overall_status == VX_SUCCESS && batches == 0) {
-        agoAddLogEntry(&graph->ref, VX_FAILURE,
-            "ERROR: vxScheduleGraph: QUEUE_MANUAL requires a ready reference at every enqueued graph parameter\n");
-        return VX_FAILURE;
+    if (overall_status != VX_SUCCESS)
+        return overall_status;
+
+    if (executions > 0) {
+        // This request claims one of the executions it ran and leaves the rest
+        // to the requests that were made for them.
+        if (executions > 1)
+            pipe->manual_unclaimed_executions.fetch_add(executions - 1);
+        return VX_SUCCESS;
     }
-    return overall_status;
+
+    // Nothing to run, so this request is only in order if an earlier one
+    // already ran the set it was made for.
+    uint32_t unclaimed = pipe->manual_unclaimed_executions.load();
+    while (unclaimed > 0) {
+        if (pipe->manual_unclaimed_executions.compare_exchange_weak(unclaimed, unclaimed - 1))
+            return VX_SUCCESS;
+    }
+
+    agoAddLogEntry(&graph->ref, VX_FAILURE,
+        "ERROR: vxScheduleGraph: QUEUE_MANUAL requires a ready reference at every enqueued graph parameter\n");
+    return VX_FAILURE;
 }
 
 //

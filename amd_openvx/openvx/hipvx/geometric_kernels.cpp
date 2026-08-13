@@ -2087,6 +2087,45 @@ __device__ __forceinline__ void hip_remap_load_sxy_nearest(int map, int *sx, int
     *sy = max(0, min(*sy, srcH1));
 }
 
+// Each thread produces up to 8 pixels. A full block is written with the wide
+// vector store, but when dstWidth is not a multiple of 8 the last block in a row
+// holds fewer than 8 valid pixels, and writing the whole block would run past
+// the row end and overflow the row stride. The tail is written pixel-wise so
+// only the valid bytes are touched.
+__device__ __forceinline__ void hip_remap_store_RGB(uchar *pDstImage, uint dstIdx, const uint3 *out, int valid)
+{
+    if (valid >= 8) {
+        uint *dst = (uint *)(pDstImage + dstIdx);
+        dst[0] = out[0].x; dst[1] = out[0].y; dst[2] = out[0].z;
+        dst[3] = out[1].x; dst[4] = out[1].y; dst[5] = out[1].z;
+    } else {
+        uchar *dst = pDstImage + dstIdx;
+        for (int i = 0; i < valid; i++) {
+            const uchar *src = (const uchar *)&out[i >> 2] + (i & 3) * 3;
+            dst[i * 3 + 0] = src[0];
+            dst[i * 3 + 1] = src[1];
+            dst[i * 3 + 2] = src[2];
+        }
+    }
+}
+
+__device__ __forceinline__ void hip_remap_store_RGBX(uchar *pDstImage, uint dstIdx, uint4 out0, uint4 out1, int valid)
+{
+    if (valid >= 8) {
+        *((uint4 *)(pDstImage + dstIdx)) = out0;
+        *((uint4 *)(pDstImage + dstIdx + 16)) = out1;
+    } else {
+        uchar *dst = pDstImage + dstIdx;
+        for (int i = 0; i < valid; i++) {
+            const uchar *src = ((i < 4) ? (const uchar *)&out0 : (const uchar *)&out1) + (i & 3) * 4;
+            dst[i * 4 + 0] = src[0];
+            dst[i * 4 + 1] = src[1];
+            dst[i * 4 + 2] = src[2];
+            dst[i * 4 + 3] = src[3];
+        }
+    }
+}
+
 __global__ void __attribute__((visibility("default")))
 Hip_Remap_RGB_RGB_Bilinear(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
@@ -2103,7 +2142,7 @@ Hip_Remap_RGB_RGB_Bilinear(uint dstWidth, uint dstHeight,
     int *remap = (int *)(remap_ + y * remapStrideInBytes + (x << 2));
     uint dstIdx = y * dstImageStrideInBytes + x * 3;
 
-    // Each thread writes 8 RGB pixels = 24 bytes. Pack into 6 uints using U24x8 layout.
+    // Each thread produces up to 8 RGB pixels (24 bytes), packed into two uint3s.
     uint3 out[2];
     out[0] = (uint3)0;
     out[1] = (uint3)0;
@@ -2118,10 +2157,8 @@ Hip_Remap_RGB_RGB_Bilinear(uint dstWidth, uint dstHeight,
         uchar *pRow0 = (uchar *)pSrcImage + y0 * srcImageStrideInBytes + x0 * 3;
         uchar *pRow1 = pRow0 + srcImageStrideInBytes;
 
-        uint2 px0 = *((uint2 *)pRow0);
-        uint2 px1 = *((uint2 *)pRow1);
-        // 3-channel 4-byte-aligned load contains 4/3 pixels; use byte offsets.
-        // For bilinear we only need the first two source pixels of the row pair.
+        // Read the two source pixels of each row byte-wise: an RGB pixel is only
+        // 3 bytes, so a vector load here would be misaligned for most x0.
         float4 f;
         for (int c = 0; c < 3; c++) {
             float v00 = (float)pRow0[c];
@@ -2141,15 +2178,7 @@ Hip_Remap_RGB_RGB_Bilinear(uint dstWidth, uint dstHeight,
         ((uchar *)&out[slot])[sub * 3 + 2] = (uchar)(f.z + 0.5f);
     }
 
-    // 8 RGB pixels = 24 contiguous bytes starting at dstIdx.
-    // Write as six uints (dstIdx is 8-byte aligned since x is a multiple of 8 and stride is aligned).
-    uint *dst = (uint *)(pDstImage + dstIdx);
-    dst[0] = out[0].x;
-    dst[1] = out[0].y;
-    dst[2] = out[0].z;
-    dst[3] = out[1].x;
-    dst[4] = out[1].y;
-    dst[5] = out[1].z;
+    hip_remap_store_RGB(pDstImage, dstIdx, out, (int)min(dstWidth - (uint)x, 8u));
 }
 
 int HipExec_Remap_RGB_RGB_Bilinear(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -2205,14 +2234,7 @@ Hip_Remap_RGB_RGB_Nearest(uint dstWidth, uint dstHeight,
         }
     }
 
-    // 8 RGB pixels = 24 contiguous bytes starting at dstIdx.
-    uint *dst = (uint *)(pDstImage + dstIdx);
-    dst[0] = out[0].x;
-    dst[1] = out[0].y;
-    dst[2] = out[0].z;
-    dst[3] = out[1].x;
-    dst[4] = out[1].y;
-    dst[5] = out[1].z;
+    hip_remap_store_RGB(pDstImage, dstIdx, out, (int)min(dstWidth - (uint)x, 8u));
 }
 
 int HipExec_Remap_RGB_RGB_Nearest(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -2273,13 +2295,7 @@ Hip_Remap_RGB_RGB_Bilinear_Constant(uint dstWidth, uint dstHeight,
         ((uchar *)&out[slot])[sub * 3 + 2] = (uchar)(f.z + 0.5f);
     }
 
-    uint *dst = (uint *)(pDstImage + dstIdx);
-    dst[0] = out[0].x;
-    dst[1] = out[0].y;
-    dst[2] = out[0].z;
-    dst[3] = out[1].x;
-    dst[4] = out[1].y;
-    dst[5] = out[1].z;
+    hip_remap_store_RGB(pDstImage, dstIdx, out, (int)min(dstWidth - (uint)x, 8u));
 }
 
 int HipExec_Remap_RGB_RGB_Bilinear_Constant(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -2339,13 +2355,7 @@ Hip_Remap_RGB_RGB_Nearest_Constant(uint dstWidth, uint dstHeight,
         }
     }
 
-    uint *dst = (uint *)(pDstImage + dstIdx);
-    dst[0] = out[0].x;
-    dst[1] = out[0].y;
-    dst[2] = out[0].z;
-    dst[3] = out[1].x;
-    dst[4] = out[1].y;
-    dst[5] = out[1].z;
+    hip_remap_store_RGB(pDstImage, dstIdx, out, (int)min(dstWidth - (uint)x, 8u));
 }
 
 int HipExec_Remap_RGB_RGB_Nearest_Constant(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -2383,7 +2393,7 @@ Hip_Remap_RGBX_RGBX_Bilinear(uint dstWidth, uint dstHeight,
     int *remap = (int *)(remap_ + y * remapStrideInBytes + (x << 2));
     uint dstIdx = y * dstImageStrideInBytes + x * 4;
 
-    // 8 RGBX pixels = 32 bytes = two uint4 stores.
+    // Up to 8 RGBX pixels (32 bytes) accumulated into two uint4s, then stored.
     uint4 out0 = (uint4)0;
     uint4 out1 = (uint4)0;
 
@@ -2394,24 +2404,11 @@ Hip_Remap_RGBX_RGBX_Bilinear(uint dstWidth, uint dstHeight,
         int x0, y0;
         hip_remap_load_sxy(remap[i], &sx, &sy, &x0, &y0, &fx0, &fy0, sw, sh);
 
-        uchar *pRow0 = (uchar *)pSrcImage + y0 * srcImageStrideInBytes + x0 * 4;
-        uchar *pRow1 = pRow0 + srcImageStrideInBytes;
-
-        uint4 p0 = *((uint4 *)pRow0);
-        uint4 p1 = *((uint4 *)pRow1);
-        uint4 p2 = *((uint4 *)(pRow0 + 4));
-        uint4 p3 = *((uint4 *)(pRow1 + 4));
-
-        // Unpack low/high src pixels and interpolate per channel.
+        // Sample byte-wise per channel: an RGBX pixel is 4-byte aligned but not
+        // 16-byte aligned, so a uint4 load off x0*4 would be misaligned/UB.
         float4 f;
         for (int c = 0; c < 4; c++) {
-            float v00 = (float)((uchar *)&p0)[c];
-            float v10 = (float)((uchar *)&p2)[c];
-            float v01 = (float)((uchar *)&p1)[c];
-            float v11 = (float)((uchar *)&p3)[c];
-            float v0 = fmaf(v10, (1.0f - fx0), v00 * fx0);
-            float v1 = fmaf(v11, (1.0f - fx0), v01 * fx0);
-            ((float*)&f)[c] = fmaf(v1, (1.0f - fy0), v0 * fy0);
+            ((float*)&f)[c] = hip_bilinear_sample_RGBX((uchar *)pSrcImage, x0, y0, fx0, fy0, c, srcImageStrideInBytes);
         }
 
         uint4 *out = (i < 4) ? &out0 : &out1;
@@ -2421,8 +2418,7 @@ Hip_Remap_RGBX_RGBX_Bilinear(uint dstWidth, uint dstHeight,
         ((uchar *)out)[(i & 3) * 4 + 3] = (uchar)(f.w + 0.5f);
     }
 
-    *((uint4 *)(pDstImage + dstIdx)) = out0;
-    *((uint4 *)(pDstImage + dstIdx + 16)) = out1;
+    hip_remap_store_RGBX(pDstImage, dstIdx, out0, out1, (int)min(dstWidth - (uint)x, 8u));
 }
 
 int HipExec_Remap_RGBX_RGBX_Bilinear(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -2476,8 +2472,7 @@ Hip_Remap_RGBX_RGBX_Nearest(uint dstWidth, uint dstHeight,
         }
     }
 
-    *((uint4 *)(pDstImage + dstIdx)) = out0;
-    *((uint4 *)(pDstImage + dstIdx + 16)) = out1;
+    hip_remap_store_RGBX(pDstImage, dstIdx, out0, out1, (int)min(dstWidth - (uint)x, 8u));
 }
 
 int HipExec_Remap_RGBX_RGBX_Nearest(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -2537,8 +2532,7 @@ Hip_Remap_RGBX_RGBX_Bilinear_Constant(uint dstWidth, uint dstHeight,
         ((uchar *)out)[(i & 3) * 4 + 3] = (uchar)(f.w + 0.5f);
     }
 
-    *((uint4 *)(pDstImage + dstIdx)) = out0;
-    *((uint4 *)(pDstImage + dstIdx + 16)) = out1;
+    hip_remap_store_RGBX(pDstImage, dstIdx, out0, out1, (int)min(dstWidth - (uint)x, 8u));
 }
 
 int HipExec_Remap_RGBX_RGBX_Bilinear_Constant(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -2596,8 +2590,7 @@ Hip_Remap_RGBX_RGBX_Nearest_Constant(uint dstWidth, uint dstHeight,
         }
     }
 
-    *((uint4 *)(pDstImage + dstIdx)) = out0;
-    *((uint4 *)(pDstImage + dstIdx + 16)) = out1;
+    hip_remap_store_RGBX(pDstImage, dstIdx, out0, out1, (int)min(dstWidth - (uint)x, 8u));
 }
 
 int HipExec_Remap_RGBX_RGBX_Nearest_Constant(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,

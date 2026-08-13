@@ -8,7 +8,7 @@
 MIVisionX toolkits
 **********************
 
-MIVisionX includes the `AMD data analysis toolkit (ADAT) <https://github.com/ROCm/MIVisionX/tree/develop/toolkit/amd_data_analysis_toolkit>`_ and the `AMD data generation toolkit (ADGT) <https://github.com/ROCm/MIVisionX/tree/develop/toolkit/amd_data_generation_toolkit>`_ 
+MIVisionX includes the `AMD data analysis toolkit (ADAT) <https://github.com/ROCm/MIVisionX/tree/release/rocm-rel-7.2/toolkit/amd_data_analysis_toolkit>`_ and the `AMD data generation toolkit (ADGT) <https://github.com/ROCm/MIVisionX/tree/release/rocm-rel-7.2/toolkit/amd_data_generation_toolkit>`_ 
 
 ADAT is a set of neural network tools that help design, develop, quantize, prune, retrain, and infer a neural network in any framework.  The ADAT image and object classification tools can be used to analyze the results of image classification and object returned by any neural net model.
 

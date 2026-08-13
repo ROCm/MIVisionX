@@ -23,8 +23,8 @@ Build Instructions
 
 Build this project to generate AMD OpenVX library 
 
-* Refer to `openvx/include/VX <https://github.com/ROCm/MIVisionX/tree/develop/amd_openvx/openvx/include>`_ for Khronos OpenVX standard header files.
-* Refer to `openvx/include/vx_ext_amd.h <https://github.com/ROCm/MIVisionX/tree/develop/amd_openvx/openvx/include/vx_ext_amd.h>`_ for vendor extensions in AMD OpenVX library
+* Refer to `openvx/include/VX <https://github.com/ROCm/MIVisionX/tree/release/rocm-rel-7.2/amd_openvx/openvx/include>`_ for Khronos OpenVX standard header files.
+* Refer to `openvx/include/vx_ext_amd.h <https://github.com/ROCm/MIVisionX/tree/release/rocm-rel-7.2/amd_openvx/openvx/include/vx_ext_amd.h>`_ for vendor extensions in AMD OpenVX library
 
 Build using Microsoft Visual Studio
 -------------------------------------

@@ -87,4 +87,4 @@ The following prerequisites are required and are installed with both the Linux p
 
 .. |setup| replace:: ``MIVisionX-setup.py``
 
-.. _setup: https://github.com/ROCm/MIVisionX/blob/develop/MIVisionX-setup.py
+.. _setup: https://github.com/ROCm/MIVisionX/blob/release/rocm-rel-7.2/MIVisionX-setup.py

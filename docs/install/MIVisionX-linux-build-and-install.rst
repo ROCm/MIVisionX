@@ -68,4 +68,4 @@ After installation, the MIVisionX files will be found under ``/opt/rocm/`` unles
 To make and run tests, use ``make test``.
 
 .. |setup| replace:: ``MIVisionX-setup.py``
-.. _setup: https://github.com/ROCm/MIVisionX/blob/develop/MIVisionX-setup.py
+.. _setup: https://github.com/ROCm/MIVisionX/blob/release/rocm-rel-7.2/MIVisionX-setup.py

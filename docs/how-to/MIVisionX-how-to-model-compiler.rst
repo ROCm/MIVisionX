@@ -17,7 +17,7 @@ The steps to convert the models is:
 3. Use the NNIR to generate the OpenVX C code.
 4. Compile the C code into the ``libannmodule.so`` shared library.
 
-Model compiler examples and samples are available in the `MIVisionX GitHub repository <https://github.com/ROCm/MIVisionX/tree/develop/samples/model_compiler_samples>`_.
+Model compiler examples and samples are available in the `MIVisionX GitHub repository <https://github.com/ROCm/MIVisionX/tree/release/rocm-rel-7.2/samples/model_compiler_samples>`_.
 
 You will need to :doc:`install the model compiler <../install/MIVisionX-model-compiler-install>` first before using it.
 

@@ -21,16 +21,19 @@
 name: ROCprof GDF profiling
 
 on:
+  # Post-merge: only when tracing-relevant files change.
   push:
     branches: [master, main, develop]
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
+    paths:
+      - 'amd_openvx/openvx/ago/**'
+      - 'amd_openvx/openvx/CMakeLists.txt'
+      - '.github/scripts/run_rocprof_gdf.py'
+      - '.github/workflows/rocprof-gdf.yml'
+  # PRs trigger for every event (so the label can start a run); the `gate`
+  # job below decides whether the GPU jobs actually run.
   pull_request:
     branches: [master, main, develop]
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
+    types: [opened, synchronize, reopened, labeled]
 
 defaults:
   run:
@@ -45,6 +48,54 @@ concurrency:
 
 jobs:
   # ---------------------------------------------------------------------------
+  # Gate — decides whether the expensive GPU jobs run. This keeps the GPU
+  # runner pool free on unrelated PRs. It runs on a cheap GitHub-hosted runner.
+  # Runs when ANY of:
+  #   * the event is a push (already path-filtered above), or
+  #   * the PR carries the 'run-rocprof' label, or
+  #   * the PR changed a tracing-relevant file.
+  # ---------------------------------------------------------------------------
+
+  gate:
+    name: Decide whether to profile
+    runs-on: ubuntu-24.04
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Decide
+        id: decide
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HAS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'run-rocprof') }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT_NAME" = "push" ]; then
+            echo "push event -> run"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$HAS_LABEL" = "true" ]; then
+            echo "run-rocprof label present -> run"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # PR without the label: run only if a tracing-relevant file changed.
+          changed="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" || true)"
+          echo "changed files:"; echo "$changed"
+          if echo "$changed" | grep -qE '^(amd_openvx/openvx/ago/|amd_openvx/openvx/CMakeLists\.txt|\.github/scripts/run_rocprof_gdf\.py|\.github/workflows/rocprof-gdf\.yml)'; then
+            echo "tracing-relevant change -> run"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "no tracing-relevant change and no label -> skip"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ---------------------------------------------------------------------------
   # Build Stage — two parallel builds on the ROCm container.
   # CPU is built inside the ROCm container because MIVISIONX_ENABLE_ROCPROF=ON
   # still requires the roctx header/library from /opt/rocm.
@@ -52,6 +103,8 @@ jobs:
 
   build-rocprof-cpu:
     name: Build MIVisionX (CPU + ROCTX)
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on:
       group: linux-shark39-runner-group
     container:
@@ -90,6 +143,8 @@ jobs:
 
   build-rocprof-hip:
     name: Build MIVisionX (HIP + ROCTX)
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on:
       group: linux-shark39-runner-group
     container:

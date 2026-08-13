@@ -61,4 +61,57 @@ On Windows, the default backend is `OpenCL`; pass `-DGPU_SUPPORT=OFF` for a CPU-
 > [!NOTE]
 > AMD GPU HIP backend is not supported on Windows.
 
+## Profiling with rocprof / ROCTX
+
+AMD OpenVX can emit [ROCTX](https://rocm.docs.amd.com/projects/roctracer/en/latest/) markers so graph execution can be correlated with GPU kernel activity in [`rocprofv3`](https://rocm.docs.amd.com/projects/rocprofiler-sdk/en/latest/how-to/using-rocprofv3.html) traces. This is useful for understanding per-node GPU time, host&harr;device transfers, and the effect of `MIVISIONX_HIP_CU_COUNT`.
+
+The instrumentation is **off by default** and adds no dependency unless explicitly enabled.
+
+### Enable at build time
+
+```shell
+# From the MIVisionX repo root
+cmake -B build -S . -DMIVISIONX_ENABLE_ROCPROF=ON
+cmake --build build -j$(nproc)
+```
+
+When `MIVISIONX_ENABLE_ROCPROF=ON`, CMake links `libroctx64` from `${ROCM_PATH}`. If the library is not found the build still succeeds with tracing compiled out (a warning is printed).
+
+### Enable at run time
+
+Even when compiled in, no markers are emitted unless `MIVISIONX_ROCPROF` is set to `1`/`true`/`yes` (honored on both Linux and Windows):
+
+```shell
+export MIVISIONX_ROCPROF=1
+export LD_LIBRARY_PATH=$ROCM_PATH/lib:$LD_LIBRARY_PATH
+rocprofv3 --marker-trace --kernel-trace --memory-copy-trace --memory-allocation-trace \
+    --output-format csv pftrace --output-directory ./trace \
+    -- runvx -frames:10 -affinity:GPU graph.gdf
+```
+
+### What you get in the trace
+
+| Range / event | Meaning |
+|---------------|---------|
+| `MIVisionX: agoExecuteGraph` | one full graph execution |
+| `MIVisionX: pipelined execution` | one pipelined/streaming graph iteration (wraps `agoExecuteGraph`) |
+| `MIVisionX: level N` | all nodes at hierarchical level N |
+| `<kernel name>` (e.g. `com.amd.openvx.ColorConvert_RGB_RGBX`) | a single node's launch/execute |
+| `MIVisionX: copy-in <kernel> paramN` | host&rarr;device transfer of an input, attributed to the node/param that needed it |
+| `MIVisionX: copy-out <kernel>` | device&rarr;host transfer of a node's output |
+| `MIVisionX: GPU sync/wait` | where the graph blocks on GPU completion (`hipStreamSynchronize`/`clFinish`) &mdash; the real GPU kernel time lands here, since per-node ranges only cover the asynchronous launch |
+| kernel dispatches, memory copies, allocations | captured by `rocprofv3` directly (`--kernel-trace`, `--memory-copy-trace`, `--memory-allocation-trace`) |
+
+> [!NOTE]
+> GPU kernel launches are asynchronous. The per-node ranges (`<kernel name>`) measure the time to **enqueue** the kernel, not to run it. Actual device execution is bounded by the `MIVisionX: GPU sync/wait` range and shown precisely by the kernel-dispatch trace.
+
+Open the resulting `*.pftrace` at [ui.perfetto.dev](https://ui.perfetto.dev) to see the ROCTX ranges, kernel dispatches, and memory transfers on a single timeline.
+
+### Continuous integration
+
+The `ROCprof GDF profiling` workflow (`.github/workflows/rocprof-gdf.yml`) builds with `MIVISIONX_ENABLE_ROCPROF=ON` and profiles a small set of GDFs under `rocprofv3`. Because it uses GPU runners, it is gated so it does not run on unrelated pull requests:
+
+* **Push** to `master`/`main`/`develop` &mdash; runs only when a tracing-relevant file changes (`amd_openvx/openvx/ago/**`, `amd_openvx/openvx/CMakeLists.txt`, the profiling script, or the workflow).
+* **Pull request** &mdash; runs automatically when one of those files changes, or on demand for any PR by adding the **`run-rocprof`** label.
+
 OpenVX and the OpenVX logo are trademarks of the Khronos Group Inc.

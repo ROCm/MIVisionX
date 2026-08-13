@@ -746,6 +746,26 @@ int HipExec_ScaleImage_U8_U8_Area(
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         vx_uint32 srcWidth, vx_uint32 srcHeight,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
+int HipExec_ScaleImage_RGB_RGB_Nearest(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        vx_uint32 srcWidth, vx_uint32 srcHeight,
+        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
+int HipExec_ScaleImage_RGB_RGB_Bilinear(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        vx_uint32 srcWidth, vx_uint32 srcHeight,
+        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
+int HipExec_ScaleImage_RGBX_RGBX_Nearest(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        vx_uint32 srcWidth, vx_uint32 srcHeight,
+        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
+int HipExec_ScaleImage_RGBX_RGBX_Bilinear(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        vx_uint32 srcWidth, vx_uint32 srcHeight,
+        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
 int HipExec_WarpAffine_U8_U8_Nearest(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,

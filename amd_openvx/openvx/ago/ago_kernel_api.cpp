@@ -632,7 +632,9 @@ int ovxKernel_ScaleImage(AgoNode * node, AgoKernelCommand cmd)
     }
     else if (cmd == ago_kernel_cmd_validate) {
         // validate parameters
-        if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 || node->paramList[1]->u.img.format != VX_DF_IMAGE_U8)
+        vx_df_image fmtIn = node->paramList[0]->u.img.format;
+        vx_df_image fmtOut = node->paramList[1]->u.img.format;
+        if (fmtIn != fmtOut || (fmtIn != VX_DF_IMAGE_U8 && fmtIn != VX_DF_IMAGE_RGB && fmtIn != VX_DF_IMAGE_RGBX))
             return VX_ERROR_INVALID_FORMAT;
         else if (!node->paramList[0]->u.img.width || !node->paramList[0]->u.img.height || !node->paramList[1]->u.img.width || !node->paramList[1]->u.img.height)
             return VX_ERROR_INVALID_DIMENSION;
@@ -647,7 +649,7 @@ int ovxKernel_ScaleImage(AgoNode * node, AgoKernelCommand cmd)
         meta = &node->metaList[1];
         meta->data.u.img.width = node->paramList[1]->u.img.width;
         meta->data.u.img.height = node->paramList[1]->u.img.height;
-        meta->data.u.img.format = VX_DF_IMAGE_U8;
+        meta->data.u.img.format = fmtOut;
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -22643,5 +22645,341 @@ int agoKernel_LaplacianReconstruct_DATA_DATA_DATA(AgoNode * node, AgoKernelComma
                     ;
         status = VX_SUCCESS;
     }
+    return status;
+}
+
+int agoKernel_ScaleImage_RGB_RGB_Nearest(AgoNode * node, AgoKernelCommand cmd)
+{
+    vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+    if (cmd == ago_kernel_cmd_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        if (HafCpu_ScaleImage_U8_U8_Nearest(oImg->u.img.width * 3, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width * 3, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes, (AgoConfigScaleMatrix *)node->localDataPtr))
+        {
+            status = VX_FAILURE;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_validate) {
+        status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_RGB, VX_DF_IMAGE_RGB);
+        if (!status) {
+            vx_meta_format meta;
+            meta = &node->metaList[0];
+            meta->data.u.img.width = node->paramList[0]->u.img.width;
+            meta->data.u.img.height = node->paramList[0]->u.img.height;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_initialize) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        int alignedWidth = (oImg->u.img.width + 15) & ~15;
+        int alignedHeight = (oImg->u.img.height + 15) & ~15;
+        node->localDataSize = sizeof(AgoConfigScaleMatrix) + (alignedWidth * 6) + (alignedHeight * 2);
+        node->localDataPtr = (vx_uint8 *)agoAllocMemory(node->localDataSize);
+        if (!node->localDataPtr) return VX_ERROR_NO_MEMORY;
+        AgoConfigScaleMatrix * scalemat = (AgoConfigScaleMatrix *)node->localDataPtr;
+        scalemat->xscale = (vx_float32)((vx_float64)iImg->u.img.width / (vx_float64)oImg->u.img.width);
+        scalemat->yscale = (vx_float32)((vx_float64)iImg->u.img.height / (vx_float64)oImg->u.img.height);
+        scalemat->xoffset = (vx_float32)((vx_float64)iImg->u.img.width / (vx_float64)oImg->u.img.width * 0.5);
+        scalemat->yoffset = (vx_float32)((vx_float64)iImg->u.img.height / (vx_float64)oImg->u.img.height * 0.5);
+    }
+    else if (cmd == ago_kernel_cmd_shutdown) {
+        status = VX_SUCCESS;
+        if (node->localDataPtr) {
+            agoReleaseMemory(node->localDataPtr);
+            node->localDataPtr = nullptr;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
+#if ENABLE_OPENCL
+                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
+#endif
+                    ;
+        status = VX_SUCCESS;
+    }
+    else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+        AgoData * inp = node->paramList[0];
+        AgoData * out = node->paramList[1];
+        vx_float32 widthOut = (vx_float32)out->u.img.width;
+        vx_float32 heightOut = (vx_float32)out->u.img.height;
+        vx_float32 widthIn = (vx_float32)inp->u.img.width;
+        vx_float32 heightIn = (vx_float32)inp->u.img.height;
+        out->u.img.rect_valid.start_x = (vx_uint32)(((inp->u.img.rect_valid.start_x + 0.5f) * widthOut / widthIn) - 0.5f);
+        out->u.img.rect_valid.start_y = (vx_uint32)(((inp->u.img.rect_valid.start_y + 0.5f) * heightOut / heightIn) - 0.5f);
+        out->u.img.rect_valid.end_x = (vx_uint32)(((inp->u.img.rect_valid.end_x + 0.5f) * widthOut / widthIn) - 0.5f);
+        out->u.img.rect_valid.end_y = (vx_uint32)(((inp->u.img.rect_valid.end_y + 0.5f) * heightOut / heightIn) - 0.5f);
+    }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        if (HipExec_ScaleImage_RGB_RGB_Nearest(
+            node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
+            oImg->hip_memory + oImg->gpu_buffer_offset, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width, iImg->u.img.height,
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+    }
+#endif
+    return status;
+}
+
+int agoKernel_ScaleImage_RGB_RGB_Bilinear(AgoNode * node, AgoKernelCommand cmd)
+{
+    vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+    if (cmd == ago_kernel_cmd_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        if (HafCpu_ScaleImage_U8_U8_Bilinear(oImg->u.img.width * 3, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width * 3, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes, (AgoConfigScaleMatrix *)node->localDataPtr))
+        {
+            status = VX_FAILURE;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_validate) {
+        status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_RGB, VX_DF_IMAGE_RGB);
+        if (!status) {
+            vx_meta_format meta;
+            meta = &node->metaList[0];
+            meta->data.u.img.width = node->paramList[0]->u.img.width;
+            meta->data.u.img.height = node->paramList[0]->u.img.height;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_initialize) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        int alignedWidth = (oImg->u.img.width + 15) & ~15;
+        int alignedHeight = (oImg->u.img.height + 15) & ~15;
+        node->localDataSize = sizeof(AgoConfigScaleMatrix) + (alignedWidth * 6) + (alignedHeight * 2);
+        node->localDataPtr = (vx_uint8 *)agoAllocMemory(node->localDataSize);
+        if (!node->localDataPtr) return VX_ERROR_NO_MEMORY;
+        AgoConfigScaleMatrix * scalemat = (AgoConfigScaleMatrix *)node->localDataPtr;
+        scalemat->xscale = (vx_float32)((vx_float64)iImg->u.img.width / (vx_float64)oImg->u.img.width);
+        scalemat->yscale = (vx_float32)((vx_float64)iImg->u.img.height / (vx_float64)oImg->u.img.height);
+        scalemat->xoffset = (vx_float32)((vx_float64)iImg->u.img.width / (vx_float64)oImg->u.img.width * 0.5 - 0.5);
+        scalemat->yoffset = (vx_float32)((vx_float64)iImg->u.img.height / (vx_float64)oImg->u.img.height * 0.5 - 0.5);
+    }
+    else if (cmd == ago_kernel_cmd_shutdown) {
+        status = VX_SUCCESS;
+        if (node->localDataPtr) {
+            agoReleaseMemory(node->localDataPtr);
+            node->localDataPtr = nullptr;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
+#if ENABLE_OPENCL
+                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
+#endif
+                    ;
+        status = VX_SUCCESS;
+    }
+    else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+        AgoData * inp = node->paramList[0];
+        AgoData * out = node->paramList[1];
+        vx_float32 widthOut = (vx_float32)out->u.img.width;
+        vx_float32 heightOut = (vx_float32)out->u.img.height;
+        vx_float32 widthIn = (vx_float32)inp->u.img.width;
+        vx_float32 heightIn = (vx_float32)inp->u.img.height;
+        out->u.img.rect_valid.start_x = (vx_uint32)(((inp->u.img.rect_valid.start_x + 0.5f) * widthOut / widthIn) - 0.5f);
+        out->u.img.rect_valid.start_y = (vx_uint32)(((inp->u.img.rect_valid.start_y + 0.5f) * heightOut / heightIn) - 0.5f);
+        out->u.img.rect_valid.end_x = (vx_uint32)(((inp->u.img.rect_valid.end_x + 0.5f) * widthOut / widthIn) - 0.5f);
+        out->u.img.rect_valid.end_y = (vx_uint32)(((inp->u.img.rect_valid.end_y + 0.5f) * heightOut / heightIn) - 0.5f);
+    }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        if (HipExec_ScaleImage_RGB_RGB_Bilinear(
+            node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
+            oImg->hip_memory + oImg->gpu_buffer_offset, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width, iImg->u.img.height,
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+    }
+#endif
+    return status;
+}
+
+int agoKernel_ScaleImage_RGBX_RGBX_Nearest(AgoNode * node, AgoKernelCommand cmd)
+{
+    vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+    if (cmd == ago_kernel_cmd_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        if (HafCpu_ScaleImage_U8_U8_Nearest(oImg->u.img.width * 4, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width * 4, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes, (AgoConfigScaleMatrix *)node->localDataPtr))
+        {
+            status = VX_FAILURE;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_validate) {
+        status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_RGBX, VX_DF_IMAGE_RGBX);
+        if (!status) {
+            vx_meta_format meta;
+            meta = &node->metaList[0];
+            meta->data.u.img.width = node->paramList[0]->u.img.width;
+            meta->data.u.img.height = node->paramList[0]->u.img.height;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_initialize) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        int alignedWidth = (oImg->u.img.width + 15) & ~15;
+        int alignedHeight = (oImg->u.img.height + 15) & ~15;
+        node->localDataSize = sizeof(AgoConfigScaleMatrix) + (alignedWidth * 8) + (alignedHeight * 2);
+        node->localDataPtr = (vx_uint8 *)agoAllocMemory(node->localDataSize);
+        if (!node->localDataPtr) return VX_ERROR_NO_MEMORY;
+        AgoConfigScaleMatrix * scalemat = (AgoConfigScaleMatrix *)node->localDataPtr;
+        scalemat->xscale = (vx_float32)((vx_float64)iImg->u.img.width / (vx_float64)oImg->u.img.width);
+        scalemat->yscale = (vx_float32)((vx_float64)iImg->u.img.height / (vx_float64)oImg->u.img.height);
+        scalemat->xoffset = (vx_float32)((vx_float64)iImg->u.img.width / (vx_float64)oImg->u.img.width * 0.5);
+        scalemat->yoffset = (vx_float32)((vx_float64)iImg->u.img.height / (vx_float64)oImg->u.img.height * 0.5);
+    }
+    else if (cmd == ago_kernel_cmd_shutdown) {
+        status = VX_SUCCESS;
+        if (node->localDataPtr) {
+            agoReleaseMemory(node->localDataPtr);
+            node->localDataPtr = nullptr;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
+#if ENABLE_OPENCL
+                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
+#endif
+                    ;
+        status = VX_SUCCESS;
+    }
+    else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+        AgoData * inp = node->paramList[0];
+        AgoData * out = node->paramList[1];
+        vx_float32 widthOut = (vx_float32)out->u.img.width;
+        vx_float32 heightOut = (vx_float32)out->u.img.height;
+        vx_float32 widthIn = (vx_float32)inp->u.img.width;
+        vx_float32 heightIn = (vx_float32)inp->u.img.height;
+        out->u.img.rect_valid.start_x = (vx_uint32)(((inp->u.img.rect_valid.start_x + 0.5f) * widthOut / widthIn) - 0.5f);
+        out->u.img.rect_valid.start_y = (vx_uint32)(((inp->u.img.rect_valid.start_y + 0.5f) * heightOut / heightIn) - 0.5f);
+        out->u.img.rect_valid.end_x = (vx_uint32)(((inp->u.img.rect_valid.end_x + 0.5f) * widthOut / widthIn) - 0.5f);
+        out->u.img.rect_valid.end_y = (vx_uint32)(((inp->u.img.rect_valid.end_y + 0.5f) * heightOut / heightIn) - 0.5f);
+    }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        if (HipExec_ScaleImage_RGBX_RGBX_Nearest(
+            node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
+            oImg->hip_memory + oImg->gpu_buffer_offset, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width, iImg->u.img.height,
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+    }
+#endif
+    return status;
+}
+
+int agoKernel_ScaleImage_RGBX_RGBX_Bilinear(AgoNode * node, AgoKernelCommand cmd)
+{
+    vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+    if (cmd == ago_kernel_cmd_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        if (HafCpu_ScaleImage_U8_U8_Bilinear(oImg->u.img.width * 4, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width * 4, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes, (AgoConfigScaleMatrix *)node->localDataPtr))
+        {
+            status = VX_FAILURE;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_validate) {
+        status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_RGBX, VX_DF_IMAGE_RGBX);
+        if (!status) {
+            vx_meta_format meta;
+            meta = &node->metaList[0];
+            meta->data.u.img.width = node->paramList[0]->u.img.width;
+            meta->data.u.img.height = node->paramList[0]->u.img.height;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_initialize) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        int alignedWidth = (oImg->u.img.width + 15) & ~15;
+        int alignedHeight = (oImg->u.img.height + 15) & ~15;
+        node->localDataSize = sizeof(AgoConfigScaleMatrix) + (alignedWidth * 8) + (alignedHeight * 2);
+        node->localDataPtr = (vx_uint8 *)agoAllocMemory(node->localDataSize);
+        if (!node->localDataPtr) return VX_ERROR_NO_MEMORY;
+        AgoConfigScaleMatrix * scalemat = (AgoConfigScaleMatrix *)node->localDataPtr;
+        scalemat->xscale = (vx_float32)((vx_float64)iImg->u.img.width / (vx_float64)oImg->u.img.width);
+        scalemat->yscale = (vx_float32)((vx_float64)iImg->u.img.height / (vx_float64)oImg->u.img.height);
+        scalemat->xoffset = (vx_float32)((vx_float64)iImg->u.img.width / (vx_float64)oImg->u.img.width * 0.5 - 0.5);
+        scalemat->yoffset = (vx_float32)((vx_float64)iImg->u.img.height / (vx_float64)oImg->u.img.height * 0.5 - 0.5);
+    }
+    else if (cmd == ago_kernel_cmd_shutdown) {
+        status = VX_SUCCESS;
+        if (node->localDataPtr) {
+            agoReleaseMemory(node->localDataPtr);
+            node->localDataPtr = nullptr;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
+#if ENABLE_OPENCL
+                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
+#endif
+                    ;
+        status = VX_SUCCESS;
+    }
+    else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+        AgoData * inp = node->paramList[0];
+        AgoData * out = node->paramList[1];
+        vx_float32 widthOut = (vx_float32)out->u.img.width;
+        vx_float32 heightOut = (vx_float32)out->u.img.height;
+        vx_float32 widthIn = (vx_float32)inp->u.img.width;
+        vx_float32 heightIn = (vx_float32)inp->u.img.height;
+        out->u.img.rect_valid.start_x = (vx_uint32)(((inp->u.img.rect_valid.start_x + 0.5f) * widthOut / widthIn) - 0.5f);
+        out->u.img.rect_valid.start_y = (vx_uint32)(((inp->u.img.rect_valid.start_y + 0.5f) * heightOut / heightIn) - 0.5f);
+        out->u.img.rect_valid.end_x = (vx_uint32)(((inp->u.img.rect_valid.end_x + 0.5f) * widthOut / widthIn) - 0.5f);
+        out->u.img.rect_valid.end_y = (vx_uint32)(((inp->u.img.rect_valid.end_y + 0.5f) * heightOut / heightIn) - 0.5f);
+    }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        if (HipExec_ScaleImage_RGBX_RGBX_Bilinear(
+            node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
+            oImg->hip_memory + oImg->gpu_buffer_offset, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width, iImg->u.img.height,
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+    }
+#endif
     return status;
 }

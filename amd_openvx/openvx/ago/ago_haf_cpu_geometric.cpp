@@ -92,6 +92,29 @@ static inline __m128i AgoRemapComputeOffsets_SSE(ago_coord2d_short_t *pMap, cons
     return _mm_add_epi32(xpart, ypart);      // [off0,off1,off2,off3]
 }
 
+// Decode a single remap entry into a clamped byte offset, matching
+// AgoRemapComputeOffsets_SSE exactly for one entry. Used by the two-pixel tail
+// of the bilinear paths so it does not have to load four entries (which would
+// read past the remap allocation when only one or two entries remain in a row).
+static inline int AgoRemapComputeOffset1(const ago_coord2d_short_t *pMap, int srcStride, int bpp, int srcW, int srcH, int &fx, int &fy)
+{
+    vx_uint16 mx16 = (vx_uint16)pMap->x, my16 = (vx_uint16)pMap->y;
+    fx = mx16 & 7; fy = my16 & 7;
+    int mx = mx16 >> 3, my = my16 >> 3;   // logical shift, always >= 0
+    if (mx > srcW - 2) mx = srcW - 2;
+    if (my > srcH - 2) my = srcH - 2;
+    return my * srcStride + mx * bpp;
+}
+
+// Read one packed 24-bit RGB pixel into the low three bytes of a dword (R,G,B,0),
+// touching exactly three bytes. This is the same value the wide-load-and-shuffle
+// produced for the low lane, without reading past the image allocation at the
+// bottom-right pixel.
+static inline int AgoLoadRGB24(const vx_uint8 *p)
+{
+    return (int)((vx_uint32)p[0] | ((vx_uint32)p[1] << 8) | ((vx_uint32)p[2] << 16));
+}
+
 int HafCpu_Remap_U8_U8_Nearest
 (
 	vx_uint32              dstWidth,
@@ -421,11 +444,6 @@ int HafCpu_Remap_U24_U24_Bilinear
 	                                    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80);
 	const __m128i zero128 = _mm_setzero_si128();
 	const __m256i round32_avx = _mm256_set1_epi32(32);
-	const __m128i shufRGB2RGBA = _mm_setr_epi8(
-	    0, 1, 2, (char)0x80,
-	    3, 4, 5, (char)0x80,
-	    6, 7, 8, (char)0x80,
-	    9, 10, 11, (char)0x80);
 
 	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
@@ -451,26 +469,28 @@ int HafCpu_Remap_U24_U24_Bilinear
 			int o2 = M128I(off).m128i_i32[2];
 			int o3 = M128I(off).m128i_i32[3];
 
+			// Pack exactly three bytes per pixel; a 16-byte vector load off the
+			// bottom-right 3-byte pixel would read past the image allocation.
 			__m128i tl128 = _mm_setr_epi32(
-			    _mm_cvtsi128_si32(_mm_shuffle_epi8(_mm_loadu_si128((__m128i *)(pSrcImage + o0)), shufRGB2RGBA)),
-			    _mm_cvtsi128_si32(_mm_shuffle_epi8(_mm_loadu_si128((__m128i *)(pSrcImage + o1)), shufRGB2RGBA)),
-			    _mm_cvtsi128_si32(_mm_shuffle_epi8(_mm_loadu_si128((__m128i *)(pSrcImage + o2)), shufRGB2RGBA)),
-			    _mm_cvtsi128_si32(_mm_shuffle_epi8(_mm_loadu_si128((__m128i *)(pSrcImage + o3)), shufRGB2RGBA)));
+			    AgoLoadRGB24(pSrcImage + o0),
+			    AgoLoadRGB24(pSrcImage + o1),
+			    AgoLoadRGB24(pSrcImage + o2),
+			    AgoLoadRGB24(pSrcImage + o3));
 			__m128i tr128 = _mm_setr_epi32(
-			    _mm_cvtsi128_si32(_mm_shuffle_epi8(_mm_loadu_si128((__m128i *)(pSrcImage + o0 + 3)), shufRGB2RGBA)),
-			    _mm_cvtsi128_si32(_mm_shuffle_epi8(_mm_loadu_si128((__m128i *)(pSrcImage + o1 + 3)), shufRGB2RGBA)),
-			    _mm_cvtsi128_si32(_mm_shuffle_epi8(_mm_loadu_si128((__m128i *)(pSrcImage + o2 + 3)), shufRGB2RGBA)),
-			    _mm_cvtsi128_si32(_mm_shuffle_epi8(_mm_loadu_si128((__m128i *)(pSrcImage + o3 + 3)), shufRGB2RGBA)));
+			    AgoLoadRGB24(pSrcImage + o0 + 3),
+			    AgoLoadRGB24(pSrcImage + o1 + 3),
+			    AgoLoadRGB24(pSrcImage + o2 + 3),
+			    AgoLoadRGB24(pSrcImage + o3 + 3));
 			__m128i bl128 = _mm_setr_epi32(
-			    _mm_cvtsi128_si32(_mm_shuffle_epi8(_mm_loadu_si128((__m128i *)(pSrcImage + o0 + srcImageStrideInBytes)), shufRGB2RGBA)),
-			    _mm_cvtsi128_si32(_mm_shuffle_epi8(_mm_loadu_si128((__m128i *)(pSrcImage + o1 + srcImageStrideInBytes)), shufRGB2RGBA)),
-			    _mm_cvtsi128_si32(_mm_shuffle_epi8(_mm_loadu_si128((__m128i *)(pSrcImage + o2 + srcImageStrideInBytes)), shufRGB2RGBA)),
-			    _mm_cvtsi128_si32(_mm_shuffle_epi8(_mm_loadu_si128((__m128i *)(pSrcImage + o3 + srcImageStrideInBytes)), shufRGB2RGBA)));
+			    AgoLoadRGB24(pSrcImage + o0 + srcImageStrideInBytes),
+			    AgoLoadRGB24(pSrcImage + o1 + srcImageStrideInBytes),
+			    AgoLoadRGB24(pSrcImage + o2 + srcImageStrideInBytes),
+			    AgoLoadRGB24(pSrcImage + o3 + srcImageStrideInBytes));
 			__m128i br128 = _mm_setr_epi32(
-			    _mm_cvtsi128_si32(_mm_shuffle_epi8(_mm_loadu_si128((__m128i *)(pSrcImage + o0 + srcImageStrideInBytes + 3)), shufRGB2RGBA)),
-			    _mm_cvtsi128_si32(_mm_shuffle_epi8(_mm_loadu_si128((__m128i *)(pSrcImage + o1 + srcImageStrideInBytes + 3)), shufRGB2RGBA)),
-			    _mm_cvtsi128_si32(_mm_shuffle_epi8(_mm_loadu_si128((__m128i *)(pSrcImage + o2 + srcImageStrideInBytes + 3)), shufRGB2RGBA)),
-			    _mm_cvtsi128_si32(_mm_shuffle_epi8(_mm_loadu_si128((__m128i *)(pSrcImage + o3 + srcImageStrideInBytes + 3)), shufRGB2RGBA)));
+			    AgoLoadRGB24(pSrcImage + o0 + srcImageStrideInBytes + 3),
+			    AgoLoadRGB24(pSrcImage + o1 + srcImageStrideInBytes + 3),
+			    AgoLoadRGB24(pSrcImage + o2 + srcImageStrideInBytes + 3),
+			    AgoLoadRGB24(pSrcImage + o3 + srcImageStrideInBytes + 3));
 
 			__m256i TL = _mm256_set_m128i(zero128, tl128);
 			__m256i TR = _mm256_set_m128i(zero128, tr128);
@@ -573,33 +593,30 @@ int HafCpu_Remap_U24_U24_Bilinear
 		}
 		for (; x + 2 <= dstWidth; x += 2, pd += 6, pMapY_X += 2)
 		{
-			__m128i mapfrac0, mapxy0, mapfrac1, mapxy1;
-			__m128i off0 = AgoRemapComputeOffsets_SSE(pMapY_X,     sstride, 3, srcWidth, srcHeight, mapfrac0, mapxy0);
-			__m128i off1 = AgoRemapComputeOffsets_SSE(pMapY_X + 1, sstride, 3, srcWidth, srcHeight, mapfrac1, mapxy1);
+			// Decode one entry at a time: a four-entry SSE load would read past
+			// the remap allocation when fewer than four entries remain in the row.
+			int fx0, fy0, fx1, fy1;
+			int o0 = AgoRemapComputeOffset1(pMapY_X,     (int)srcImageStrideInBytes, 3, (int)srcWidth, (int)srcHeight, fx0, fy0);
+			int o1 = AgoRemapComputeOffset1(pMapY_X + 1, (int)srcImageStrideInBytes, 3, (int)srcWidth, (int)srcHeight, fx1, fy1);
 
-			int fx0 = M128I(mapfrac0).m128i_i16[0];
-			int fy0 = M128I(mapfrac0).m128i_i16[1];
-			int fx1 = M128I(mapfrac1).m128i_i16[0];
-			int fy1 = M128I(mapfrac1).m128i_i16[1];
 			__m128i weights = _mm_setr_epi16(
 			    (short)((8 - fx0) * (8 - fy0)), (short)(fx0 * (8 - fy0)),
 			    (short)((8 - fx0) * fy0),       (short)(fx0 * fy0),
 			    (short)((8 - fx1) * (8 - fy1)), (short)(fx1 * (8 - fy1)),
 			    (short)((8 - fx1) * fy1),       (short)(fx1 * fy1));
 
-			int o0 = M128I(off0).m128i_i32[0];
-			int o1 = M128I(off1).m128i_i32[0];
-
+			// Pack exactly three bytes per pixel to avoid reading a fourth byte
+			// off the final 3-byte pixel of the allocation.
 			__m128i c0 = _mm_setr_epi32(
-			    (int)(((const vx_uint32 *)(pSrcImage + o0))[0] & 0x00FFFFFFu),
-			    (int)(((const vx_uint32 *)(pSrcImage + o0 + 3))[0] & 0x00FFFFFFu),
-			    (int)(((const vx_uint32 *)(pSrcImage + o0 + srcImageStrideInBytes))[0] & 0x00FFFFFFu),
-			    (int)(((const vx_uint32 *)(pSrcImage + o0 + srcImageStrideInBytes + 3))[0] & 0x00FFFFFFu));
+			    AgoLoadRGB24(pSrcImage + o0),
+			    AgoLoadRGB24(pSrcImage + o0 + 3),
+			    AgoLoadRGB24(pSrcImage + o0 + srcImageStrideInBytes),
+			    AgoLoadRGB24(pSrcImage + o0 + srcImageStrideInBytes + 3));
 			__m128i c1 = _mm_setr_epi32(
-			    (int)(((const vx_uint32 *)(pSrcImage + o1))[0] & 0x00FFFFFFu),
-			    (int)(((const vx_uint32 *)(pSrcImage + o1 + 3))[0] & 0x00FFFFFFu),
-			    (int)(((const vx_uint32 *)(pSrcImage + o1 + srcImageStrideInBytes))[0] & 0x00FFFFFFu),
-			    (int)(((const vx_uint32 *)(pSrcImage + o1 + srcImageStrideInBytes + 3))[0] & 0x00FFFFFFu));
+			    AgoLoadRGB24(pSrcImage + o1),
+			    AgoLoadRGB24(pSrcImage + o1 + 3),
+			    AgoLoadRGB24(pSrcImage + o1 + srcImageStrideInBytes),
+			    AgoLoadRGB24(pSrcImage + o1 + srcImageStrideInBytes + 3));
 
 			__m128i p0R = _mm_shuffle_epi8(c0, shufR);
 			__m128i p1R = _mm_shuffle_epi8(c1, shufR);
@@ -856,22 +873,17 @@ int HafCpu_Remap_U32_U32_Bilinear
 		}
 		for (; x + 2 <= dstWidth; x += 2, pd += 8, pMapY_X += 2)
 		{
-			__m128i mapfrac0, mapxy0, mapfrac1, mapxy1;
-			__m128i off0 = AgoRemapComputeOffsets_SSE(pMapY_X,     sstride, 4, srcWidth, srcHeight, mapfrac0, mapxy0);
-			__m128i off1 = AgoRemapComputeOffsets_SSE(pMapY_X + 1, sstride, 4, srcWidth, srcHeight, mapfrac1, mapxy1);
+			// Decode one entry at a time: a four-entry SSE load would read past
+			// the remap allocation when fewer than four entries remain in the row.
+			int fx0, fy0, fx1, fy1;
+			int o0 = AgoRemapComputeOffset1(pMapY_X,     (int)srcImageStrideInBytes, 4, (int)srcWidth, (int)srcHeight, fx0, fy0);
+			int o1 = AgoRemapComputeOffset1(pMapY_X + 1, (int)srcImageStrideInBytes, 4, (int)srcWidth, (int)srcHeight, fx1, fy1);
 
-			int fx0 = M128I(mapfrac0).m128i_i16[0];
-			int fy0 = M128I(mapfrac0).m128i_i16[1];
-			int fx1 = M128I(mapfrac1).m128i_i16[0];
-			int fy1 = M128I(mapfrac1).m128i_i16[1];
 			__m128i weights = _mm_setr_epi16(
 			    (short)((8 - fx0) * (8 - fy0)), (short)(fx0 * (8 - fy0)),
 			    (short)((8 - fx0) * fy0),       (short)(fx0 * fy0),
 			    (short)((8 - fx1) * (8 - fy1)), (short)(fx1 * (8 - fy1)),
 			    (short)((8 - fx1) * fy1),       (short)(fx1 * fy1));
-
-			int o0 = M128I(off0).m128i_i32[0];
-			int o1 = M128I(off1).m128i_i32[0];
 
 			__m128i c0 = _mm_setr_epi32(
 			    (int)((const vx_uint32 *)(pSrcImage + o0))[0],

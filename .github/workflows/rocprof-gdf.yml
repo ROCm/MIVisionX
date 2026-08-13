@@ -1,0 +1,290 @@
+# Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+name: ROCprof GDF profiling
+
+on:
+  # Post-merge: only when tracing-relevant files change.
+  push:
+    branches: [master, main, develop]
+    paths:
+      - 'amd_openvx/openvx/ago/**'
+      - 'amd_openvx/openvx/CMakeLists.txt'
+      - '.github/scripts/run_rocprof_gdf.py'
+      - '.github/workflows/rocprof-gdf.yml'
+  # PRs trigger for every event (so the label can start a run); the `gate`
+  # job below decides whether the GPU jobs actually run.
+  pull_request:
+    branches: [master, main, develop]
+    types: [opened, synchronize, reopened, labeled]
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  ROCM_PATH: /opt/rocm
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Gate — decides whether the expensive GPU jobs run. This keeps the GPU
+  # runner pool free on unrelated PRs. It runs on a cheap GitHub-hosted runner.
+  # Runs when ANY of:
+  #   * the event is a push (already path-filtered above), or
+  #   * the PR carries the 'run-rocprof' label, or
+  #   * the PR changed a tracing-relevant file.
+  # ---------------------------------------------------------------------------
+
+  gate:
+    name: Decide whether to profile
+    runs-on: ubuntu-24.04
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Decide
+        id: decide
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HAS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'run-rocprof') }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT_NAME" = "push" ]; then
+            echo "push event -> run"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$HAS_LABEL" = "true" ]; then
+            echo "run-rocprof label present -> run"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # PR without the label: run only if a tracing-relevant file changed.
+          changed="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" || true)"
+          echo "changed files:"; echo "$changed"
+          if echo "$changed" | grep -qE '^(amd_openvx/openvx/ago/|amd_openvx/openvx/CMakeLists\.txt|\.github/scripts/run_rocprof_gdf\.py|\.github/workflows/rocprof-gdf\.yml)'; then
+            echo "tracing-relevant change -> run"
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "no tracing-relevant change and no label -> skip"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Build Stage — two parallel builds on the ROCm container.
+  # CPU is built inside the ROCm container because MIVISIONX_ENABLE_ROCPROF=ON
+  # still requires the roctx header/library from /opt/rocm.
+  # ---------------------------------------------------------------------------
+
+  build-rocprof-cpu:
+    name: Build MIVisionX (CPU + ROCTX)
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on:
+      group: linux-shark39-runner-group
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-20260710
+      options: --device /dev/kfd --device /dev/dri
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install build dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends build-essential cmake git python3
+
+      - name: Build CPU backend with ROCTX
+        run: |
+          mkdir build && cd build
+          cmake .. \
+            -DBACKEND=CPU \
+            -DMIVISIONX_ENABLE_ROCPROF=ON \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
+            -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++"
+          make -j$(nproc)
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rocprof-build-cpu
+          path: |
+            build/lib/
+            build/bin/runvx
+            amd_openvx/openvx/include/
+          retention-days: 1
+
+  build-rocprof-hip:
+    name: Build MIVisionX (HIP + ROCTX)
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on:
+      group: linux-shark39-runner-group
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-20260710
+      options: --device /dev/kfd --device /dev/dri
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install build dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends build-essential cmake git python3
+
+      - name: Validate ROCm
+        run: |
+          rocminfo
+          amd-smi || true
+
+      - name: Build HIP backend with ROCTX
+        run: |
+          mkdir build && cd build
+          cmake .. \
+            -DBACKEND=HIP \
+            -DGPU_TARGETS="gfx1100;gfx1201" \
+            -DMIVISIONX_ENABLE_ROCPROF=ON \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER="${ROCM_PATH}/bin/amdclang" \
+            -DCMAKE_CXX_COMPILER="${ROCM_PATH}/bin/amdclang++"
+          make -j$(nproc)
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rocprof-build-hip
+          path: |
+            build/lib/
+            build/bin/runvx
+            amd_openvx/openvx/include/
+          retention-days: 1
+
+  # ---------------------------------------------------------------------------
+  # Profile Stage — run a small representative set of GDFs under rocprofv3.
+  # ---------------------------------------------------------------------------
+
+  rocprof-gdf-cpu:
+    name: Profile GDF tests (CPU)
+    runs-on:
+      group: linux-shark39-runner-group
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-20260710
+      options: --device /dev/kfd --device /dev/dri
+    needs: build-rocprof-cpu
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Download CPU build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: rocprof-build-cpu
+          path: ${{ github.workspace }}
+
+      - name: Make runvx executable
+        run: chmod +x "$GITHUB_WORKSPACE/build/bin/runvx"
+
+      - name: Run GDF tests under rocprof
+        run: |
+          python3 .github/scripts/run_rocprof_gdf.py \
+            --runvx "$GITHUB_WORKSPACE/build/bin/runvx" \
+            --backend CPU \
+            --output-dir "$GITHUB_WORKSPACE/rocprof-results-cpu" \
+            --summary-out "$GITHUB_WORKSPACE/rocprof-summary-cpu.md" \
+            --frames 10
+
+      - name: Write step summary
+        if: always()
+        run: cat "$GITHUB_WORKSPACE/rocprof-summary-cpu.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload profiling results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rocprof-gdf-cpu-results
+          path: |
+            ${{ github.workspace }}/rocprof-results-cpu/
+            ${{ github.workspace }}/rocprof-summary-cpu.md
+            ${{ github.workspace }}/rocprof-summary-cpu.json
+          if-no-files-found: ignore
+
+  rocprof-gdf-hip:
+    name: Profile GDF tests (HIP)
+    runs-on:
+      group: linux-shark39-runner-group
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-20260710
+      options: --device /dev/kfd --device /dev/dri
+    needs: build-rocprof-hip
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Download HIP build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: rocprof-build-hip
+          path: ${{ github.workspace }}
+
+      - name: Make runvx executable
+        run: chmod +x "$GITHUB_WORKSPACE/build/bin/runvx"
+
+      - name: Validate ROCm
+        run: |
+          rocminfo
+          amd-smi || true
+
+      - name: Run GDF tests under rocprof
+        run: |
+          export HIP_VISIBLE_DEVICES=0
+          python3 .github/scripts/run_rocprof_gdf.py \
+            --runvx "$GITHUB_WORKSPACE/build/bin/runvx" \
+            --backend HIP \
+            --output-dir "$GITHUB_WORKSPACE/rocprof-results-hip" \
+            --summary-out "$GITHUB_WORKSPACE/rocprof-summary-hip.md" \
+            --frames 10
+
+      - name: Write step summary
+        if: always()
+        run: cat "$GITHUB_WORKSPACE/rocprof-summary-hip.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload profiling results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rocprof-gdf-hip-results
+          path: |
+            ${{ github.workspace }}/rocprof-results-hip/
+            ${{ github.workspace }}/rocprof-summary-hip.md
+            ${{ github.workspace }}/rocprof-summary-hip.json
+          if-no-files-found: ignore

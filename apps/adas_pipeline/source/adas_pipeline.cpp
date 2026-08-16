@@ -50,6 +50,7 @@ THE SOFTWARE.
 #include <VX/vx_khr_pipelining.h>
 #include "opencv2/opencv.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -115,6 +116,7 @@ struct Config
 {
     ExecutionMode mode = MODE_STAGED;
     bool compare = false;
+    bool verify = false;
     std::string videoPath;
     int cameraId = -1;
     vx_uint32 width = 1280;
@@ -131,7 +133,11 @@ struct Config
     vx_uint8 cannyLower = 80;
     vx_uint8 cannyUpper = 100;
     bool manualSchedule = false;
+    bool placementGiven = false;
     const char *placement[STAGE_COUNT] = {"gpu", "cpu", "gpu"};
+    // When set, every lane mask a run produces is cloned here in output order,
+    // so two modes can be compared frame for frame. --verify uses this.
+    std::vector<cv::Mat> *laneSink = nullptr;
 };
 
 // One pool of buffers per hand-off point. The camera inputs need a pool per
@@ -236,8 +242,10 @@ static void print_usage(const char *argv0)
            "  %s --live  <camera-id> [options]\n"
            "\n"
            "Options:\n"
-           "  --compare                  run cpu, gpu, split, queued and staged on the same\n"
-           "                             frames, then print one table (no display)\n"
+           "  --compare                  run every arrangement on the same frames, then\n"
+           "                             print one table (no display)\n"
+           "  --verify                   check that each pipelined mode produces the same\n"
+           "                             lane masks as the unpipelined reference (no display)\n"
            "  --mode <name>              cpu, gpu, split, queued, staged, batch, stream\n"
            "                               cpu     one graph, every stage on the cpu\n"
            "                               gpu     one graph, every stage on the gpu\n"
@@ -314,6 +322,7 @@ static bool parse_args(int argc, char *argv[], Config &cfg)
         if (arg == "--video" && hasValue) cfg.videoPath = argv[++i];
         else if (arg == "--live" && hasValue) cfg.cameraId = atoi(argv[++i]);
         else if (arg == "--compare") cfg.compare = true;
+        else if (arg == "--verify") cfg.verify = true;
         else if (arg == "--preload") cfg.preload = true;
         else if (arg == "--no-display") cfg.display = false;
         else if (arg == "--dump" && hasValue) cfg.dumpDir = argv[++i];
@@ -323,7 +332,7 @@ static bool parse_args(int argc, char *argv[], Config &cfg)
         else if (arg == "--frames" && hasValue) cfg.frames = (vx_uint32)atoi(argv[++i]);
         else if (arg == "--batch" && hasValue) cfg.batch = (vx_uint32)atoi(argv[++i]);
         else if (arg == "--timeout" && hasValue) cfg.timeoutMs = (vx_uint32)atoi(argv[++i]);
-        else if (arg == "--place" && hasValue) { if (!parse_placement(argv[++i], cfg)) return false; }
+        else if (arg == "--place" && hasValue) { if (!parse_placement(argv[++i], cfg)) return false; cfg.placementGiven = true; }
         else if (arg == "--mode" && hasValue)
         {
             std::string name = argv[++i];
@@ -374,7 +383,11 @@ static bool parse_args(int argc, char *argv[], Config &cfg)
     if (cfg.filters < 1) cfg.filters = 1;
     if (cfg.batch < 1) cfg.batch = 1;
     if (cfg.frames == 0) cfg.frames = UINT32_MAX;
-    if (cfg.compare) cfg.display = false;
+    if (cfg.compare || cfg.verify) cfg.display = false;
+    if (cfg.placementGiven && !cfg.compare && !cfg.verify &&
+        (cfg.mode == MODE_CPU || cfg.mode == MODE_GPU))
+        printf("WARNING: --place is ignored in %s mode, which puts every stage on one device\n",
+               mode_name(cfg.mode));
     return true;
 }
 
@@ -463,9 +476,10 @@ static vx_matrix create_ground_plane(const Config &cfg, vx_context context)
 static std::vector<vx_convolution> create_filter_bank(const Config &cfg, vx_context context)
 {
     std::vector<vx_convolution> bank;
+    const double pi = 3.14159265358979323846;
     for (vx_uint32 f = 0; f < cfg.filters; f++)
     {
-        const double angle = (M_PI * f) / cfg.filters;
+        const double angle = (pi * f) / cfg.filters;
         const double ca = cos(angle), sa = sin(angle);
         vx_int16 coefficients[81];
         for (int index = 0; index < 81; index++)
@@ -695,6 +709,9 @@ static cv::Mat retain_frame(const Config &cfg, const cv::Mat &luma)
 static bool show_frame(const Config &cfg, const cv::Mat &luma, const cv::Mat &lanes,
                        const char *label)
 {
+    if (cfg.laneSink && !lanes.empty())
+        cfg.laneSink->push_back(lanes.clone());
+
     if (!cfg.dumpDir.empty())
     {
         static vx_uint32 dumped = 0;
@@ -1693,7 +1710,8 @@ static void report(const Config &cfg, const Stats &stats)
 
 static void run_comparison(Config cfg, FrameSource &source)
 {
-    const ExecutionMode ladder[] = {MODE_CPU, MODE_GPU, MODE_SPLIT, MODE_QUEUED, MODE_STAGED};
+    const ExecutionMode ladder[] = {MODE_CPU, MODE_GPU, MODE_SPLIT, MODE_QUEUED,
+                                    MODE_STAGED, MODE_BATCH, MODE_STREAM};
     const size_t count = sizeof(ladder) / sizeof(ladder[0]);
     std::vector<Stats> results;
 
@@ -1730,6 +1748,8 @@ static void run_comparison(Config cfg, FrameSource &source)
         case MODE_SPLIT:  overlap = "nothing, the devices take turns"; break;
         case MODE_QUEUED: overlap = "capture against the graph"; break;
         case MODE_STAGED: overlap = "capture and all three stages, on different frames"; break;
+        case MODE_BATCH:  overlap = "the frames in one enqueue, one graph"; break;
+        case MODE_STREAM: overlap = "the framework re-runs the graph itself"; break;
         default: break;
         }
         printf("  %-7s %-8.1f %-9.2f %-9.2f %-8.2fx %s\n", mode_name(s.mode), fps,
@@ -1739,7 +1759,11 @@ static void run_comparison(Config cfg, FrameSource &source)
     if (cfg.preload)
         printf("\n  frames were decoded up front, so the capture column is a memory read\n");
 
-    const Stats &staged = results[count - 1];
+    size_t stagedIndex = 0;
+    for (size_t i = 0; i < results.size(); i++)
+        if (results[i].mode == MODE_STAGED)
+            stagedIndex = i;
+    const Stats &staged = results[stagedIndex];
     double total = 0.0;
     printf("\n  staged stage graphs: ");
     for (int i = 0; i < STAGE_COUNT; i++)
@@ -1759,6 +1783,68 @@ static void run_comparison(Config cfg, FrameSource &source)
                "  frame every %.2f ms, so %.2fx of that work was in flight at once\n",
                total, achieved, total / achieved);
     printf("\n");
+}
+
+//
+// Runs an unpipelined reference and each pipelined mode over the same frames,
+// then compares the lane masks frame for frame. The outer six pixels are
+// excluded because the neighbourhood operators leave their border pixels
+// undefined by specification, so they differ run to run even in one mode; a
+// pipelining fault shows up as a difference in the interior, which this counts.
+//
+static void run_verify(Config cfg, FrameSource &source)
+{
+    const vx_uint32 border = 6;
+    if (cfg.frames > 50)
+        cfg.frames = 50;
+
+    std::vector<cv::Mat> reference;
+    Config refCfg = cfg;
+    refCfg.mode = MODE_SPLIT;
+    refCfg.laneSink = &reference;
+    source.rewind();
+    printf("verify: reference is split over %u frames, placement surround %s, detect %s, refine %s\n",
+           cfg.frames, stage_target(refCfg, STAGE_SURROUND), stage_target(refCfg, STAGE_DETECT),
+           stage_target(refCfg, STAGE_REFINE));
+    fflush(stdout);
+    run_one(refCfg, source);
+
+    const ExecutionMode candidates[] = {MODE_QUEUED, MODE_STAGED, MODE_BATCH};
+    bool allMatched = true;
+    for (size_t c = 0; c < sizeof(candidates) / sizeof(candidates[0]); c++)
+    {
+        std::vector<cv::Mat> masks;
+        Config runCfg = cfg;
+        runCfg.mode = candidates[c];
+        runCfg.laneSink = &masks;
+        source.rewind();
+        run_one(runCfg, source);
+
+        const size_t pairs = std::min(reference.size(), masks.size());
+        vx_uint32 matched = 0;
+        for (size_t i = 0; i < pairs; i++)
+        {
+            const cv::Mat &a = reference[i];
+            const cv::Mat &b = masks[i];
+            if (a.size() != b.size() || a.type() != b.type())
+                continue;
+            if (a.rows <= (int)(2 * border) || a.cols <= (int)(2 * border))
+            {
+                if (cv::countNonZero(a != b) == 0)
+                    matched++;
+                continue;
+            }
+            cv::Rect inner(border, border, a.cols - 2 * border, a.rows - 2 * border);
+            if (cv::countNonZero(a(inner) != b(inner)) == 0)
+                matched++;
+        }
+        printf("  %-7s vs split : %u of %zu frames identical (interior, %u px border ignored)%s\n",
+               mode_name(candidates[c]), matched, pairs, border,
+               (matched == pairs && pairs > 0) ? "" : "  MISMATCH");
+        if (matched != pairs || pairs == 0)
+            allMatched = false;
+    }
+    printf("\nverify: %s\n", allMatched ? "PASS" : "FAIL");
 }
 
 int main(int argc, char *argv[])
@@ -1787,6 +1873,12 @@ int main(int argc, char *argv[])
         }
         printf("preloaded %zu frames, %.3f ms per frame to decode\n",
                source.preloadedFrames(), source.decodeMsPerFrame());
+    }
+
+    if (cfg.verify)
+    {
+        run_verify(cfg, source);
+        return 0;
     }
 
     if (cfg.compare)

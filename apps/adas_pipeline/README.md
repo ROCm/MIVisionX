@@ -37,7 +37,7 @@ make -j
 
 `--compare` runs the same frames through every arrangement and prints one
 table. Everything below was measured on a Radeon RX 7900 XT (gfx1100) with a
-Ryzen 9 7900X, ROCm 7.11, HIP backend, at 1920x1080 with 6 cameras and 8 filter
+Ryzen 9 7900X, ROCm 7.13, HIP backend, at 1920x1080 with 6 cameras and 8 filter
 orientations, 300 frames per mode, queue depth 3.
 
 Decoding each frame as it goes, which is what a run against a video file does:
@@ -106,6 +106,9 @@ carries, so the two devices can be brought into the same range.
 | `batch`   | several frames handed over in one enqueue call |
 | `stream`  | `vxStartGraphStreaming`, the framework re-runs the graph itself |
 
+`--compare` runs every mode in the table above, `batch` and `stream` included,
+and `--verify` checks that the pipelined modes match the unpipelined reference.
+
 Useful options: `--preload` to take the video decoder out of the measurement,
 `--place <d,d,d>` to move stages between devices, `--schedule manual` to drive
 the queues with `vxScheduleGraph` instead of letting the framework do it,
@@ -119,8 +122,17 @@ sensor loop wants.
 
 ## Checking that pipelining did not change the answer
 
-Dump the same frames from an unpipelined mode and a pipelined one and compare
-them, ignoring a six pixel frame around the edge:
+`--verify` does this in one run: it produces the lane masks from the unpipelined
+`split` reference and from each pipelined mode over the same frames, then reports
+how many come out identical in the interior (the six pixel border is excluded,
+for the reason below).
+
+```bash
+./adasPipeline --video drive.mp4 --verify
+```
+
+To compare byte for byte instead, dump the same frames from an unpipelined mode
+and a pipelined one, ignoring a six pixel frame around the edge:
 
 ```bash
 for m in split staged; do

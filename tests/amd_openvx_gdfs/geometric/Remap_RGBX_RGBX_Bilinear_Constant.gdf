@@ -1,0 +1,5 @@
+# agoKernel_Remap_RGBX_RGBX_Bilinear_Constant
+data input_1 = uniform-image:1280,720,RGBX,0xAABBCCDD
+data output_1 = image:1280,720,RGBX
+data remap_table = remap:1280,720,1280,720:READ,inputs/remap_1280x720_mirror.txt
+node org.khronos.openvx.remap input_1 remap_table !BILINEAR output_1 attr:BORDER_MODE:CONSTANT,0

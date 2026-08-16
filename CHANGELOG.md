@@ -11,6 +11,7 @@ The full documentation for MIVisionX is available at [https://rocm.docs.amd.com/
 * HIP GPU architecture support for gfx115x (Radeon RX 9000 / gfx1150, gfx1151, gfx1152, gfx1153)
 * `MIVISIONX_HIP_CU_COUNT` environment variable to limit the number of compute units used by HIP kernels at runtime
 * Apps - `adas_pipeline`, a multi-camera surround-view lane pipeline built as the three stage GPU/CPU/GPU chain the OpenVX 1.3.2 pipelining extension (`vx_khr_pipelining`) uses as its example. The same work runs unpipelined on either device, split across both, with queued graph parameters, as one graph per stage, batched, and streaming, and `--compare` prints the throughput of each side by side
+* Remap GPU support for packed RGB (`VX_DF_IMAGE_RGB`) and RGBX (`VX_DF_IMAGE_RGBX`) images on the HIP backend, with nearest and bilinear interpolation and undefined/constant border modes; previously Remap ran on the GPU only for `VX_DF_IMAGE_U8`
 
 ### Fixed
 * MinMaxLoc count-scalar type: `ovxKernel_MinMaxLoc` and all `agoKernel_MinMaxLoc_*` sub-kernels now declare and write count outputs as `VX_TYPE_SIZE` instead of `VX_TYPE_UINT32`, matching the OpenVX 1.3.2 spec and Khronos CTS

@@ -33,6 +33,43 @@ cmake -DOPENVX_INCLUDES=<mivisionx>/amd_openvx/openvx/include \
 make -j
 ```
 
+## Trying it with real driving data
+
+The application reads any video file or a numbered image sequence, so any
+dashcam clip works as input. The public driving datasets below are a good
+source; each is downloaded by the user, so the non-commercial ones are fine to
+try even though this sample does not redistribute them. Check every dataset's
+own licence and attribution terms before using it beyond a local trial.
+
+| Dataset | Licence | Cameras | Why |
+|---------|---------|---------|-----|
+| [comma10k](https://github.com/commaai/comma10k) | MIT | single road camera | Real comma.ai driving frames, permissive licence, no account. Smallest way to feed the pipeline real road scenes. |
+| [comma2k19](https://github.com/commaai/comma2k19) | MIT | single road camera | Real driving video with real camera intrinsics and vehicle pose, so the undistort and ground-plane stages can be made genuine rather than synthetic. |
+| [nuScenes mini](https://www.nuscenes.org/nuscenes) | CC BY-NC-SA 4.0 (non-commercial, account required) | 6-camera 360 surround | The only small dataset with a real synchronised multi-camera rig plus full calibration, for a true surround input. |
+
+The `--video` argument accepts a `printf` pattern for an image sequence. To pull
+a handful of real comma10k frames into a numbered sequence and run the
+comparison on them:
+
+```bash
+mkdir -p /tmp/comma10k && cd /tmp/comma10k
+i=0
+for url in $(curl -s https://api.github.com/repos/commaai/comma10k/contents/imgs \
+            | grep -o 'https://raw.githubusercontent.com/[^"]*\.png' | head -n 8); do
+  printf -v out "img_%04d.png" $i; curl -sL "$url" -o "$out"; i=$((i+1))
+done
+cd -
+
+# comma10k frames are 1164x874; the app resizes to --size
+./adasPipeline --video "/tmp/comma10k/img_%04d.png" --compare \
+    --frames 8 --size 1164x874 --cameras 4 --filters 6
+```
+
+There is one real video here, so the app feeds every camera the same frame:
+the workload per cycle is what the measurement is about, not a true surround
+stitch. A dataset with a real multi-camera rig (nuScenes above) would give each
+camera a distinct view.
+
 ## Seeing what pipelining is worth
 
 `--compare` runs the same frames through every arrangement and prints one

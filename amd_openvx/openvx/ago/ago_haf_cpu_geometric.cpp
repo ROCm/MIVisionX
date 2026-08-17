@@ -1077,8 +1077,10 @@ int HafCpu_Remap_U24_U24_Bilinear_Constant
 		for (vx_uint32 x = 0; x < dstWidth; ++x, pd += 3, ++pMapY_X)
 		{
 			int mx, my, fx, fy;
+			bool useBorder = false;
 			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
-				mx = 1; my = 1; fx = 0; fy = 0;
+				useBorder = true;
+				mx = 0; my = 0; fx = 0; fy = 0;
 			} else {
 				mx = pMapY_X->x >> 3;
 				my = pMapY_X->y >> 3;
@@ -1088,10 +1090,15 @@ int HafCpu_Remap_U24_U24_Bilinear_Constant
 			int w00 = (8 - fx) * (8 - fy), w10 = fx * (8 - fy), w01 = (8 - fx) * fy, w11 = fx * fy;
 			for (int c = 0; c < 3; ++c)
 			{
-				int v00 = ((mx		 >= 0) && (my		 >= 0) && (mx		 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)mx * 3 + c] : borderValue;
-				int v10 = ((mx + 1 >= 0) && (my		 >= 0) && (mx + 1 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)(mx + 1) * 3 + c] : borderValue;
-				int v01 = ((mx		 >= 0) && (my + 1 >= 0) && (mx		 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)mx * 3 + c] : borderValue;
-				int v11 = ((mx + 1 >= 0) && (my + 1 >= 0) && (mx + 1 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)(mx + 1) * 3 + c] : borderValue;
+				int v00, v10, v01, v11;
+				if (useBorder) {
+					v00 = v10 = v01 = v11 = borderValue;
+				} else {
+					v00 = ((mx		 >= 0) && (my		 >= 0) && (mx		 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)mx * 3 + c] : borderValue;
+					v10 = ((mx + 1 >= 0) && (my		 >= 0) && (mx + 1 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)(mx + 1) * 3 + c] : borderValue;
+					v01 = ((mx		 >= 0) && (my + 1 >= 0) && (mx		 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)mx * 3 + c] : borderValue;
+					v11 = ((mx + 1 >= 0) && (my + 1 >= 0) && (mx + 1 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)(mx + 1) * 3 + c] : borderValue;
+				}
 				int v = (v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + 32) >> 6;
 				pd[c] = (vx_uint8)v;
 			}
@@ -1122,15 +1129,19 @@ int HafCpu_Remap_U24_U24_Nearest_Constant
 		for (vx_uint32 x = 0; x < dstWidth; ++x, pd += 3, ++pMapY_X)
 		{
 			int mx, my;
+			bool useBorder = false;
 			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
-				mx = 1; my = 1;
+				useBorder = true;
+				mx = 0; my = 0;
 			} else {
 				mx = (pMapY_X->x >> 3) + ((pMapY_X->x & 7) >> 2);
 				my = (pMapY_X->y >> 3) + ((pMapY_X->y & 7) >> 2);
 			}
 			for (int c = 0; c < 3; ++c)
 			{
-				if (mx >= 0 && my >= 0 && mx < (int)srcWidth && my < (int)srcHeight)
+				if (useBorder)
+					pd[c] = borderValue;
+				else if (mx >= 0 && my >= 0 && mx < (int)srcWidth && my < (int)srcHeight)
 						pd[c] = pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)mx * 3 + c];
 				else
 						pd[c] = borderValue;
@@ -1162,8 +1173,10 @@ int HafCpu_Remap_U32_U32_Bilinear_Constant
 		for (vx_uint32 x = 0; x < dstWidth; ++x, pd += 4, ++pMapY_X)
 		{
 			int mx, my, fx, fy;
+			bool useBorder = false;
 			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
-				mx = 1; my = 1; fx = 0; fy = 0;
+				useBorder = true;
+				mx = 0; my = 0; fx = 0; fy = 0;
 			} else {
 				mx = pMapY_X->x >> 3;
 				my = pMapY_X->y >> 3;
@@ -1173,10 +1186,15 @@ int HafCpu_Remap_U32_U32_Bilinear_Constant
 			int w00 = (8 - fx) * (8 - fy), w10 = fx * (8 - fy), w01 = (8 - fx) * fy, w11 = fx * fy;
 			for (int c = 0; c < 4; ++c)
 			{
-				int v00 = ((mx		 >= 0) && (my		 >= 0) && (mx		 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)mx * 4 + c] : borderValue;
-				int v10 = ((mx + 1 >= 0) && (my		 >= 0) && (mx + 1 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)(mx + 1) * 4 + c] : borderValue;
-				int v01 = ((mx		 >= 0) && (my + 1 >= 0) && (mx		 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)mx * 4 + c] : borderValue;
-				int v11 = ((mx + 1 >= 0) && (my + 1 >= 0) && (mx + 1 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)(mx + 1) * 4 + c] : borderValue;
+				int v00, v10, v01, v11;
+				if (useBorder) {
+					v00 = v10 = v01 = v11 = borderValue;
+				} else {
+					v00 = ((mx		 >= 0) && (my		 >= 0) && (mx		 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)mx * 4 + c] : borderValue;
+					v10 = ((mx + 1 >= 0) && (my		 >= 0) && (mx + 1 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)(mx + 1) * 4 + c] : borderValue;
+					v01 = ((mx		 >= 0) && (my + 1 >= 0) && (mx		 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)mx * 4 + c] : borderValue;
+					v11 = ((mx + 1 >= 0) && (my + 1 >= 0) && (mx + 1 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)(mx + 1) * 4 + c] : borderValue;
+				}
 				int v = (v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + 32) >> 6;
 				pd[c] = (vx_uint8)v;
 			}
@@ -1207,15 +1225,19 @@ int HafCpu_Remap_U32_U32_Nearest_Constant
 		for (vx_uint32 x = 0; x < dstWidth; ++x, pd += 4, ++pMapY_X)
 		{
 			int mx, my;
+			bool useBorder = false;
 			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
-				mx = 1; my = 1;
+				useBorder = true;
+				mx = 0; my = 0;
 			} else {
 				mx = (pMapY_X->x >> 3) + ((pMapY_X->x & 7) >> 2);
 				my = (pMapY_X->y >> 3) + ((pMapY_X->y & 7) >> 2);
 			}
 			for (int c = 0; c < 4; ++c)
 			{
-				if (mx >= 0 && my >= 0 && mx < (int)srcWidth && my < (int)srcHeight)
+				if (useBorder)
+					pd[c] = borderValue;
+				else if (mx >= 0 && my >= 0 && mx < (int)srcWidth && my < (int)srcHeight)
 						pd[c] = pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)mx * 4 + c];
 				else
 						pd[c] = borderValue;

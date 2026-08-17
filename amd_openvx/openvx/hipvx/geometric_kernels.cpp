@@ -2279,13 +2279,20 @@ Hip_Remap_RGB_RGB_Bilinear_Constant(uint dstWidth, uint dstHeight,
     int sw = (int)srcWidth, sh = (int)srcHeight;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
+        int map = remap[i];
+        bool useBorder = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
         float sx, sy, fx0, fy0;
         int x0, y0;
-        hip_remap_load_sxy(remap[i], &sx, &sy, &x0, &y0, &fx0, &fy0, sw, sh);
+        if (useBorder) {
+            sx = sy = 0.0f; x0 = y0 = 0; fx0 = fy0 = 0.0f;
+        } else {
+            hip_remap_load_sxy(map, &sx, &sy, &x0, &y0, &fx0, &fy0, sw, sh);
+        }
 
         float4 f;
         for (int c = 0; c < 3; c++) {
-            ((float *)&f)[c] = hip_bilinear_sample_RGB_constant((uchar *)pSrcImage, x0, y0, fx0, fy0, c, srcImageStrideInBytes, srcWidth, srcHeight, borderValue);
+            ((float *)&f)[c] = useBorder ? hip_unpack0(borderValue)
+                : hip_bilinear_sample_RGB_constant((uchar *)pSrcImage, x0, y0, fx0, fy0, c, srcImageStrideInBytes, srcWidth, srcHeight, borderValue);
         }
 
         int slot = i >> 2;
@@ -2516,13 +2523,20 @@ Hip_Remap_RGBX_RGBX_Bilinear_Constant(uint dstWidth, uint dstHeight,
     int sw = (int)srcWidth, sh = (int)srcHeight;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
+        int map = remap[i];
+        bool useBorder = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
         float sx, sy, fx0, fy0;
         int x0, y0;
-        hip_remap_load_sxy(remap[i], &sx, &sy, &x0, &y0, &fx0, &fy0, sw, sh);
+        if (useBorder) {
+            sx = sy = 0.0f; x0 = y0 = 0; fx0 = fy0 = 0.0f;
+        } else {
+            hip_remap_load_sxy(map, &sx, &sy, &x0, &y0, &fx0, &fy0, sw, sh);
+        }
 
         float4 f;
         for (int c = 0; c < 4; c++) {
-            ((float *)&f)[c] = hip_bilinear_sample_RGBX_constant((uchar *)pSrcImage, x0, y0, fx0, fy0, c, srcImageStrideInBytes, srcWidth, srcHeight, borderValue);
+            ((float *)&f)[c] = useBorder ? hip_unpack0(borderValue)
+                : hip_bilinear_sample_RGBX_constant((uchar *)pSrcImage, x0, y0, fx0, fy0, c, srcImageStrideInBytes, srcWidth, srcHeight, borderValue);
         }
 
         uint4 *out = (i < 4) ? &out0 : &out1;

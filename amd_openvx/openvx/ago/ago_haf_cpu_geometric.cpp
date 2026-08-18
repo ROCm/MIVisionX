@@ -415,6 +415,7 @@ int HafCpu_Remap_U8_U8_Bilinear
 	return AGO_SUCCESS;
 }
 
+
 // CPU scalar fallback for RGB (U24) bilinear remap.
 // SSE RGB bilinear remap: 2 pixels per iteration (load 3-byte pixels as masked 32-bit).
 int HafCpu_Remap_U24_U24_Bilinear
@@ -1055,6 +1056,7 @@ int HafCpu_Remap_U32_U32_Nearest
 	return AGO_SUCCESS;
 }
 
+
 int HafCpu_Remap_U24_U24_Bilinear_Constant
 (
 	vx_uint32				  dstWidth,
@@ -1070,43 +1072,71 @@ int HafCpu_Remap_U24_U24_Bilinear_Constant
 	vx_uint8				  borderValue
 )
 {
-	for (vx_uint32 y = 0; y < dstHeight; ++y)
+	auto scalar_pixel = [&](ago_coord2d_short_t *pMapY_X, vx_uint8 *pd) {
+		int mx, my, fx, fy;
+		bool useBorder = false;
+		if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
+			useBorder = true;
+			mx = 0; my = 0; fx = 0; fy = 0;
+		} else {
+			mx = pMapY_X->x >> 3;
+			my = pMapY_X->y >> 3;
+			fx = pMapY_X->x & 7;
+			fy = pMapY_X->y & 7;
+		}
+		int w00 = (8 - fx) * (8 - fy), w10 = fx * (8 - fy), w01 = (8 - fx) * fy, w11 = fx * fy;
+		for (int c = 0; c < 3; ++c)
+		{
+			int v00, v10, v01, v11;
+			if (useBorder) {
+				v00 = v10 = v01 = v11 = borderValue;
+			} else {
+				v00 = ((mx		 >= 0) && (my		 >= 0) && (mx		 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)mx * 3 + c] : borderValue;
+				v10 = ((mx + 1 >= 0) && (my		 >= 0) && (mx + 1 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)(mx + 1) * 3 + c] : borderValue;
+				v01 = ((mx		 >= 0) && (my + 1 >= 0) && (mx		 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)mx * 3 + c] : borderValue;
+				v11 = ((mx + 1 >= 0) && (my + 1 >= 0) && (mx + 1 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)(mx + 1) * 3 + c] : borderValue;
+			}
+			int v = (v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + 32) >> 6;
+			pd[c] = (vx_uint8)v;
+		}
+	};
+
+	// Fast path: the existing AVX undefined-border kernel is correct whenever
+	// every pixel's 2x2 neighborhood is fully inside the source image. For maps
+	// that keep interior dst pixels away from the source boundary, the rectangle
+	// [0, simdWidth) x [0, simdHeight) is safe. The last row and last few columns
+	// always fall back to scalar per-neighbor blending.
+	vx_uint32 simdWidth = (dstWidth >= 4) ? ((((int)srcWidth - 1) >> 2) << 2) : 0;
+	if (simdWidth > dstWidth) simdWidth = (dstWidth >> 2) << 2;
+	vx_uint32 simdHeight = (dstHeight > 1) ? (dstHeight - 1) : 0;
+
+	if (simdWidth > 0 && simdHeight > 0) {
+		HafCpu_Remap_U24_U24_Bilinear(simdWidth, simdHeight, pDstImage, dstImageStrideInBytes,
+		    srcWidth, srcHeight, pSrcImage, srcImageStrideInBytes, pMap, mapStrideInBytes);
+	}
+
+	for (vx_uint32 y = 0; y < simdHeight; ++y)
+	{
+		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes + simdWidth * sizeof(ago_coord2d_ushort_t));
+		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes + (size_t)simdWidth * 3;
+		for (vx_uint32 x = simdWidth; x < dstWidth; ++x, pd += 3, ++pMapY_X)
+		{
+			scalar_pixel(pMapY_X, pd);
+		}
+	}
+
+	for (vx_uint32 y = simdHeight; y < dstHeight; ++y)
 	{
 		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
 		for (vx_uint32 x = 0; x < dstWidth; ++x, pd += 3, ++pMapY_X)
 		{
-			int mx, my, fx, fy;
-			bool useBorder = false;
-			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
-				useBorder = true;
-				mx = 0; my = 0; fx = 0; fy = 0;
-			} else {
-				mx = pMapY_X->x >> 3;
-				my = pMapY_X->y >> 3;
-				fx = pMapY_X->x & 7;
-				fy = pMapY_X->y & 7;
-			}
-			int w00 = (8 - fx) * (8 - fy), w10 = fx * (8 - fy), w01 = (8 - fx) * fy, w11 = fx * fy;
-			for (int c = 0; c < 3; ++c)
-			{
-				int v00, v10, v01, v11;
-				if (useBorder) {
-					v00 = v10 = v01 = v11 = borderValue;
-				} else {
-					v00 = ((mx		 >= 0) && (my		 >= 0) && (mx		 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)mx * 3 + c] : borderValue;
-					v10 = ((mx + 1 >= 0) && (my		 >= 0) && (mx + 1 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)(mx + 1) * 3 + c] : borderValue;
-					v01 = ((mx		 >= 0) && (my + 1 >= 0) && (mx		 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)mx * 3 + c] : borderValue;
-					v11 = ((mx + 1 >= 0) && (my + 1 >= 0) && (mx + 1 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)(mx + 1) * 3 + c] : borderValue;
-				}
-				int v = (v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + 32) >> 6;
-				pd[c] = (vx_uint8)v;
-			}
+			scalar_pixel(pMapY_X, pd);
 		}
 	}
+
 	return AGO_SUCCESS;
 }
-
 int HafCpu_Remap_U24_U24_Nearest_Constant
 (
 	vx_uint32				  dstWidth,
@@ -1166,43 +1196,66 @@ int HafCpu_Remap_U32_U32_Bilinear_Constant
 	vx_uint8				  borderValue
 )
 {
-	for (vx_uint32 y = 0; y < dstHeight; ++y)
+	auto scalar_pixel = [&](ago_coord2d_short_t *pMapY_X, vx_uint8 *pd) {
+		int mx, my, fx, fy;
+		bool useBorder = false;
+		if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
+			useBorder = true;
+			mx = 0; my = 0; fx = 0; fy = 0;
+		} else {
+			mx = pMapY_X->x >> 3;
+			my = pMapY_X->y >> 3;
+			fx = pMapY_X->x & 7;
+			fy = pMapY_X->y & 7;
+		}
+		int w00 = (8 - fx) * (8 - fy), w10 = fx * (8 - fy), w01 = (8 - fx) * fy, w11 = fx * fy;
+		for (int c = 0; c < 4; ++c)
+		{
+			int v00, v10, v01, v11;
+			if (useBorder) {
+				v00 = v10 = v01 = v11 = borderValue;
+			} else {
+				v00 = ((mx		 >= 0) && (my		 >= 0) && (mx		 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)mx * 4 + c] : borderValue;
+				v10 = ((mx + 1 >= 0) && (my		 >= 0) && (mx + 1 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)(mx + 1) * 4 + c] : borderValue;
+				v01 = ((mx		 >= 0) && (my + 1 >= 0) && (mx		 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)mx * 4 + c] : borderValue;
+				v11 = ((mx + 1 >= 0) && (my + 1 >= 0) && (mx + 1 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)(mx + 1) * 4 + c] : borderValue;
+			}
+			int v = (v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + 32) >> 6;
+			pd[c] = (vx_uint8)v;
+		}
+	};
+
+	vx_uint32 simdWidth = (dstWidth >= 4) ? ((((int)srcWidth - 1) >> 2) << 2) : 0;
+	if (simdWidth > dstWidth) simdWidth = (dstWidth >> 2) << 2;
+	vx_uint32 simdHeight = (dstHeight > 1) ? (dstHeight - 1) : 0;
+
+	if (simdWidth > 0 && simdHeight > 0) {
+		HafCpu_Remap_U32_U32_Bilinear(simdWidth, simdHeight, pDstImage, dstImageStrideInBytes,
+		    srcWidth, srcHeight, pSrcImage, srcImageStrideInBytes, pMap, mapStrideInBytes);
+	}
+
+	for (vx_uint32 y = 0; y < simdHeight; ++y)
+	{
+		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes + simdWidth * sizeof(ago_coord2d_ushort_t));
+		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes + (size_t)simdWidth * 4;
+		for (vx_uint32 x = simdWidth; x < dstWidth; ++x, pd += 4, ++pMapY_X)
+		{
+			scalar_pixel(pMapY_X, pd);
+		}
+	}
+
+	for (vx_uint32 y = simdHeight; y < dstHeight; ++y)
 	{
 		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
 		for (vx_uint32 x = 0; x < dstWidth; ++x, pd += 4, ++pMapY_X)
 		{
-			int mx, my, fx, fy;
-			bool useBorder = false;
-			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
-				useBorder = true;
-				mx = 0; my = 0; fx = 0; fy = 0;
-			} else {
-				mx = pMapY_X->x >> 3;
-				my = pMapY_X->y >> 3;
-				fx = pMapY_X->x & 7;
-				fy = pMapY_X->y & 7;
-			}
-			int w00 = (8 - fx) * (8 - fy), w10 = fx * (8 - fy), w01 = (8 - fx) * fy, w11 = fx * fy;
-			for (int c = 0; c < 4; ++c)
-			{
-				int v00, v10, v01, v11;
-				if (useBorder) {
-					v00 = v10 = v01 = v11 = borderValue;
-				} else {
-					v00 = ((mx		 >= 0) && (my		 >= 0) && (mx		 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)mx * 4 + c] : borderValue;
-					v10 = ((mx + 1 >= 0) && (my		 >= 0) && (mx + 1 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)(mx + 1) * 4 + c] : borderValue;
-					v01 = ((mx		 >= 0) && (my + 1 >= 0) && (mx		 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)mx * 4 + c] : borderValue;
-					v11 = ((mx + 1 >= 0) && (my + 1 >= 0) && (mx + 1 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)(mx + 1) * 4 + c] : borderValue;
-				}
-				int v = (v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + 32) >> 6;
-				pd[c] = (vx_uint8)v;
-			}
+			scalar_pixel(pMapY_X, pd);
 		}
 	}
+
 	return AGO_SUCCESS;
 }
-
 int HafCpu_Remap_U32_U32_Nearest_Constant
 (
 	vx_uint32				  dstWidth,
@@ -1259,87 +1312,111 @@ int HafCpu_Remap_U8_U8_Bilinear_Constant
 	vx_uint32              srcImageStrideInBytes,
 	ago_coord2d_ushort_t  * pMap,
 	vx_uint32              mapStrideInBytes,
-	vx_uint8               border
+	vx_uint8               borderValue
 )
 {
 	__m128i zeromask = _mm_setzero_si128();
 	__m128i mapxy, mapfrac;
 
 	const __m128i sstride = _mm_set1_epi32(srcImageStrideInBytes);
-	const __m128i pborder = _mm_set1_epi32(border);
+	const __m128i pborder = _mm_set1_epi32(borderValue);
 	const __m128i round = _mm_set1_epi32((int)32);
 
 	unsigned char *pchDst = (unsigned char*)pDstImage;
-	unsigned char *pchDstlast = (unsigned char*)pDstImage + dstHeight*dstImageStrideInBytes;
 	unsigned char *pchMap = (unsigned char *)pMap;
 
-	while (pchDst < pchDstlast)
+	auto scalar_pixel = [&](ago_coord2d_short_t *pMapY_X) -> vx_uint8 {
+		int mx, my, fx, fy;
+		bool useBorder = false;
+		if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
+			useBorder = true;
+			mx = 0; my = 0; fx = 0; fy = 0;
+		} else {
+			mx = pMapY_X->x >> 3;
+			my = pMapY_X->y >> 3;
+			fx = pMapY_X->x & 7;
+			fy = pMapY_X->y & 7;
+		}
+		int w00 = (8 - fx) * (8 - fy), w10 = fx * (8 - fy), w01 = (8 - fx) * fy, w11 = fx * fy;
+		int v00, v10, v01, v11;
+		if (useBorder) {
+			v00 = v10 = v01 = v11 = borderValue;
+		} else {
+			v00 = ((mx		 >= 0) && (my		 >= 0) && (mx		 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)mx] : borderValue;
+			v10 = ((mx + 1 >= 0) && (my		 >= 0) && (mx + 1 < (int)srcWidth) && (my		 < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)(mx + 1)] : borderValue;
+			v01 = ((mx		 >= 0) && (my + 1 >= 0) && (mx		 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)mx] : borderValue;
+			v11 = ((mx + 1 >= 0) && (my + 1 >= 0) && (mx + 1 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)(mx + 1)] : borderValue;
+		}
+		return (vx_uint8)((v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + 32) >> 6);
+	};
+
+	// SIMD path is valid for vectors where every pixel's 2x2 neighborhood is fully
+	// inside the source image. For the last row or last columns we must use scalar
+	// per-neighbor blending to match OpenVX constant-border semantics.
+	// lastSimdCol is the largest multiple-of-4 dst column count that is guaranteed
+	// interior. A SIMD vector covers 4 pixels; the rightmost covered pixel must
+	// satisfy floor(src_x) + 1 < srcWidth. With the standard +0.5 shift this means
+	// dst column cx <= srcWidth - 5. For general maps we keep the same conservative
+	// bound and fall back to scalar for the rightmost 4-pixel block.
+	vx_uint32 lastSimdCol = 0;
+	if (dstWidth > 4 && srcWidth > 4) {
+		lastSimdCol = (vx_uint32)(srcWidth - 5) + 1;
+		lastSimdCol = (lastSimdCol >> 2) << 2;
+		if (lastSimdCol > dstWidth) lastSimdCol = (dstWidth >> 2) << 2;
+	}
+	vx_uint32 scalarRowStart = (dstHeight > 1) ? (dstHeight - 1) : dstHeight;
+
+	for (vx_uint32 y = 0; y < scalarRowStart; ++y)
 	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)pchMap;
-		unsigned int *pdst = (unsigned int *)pchDst;
-		unsigned int *pdstLast = pdst + ((dstWidth+3) >> 2);
-		while (pdst < pdstLast)
+		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)(pchMap + y * mapStrideInBytes);
+		unsigned int *pdst = (unsigned int *)(pchDst + y * dstImageStrideInBytes);
+
+		for (vx_uint32 x = 0; x < lastSimdCol; x += 4)
 		{
 			__m128i temp0, temp1, w_xy, oneminusxy, p12, p34, mask;
 			unsigned char *p0;
-			// read remap table location for (x,y)
-			mapxy = _mm_loadu_si128((__m128i *)pMapY_X);		// mapped table [src_y3,src_x3 .....src_y2,src_x1,src_y0,src_x0]
-			// check for boundary values: will be substituted by border.
+			mapxy = _mm_loadu_si128((__m128i *)pMapY_X);
 			mask = _mm_cmpeq_epi16(mapxy, CONST_FFFF);
 			mapxy = _mm_andnot_si128(mask, mapxy);
-			temp0 = _mm_and_si128(mask, zeromask);
-			mapxy = _mm_or_si128(mapxy, temp0);			// combined result
-			//mask = _mm_movemask_epi8(temp1);
+			mapxy = _mm_or_si128(mapxy, _mm_and_si128(mask, zeromask));
 
-			// get the fractional part for rounding
-			// get the fractional part for rounding
-			mapfrac = _mm_and_si128(mapxy, CONST_7);					// [dy3, dx3.........dy0, dx0]
-			oneminusxy = _mm_sub_epi16(_mm_set1_epi16(8), mapfrac);		// [1-dy3, 1-dx3........1-dy0, 1-dx0]
-			mapxy = _mm_srli_epi16(mapxy, 3);							// [y3, x3.............y0, x0]
-			// calculate (mapxy.y*srcImageStrideInBytes + mapxy.x)
-			temp0 = _mm_srli_epi32(mapxy, 16);					//[0000src_y4......0000src_y0]
-			mapxy = _mm_and_si128(mapxy, CONST_0000FFFF);		// [0000src_x4......0000src_x0]
-			temp0 = _mm_mullo_epi32(temp0, sstride);				// temp0 = src_y*stride;
-			mapxy = _mm_add_epi32(mapxy, temp0);				// mapxy = src_y*stride + src_x;
+			mapfrac = _mm_and_si128(mapxy, CONST_7);
+			oneminusxy = _mm_sub_epi16(_mm_set1_epi16(8), mapfrac);
+			mapxy = _mm_srli_epi16(mapxy, 3);
+			temp0 = _mm_srli_epi32(mapxy, 16);
+			mapxy = _mm_and_si128(mapxy, CONST_0000FFFF);
+			temp0 = _mm_mullo_epi32(temp0, sstride);
+			mapxy = _mm_add_epi32(mapxy, temp0);
 
-				// load the pixels 2 pixels in one load
 			p0 = &pSrcImage[M128I(mapxy).m128i_i32[0]];
 			p12 = _mm_cvtsi32_si128(((unsigned int *)p0)[0]);
 			p34 = _mm_cvtsi32_si128(((unsigned int *)(p0 + srcImageStrideInBytes))[0]);
-			temp0 = _mm_unpacklo_epi16(oneminusxy, mapfrac);			// [dy1, 1-dy1, dx1, 1-dx1, dy0, 1-dy0, dx0, 1-dx0]
-			temp1 = _mm_unpacklo_epi32(temp0, temp0);					// [dy0, 1-dy0, dy0, 1-dy0, dx0, 1-dx0, dx0, 1-dx0]
-			temp0 = _mm_unpackhi_epi32(temp0, temp0);					// [dy1, 1-dy1, dy1, 1-dy1, dx1, 1-dx1, dx1, 1-dx1]
-
-			w_xy = _mm_unpacklo_epi64(temp1, temp0);					// [dx1, 1-dx1, dx1, 1-dx1 dx0, 1-dx0, dx0, 1-dx0]
-			temp1 = _mm_unpackhi_epi64(temp1, temp0);					// [dy1, 1-dy1, dy1, 1-dy1, dy0, 1-dy0, dy0, 1-dy0]
+			temp0 = _mm_unpacklo_epi16(oneminusxy, mapfrac);
+			temp1 = _mm_unpacklo_epi32(temp0, temp0);
+			temp0 = _mm_unpackhi_epi32(temp0, temp0);
+			w_xy = _mm_unpacklo_epi64(temp1, temp0);
+			temp1 = _mm_unpackhi_epi64(temp1, temp0);
 			temp1 = _mm_shufflelo_epi16(temp1, 0xd8);
-			temp1 = _mm_shufflehi_epi16(temp1, 0xd8);					// [dy1, dy1, 1-dy1, 1-dy1, dy0, dy0, 1-dy0, 1-dy0]
-
-			// calculate weight 
-			w_xy = _mm_mullo_epi16(w_xy, temp1);						// [w3, w2, w1, w0]	// for 2 
+			temp1 = _mm_shufflehi_epi16(temp1, 0xd8);
+			w_xy = _mm_mullo_epi16(w_xy, temp1);
 			p12 = _mm_unpacklo_epi16(p12, p34);
 			p0 = &pSrcImage[M128I(mapxy).m128i_i32[1]];
 			temp0 = _mm_cvtsi32_si128(((unsigned int *)p0)[0]);
 			p34 = _mm_cvtsi32_si128(((unsigned int *)(p0 + srcImageStrideInBytes))[0]);
 			temp0 = _mm_unpacklo_epi16(temp0, p34);
 			p12 = _mm_unpacklo_epi32(p12, temp0);
-			p12 = _mm_unpacklo_epi8(p12, zeromask);				// [p3, p2, p1, p0] for 2
+			p12 = _mm_unpacklo_epi8(p12, zeromask);
+			p12 = _mm_madd_epi16(p12, w_xy);
+			p34 = _mm_hadd_epi32(p12, p12);
 
-			// multiply add with weight
-			p12 = _mm_madd_epi16(p12, w_xy);			// (w3p3+w2p2),(w0p0+w1p1) for 2
-			p34 = _mm_hadd_epi32(p12, p12);				// dst 0 and 1
-
-			// do computation for dst 2 and 3
-			temp0 = _mm_unpackhi_epi16(oneminusxy, mapfrac);			// [dy3, 1-dy3, dx3, 1-dx3, dy2, 1-dy2, dx2, 1-dx2]
-			temp1 = _mm_unpacklo_epi32(temp0, temp0);					// [dy2, 1-dy2, dy2, 1-dy2, dx2, 1-dx2, dx2, 1-dx2]
-			temp0 = _mm_unpackhi_epi32(temp0, temp0);					// [dy3, 1-dy3, dy3, 1-dy3, dx3, 1-dx3, dx3, 1-dx3]
-			w_xy = _mm_unpacklo_epi64(temp1, temp0);					// [dx3, 1-dx3, dx3, 1-dx3, dx2, 1-dx2, dx2, 1-dx2]
-			temp1 = _mm_unpackhi_epi64(temp1, temp0);					// [dy3, 1-dy3, dy3, 1-dy3, dy2, 1-dy2, dy2, 1-dy2]
+			temp0 = _mm_unpackhi_epi16(oneminusxy, mapfrac);
+			temp1 = _mm_unpacklo_epi32(temp0, temp0);
+			temp0 = _mm_unpackhi_epi32(temp0, temp0);
+			w_xy = _mm_unpacklo_epi64(temp1, temp0);
+			temp1 = _mm_unpackhi_epi64(temp1, temp0);
 			temp1 = _mm_shufflelo_epi16(temp1, 0xd8);
-			temp1 = _mm_shufflehi_epi16(temp1, 0xd8);					// [dy3, dy3, 1-dy3, 1-dy3, dy0, dy2, 1-dy2, 1-dy2]
-
-			// calculate weight 
-			w_xy = _mm_mullo_epi16(w_xy, temp1);						// [w3, w2, w1, w0]	// for 2 and 3 
+			temp1 = _mm_shufflehi_epi16(temp1, 0xd8);
+			w_xy = _mm_mullo_epi16(w_xy, temp1);
 			p0 = &pSrcImage[M128I(mapxy).m128i_i32[2]];
 			p12 = _mm_cvtsi32_si128(((unsigned int *)p0)[0]);
 			temp0 = _mm_cvtsi32_si128(((unsigned int *)(p0 + srcImageStrideInBytes))[0]);
@@ -1349,38 +1426,42 @@ int HafCpu_Remap_U8_U8_Bilinear_Constant
 			temp1 = _mm_cvtsi32_si128(((unsigned int *)(p0 + srcImageStrideInBytes))[0]);
 			temp0 = _mm_unpacklo_epi16(temp0, temp1);
 			p12 = _mm_unpacklo_epi32(p12, temp0);
-			//w_xy = _mm_shuffle_epi32(w_xy, 0x4e);
-			p12 = _mm_unpacklo_epi8(p12, zeromask);				// [p3, p2, p1, p0] for 2
-
-			// multiply add with weight
-			p12 = _mm_madd_epi16(p12, w_xy);			// (w3p3+w2p2),(w0p0+w1p1) for 2
-			temp0 = _mm_hadd_epi32(p12, p12);				// dst 0 and 1
-			//p34 = _mm_shuffle_epi32(p34, 0xd8);
-
-			//temp0 = _mm_shuffle_epi32(temp0, 0xd8);
+			p12 = _mm_unpacklo_epi8(p12, zeromask);
+			p12 = _mm_madd_epi16(p12, w_xy);
+			temp0 = _mm_hadd_epi32(p12, p12);
 			p34 = _mm_unpacklo_epi64(p34, temp0);
 			p34 = _mm_add_epi32(p34, round);
 			p34 = _mm_srli_epi32(p34, 6);
-
 			p34 = _mm_andnot_si128(mask, p34);
 			mask = _mm_and_si128(mask, pborder);
-			p34 = _mm_or_si128(p34, mask);			// combined result
-			// convert 32 bit to 8 bit
+			p34 = _mm_or_si128(p34, mask);
 			p34 = _mm_packus_epi32(p34, zeromask);
 			p34 = _mm_packus_epi16(p34, zeromask);
-
-			// read each src pixel from mapped position and copy to dst
 			*pdst++ = M128I(p34).m128i_i32[0];
 
 			pMapY_X += 4;
 		}
-		pchDst += dstImageStrideInBytes;
-		pchMap += mapStrideInBytes;
+
+		for (vx_uint32 x = lastSimdCol; x < dstWidth; ++x, ++pMapY_X)
+		{
+			unsigned char *pd = (unsigned char *)pdst + (x - lastSimdCol);
+			pd[0] = scalar_pixel(pMapY_X);
+		}
+	}
+
+	if (dstHeight > 1)
+	{
+		vx_uint32 y = dstHeight - 1;
+		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)(pchMap + y * mapStrideInBytes);
+		unsigned char *pd = pchDst + y * dstImageStrideInBytes;
+		for (vx_uint32 x = 0; x < dstWidth; ++x, ++pd, ++pMapY_X)
+		{
+			*pd = scalar_pixel(pMapY_X);
+		}
 	}
 
 	return AGO_SUCCESS;
 }
-
 // The dst pixels are nearest affine transformed (truncate towards zero rounding). Bounday_mode is not specified. 
 // If the transformed location is out of bounds: 0 or max pixel will be used as substitution.
 int HafCpu_WarpAffine_U8_U8_Nearest

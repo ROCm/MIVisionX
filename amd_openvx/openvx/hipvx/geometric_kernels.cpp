@@ -2067,6 +2067,16 @@ __device__ __forceinline__ float hip_bilinear_sample_RGBX_constant(uchar *pSrc, 
     return fmaf(v1, (1.0f - fy0), v0 * fy0);
 }
 
+__device__ __forceinline__ void hip_remap_load_sxy_constant(int map, float *sx, float *sy, int *x0, int *y0, float *fx0, float *fy0)
+{
+    *sx = ((float)(map & 0xffff)) * 0.125f;
+    *sy = ((float)(map >> 16)) * 0.125f;
+    *x0 = (int)floorf(*sx);
+    *y0 = (int)floorf(*sy);
+    float fx1 = *sx - (float)(*x0); *fx0 = 1.0f - fx1;
+    float fy1 = *sy - (float)(*y0); *fy0 = 1.0f - fy1;
+}
+
 __device__ __forceinline__ void hip_remap_load_sxy(int map, float *sx, float *sy, int *x0, int *y0, float *fx0, float *fy0, int srcWidth, int srcHeight)
 {
     *sx = ((float)(map & 0xffff)) * 0.125f;
@@ -2079,12 +2089,10 @@ __device__ __forceinline__ void hip_remap_load_sxy(int map, float *sx, float *sy
     *y0 = max(0, min(*y0, srcHeight - 2));
 }
 
-__device__ __forceinline__ void hip_remap_load_sxy_nearest(int map, int *sx, int *sy, int srcW1, int srcH1)
+__device__ __forceinline__ void hip_remap_load_sxy_nearest(int map, int *sx, int *sy)
 {
     *sx = ((map & 0xffff) + 4) >> 3;
     *sy = (map + 0x00040000) >> 19;
-    *sx = max(0, min(*sx, srcW1));
-    *sy = max(0, min(*sy, srcH1));
 }
 
 // Each thread produces up to 8 pixels. A full block is written with the wide
@@ -2220,12 +2228,10 @@ Hip_Remap_RGB_RGB_Nearest(uint dstWidth, uint dstHeight,
     out[0] = (uint3)0;
     out[1] = (uint3)0;
 
-    int srcW1 = (int)srcWidth - 1;
-    int srcH1 = (int)srcHeight - 1;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
         int sx, sy;
-        hip_remap_load_sxy_nearest(remap[i], &sx, &sy, srcW1, srcH1);
+        hip_remap_load_sxy_nearest(remap[i], &sx, &sy);
         uint srcIdx = (uint)(sy * srcImageStrideInBytes + sx * 3);
         int slot = i >> 2;
         int sub = i & 3;
@@ -2276,7 +2282,6 @@ Hip_Remap_RGB_RGB_Bilinear_Constant(uint dstWidth, uint dstHeight,
     out[0] = (uint3)0;
     out[1] = (uint3)0;
 
-    int sw = (int)srcWidth, sh = (int)srcHeight;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
         int map = remap[i];
@@ -2286,7 +2291,7 @@ Hip_Remap_RGB_RGB_Bilinear_Constant(uint dstWidth, uint dstHeight,
         if (useBorder) {
             sx = sy = 0.0f; x0 = y0 = 0; fx0 = fy0 = 0.0f;
         } else {
-            hip_remap_load_sxy(map, &sx, &sy, &x0, &y0, &fx0, &fy0, sw, sh);
+            hip_remap_load_sxy_constant(map, &sx, &sy, &x0, &y0, &fx0, &fy0);
         }
 
         float4 f;
@@ -2344,12 +2349,10 @@ Hip_Remap_RGB_RGB_Nearest_Constant(uint dstWidth, uint dstHeight,
     out[0] = (uint3)0;
     out[1] = (uint3)0;
 
-    int srcW1 = (int)srcWidth - 1;
-    int srcH1 = (int)srcHeight - 1;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
         int sx, sy;
-        hip_remap_load_sxy_nearest(remap[i], &sx, &sy, srcW1, srcH1);
+        hip_remap_load_sxy_nearest(remap[i], &sx, &sy);
         int slot = i >> 2;
         int sub = i & 3;
         for (int c = 0; c < 3; c++) {
@@ -2466,12 +2469,10 @@ Hip_Remap_RGBX_RGBX_Nearest(uint dstWidth, uint dstHeight,
     uint4 out0 = (uint4)0;
     uint4 out1 = (uint4)0;
 
-    int srcW1 = (int)srcWidth - 1;
-    int srcH1 = (int)srcHeight - 1;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
         int sx, sy;
-        hip_remap_load_sxy_nearest(remap[i], &sx, &sy, srcW1, srcH1);
+        hip_remap_load_sxy_nearest(remap[i], &sx, &sy);
         uint srcIdx = (uint)(sy * srcImageStrideInBytes + sx * 4);
         uint4 *out = (i < 4) ? &out0 : &out1;
         for (int c = 0; c < 4; c++) {
@@ -2520,7 +2521,6 @@ Hip_Remap_RGBX_RGBX_Bilinear_Constant(uint dstWidth, uint dstHeight,
     uint4 out0 = (uint4)0;
     uint4 out1 = (uint4)0;
 
-    int sw = (int)srcWidth, sh = (int)srcHeight;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
         int map = remap[i];
@@ -2530,7 +2530,7 @@ Hip_Remap_RGBX_RGBX_Bilinear_Constant(uint dstWidth, uint dstHeight,
         if (useBorder) {
             sx = sy = 0.0f; x0 = y0 = 0; fx0 = fy0 = 0.0f;
         } else {
-            hip_remap_load_sxy(map, &sx, &sy, &x0, &y0, &fx0, &fy0, sw, sh);
+            hip_remap_load_sxy_constant(map, &sx, &sy, &x0, &y0, &fx0, &fy0);
         }
 
         float4 f;
@@ -2587,12 +2587,10 @@ Hip_Remap_RGBX_RGBX_Nearest_Constant(uint dstWidth, uint dstHeight,
     uint4 out0 = (uint4)0;
     uint4 out1 = (uint4)0;
 
-    int srcW1 = (int)srcWidth - 1;
-    int srcH1 = (int)srcHeight - 1;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
         int sx, sy;
-        hip_remap_load_sxy_nearest(remap[i], &sx, &sy, srcW1, srcH1);
+        hip_remap_load_sxy_nearest(remap[i], &sx, &sy);
         uint4 *out = (i < 4) ? &out0 : &out1;
         for (int c = 0; c < 4; c++) {
             uint v = borderValue;

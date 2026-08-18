@@ -75,6 +75,11 @@ ground-plane projection maps the road to a bird's-eye view, so a dumped mask
 shows the detected markings from above; warping it back through the same
 homography lands them on the lane lines in the original frame.
 
+A forward camera also sees sky above and the car's own hood or dashboard below,
+which the edge detector would otherwise pick up instead of the road. `--crop
+<top>,<bottom>` trims both off before processing; the default `0.08,0.12` suits
+comma10k, and a different camera mounting may want other fractions.
+
 There is one real video here, so the app feeds every camera the same frame:
 the workload per cycle is what the measurement is about, not a true surround
 stitch. A dataset with a real multi-camera rig (nuScenes above) would give each

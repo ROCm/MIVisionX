@@ -132,6 +132,11 @@ struct Config
     vx_uint32 timeoutMs = 10000;
     vx_uint8 cannyLower = 20;
     vx_uint8 cannyUpper = 50;
+    // Fractions of the raw frame trimmed before processing. A forward road
+    // camera sees sky above and the car's hood or dashboard below; cropping
+    // both keeps the pipeline on the road rather than on the vehicle interior.
+    float cropTop = 0.08f;
+    float cropBottom = 0.12f;
     bool manualSchedule = false;
     bool placementGiven = false;
     const char *placement[STAGE_COUNT] = {"gpu", "cpu", "gpu"};
@@ -270,6 +275,9 @@ static void print_usage(const char *argv0)
            "  --no-display               skip the OpenCV window, for timing runs\n"
            "  --dump <dir>               write each lane mask as a png\n"
            "  --canny <lower>,<upper>    hysteresis thresholds (default 20,50)\n"
+           "  --crop <top>,<bottom>      fractions trimmed off the frame before\n"
+           "                             processing, to drop sky and the car interior\n"
+           "                             (default 0.08,0.12)\n"
            "  --timeout <ms>             graph and event timeout (default 10000)\n"
            "\n"
            "Examples:\n"
@@ -366,6 +374,18 @@ static bool parse_args(int argc, char *argv[], Config &cfg)
             }
             cfg.cannyLower = (vx_uint8)lower;
             cfg.cannyUpper = (vx_uint8)upper;
+        }
+        else if (arg == "--crop" && hasValue)
+        {
+            float top = 0.0f, bottom = 0.0f;
+            if (sscanf(argv[++i], "%f,%f", &top, &bottom) != 2 ||
+                top < 0.0f || bottom < 0.0f || top + bottom >= 1.0f)
+            {
+                printf("ERROR: --crop expects <top>,<bottom> fractions with top+bottom < 1\n");
+                return false;
+            }
+            cfg.cropTop = top;
+            cfg.cropBottom = bottom;
         }
         else
         {
@@ -568,6 +588,8 @@ public:
     bool open(const Config &cfg)
     {
         m_size = cv::Size((int)cfg.width, (int)cfg.height);
+        m_cropTop = cfg.cropTop;
+        m_cropBottom = cfg.cropBottom;
         if (!cfg.videoPath.empty())
         {
             m_isFile = true;
@@ -668,6 +690,12 @@ private:
             if (!m_capture.read(frame) || frame.empty())
                 return false;
         }
+        // Trim the sky and the car interior before the resize, so the road
+        // fills the processing frame the pipeline works on.
+        int top = (int)(m_cropTop * frame.rows);
+        int bottom = (int)(m_cropBottom * frame.rows);
+        if (top + bottom < frame.rows)
+            frame = frame(cv::Rect(0, top, frame.cols, frame.rows - top - bottom));
         if (frame.size() != m_size)
             cv::resize(frame, frame, m_size);
         cv::cvtColor(frame, luma, cv::COLOR_BGR2GRAY);
@@ -677,6 +705,8 @@ private:
     cv::VideoCapture m_capture;
     bool m_isFile = false;
     cv::Size m_size;
+    float m_cropTop = 0.0f;
+    float m_cropBottom = 0.0f;
     std::vector<cv::Mat> m_frames;
     size_t m_next = 0;
     double m_preloadMs = 0.0;

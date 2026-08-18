@@ -130,8 +130,8 @@ struct Config
     bool display = true;
     std::string dumpDir;
     vx_uint32 timeoutMs = 10000;
-    vx_uint8 cannyLower = 80;
-    vx_uint8 cannyUpper = 100;
+    vx_uint8 cannyLower = 20;
+    vx_uint8 cannyUpper = 50;
     bool manualSchedule = false;
     bool placementGiven = false;
     const char *placement[STAGE_COUNT] = {"gpu", "cpu", "gpu"};
@@ -269,7 +269,7 @@ static void print_usage(const char *argv0)
            "                             measures the pipeline and not the video decoder\n"
            "  --no-display               skip the OpenCV window, for timing runs\n"
            "  --dump <dir>               write each lane mask as a png\n"
-           "  --canny <lower>,<upper>    hysteresis thresholds (default 80,100)\n"
+           "  --canny <lower>,<upper>    hysteresis thresholds (default 20,50)\n"
            "  --timeout <ms>             graph and event timeout (default 10000)\n"
            "\n"
            "Examples:\n"
@@ -408,7 +408,10 @@ static vx_remap create_undistort_table(const Config &cfg, vx_context context)
     const float cx = cfg.width * 0.5f;
     const float cy = cfg.height * 0.5f;
     const float norm = 1.0f / sqrtf(cx * cx + cy * cy);
-    const float k1 = -0.22f, k2 = 0.05f;
+    // A mild barrel model. A forward road camera is close to rectilinear, so
+    // large coefficients only push the image edges inward and leave a black
+    // ring the edge detector then fires on; these keep the correction gentle.
+    const float k1 = -0.06f, k2 = 0.0f;
 
     for (vx_uint32 y = 0; y < cfg.height; y++)
     {
@@ -444,17 +447,22 @@ static vx_matrix create_ground_plane(const Config &cfg, vx_context context)
 
     const float w = (float)cfg.width;
     const float h = (float)cfg.height;
+    // Source trapezoid: a lane-width patch of road ahead, from just below the
+    // horizon to the hood. Tuned against a forward road camera (comma10k).
     cv::Point2f camera[4] = {
-        cv::Point2f(0.40f * w, 0.62f * h),
-        cv::Point2f(0.60f * w, 0.62f * h),
-        cv::Point2f(0.92f * w, 0.95f * h),
-        cv::Point2f(0.08f * w, 0.95f * h)
+        cv::Point2f(0.43f * w, 0.58f * h),
+        cv::Point2f(0.57f * w, 0.58f * h),
+        cv::Point2f(0.87f * w, 0.90f * h),
+        cv::Point2f(0.13f * w, 0.90f * h)
     };
+    // Destination spans the full frame, so the projection has no internal black
+    // boundary for the edge detector to fire on; the warp border is replicated
+    // rather than filled, keeping the strong lane ridges as the only edges.
     cv::Point2f ground[4] = {
-        cv::Point2f(0.25f * w, 0.0f),
-        cv::Point2f(0.75f * w, 0.0f),
-        cv::Point2f(0.75f * w, h),
-        cv::Point2f(0.25f * w, h)
+        cv::Point2f(0.0f, 0.0f),
+        cv::Point2f(w, 0.0f),
+        cv::Point2f(w, h),
+        cv::Point2f(0.0f, h)
     };
     cv::Mat groundToCamera = cv::getPerspectiveTransform(ground, camera);
 
@@ -908,7 +916,20 @@ static StageNodes build_surround(const Config &cfg, Pipeline &pipe, vx_graph gra
     const char *target = stage_target(cfg, STAGE_SURROUND);
     std::vector<vx_image> temporaries;
     StageNodes stage;
-    vx_image blended = nullptr;
+
+    // The projections are averaged, not summed. A surround view blends
+    // overlapping ground projections; a saturating U8 sum of N of them would
+    // blow the road out to white and bury the lane markings. Each projection is
+    // accumulated into an S16 image (N*255 fits, so nothing saturates), then a
+    // single convert back to U8 shifts right by ceil(log2 N) to form the mean.
+    // With one camera there is nothing to average and the projection is written
+    // straight to the output.
+    vx_int32 blendShift = 0;
+    while ((1u << blendShift) < cfg.cameras)
+        blendShift++;
+
+    vx_image accumulator = nullptr; // S16 running sum, once more than one camera
+    vx_image firstProjection = nullptr;
 
     for (vx_uint32 camera = 0; camera < cfg.cameras; camera++)
     {
@@ -925,12 +946,12 @@ static StageNodes build_surround(const Config &cfg, Pipeline &pipe, vx_graph gra
         stage.inputs.push_back(remap);
         place_bordered(pipe, vxGaussian3x3Node(graph, undistorted, denoised), target);
 
-        // The last write of the chain goes straight to the stage output.
-        const bool lastCamera = (camera + 1 == cfg.cameras);
-        vx_image projected = output;
-        if (!lastCamera || blended)
+        // With one camera the warp writes straight to the stage output.
+        const bool single = (cfg.cameras == 1);
+        vx_image projected = single ? output
+                                    : vxCreateVirtualImage(graph, cfg.width, cfg.height, VX_DF_IMAGE_U8);
+        if (!single)
         {
-            projected = vxCreateVirtualImage(graph, cfg.width, cfg.height, VX_DF_IMAGE_U8);
             ERROR_CHECK_OBJECT(projected);
             temporaries.push_back(projected);
         }
@@ -940,25 +961,39 @@ static StageNodes build_surround(const Config &cfg, Pipeline &pipe, vx_graph gra
         stage.output = warp;
         stage.outputIndex = 3;
 
-        if (!blended)
+        if (single)
+            continue;
+
+        if (!firstProjection)
         {
-            blended = projected;
+            // Hold the first projection; the S16 sum starts when the second
+            // arrives, since Add's S16 output takes two U8 inputs.
+            firstProjection = projected;
+            continue;
         }
+
+        vx_image nextSum = vxCreateVirtualImage(graph, cfg.width, cfg.height, VX_DF_IMAGE_S16);
+        ERROR_CHECK_OBJECT(nextSum);
+        temporaries.push_back(nextSum);
+        if (!accumulator)
+            place(pipe, vxAddNode(graph, firstProjection, projected, VX_CONVERT_POLICY_SATURATE, nextSum), target);
         else
-        {
-            vx_image merged = output;
-            if (!lastCamera)
-            {
-                merged = vxCreateVirtualImage(graph, cfg.width, cfg.height, VX_DF_IMAGE_U8);
-                ERROR_CHECK_OBJECT(merged);
-                temporaries.push_back(merged);
-            }
-            vx_node add = vxAddNode(graph, blended, projected, VX_CONVERT_POLICY_SATURATE, merged);
-            place(pipe, add, target);
-            blended = merged;
-            stage.output = add;
-            stage.outputIndex = 3;
-        }
+            place(pipe, vxAddNode(graph, accumulator, projected, VX_CONVERT_POLICY_SATURATE, nextSum), target);
+        accumulator = nextSum;
+    }
+
+    if (accumulator)
+    {
+        // Divide the running sum by the next power of two at or above N to make
+        // the blended mean, writing the U8 result to the stage output.
+        vx_scalar shift = vxCreateScalar(pipe.context, VX_TYPE_INT32, &blendShift);
+        ERROR_CHECK_OBJECT(shift);
+        vx_node mean = vxConvertDepthNode(graph, accumulator, output,
+                                          VX_CONVERT_POLICY_SATURATE, shift);
+        place(pipe, mean, target);
+        ERROR_CHECK_STATUS(vxReleaseScalar(&shift));
+        stage.output = mean;
+        stage.outputIndex = 1;
     }
 
     for (size_t i = 0; i < temporaries.size(); i++)

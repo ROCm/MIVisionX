@@ -63,7 +63,17 @@ cd -
 # comma10k frames are 1164x874; the app resizes to --size
 ./adasPipeline --video "/tmp/comma10k/img_%04d.png" --compare \
     --frames 8 --size 1164x874 --cameras 4 --filters 6
+
+# write the lane mask for each frame to inspect the detection
+./adasPipeline --video "/tmp/comma10k/img_%04d.png" --mode staged \
+    --frames 8 --size 1164x874 --no-display --dump /tmp/lanes
 ```
+
+The default calibration and Canny thresholds are tuned for a forward road
+camera like comma10k, so the lane markings ahead come through in the mask. The
+ground-plane projection maps the road to a bird's-eye view, so a dumped mask
+shows the detected markings from above; warping it back through the same
+homography lands them on the lane lines in the original frame.
 
 There is one real video here, so the app feeds every camera the same frame:
 the workload per cycle is what the measurement is about, not a true surround

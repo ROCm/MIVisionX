@@ -136,7 +136,7 @@ struct Config
     // camera sees sky above and the car's hood or dashboard below; cropping
     // both keeps the pipeline on the road rather than on the vehicle interior.
     float cropTop = 0.08f;
-    float cropBottom = 0.12f;
+    float cropBottom = 0.18f;
     bool manualSchedule = false;
     bool placementGiven = false;
     const char *placement[STAGE_COUNT] = {"gpu", "cpu", "gpu"};
@@ -277,7 +277,7 @@ static void print_usage(const char *argv0)
            "  --canny <lower>,<upper>    hysteresis thresholds (default 20,50)\n"
            "  --crop <top>,<bottom>      fractions trimmed off the frame before\n"
            "                             processing, to drop sky and the car interior\n"
-           "                             (default 0.08,0.12)\n"
+           "                             (default 0.08,0.18)\n"
            "  --timeout <ms>             graph and event timeout (default 10000)\n"
            "\n"
            "Examples:\n"

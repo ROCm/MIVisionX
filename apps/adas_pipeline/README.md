@@ -77,7 +77,7 @@ homography lands them on the lane lines in the original frame.
 
 A forward camera also sees sky above and the car's own hood or dashboard below,
 which the edge detector would otherwise pick up instead of the road. `--crop
-<top>,<bottom>` trims both off before processing; the default `0.08,0.12` suits
+<top>,<bottom>` trims both off before processing; the default `0.08,0.18` suits
 comma10k, and a different camera mounting may want other fractions.
 
 There is one real video here, so the app feeds every camera the same frame:

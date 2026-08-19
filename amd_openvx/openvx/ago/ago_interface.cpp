@@ -410,11 +410,15 @@ static const char * agoReadLine(char * line, int size, const char * str)
     return str;
 }
 
-static void agoUpdateLine(char * line, std::vector< std::pair< std::string, std::string > >& vars, std::string localPrefix)
+static void agoUpdateLine(char * line, size_t line_size, std::vector< std::pair< std::string, std::string > >& vars, std::string localPrefix)
 {
-    char lineOriginal[2048]; strcpy(lineOriginal, line);
+    if (line_size == 0) return;
+    const int cap = (int)(line_size - 1);           // reserve last byte for the terminating NUL
+    char lineOriginal[2048];
+    strncpy(lineOriginal, line, sizeof(lineOriginal) - 1);
+    lineOriginal[sizeof(lineOriginal) - 1] = 0;
     int ki = 0;
-    for (int i = 0; lineOriginal[i]; i++, ki++) {
+    for (int i = 0; lineOriginal[i] && ki < cap; i++, ki++) {
         line[ki] = lineOriginal[i];
         if (lineOriginal[i] == '$' && lineOriginal[i + 1] >= 'A' && lineOriginal[i + 1] <= 'Z') {
             // get variable name
@@ -425,7 +429,8 @@ static void agoUpdateLine(char * line, std::vector< std::pair< std::string, std:
             // search variable name
             for (std::vector< std::pair< std::string, std::string > >::iterator it = vars.begin(); it != vars.end(); ++it) {
                 if (!strncmp(it->first.c_str(), s, k)) {
-                    strcpy(&line[ki], it->second.c_str());
+                    strncpy(&line[ki], it->second.c_str(), (size_t)(cap - ki));
+                    line[cap] = 0;
                     ki = (int)strlen(line) - 1;
                     i += k;
                     break;
@@ -433,9 +438,10 @@ static void agoUpdateLine(char * line, std::vector< std::pair< std::string, std:
             }
         }
         else if (lineOriginal[i] == '$' && lineOriginal[i + 1] == '!') {
-            strcpy(&line[ki], localPrefix.c_str());
+            strncpy(&line[ki], localPrefix.c_str(), (size_t)(cap - ki));
+            line[cap] = 0;
             ki = (int)strlen(line) - 1;
-            line[++ki] = '!';
+            if (ki + 1 < cap) line[++ki] = '!';
             i += 1;
         }
     }
@@ -508,7 +514,7 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
             if (dumpToConsole) agoAddLogEntry(NULL, VX_SUCCESS, "%s\n", line+pos);
             lineno++;
         }
-        agoUpdateLine(line, vars, localPrefix);
+        agoUpdateLine(line, sizeof(line), vars, localPrefix);
         char lineCopy[sizeof(line)]; strcpy(lineCopy, line);
         char * s = strstr(line, "#");
         if (s) { *s = 0; N = (int)strlen(line); }
@@ -903,12 +909,12 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
                 }
             }
             else if (narg == 2 && !strcmp(arg[0], "def-macro")) {
-                char macro_name[256]; strncpy(macro_name, arg[1], sizeof(macro_name));
+                char macro_name[256]; strncpy(macro_name, arg[1], sizeof(macro_name) - 1); macro_name[sizeof(macro_name) - 1] = 0;
                 const char * str_begin = str;
                 const char * str_end = str;
                 for (; (str = agoReadLine(line, sizeof(line)-16, str)) != NULL; lineno++) {
                     if (dumpToConsole) agoAddLogEntry(NULL, VX_SUCCESS, "%s", line);
-                    agoUpdateLine(line, vars, localPrefix);
+                    agoUpdateLine(line, sizeof(line), vars, localPrefix);
                     char word[256];
                     if (sscanf(line, "%255s", word) == 1 && !strcmp(word, "endmacro"))
                         break;

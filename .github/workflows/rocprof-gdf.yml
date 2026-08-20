@@ -108,7 +108,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-20260818
       options: --device /dev/kfd --device /dev/dri
     steps:
       - uses: actions/checkout@v4
@@ -148,7 +148,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-20260818
       options: --device /dev/kfd --device /dev/dri
     steps:
       - uses: actions/checkout@v4
@@ -196,7 +196,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-20260818
       options: --device /dev/kfd --device /dev/dri
     needs: build-rocprof-cpu
     steps:
@@ -242,7 +242,7 @@ jobs:
     runs-on:
       group: linux-shark39-runner-group
     container:
-      image: mivisionx/ubuntu-24.04:rocm-20260710
+      image: mivisionx/ubuntu-24.04:rocm-20260818
       options: --device /dev/kfd --device /dev/dri
     needs: build-rocprof-hip
     steps:

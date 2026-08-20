@@ -67,8 +67,8 @@ concurrency:
 # no --group-add video/render is needed (and the mivisionx image lacks the
 # render group name, which would make docker start fail on --group-add render).
 #
-# mivisionx/ubuntu-24.04:rocm-20260818 is a multi-arch ROCm 7.15 (nightly
-# 20260710) stack (amdclang++, HIP runtime, rocminfo) with device support for
+# mivisionx/ubuntu-24.04:rocm-20260818 is a multi-arch ROCm 10.1 (nightly
+# 20260818) stack (amdclang++, HIP runtime, rocminfo) with device support for
 # all supported GPU archs, so it works on whichever runner the job lands on.
 # Multi-arch is required because the shark42 group hands out either gfx1100 or
 # gfx1201, and a single-family image would fail on the other arch.

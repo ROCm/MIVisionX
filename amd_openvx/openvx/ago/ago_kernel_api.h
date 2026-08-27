@@ -313,6 +313,12 @@ int agoKernel_Remap_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelCommand cmd
 int agoKernel_Remap_U24_U24_Bilinear(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Remap_U24_U32_Bilinear(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Remap_U32_U32_Bilinear(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_Remap_U24_U24_Nearest(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_Remap_U32_U32_Nearest(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_Remap_U24_U24_Bilinear_Constant(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_Remap_U24_U24_Nearest_Constant(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_Remap_U32_U32_Bilinear_Constant(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_Remap_U32_U32_Nearest_Constant(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_WarpAffine_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_WarpAffine_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_WarpAffine_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd);

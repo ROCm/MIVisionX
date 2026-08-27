@@ -1496,7 +1496,7 @@ static void agoEmulateAmdMediaOpsInOpenCL(std::string& code)
             "#define amd_bitalign amd_bitalign_emu\n"
             "\n"
             "inline uint amd_bytealign_emu(uint src0,uint src1, uint src2){\n"
-            "	uint dst = (uint)(as_ulong((uint2)(src1,src0)) >> (src2 & 31) * 8 );\n"
+            "	uint dst = (uint)(as_ulong((uint2)(src1,src0)) >> (src2 & 3) * 8 );\n"
             "	return dst;\n"
             "}\n"
             "#define amd_bytealign amd_bytealign_emu\n"

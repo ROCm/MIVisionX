@@ -1644,7 +1644,7 @@ int HafGpu_ScaleGaussianOrb(AgoNode * node, vx_interpolation_type_e interpolatio
 			OPENCL_FORMAT(
 			"  __local uchar * lbuf_ptr = lbuf + ly * %d;\n" // LMemStride
 			"  float flx = mad((float)(lx << 2), %.12ef, fx + (float)lxalign);\n" // xscale
-			"  uint2 L0, isum; float fsum; uint ilx;\n"
+			"  uint2 L0, isum, isum2; float fsum; uint ilx;\n"
 			"  ilx = (uint)flx; L0 = vload2(0, (__local uint *)&lbuf_ptr[ilx & ~3]); L0.s0 = amd_bytealign(L0.s1, L0.s0, ilx); L0.s1 = amd_bytealign(L0.s1, L0.s1, ilx);\n"
 			"  fsum = amd_unpack0(L0.s0); fsum = mad(amd_unpack1(L0.s0), 4.0f, fsum); fsum = mad(amd_unpack2(L0.s0), 6.0f, fsum); fsum = mad(amd_unpack3(L0.s0), 4.0f, fsum); fsum += amd_unpack0(L0.s1);\n"
 			"  isum.s0 = (uint)fsum;\n"
@@ -1657,23 +1657,33 @@ int HafGpu_ScaleGaussianOrb(AgoNode * node, vx_interpolation_type_e interpolatio
 			"  ilx = (uint)(flx + %.12ef); L0 = vload2(0, (__local uint *)&lbuf_ptr[ilx & ~3]); L0.s0 = amd_bytealign(L0.s1, L0.s0, ilx); L0.s1 = amd_bytealign(L0.s1, L0.s1, ilx);\n" // xscale * 3
 			"  fsum = amd_unpack0(L0.s0); fsum = mad(amd_unpack1(L0.s0), 4.0f, fsum); fsum = mad(amd_unpack2(L0.s0), 6.0f, fsum); fsum = mad(amd_unpack3(L0.s0), 4.0f, fsum); fsum += amd_unpack0(L0.s1);\n"
 			"  isum.s1 |= (((uint)fsum) << 16);\n"
+			// Compute the extra (+16 rows) horizontal sums into a separate register
+			// BEFORE writing anything back to local memory. The horizontal reads
+			// (lbuf_ptr[ilx & ~3], neighbouring image pixels) and the write-back
+			// (((uint2*)lbuf_ptr)[lx]) alias the same local buffer, so storing before
+			// every work-item has finished reading corrupts neighbours' inputs. On a
+			// lock-step SIMD device the reads happen to complete first; on scalar
+			// devices (e.g. a CPU OpenCL driver) they do not, which produced wrong
+			// results. Finish all reads, barrier, then store.
+			"  if (ly < 7) {\n"
+			"    __local uchar * lbuf_ptr2 = lbuf_ptr + %d;\n" // LMemStride * 16
+			"    ilx = (uint)flx; L0 = vload2(0, (__local uint *)&lbuf_ptr2[ilx & ~3]); L0.s0 = amd_bytealign(L0.s1, L0.s0, ilx); L0.s1 = amd_bytealign(L0.s1, L0.s1, ilx);\n"
+			"    fsum = amd_unpack0(L0.s0); fsum = mad(amd_unpack1(L0.s0), 4.0f, fsum); fsum = mad(amd_unpack2(L0.s0), 6.0f, fsum); fsum = mad(amd_unpack3(L0.s0), 4.0f, fsum); fsum += amd_unpack0(L0.s1);\n"
+			"    isum2.s0 = (uint)fsum;\n"
+			"    ilx = (uint)(flx + %.12ef); L0 = vload2(0, (__local uint *)&lbuf_ptr2[ilx & ~3]); L0.s0 = amd_bytealign(L0.s1, L0.s0, ilx); L0.s1 = amd_bytealign(L0.s1, L0.s1, ilx);\n" // xscale
+			"    fsum = amd_unpack0(L0.s0); fsum = mad(amd_unpack1(L0.s0), 4.0f, fsum); fsum = mad(amd_unpack2(L0.s0), 6.0f, fsum); fsum = mad(amd_unpack3(L0.s0), 4.0f, fsum); fsum += amd_unpack0(L0.s1);\n"
+			"    isum2.s0 |= (((uint)fsum) << 16);\n"
+			"    ilx = (uint)(flx + %.12ef); L0 = vload2(0, (__local uint *)&lbuf_ptr2[ilx & ~3]); L0.s0 = amd_bytealign(L0.s1, L0.s0, ilx); L0.s1 = amd_bytealign(L0.s1, L0.s1, ilx);\n" // xscale * 2
+			"    fsum = amd_unpack0(L0.s0); fsum = mad(amd_unpack1(L0.s0), 4.0f, fsum); fsum = mad(amd_unpack2(L0.s0), 6.0f, fsum); fsum = mad(amd_unpack3(L0.s0), 4.0f, fsum); fsum += amd_unpack0(L0.s1);\n"
+			"    isum2.s1 = (uint)fsum;\n"
+			"    ilx = (uint)(flx + %.12ef); L0 = vload2(0, (__local uint *)&lbuf_ptr2[ilx & ~3]); L0.s0 = amd_bytealign(L0.s1, L0.s0, ilx); L0.s1 = amd_bytealign(L0.s1, L0.s1, ilx);\n" // xscale * 3
+			"    fsum = amd_unpack0(L0.s0); fsum = mad(amd_unpack1(L0.s0), 4.0f, fsum); fsum = mad(amd_unpack2(L0.s0), 6.0f, fsum); fsum = mad(amd_unpack3(L0.s0), 4.0f, fsum); fsum += amd_unpack0(L0.s1);\n"
+			"    isum2.s1 |= (((uint)fsum) << 16);\n"
+			"  }\n"
+			"  barrier(CLK_LOCAL_MEM_FENCE);\n"
 			"  ((__local uint2 *)lbuf_ptr)[lx] = isum;\n"
 			"  if (ly < 7) {\n"
-			"    lbuf_ptr += %d;\n" // LMemStride * 16
-			"    ilx = (uint)flx; L0 = vload2(0, (__local uint *)&lbuf_ptr[ilx & ~3]); L0.s0 = amd_bytealign(L0.s1, L0.s0, ilx); L0.s1 = amd_bytealign(L0.s1, L0.s1, ilx);\n"
-			"    fsum = amd_unpack0(L0.s0); fsum = mad(amd_unpack1(L0.s0), 4.0f, fsum); fsum = mad(amd_unpack2(L0.s0), 6.0f, fsum); fsum = mad(amd_unpack3(L0.s0), 4.0f, fsum); fsum += amd_unpack0(L0.s1);\n"
-			"    isum.s0 = (uint)fsum;\n"
-			"    ilx = (uint)(flx + %.12ef); L0 = vload2(0, (__local uint *)&lbuf_ptr[ilx & ~3]); L0.s0 = amd_bytealign(L0.s1, L0.s0, ilx); L0.s1 = amd_bytealign(L0.s1, L0.s1, ilx);\n" // xscale
-			"    fsum = amd_unpack0(L0.s0); fsum = mad(amd_unpack1(L0.s0), 4.0f, fsum); fsum = mad(amd_unpack2(L0.s0), 6.0f, fsum); fsum = mad(amd_unpack3(L0.s0), 4.0f, fsum); fsum += amd_unpack0(L0.s1);\n"
-			"    isum.s0 |= (((uint)fsum) << 16);\n"
-			"    ilx = (uint)(flx + %.12ef); L0 = vload2(0, (__local uint *)&lbuf_ptr[ilx & ~3]); L0.s0 = amd_bytealign(L0.s1, L0.s0, ilx); L0.s1 = amd_bytealign(L0.s1, L0.s1, ilx);\n" // xscale * 2
-			"    fsum = amd_unpack0(L0.s0); fsum = mad(amd_unpack1(L0.s0), 4.0f, fsum); fsum = mad(amd_unpack2(L0.s0), 6.0f, fsum); fsum = mad(amd_unpack3(L0.s0), 4.0f, fsum); fsum += amd_unpack0(L0.s1);\n"
-			"    isum.s1 = (uint)fsum;\n"
-			"    ilx = (uint)(flx + %.12ef); L0 = vload2(0, (__local uint *)&lbuf_ptr[ilx & ~3]); L0.s0 = amd_bytealign(L0.s1, L0.s0, ilx); L0.s1 = amd_bytealign(L0.s1, L0.s1, ilx);\n" // xscale * 3
-			"    fsum = amd_unpack0(L0.s0); fsum = mad(amd_unpack1(L0.s0), 4.0f, fsum); fsum = mad(amd_unpack2(L0.s0), 6.0f, fsum); fsum = mad(amd_unpack3(L0.s0), 4.0f, fsum); fsum += amd_unpack0(L0.s1);\n"
-			"    isum.s1 |= (((uint)fsum) << 16);\n"
-			"    ((__local uint2 *)lbuf_ptr)[lx] = isum;\n"
-			"    lbuf_ptr -= %d;\n" // LMemStride * 16
+			"    ((__local uint2 *)(lbuf_ptr + %d))[lx] = isum2;\n" // LMemStride * 16
 			"  }\n"
 			"  barrier(CLK_LOCAL_MEM_FENCE);\n"
 			"  float fly = fy + (float)ly * %.12ef; float4 sum;\n" // yscale

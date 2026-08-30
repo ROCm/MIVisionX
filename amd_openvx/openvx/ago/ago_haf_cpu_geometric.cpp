@@ -446,7 +446,8 @@ int HafCpu_Remap_U24_U24_Bilinear
 	const __m128i zero128 = _mm_setzero_si128();
 	const __m256i round32_avx = _mm256_set1_epi32(32);
 
-	for (vx_uint32 y = 0; y < dstHeight; ++y)
+	#pragma omp parallel for schedule(static)
+	for (int y = 0; y < (int)dstHeight; ++y)
 	{
 		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
@@ -735,7 +736,8 @@ int HafCpu_Remap_U32_U32_Bilinear
 	    3, (char)0x80, 7, (char)0x80, 11, (char)0x80, 15, (char)0x80,
 	    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80);
 
-	for (vx_uint32 y = 0; y < dstHeight; ++y)
+	#pragma omp parallel for schedule(static)
+	for (int y = 0; y < (int)dstHeight; ++y)
 	{
 		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
@@ -1074,9 +1076,9 @@ int HafCpu_Remap_U24_U24_Bilinear_Constant
 {
 	// Use the existing undefined-border SIMD bilinear path for the whole image,
 	// then overwrite any destination pixels whose remap entry is the out-of-bounds
-	// sentinel (0xFFFF) with the configured constant border value. This keeps the
-	// SIMD fast path active for all valid pixels while honoring
-	// VX_BORDER_MODE_CONSTANT for out-of-bounds map entries.
+	// sentinel (0xFFFF) with the configured constant border value. The base SIMD
+	// kernel is row-parallel (OpenMP), so both the constant-border and
+	// undefined-border paths are multi-threaded.
 	int err = HafCpu_Remap_U24_U24_Bilinear(dstWidth, dstHeight, pDstImage, dstImageStrideInBytes,
 	                                        srcWidth, srcHeight, pSrcImage, srcImageStrideInBytes,
 	                                        pMap, mapStrideInBytes);
@@ -1085,7 +1087,7 @@ int HafCpu_Remap_U24_U24_Bilinear_Constant
 
 	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
+		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + (size_t)y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
 		for (vx_uint32 x = 0; x < dstWidth; ++x, ++pMapY_X, pd += 3)
 		{
@@ -1100,6 +1102,7 @@ int HafCpu_Remap_U24_U24_Bilinear_Constant
 
 	return AGO_SUCCESS;
 }
+
 int HafCpu_Remap_U24_U24_Nearest_Constant
 (
 	vx_uint32				  dstWidth,
@@ -1161,9 +1164,9 @@ int HafCpu_Remap_U32_U32_Bilinear_Constant
 {
 	// Use the existing undefined-border SIMD bilinear path for the whole image,
 	// then overwrite any destination pixels whose remap entry is the out-of-bounds
-	// sentinel (0xFFFF) with the configured constant border value. This keeps the
-	// SIMD fast path active for all valid pixels while honoring
-	// VX_BORDER_MODE_CONSTANT for out-of-bounds map entries.
+	// sentinel (0xFFFF) with the configured constant border value. The base SIMD
+	// kernel is row-parallel (OpenMP), so both the constant-border and
+	// undefined-border paths are multi-threaded.
 	int err = HafCpu_Remap_U32_U32_Bilinear(dstWidth, dstHeight, pDstImage, dstImageStrideInBytes,
 	                                        srcWidth, srcHeight, pSrcImage, srcImageStrideInBytes,
 	                                        pMap, mapStrideInBytes);
@@ -1172,7 +1175,7 @@ int HafCpu_Remap_U32_U32_Bilinear_Constant
 
 	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
+		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + (size_t)y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
 		for (vx_uint32 x = 0; x < dstWidth; ++x, ++pMapY_X, pd += 4)
 		{
@@ -1188,6 +1191,7 @@ int HafCpu_Remap_U32_U32_Bilinear_Constant
 
 	return AGO_SUCCESS;
 }
+
 int HafCpu_Remap_U32_U32_Nearest_Constant
 (
 	vx_uint32				  dstWidth,

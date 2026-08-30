@@ -1101,31 +1101,13 @@ int HafCpu_Remap_U24_U24_Bilinear_Constant
 		}
 	};
 
-	// Fast path: the existing AVX undefined-border kernel is correct whenever
-	// every pixel's 2x2 neighborhood is fully inside the source image. For maps
-	// that keep interior dst pixels away from the source boundary, the rectangle
-	// [0, simdWidth) x [0, simdHeight) is safe. The last row and last few columns
-	// always fall back to scalar per-neighbor blending.
-	vx_uint32 simdWidth = (dstWidth >= 4) ? ((((int)srcWidth - 1) >> 2) << 2) : 0;
-	if (simdWidth > dstWidth) simdWidth = (dstWidth >> 2) << 2;
-	vx_uint32 simdHeight = (dstHeight > 1) ? (dstHeight - 1) : 0;
-
-	if (simdWidth > 0 && simdHeight > 0) {
-		HafCpu_Remap_U24_U24_Bilinear(simdWidth, simdHeight, pDstImage, dstImageStrideInBytes,
-		    srcWidth, srcHeight, pSrcImage, srcImageStrideInBytes, pMap, mapStrideInBytes);
-	}
-
-	for (vx_uint32 y = 0; y < simdHeight; ++y)
-	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes + simdWidth * sizeof(ago_coord2d_ushort_t));
-		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes + (size_t)simdWidth * 3;
-		for (vx_uint32 x = simdWidth; x < dstWidth; ++x, pd += 3, ++pMapY_X)
-		{
-			scalar_pixel(pMapY_X, pd);
-		}
-	}
-
-	for (vx_uint32 y = simdHeight; y < dstHeight; ++y)
+	// The undefined-border SIMD fast path is intentionally not used here.
+	// With VX_BORDER_MODE_CONSTANT, an out-of-bounds map entry (0xFFFF) must
+	// produce the configured border value, whereas the fast path clamps the
+	// coordinate and samples the source edge. Process every pixel through the
+	// scalar border-aware path so the constant-border contract is honored for
+	// any remap table.
+	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
 		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
@@ -1225,26 +1207,13 @@ int HafCpu_Remap_U32_U32_Bilinear_Constant
 		}
 	};
 
-	vx_uint32 simdWidth = (dstWidth >= 4) ? ((((int)srcWidth - 1) >> 2) << 2) : 0;
-	if (simdWidth > dstWidth) simdWidth = (dstWidth >> 2) << 2;
-	vx_uint32 simdHeight = (dstHeight > 1) ? (dstHeight - 1) : 0;
-
-	if (simdWidth > 0 && simdHeight > 0) {
-		HafCpu_Remap_U32_U32_Bilinear(simdWidth, simdHeight, pDstImage, dstImageStrideInBytes,
-		    srcWidth, srcHeight, pSrcImage, srcImageStrideInBytes, pMap, mapStrideInBytes);
-	}
-
-	for (vx_uint32 y = 0; y < simdHeight; ++y)
-	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes + simdWidth * sizeof(ago_coord2d_ushort_t));
-		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes + (size_t)simdWidth * 4;
-		for (vx_uint32 x = simdWidth; x < dstWidth; ++x, pd += 4, ++pMapY_X)
-		{
-			scalar_pixel(pMapY_X, pd);
-		}
-	}
-
-	for (vx_uint32 y = simdHeight; y < dstHeight; ++y)
+	// The undefined-border SIMD fast path is intentionally not used here.
+	// With VX_BORDER_MODE_CONSTANT, an out-of-bounds map entry (0xFFFF) must
+	// produce the configured border value, whereas the fast path clamps the
+	// coordinate and samples the source edge. Process every pixel through the
+	// scalar border-aware path so the constant-border contract is honored for
+	// any remap table.
+	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
 		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;

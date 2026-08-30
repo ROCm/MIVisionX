@@ -309,113 +309,125 @@ int HafCpu_Remap_U8_U8_Bilinear
 	__m128i zeromask = _mm_setzero_si128();
 	__m128i mapxy, mapfrac;
 
-	unsigned char *pchDst = (unsigned char*)pDstImage;
-	unsigned char *pchDstlast = (unsigned char*)pDstImage + dstHeight*dstImageStrideInBytes;
-	unsigned char *pchMap = (unsigned char *)pMap;
 	const __m128i sstride = _mm_set1_epi32(srcImageStrideInBytes);
 	const __m128i round = _mm_set1_epi32((int)32);
+	const __m128i cFFFF = _mm_set1_epi16((short)0xFFFF);
+	const __m128i c7 = _mm_set1_epi16(7);
+	const __m128i c8 = _mm_set1_epi16(8);
+	const __m128i c0000FFFF = _mm_set1_epi32(0x0000FFFF);
+	const __m128i c8_16 = _mm_set1_epi16(0x8);
 
-	while (pchDst < pchDstlast)
+	auto process_block4 = [&](ago_coord2d_short_t *pMapY_X, unsigned char *pDst) -> __m128i {
+		__m128i temp0, temp1, w_xy, oneminusxy, p12, p34;
+		unsigned char *p0;
+		mapxy = _mm_loadu_si128((__m128i *)pMapY_X);
+		temp0 = _mm_cmpeq_epi16(mapxy, cFFFF);
+		mapxy = _mm_andnot_si128(temp0, mapxy);
+		temp0 = _mm_and_si128(temp0, c8_16);
+		mapxy = _mm_or_si128(mapxy, temp0);
+
+		mapfrac = _mm_and_si128(mapxy, c7);
+		oneminusxy = _mm_sub_epi16(c8, mapfrac);
+		mapxy = _mm_srli_epi16(mapxy, 3);
+		temp0 = _mm_srli_epi32(mapxy, 16);
+		mapxy = _mm_and_si128(mapxy, c0000FFFF);
+		temp0 = _mm_mullo_epi32(temp0, sstride);
+		mapxy = _mm_add_epi32(mapxy, temp0);
+
+		p0 = &pSrcImage[M128I(mapxy).m128i_i32[0]];
+		p12 = _mm_cvtsi32_si128(((unsigned int *)p0)[0]);
+		p34 = _mm_cvtsi32_si128(((unsigned int *)(p0 + srcImageStrideInBytes))[0]);
+		temp0 = _mm_unpacklo_epi16(oneminusxy, mapfrac);
+		temp1 = _mm_unpacklo_epi32(temp0, temp0);
+		temp0 = _mm_unpackhi_epi32(temp0, temp0);
+		w_xy = _mm_unpacklo_epi64(temp1, temp0);
+		temp1 = _mm_unpackhi_epi64(temp1, temp0);
+		temp1 = _mm_shufflelo_epi16(temp1, 0xd8);
+		temp1 = _mm_shufflehi_epi16(temp1, 0xd8);
+		w_xy = _mm_mullo_epi16(w_xy, temp1);
+		p12 = _mm_unpacklo_epi16(p12, p34);
+		p0 = &pSrcImage[M128I(mapxy).m128i_i32[1]];
+		temp0 = _mm_cvtsi32_si128(((unsigned int *)p0)[0]);
+		p34 = _mm_cvtsi32_si128(((unsigned int *)(p0 + srcImageStrideInBytes))[0]);
+		temp0 = _mm_unpacklo_epi16(temp0, p34);
+		p12 = _mm_unpacklo_epi32(p12, temp0);
+		p12 = _mm_unpacklo_epi8(p12, zeromask);
+		p12 = _mm_madd_epi16(p12, w_xy);
+		p34 = _mm_hadd_epi32(p12, p12);
+
+		temp0 = _mm_unpackhi_epi16(oneminusxy, mapfrac);
+		temp1 = _mm_unpacklo_epi32(temp0, temp0);
+		temp0 = _mm_unpackhi_epi32(temp0, temp0);
+		w_xy = _mm_unpacklo_epi64(temp1, temp0);
+		temp1 = _mm_unpackhi_epi64(temp1, temp0);
+		temp1 = _mm_shufflelo_epi16(temp1, 0xd8);
+		temp1 = _mm_shufflehi_epi16(temp1, 0xd8);
+		w_xy = _mm_mullo_epi16(w_xy, temp1);
+		p0 = &pSrcImage[M128I(mapxy).m128i_i32[2]];
+		p12 = _mm_cvtsi32_si128(((unsigned int *)p0)[0]);
+		temp0 = _mm_cvtsi32_si128(((unsigned int *)(p0 + srcImageStrideInBytes))[0]);
+		p12 = _mm_unpacklo_epi16(p12, temp0);
+		p0 = &pSrcImage[M128I(mapxy).m128i_i32[3]];
+		temp0 = _mm_cvtsi32_si128(((unsigned int *)p0)[0]);
+		temp1 = _mm_cvtsi32_si128(((unsigned int *)(p0 + srcImageStrideInBytes))[0]);
+		temp0 = _mm_unpacklo_epi16(temp0, temp1);
+		p12 = _mm_unpacklo_epi32(p12, temp0);
+		p12 = _mm_unpacklo_epi8(p12, zeromask);
+		p12 = _mm_madd_epi16(p12, w_xy);
+		temp0 = _mm_hadd_epi32(p12, p12);
+		p34 = _mm_unpacklo_epi64(p34, temp0);
+		p34 = _mm_add_epi32(p34, round);
+		p34 = _mm_srli_epi32(p34, 6);
+		p34 = _mm_packus_epi32(p34, zeromask);
+		p34 = _mm_packus_epi16(p34, zeromask);
+		return p34;
+	};
+
+	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)pchMap;
-		unsigned int *pdst = (unsigned int *)pchDst;
-		unsigned int *pdstLast = pdst + ((dstWidth+3) >> 2);
-		while (pdst < pdstLast)
+		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + (size_t)y * mapStrideInBytes);
+		unsigned int *pdst = (unsigned int *)(pDstImage + (size_t)y * dstImageStrideInBytes);
+		vx_uint32 x = 0;
+		// Main loop: 8 pixels per iteration
+		for (; x + 8 <= dstWidth; x += 8, pMapY_X += 8, pdst += 2)
 		{
-			__m128i temp0, temp1, w_xy, oneminusxy, p12, p34;
-			unsigned char *p0;
-			// read remap table location for (x,y)
-			mapxy = _mm_loadu_si128((__m128i *)pMapY_X);		// mapped table [src_y3,src_x3 .....src_y2,src_x1,src_y0,src_x0]
-			// check for boundary values: will be substituted by 1.
-			temp0 = _mm_cmpeq_epi16(mapxy, CONST_FFFF);
-			mapxy = _mm_andnot_si128(temp0, mapxy);
-			temp0 = _mm_and_si128(temp0, _mm_set1_epi16(0x8));
-			mapxy = _mm_or_si128(mapxy, temp0);			// combined result
-
-			// get the fractional part for rounding
-			mapfrac = _mm_and_si128(mapxy, CONST_7);					// [dy3, dx3.........dy0, dx0]
-			oneminusxy = _mm_sub_epi16(_mm_set1_epi16(8), mapfrac);		// [1-dy3, 1-dx3........1-dy0, 1-dx0]
-			mapxy = _mm_srli_epi16(mapxy, 3);							// [y3, x3.............y0, x0]
-			// calculate (mapxy.y*srcImageStrideInBytes + mapxy.x)
-			temp0 = _mm_srli_epi32(mapxy, 16);					//[0000src_y4......0000src_y0]
-			mapxy = _mm_and_si128(mapxy, CONST_0000FFFF);		// [0000src_x4......0000src_x0]
-			temp0 = _mm_mullo_epi32(temp0, sstride);				// temp0 = src_y*stride;
-			mapxy = _mm_add_epi32(mapxy, temp0);				// mapxy = src_y*stride + src_x;
-
-			// load the pixels 2 pixels in one load
-			p0 = &pSrcImage[M128I(mapxy).m128i_i32[0]];
-			p12 = _mm_cvtsi32_si128(((unsigned int *)p0)[0]);
-			p34 = _mm_cvtsi32_si128(((unsigned int *)(p0 + srcImageStrideInBytes))[0]);
-			temp0 = _mm_unpacklo_epi16(oneminusxy, mapfrac);			// [dy1, 1-dy1, dx1, 1-dx1, dy0, 1-dy0, dx0, 1-dx0]
-			temp1 = _mm_unpacklo_epi32(temp0, temp0);					// [dy0, 1-dy0, dy0, 1-dy0, dx0, 1-dx0, dx0, 1-dx0]
-			temp0 = _mm_unpackhi_epi32(temp0, temp0);					// [dy1, 1-dy1, dy1, 1-dy1, dx1, 1-dx1, dx1, 1-dx1]
-
-			w_xy	= _mm_unpacklo_epi64(temp1, temp0);					// [dx1, 1-dx1, dx1, 1-dx1 dx0, 1-dx0, dx0, 1-dx0]
-			temp1 = _mm_unpackhi_epi64(temp1, temp0);					// [dy1, 1-dy1, dy1, 1-dy1, dy0, 1-dy0, dy0, 1-dy0]
-			temp1 = _mm_shufflelo_epi16(temp1, 0xd8);
-			temp1 = _mm_shufflehi_epi16(temp1, 0xd8);					// [dy1, dy1, 1-dy1, 1-dy1, dy0, dy0, 1-dy0, 1-dy0]
-			// calculate weight 
-			w_xy = _mm_mullo_epi16(w_xy, temp1);						// [w3, w2, w1, w0]	// for 2 
-			p12 = _mm_unpacklo_epi16(p12, p34);
-			p0 = &pSrcImage[M128I(mapxy).m128i_i32[1]];
-			temp0 = _mm_cvtsi32_si128(((unsigned int *)p0)[0]);
-			p34 = _mm_cvtsi32_si128(((unsigned int *)(p0 + srcImageStrideInBytes))[0]);
-			temp0 = _mm_unpacklo_epi16(temp0, p34);
-//			w_xy = _mm_srli_epi16(w_xy, 6);
-			p12 = _mm_unpacklo_epi32(p12, temp0);
-			p12 = _mm_unpacklo_epi8(p12, zeromask);				// [p2, p2, p1, p0] for 2
-
-			// multiply add with weight
-			p12 = _mm_madd_epi16(p12, w_xy);			// (w3p3+w2p2),(w0p0+w1p1) for 2
-			p34 = _mm_hadd_epi32(p12, p12);				// dst 0 and 1
-
-			// do computation for dst 2 and 3
-			temp0 = _mm_unpackhi_epi16(oneminusxy, mapfrac);			// [dy3, 1-dy3, dx3, 1-dx3, dy2, 1-dy2, dx2, 1-dx2]
-			temp1 = _mm_unpacklo_epi32(temp0, temp0);					// [dy2, 1-dy2, dy2, 1-dy2, dx2, 1-dx2, dx2, 1-dx2]
-			temp0 = _mm_unpackhi_epi32(temp0, temp0);					// [dy3, 1-dy3, dy3, 1-dy3, dx3, 1-dx3, dx3, 1-dx3]
-			w_xy = _mm_unpacklo_epi64(temp1, temp0);					// [dx3, 1-dx3, dx3, 1-dx3, dx2, 1-dx2, dx2, 1-dx2]
-			temp1 = _mm_unpackhi_epi64(temp1, temp0);					// [dy3, 1-dy3, dy3, 1-dy3, dy2, 1-dy2, dy2, 1-dy2]
-			temp1 = _mm_shufflelo_epi16(temp1, 0xd8);
-			temp1 = _mm_shufflehi_epi16(temp1, 0xd8);					// [dy1, dy1, 1-dy1, 1-dy1, dy0, dy0, 1-dy0, 1-dy0]
-			// calculate weight 
-			w_xy = _mm_mullo_epi16(w_xy, temp1);						// [w3, w2, w1, w0]	// for 2 and 3 
-			p0 = &pSrcImage[M128I(mapxy).m128i_i32[2]];
-			p12 = _mm_cvtsi32_si128(((unsigned int *)p0)[0]);
-			temp0 = _mm_cvtsi32_si128(((unsigned int *)(p0 + srcImageStrideInBytes))[0]);
-			p12 = _mm_unpacklo_epi16(p12, temp0);
-			p0 = &pSrcImage[M128I(mapxy).m128i_i32[3]];
-			temp0 = _mm_cvtsi32_si128(((unsigned int *)p0)[0]);
-			temp1 = _mm_cvtsi32_si128(((unsigned int *)(p0 + srcImageStrideInBytes))[0]);
-			//w_xy = _mm_srli_epi16(w_xy, 6);
-			temp0 = _mm_unpacklo_epi16(temp0, temp1);
-			p12 = _mm_unpacklo_epi32(p12, temp0);
-
-			p12 = _mm_unpacklo_epi8(p12, zeromask);				// [p2, p2, p1, p0] for 2
-
-			// multiply add with weight
-			p12 = _mm_madd_epi16(p12, w_xy);			// (w3p3+w2p2),(w0p0+w1p1) for 2
-			temp0 = _mm_hadd_epi32(p12, p12);				// dst 2 and 3
-
-			p34 = _mm_unpacklo_epi64(p34, temp0);
-			p34 = _mm_add_epi32(p34, round);
-			p34 = _mm_srli_epi32(p34, 6);
-			// convert 32 bit to 8 bit
-			p34 = _mm_packus_epi32(p34, zeromask);
-			p34 = _mm_packus_epi16(p34, zeromask);
-
-			// read each src pixel from mapped position and copy to dst
-			*pdst++ = M128I(p34).m128i_i32[0];
-			pMapY_X += 4;
+			__m128i lo = process_block4(pMapY_X, (unsigned char *)pdst);
+			__m128i hi = process_block4(pMapY_X + 4, (unsigned char *)pdst + 4);
+			// Pack two 32-bit results (each containing 4 U8 pixels) into one 64-bit store
+			__m128i combined = _mm_unpacklo_epi64(lo, hi);
+			_mm_storel_epi64((__m128i *)pdst, combined);
 		}
-		pchDst += dstImageStrideInBytes;
-		pchMap += mapStrideInBytes;
-
+		// Tail: 4 pixels
+		if (x + 4 <= dstWidth)
+		{
+			__m128i res = process_block4(pMapY_X, (unsigned char *)pdst);
+			*pdst++ = M128I(res).m128i_i32[0];
+			pMapY_X += 4;
+			x += 4;
+		}
+		// Scalar tail
+		for (; x < dstWidth; ++x, ++pdst, ++pMapY_X)
+		{
+			int mx = pMapY_X->x >> 3;
+			int my = pMapY_X->y >> 3;
+			int fx = pMapY_X->x & 7;
+			int fy = pMapY_X->y & 7;
+			int sx = std::max(0, std::min((int)srcWidth - 2, mx));
+			int sy = std::max(0, std::min((int)srcHeight - 2, my));
+			int w00 = (8 - fx) * (8 - fy), w10 = fx * (8 - fy), w01 = (8 - fx) * fy, w11 = fx * fy;
+			int v00 = pSrcImage[(size_t)sy * srcImageStrideInBytes + (size_t)sx];
+			int v10 = pSrcImage[(size_t)sy * srcImageStrideInBytes + (size_t)(sx + 1)];
+			int v01 = pSrcImage[(size_t)(sy + 1) * srcImageStrideInBytes + (size_t)sx];
+			int v11 = pSrcImage[(size_t)(sy + 1) * srcImageStrideInBytes + (size_t)(sx + 1)];
+			*(unsigned char *)pdst = (vx_uint8)((v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + 32) >> 6);
+		}
 	}
 
 	return AGO_SUCCESS;
 }
 
 
+// CPU scalar fallback for RGB (U24) bilinear remap.
 // CPU scalar fallback for RGB (U24) bilinear remap.
 // SSE RGB bilinear remap: 2 pixels per iteration (load 3-byte pixels as masked 32-bit).
 int HafCpu_Remap_U24_U24_Bilinear
@@ -446,7 +458,7 @@ int HafCpu_Remap_U24_U24_Bilinear
 	const __m128i zero128 = _mm_setzero_si128();
 	const __m256i round32_avx = _mm256_set1_epi32(32);
 
-	#pragma omp parallel for schedule(static)
+	#pragma omp parallel for schedule(static) num_threads(8)
 	for (int y = 0; y < (int)dstHeight; ++y)
 	{
 		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
@@ -736,7 +748,7 @@ int HafCpu_Remap_U32_U32_Bilinear
 	    3, (char)0x80, 7, (char)0x80, 11, (char)0x80, 15, (char)0x80,
 	    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80);
 
-	#pragma omp parallel for schedule(static)
+	#pragma omp parallel for schedule(static) num_threads(8)
 	for (int y = 0; y < (int)dstHeight; ++y)
 	{
 		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);

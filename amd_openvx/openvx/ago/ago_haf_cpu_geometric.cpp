@@ -457,9 +457,25 @@ int HafCpu_Remap_U24_U24_Bilinear
 	                                    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80);
 	const __m128i zero128 = _mm_setzero_si128();
 	const __m256i round32_avx = _mm256_set1_epi32(32);
+	const __m256i shufR_avx = _mm256_setr_epi8(
+	    0, (char)0x80, 4, (char)0x80, 8, (char)0x80, 12, (char)0x80,
+	    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
+	    0, (char)0x80, 4, (char)0x80, 8, (char)0x80, 12, (char)0x80,
+	    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80);
+	const __m256i shufG_avx = _mm256_setr_epi8(
+	    1, (char)0x80, 5, (char)0x80, 9, (char)0x80, 13, (char)0x80,
+	    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
+	    1, (char)0x80, 5, (char)0x80, 9, (char)0x80, 13, (char)0x80,
+	    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80);
+	const __m256i shufB_avx = _mm256_setr_epi8(
+	    2, (char)0x80, 6, (char)0x80, 10, (char)0x80, 14, (char)0x80,
+	    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
+	    2, (char)0x80, 6, (char)0x80, 10, (char)0x80, 14, (char)0x80,
+	    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80);
 
-	#pragma omp parallel for schedule(static) num_threads(8)
-	for (int y = 0; y < (int)dstHeight; ++y)
+
+
+	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
 		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
@@ -521,22 +537,6 @@ int HafCpu_Remap_U24_U24_Bilinear
 			    (short)(8 - fy2), (short)fy2, (short)(8 - fy3), (short)fy3,
 			    (short)(8 - fy0), (short)fy0, (short)(8 - fy1), (short)fy1,
 			    (short)(8 - fy2), (short)fy2, (short)(8 - fy3), (short)fy3);
-
-			const __m256i shufR_avx = _mm256_setr_epi8(
-			    0, (char)0x80, 4, (char)0x80, 8, (char)0x80, 12, (char)0x80,
-			    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
-			    0, (char)0x80, 4, (char)0x80, 8, (char)0x80, 12, (char)0x80,
-			    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80);
-			const __m256i shufG_avx = _mm256_setr_epi8(
-			    1, (char)0x80, 5, (char)0x80, 9, (char)0x80, 13, (char)0x80,
-			    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
-			    1, (char)0x80, 5, (char)0x80, 9, (char)0x80, 13, (char)0x80,
-			    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80);
-			const __m256i shufB_avx = _mm256_setr_epi8(
-			    2, (char)0x80, 6, (char)0x80, 10, (char)0x80, 14, (char)0x80,
-			    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
-			    2, (char)0x80, 6, (char)0x80, 10, (char)0x80, 14, (char)0x80,
-			    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80);
 
 			__m256i fy_vec = _mm256_setr_epi32(fy0, fy1, fy2, fy3, 0, 0, 0, 0);
 			__m256i onemyf_vec = _mm256_sub_epi32(_mm256_set1_epi32(8), fy_vec);
@@ -748,8 +748,7 @@ int HafCpu_Remap_U32_U32_Bilinear
 	    3, (char)0x80, 7, (char)0x80, 11, (char)0x80, 15, (char)0x80,
 	    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80);
 
-	#pragma omp parallel for schedule(static) num_threads(8)
-	for (int y = 0; y < (int)dstHeight; ++y)
+	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
 		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;

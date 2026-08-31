@@ -43,40 +43,20 @@ static void fill_image_u8(void* ptr, int w, int h, int stride, int channels, uin
     }
 }
 
-static void parallel_opencv_remap(const cv::Mat& src, cv::Mat& dst, const cv::Mat& mapx, const cv::Mat& mapy,
-                                  int interpolation, int borderMode, const cv::Scalar& borderVal) {
-    int nthreads = std::max(1, (int)std::thread::hardware_concurrency());
-    int h = src.rows;
-    int chunk = (h + nthreads - 1) / nthreads;
-    std::vector<std::future<void>> futs;
-    for (int t = 0; t < nthreads; ++t) {
-        int y0 = t * chunk;
-        int y1 = std::min(h, y0 + chunk);
-        if (y0 >= y1) break;
-        futs.push_back(std::async(std::launch::async, [&src, &dst, &mapx, &mapy, interpolation, borderMode, borderVal, y0, y1]() {
-            cv::Mat srcRoi = src(cv::Range(y0, y1), cv::Range::all());
-            cv::Mat mxRoi = mapx(cv::Range(y0, y1), cv::Range::all());
-            cv::Mat myRoi = mapy(cv::Range(y0, y1), cv::Range::all());
-            cv::Mat dstRoi = dst(cv::Range(y0, y1), cv::Range::all());
-            cv::remap(srcRoi, dstRoi, mxRoi, myRoi, interpolation, borderMode, borderVal);
-        }));
-    }
-    for (auto& f : futs) f.get();
-}
-
 static double bench_opencv(const cv::Mat& src, const cv::Mat& mapx, const cv::Mat& mapy,
                              int constant_border, uint32_t borderColor, int iterations) {
+    cv::setNumThreads(0);  // single-threaded OpenCV for apples-to-apples comparison
     cv::Mat dst(src.rows, src.cols, src.type());
     cv::Scalar borderVal(0, 0, 0, 0);
     int borderMode = constant_border ? cv::BORDER_CONSTANT : cv::BORDER_REPLICATE;
     for (int i = 0; i < std::max(1, iterations / 10); ++i) {
-        parallel_opencv_remap(src, dst, mapx, mapy, cv::INTER_LINEAR, borderMode, borderVal);
+        cv::remap(src, dst, mapx, mapy, cv::INTER_LINEAR, borderMode, borderVal);
     }
     std::vector<double> times;
     for (int r = 0; r < 5; ++r) {
         auto t0 = std::chrono::high_resolution_clock::now();
         for (int i = 0; i < iterations; ++i) {
-            parallel_opencv_remap(src, dst, mapx, mapy, cv::INTER_LINEAR, borderMode, borderVal);
+            cv::remap(src, dst, mapx, mapy, cv::INTER_LINEAR, borderMode, borderVal);
         }
         auto t1 = std::chrono::high_resolution_clock::now();
         double ms = std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count() / 1e6;

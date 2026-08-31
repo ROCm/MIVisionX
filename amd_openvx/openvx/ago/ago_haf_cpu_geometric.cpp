@@ -253,6 +253,16 @@ int HafCpu_Remap_U8_U8_Nearest_Constant
 			// calculate (mapxy.y*srcImageStrideInBytes + mapxy.x)
 			temp0 = _mm_srli_epi32(mapxy, 16);					//[0000src_y4......0000src_y0]
 			mapxy = _mm_and_si128(mapxy, CONST_0000FFFF);		// [0000src_x4......0000src_x0]
+			// check if rounded x or y exceed source bounds (the 1D byte-offset check
+			// below is insufficient for wide images because a large x at a small y
+			// can still be below srcHeight*stride).
+			{
+				__m128i maxx = _mm_set1_epi32((int)srcWidth - 1);
+				__m128i maxy = _mm_set1_epi32((int)srcHeight - 1);
+				__m128i xinvalid = _mm_cmpgt_epi32(mapxy, maxx);
+				__m128i yinvalid = _mm_cmpgt_epi32(temp0, maxy);
+				temp1 = _mm_or_si128(temp1, _mm_or_si128(xinvalid, yinvalid));
+			}
 			temp0 = _mm_mullo_epi32(temp0, sstride);				// temp0 = src_y*stride;
 			mapxy = _mm_add_epi32(mapxy, temp0);				// mapxy = src_y*stride + src_x;
 			// check if pixels exceed boundary
@@ -280,9 +290,15 @@ int HafCpu_Remap_U8_U8_Nearest_Constant
 		if (extra_pixels){
 			unsigned char *pd = (unsigned char *)pdst;
 			for (unsigned int i = 0; i < extra_pixels; i++, pMapY_X++){
-				int x = (pMapY_X->x != -1) ? (pMapY_X->x >> 3) + ((pMapY_X->x & 7) >> 2) : border;
-				int y = (pMapY_X->y != -1) ? (pMapY_X->y >> 3) + ((pMapY_X->y & 7) >> 2) : border;
-				pd[i] = pSrcImage[y*srcImageStrideInBytes + x];
+				int mx = pMapY_X->x;
+				int my = pMapY_X->y;
+				if (mx == -1 || my == -1) {
+					pd[i] = border;
+				} else {
+					int x = (mx >> 3) + ((mx & 7) >> 2);
+					int y = (my >> 3) + ((my & 7) >> 2);
+					pd[i] = ((x >= 0) && (y >= 0) && (x < (int)srcWidth) && (y < (int)srcHeight)) ? pSrcImage[y*srcImageStrideInBytes + x] : border;
+				}
 			}
 		}
 		pchDst += dstImageStrideInBytes;
@@ -394,7 +410,7 @@ int HafCpu_Remap_U8_U8_Bilinear
 			__m128i lo = process_block4(pMapY_X, (unsigned char *)pdst);
 			__m128i hi = process_block4(pMapY_X + 4, (unsigned char *)pdst + 4);
 			// Pack two 32-bit results (each containing 4 U8 pixels) into one 64-bit store
-			__m128i combined = _mm_unpacklo_epi64(lo, hi);
+			__m128i combined = _mm_unpacklo_epi32(lo, hi);
 			_mm_storel_epi64((__m128i *)pdst, combined);
 		}
 		// Tail: 4 pixels

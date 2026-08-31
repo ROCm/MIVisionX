@@ -1967,23 +1967,31 @@ Hip_Remap_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     int map;
 
     map = remap[0];
-    f.x = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder0 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.x = useBorder0 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[1];
-    f.y = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder1 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.y = useBorder1 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[2];
-    f.z = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder2 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.z = useBorder2 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[3];
-    f.w = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder3 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.w = useBorder3 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     dst.x = hip_pack_half_up(f);
 
     map = remap[4];
-    f.x = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder4 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.x = useBorder4 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[5];
-    f.y = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder5 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.y = useBorder5 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[6];
-    f.z = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder6 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.z = useBorder6 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[7];
-    f.w = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder7 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.w = useBorder7 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     dst.y = hip_pack_half_up(f);
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;

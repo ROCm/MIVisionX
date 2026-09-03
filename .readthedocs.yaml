@@ -16,10 +16,3 @@ build:
    os: ubuntu-22.04
    tools:
       python: "3.10"
-   apt_packages:
-     - "doxygen"
-   jobs:
-      pre_install:
-        - wget https://github.com/doxygen/doxygen/releases/download/Release_1_11_0/doxygen-1.11.0.linux.bin.tar.gz
-        - tar -xzf doxygen-1.11.0.linux.bin.tar.gz
-        - sudo cp doxygen-1.11.0/bin/doxygen /usr/local/bin/doxygen

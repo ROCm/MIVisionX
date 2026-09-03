@@ -18,3 +18,8 @@ build:
       python: "3.10"
    apt_packages:
      - "doxygen"
+   jobs:
+      post_build:
+         - cp safe-vendor/jquery.js    $READTHEDOCS_OUTPUT/html/doxygen/html/jquery.js
+         - cp safe-vendor/jquery-ui.js $READTHEDOCS_OUTPUT/html/doxygen/html/jquery-ui.js
+         - cp safe-vendor/jquery-ui.css $READTHEDOCS_OUTPUT/html/doxygen/html/jquery-ui.css

@@ -19,7 +19,7 @@ build:
    apt_packages:
      - "doxygen"
    jobs:
-      post_build:
-         - cp docs/safe-vendor/jquery.js    $READTHEDOCS_OUTPUT/html/doxygen/html/jquery.js
-         - cp docs/safe-vendor/jquery-ui.js $READTHEDOCS_OUTPUT/html/doxygen/html/jquery-ui.js
-         - cp docs/safe-vendor/jquery-ui.css $READTHEDOCS_OUTPUT/html/doxygen/html/jquery-ui.css
+      pre_install:
+        - wget https://github.com/doxygen/doxygen/releases/download/Release_1_11_0/doxygen-1.11.0.linux.bin.tar.gz
+        - tar -xzf doxygen-1.11.0.linux.bin.tar.gz
+        - sudo cp doxygen-1.11.0/bin/doxygen /usr/local/bin/doxygen

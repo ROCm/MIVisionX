@@ -27,7 +27,7 @@ subtrees:
     title: AMD OpenVX
   - file: reference/MIVisionX-env-variables.rst
     title: Environment variables
-  - file: doxygen/html/modules
+  - file: doxygen/html/topics
     title: API Reference
 
 - caption: About

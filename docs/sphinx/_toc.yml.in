@@ -27,7 +27,7 @@ subtrees:
   entries:
   - file: how-to/MIVisionX-how-to-model-compiler.rst
     title: Use the model compiler
-  - file: how-to/MIVisionX-docker.rst
+  - file: how-to/MIVisionX-use-docker.rst
     title: Use Docker
 
 - caption: Reference
@@ -40,7 +40,7 @@ subtrees:
     title: Toolkits
   - file: reference/MIVisionX-env-variables.rst
     title: Environment variables
-  - file: doxygen/html/modules
+  - file: doxygen/html/topics
     title: API Reference
 
 - caption: Examples

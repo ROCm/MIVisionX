@@ -1967,23 +1967,31 @@ Hip_Remap_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     int map;
 
     map = remap[0];
-    f.x = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder0 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.x = useBorder0 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[1];
-    f.y = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder1 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.y = useBorder1 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[2];
-    f.z = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder2 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.z = useBorder2 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[3];
-    f.w = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder3 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.w = useBorder3 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     dst.x = hip_pack_half_up(f);
 
     map = remap[4];
-    f.x = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder4 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.x = useBorder4 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[5];
-    f.y = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder5 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.y = useBorder5 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[6];
-    f.z = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder6 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.z = useBorder6 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[7];
-    f.w = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder7 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.w = useBorder7 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     dst.y = hip_pack_half_up(f);
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
@@ -2067,6 +2075,16 @@ __device__ __forceinline__ float hip_bilinear_sample_RGBX_constant(uchar *pSrc, 
     return fmaf(v1, (1.0f - fy0), v0 * fy0);
 }
 
+__device__ __forceinline__ void hip_remap_load_sxy_constant(int map, float *sx, float *sy, int *x0, int *y0, float *fx0, float *fy0)
+{
+    *sx = ((float)(map & 0xffff)) * 0.125f;
+    *sy = ((float)(map >> 16)) * 0.125f;
+    *x0 = (int)floorf(*sx);
+    *y0 = (int)floorf(*sy);
+    float fx1 = *sx - (float)(*x0); *fx0 = 1.0f - fx1;
+    float fy1 = *sy - (float)(*y0); *fy0 = 1.0f - fy1;
+}
+
 __device__ __forceinline__ void hip_remap_load_sxy(int map, float *sx, float *sy, int *x0, int *y0, float *fx0, float *fy0, int srcWidth, int srcHeight)
 {
     *sx = ((float)(map & 0xffff)) * 0.125f;
@@ -2079,12 +2097,10 @@ __device__ __forceinline__ void hip_remap_load_sxy(int map, float *sx, float *sy
     *y0 = max(0, min(*y0, srcHeight - 2));
 }
 
-__device__ __forceinline__ void hip_remap_load_sxy_nearest(int map, int *sx, int *sy, int srcW1, int srcH1)
+__device__ __forceinline__ void hip_remap_load_sxy_nearest(int map, int *sx, int *sy)
 {
     *sx = ((map & 0xffff) + 4) >> 3;
     *sy = (map + 0x00040000) >> 19;
-    *sx = max(0, min(*sx, srcW1));
-    *sy = max(0, min(*sy, srcH1));
 }
 
 // Each thread produces up to 8 pixels. A full block is written with the wide
@@ -2220,12 +2236,10 @@ Hip_Remap_RGB_RGB_Nearest(uint dstWidth, uint dstHeight,
     out[0] = (uint3)0;
     out[1] = (uint3)0;
 
-    int srcW1 = (int)srcWidth - 1;
-    int srcH1 = (int)srcHeight - 1;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
         int sx, sy;
-        hip_remap_load_sxy_nearest(remap[i], &sx, &sy, srcW1, srcH1);
+        hip_remap_load_sxy_nearest(remap[i], &sx, &sy);
         uint srcIdx = (uint)(sy * srcImageStrideInBytes + sx * 3);
         int slot = i >> 2;
         int sub = i & 3;
@@ -2276,16 +2290,22 @@ Hip_Remap_RGB_RGB_Bilinear_Constant(uint dstWidth, uint dstHeight,
     out[0] = (uint3)0;
     out[1] = (uint3)0;
 
-    int sw = (int)srcWidth, sh = (int)srcHeight;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
+        int map = remap[i];
+        bool useBorder = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
         float sx, sy, fx0, fy0;
         int x0, y0;
-        hip_remap_load_sxy(remap[i], &sx, &sy, &x0, &y0, &fx0, &fy0, sw, sh);
+        if (useBorder) {
+            sx = sy = 0.0f; x0 = y0 = 0; fx0 = fy0 = 0.0f;
+        } else {
+            hip_remap_load_sxy_constant(map, &sx, &sy, &x0, &y0, &fx0, &fy0);
+        }
 
         float4 f;
         for (int c = 0; c < 3; c++) {
-            ((float *)&f)[c] = hip_bilinear_sample_RGB_constant((uchar *)pSrcImage, x0, y0, fx0, fy0, c, srcImageStrideInBytes, srcWidth, srcHeight, borderValue);
+            ((float *)&f)[c] = useBorder ? hip_unpack0(borderValue)
+                : hip_bilinear_sample_RGB_constant((uchar *)pSrcImage, x0, y0, fx0, fy0, c, srcImageStrideInBytes, srcWidth, srcHeight, borderValue);
         }
 
         int slot = i >> 2;
@@ -2337,12 +2357,10 @@ Hip_Remap_RGB_RGB_Nearest_Constant(uint dstWidth, uint dstHeight,
     out[0] = (uint3)0;
     out[1] = (uint3)0;
 
-    int srcW1 = (int)srcWidth - 1;
-    int srcH1 = (int)srcHeight - 1;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
         int sx, sy;
-        hip_remap_load_sxy_nearest(remap[i], &sx, &sy, srcW1, srcH1);
+        hip_remap_load_sxy_nearest(remap[i], &sx, &sy);
         int slot = i >> 2;
         int sub = i & 3;
         for (int c = 0; c < 3; c++) {
@@ -2459,12 +2477,10 @@ Hip_Remap_RGBX_RGBX_Nearest(uint dstWidth, uint dstHeight,
     uint4 out0 = (uint4)0;
     uint4 out1 = (uint4)0;
 
-    int srcW1 = (int)srcWidth - 1;
-    int srcH1 = (int)srcHeight - 1;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
         int sx, sy;
-        hip_remap_load_sxy_nearest(remap[i], &sx, &sy, srcW1, srcH1);
+        hip_remap_load_sxy_nearest(remap[i], &sx, &sy);
         uint srcIdx = (uint)(sy * srcImageStrideInBytes + sx * 4);
         uint4 *out = (i < 4) ? &out0 : &out1;
         for (int c = 0; c < 4; c++) {
@@ -2513,16 +2529,22 @@ Hip_Remap_RGBX_RGBX_Bilinear_Constant(uint dstWidth, uint dstHeight,
     uint4 out0 = (uint4)0;
     uint4 out1 = (uint4)0;
 
-    int sw = (int)srcWidth, sh = (int)srcHeight;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
+        int map = remap[i];
+        bool useBorder = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
         float sx, sy, fx0, fy0;
         int x0, y0;
-        hip_remap_load_sxy(remap[i], &sx, &sy, &x0, &y0, &fx0, &fy0, sw, sh);
+        if (useBorder) {
+            sx = sy = 0.0f; x0 = y0 = 0; fx0 = fy0 = 0.0f;
+        } else {
+            hip_remap_load_sxy_constant(map, &sx, &sy, &x0, &y0, &fx0, &fy0);
+        }
 
         float4 f;
         for (int c = 0; c < 4; c++) {
-            ((float *)&f)[c] = hip_bilinear_sample_RGBX_constant((uchar *)pSrcImage, x0, y0, fx0, fy0, c, srcImageStrideInBytes, srcWidth, srcHeight, borderValue);
+            ((float *)&f)[c] = useBorder ? hip_unpack0(borderValue)
+                : hip_bilinear_sample_RGBX_constant((uchar *)pSrcImage, x0, y0, fx0, fy0, c, srcImageStrideInBytes, srcWidth, srcHeight, borderValue);
         }
 
         uint4 *out = (i < 4) ? &out0 : &out1;
@@ -2573,12 +2595,10 @@ Hip_Remap_RGBX_RGBX_Nearest_Constant(uint dstWidth, uint dstHeight,
     uint4 out0 = (uint4)0;
     uint4 out1 = (uint4)0;
 
-    int srcW1 = (int)srcWidth - 1;
-    int srcH1 = (int)srcHeight - 1;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
         int sx, sy;
-        hip_remap_load_sxy_nearest(remap[i], &sx, &sy, srcW1, srcH1);
+        hip_remap_load_sxy_nearest(remap[i], &sx, &sy);
         uint4 *out = (i < 4) ? &out0 : &out1;
         for (int c = 0; c < 4; c++) {
             uint v = borderValue;

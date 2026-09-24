@@ -257,6 +257,9 @@ __device__ __forceinline__ float hip_bilinear_sample_FXY(const uchar *p, uint pS
     return hip_bilinear_sample(p, stride, 1, fy0, fy1, 0, fx0, fx1);
 }
 
+__device__ __forceinline__ float hip_bilinear_sample_with_constant_border(const uchar *p, int x, int y, uint width,
+    uint height, uint stride, float fx0, float fx1, float fy0, float fy1, uint borderValue);
+
 __device__ __forceinline__ float hip_bilinear_sample_FXY_constant_for_remap(const uchar *p, uint stride, uint width,
     uint height, float sx, float sy, uint borderValue) {
 
@@ -268,13 +271,7 @@ __device__ __forceinline__ float hip_bilinear_sample_FXY_constant_for_remap(cons
     fy1 = hip_fract(sy, &ii);
     fy0 = 1.0f - fy1;
     y = (int)floorf(sy);
-    if (((uint)x) < width - 1 && ((uint)y) < height - 1) {
-        p += y * stride;
-        return hip_bilinear_sample(p, stride, 1, fy0, fy1, x, fx0, fx1);
-    }
-    else {
-        return hip_unpack0(borderValue);
-    }
+    return hip_bilinear_sample_with_constant_border(p, x, y, width, height, stride, fx0, fx1, fy0, fy1, borderValue);
 }
 
 __device__ __forceinline__ uint2 hip_clamp_pixel_coordinates_to_border(float f, uint limit, uint stride) {

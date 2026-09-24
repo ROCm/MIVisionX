@@ -8083,8 +8083,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetRemapPoint(vx_remap table,
             item_float->y = src_y;
             item_fixed->x = (vx_uint16)(src_x * (vx_float32)(1 << data->u.remap.remap_fractional_bits) + 0.5f); // convert to fixed-point with rounding
             item_fixed->y = (vx_uint16)(src_y * (vx_float32)(1 << data->u.remap.remap_fractional_bits) + 0.5f); // convert to fixed-point with rounding
-            // special handing for border cases
-            if (src_x < 0.0f || src_y < 0.0f || src_x >= (vx_float32)(data->u.remap.src_width-1) || src_y >= (vx_float32)(data->u.remap.src_height-1)) {
+            // special handing for border cases: only mark fully out-of-bounds coordinates
+            // as invalid. Coordinates on or inside the src image rectangle are valid and
+            // the interpolation kernel applies the border mode per sample.
+            if (src_x < 0.0f || src_y < 0.0f || src_x >= (vx_float32)data->u.remap.src_width || src_y >= (vx_float32)data->u.remap.src_height) {
                 item_fixed->x = 0xffff;
                 item_fixed->y = 0xffff;
             }

@@ -400,8 +400,11 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
     )
     set_property(TEST openvx_gdf_tests_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
 
-    # 22 - HIP CU-mask control verification using a 4K Remap graph
-    if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") AND RUNVX_EXECUTABLE)
+    # 22 - HIP CU-mask control verification using a 4K Remap graph.
+    # Guard on the script existing so an incomplete install tree does not
+    # register a test whose payload was never shipped.
+    if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") AND RUNVX_EXECUTABLE
+        AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/hip_cu_mask_tests/test_hip_cu_mask_remap.py)
       add_test(NAME openvx_hip_cu_mask_remap_4K
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/hip_cu_mask_tests/test_hip_cu_mask_remap.py
             --runvx ${RUNVX_EXECUTABLE}

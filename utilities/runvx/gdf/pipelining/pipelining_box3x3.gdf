@@ -1,0 +1,43 @@
+# Proposed pipelining GDF for the "light" C++ sample preset.
+#
+# Intended runvx invocation (once issue #1734 is implemented):
+#   runvx -frames:120 file pipelining_box3x3.gdf
+#
+# Graph:
+#   RGB input -> ColorConvert -> IYUV -> ChannelExtract(Y) -> Box3x3 -> U8 output
+
+set verbose off
+set dump-profile off
+
+# Input and output are non-virtual so they can be exposed as graph parameters.
+data input_0  = image:3840,2160,RGB2
+data input_1  = image:3840,2160,RGB2
+data input_2  = image:3840,2160,RGB2
+data input_3  = image:3840,2160,RGB2
+
+data output_0 = image:3840,2160,U008
+data output_1 = image:3840,2160,U008
+data output_2 = image:3840,2160,U008
+data output_3 = image:3840,2160,U008
+
+# Virtual intermediates inside the graph.
+data yuv  = virtual-image:3840,2160,IYUV
+data luma = virtual-image:3840,2160,U008
+
+node org.khronos.openvx.color_convert input_0 yuv
+node org.khronos.openvx.channel_extract yuv !VX_CHANNEL_Y luma
+node org.khronos.openvx.box_3x3 luma output_0
+
+# Proposed: expose node parameters as graph parameters.
+graph parameter input_0 node org.khronos.openvx.color_convert param 0
+graph parameter output_0 node org.khronos.openvx.box_3x3 param 1
+
+# Proposed: configure QUEUE_AUTO with a 4-deep ring.
+graph schedule queue-auto depth 4
+
+# Proposed: prime the pipeline by enqueueing the rings.
+graph enqueue input  input_0 input_1 input_2 input_3
+graph enqueue output output_0 output_1 output_2 output_3
+
+# Proposed: run 120 frames through the pipelined executor.
+graph launch-pipelined frames 120

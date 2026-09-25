@@ -1,0 +1,59 @@
+# Proposed pipelining GDF matching the hybrid CPU+GPU+CPU C++ sample.
+#
+# Intended runvx invocation (once issue #1734 is implemented):
+#   runvx -frames:120 file pipelining_hybrid.gdf
+#
+# Graph:
+#   CPU: ColorConvert + ChannelExtract(Y)
+#   GPU: Box3x3 -> Box3x3 -> Box3x3
+#   CPU: Threshold + Box3x3
+
+set verbose off
+set dump-profile off
+
+data input_0  = image:3840,2160,RGB2
+data input_1  = image:3840,2160,RGB2
+data input_2  = image:3840,2160,RGB2
+data input_3  = image:3840,2160,RGB2
+
+data output_0 = image:3840,2160,U008
+data output_1 = image:3840,2160,U008
+data output_2 = image:3840,2160,U008
+data output_3 = image:3840,2160,U008
+
+# Virtual intermediates.
+data yuv  = virtual-image:3840,2160,IYUV
+data luma = virtual-image:3840,2160,U008
+data gpu1 = virtual-image:3840,2160,U008
+data gpu2 = virtual-image:3840,2160,U008
+data mask = virtual-image:3840,2160,U008
+data tmp  = virtual-image:3840,2160,U008
+
+node org.khronos.openvx.color_convert input_0 yuv
+node org.khronos.openvx.channel_extract yuv !VX_CHANNEL_Y luma
+node org.khronos.openvx.box_3x3 luma gpu1
+node org.khronos.openvx.box_3x3 gpu1 gpu2
+node org.khronos.openvx.box_3x3 gpu2 mask
+
+# Threshold: binary, value 64.
+data thresh = threshold:BINARY,U008,U008
+init thresh 64
+node org.khronos.openvx.threshold mask thresh tmp
+node org.khronos.openvx.box_3x3 tmp output_0
+
+# Proposed: node target pinning via graph affinity directives.
+# (Exact GDF syntax for vxSetNodeTarget is also not implemented today.)
+graph node-target org.khronos.openvx.color_convert CPU
+graph node-target org.khronos.openvx.channel_extract CPU
+graph node-target org.khronos.openvx.box_3x3 GPU
+graph node-target org.khronos.openvx.threshold CPU
+graph node-target org.khronos.openvx.box_3x3 CPU
+
+graph parameter input_0 node org.khronos.openvx.color_convert param 0
+graph parameter output_0 node org.khronos.openvx.box_3x3 param 1
+
+graph schedule queue-auto depth 4
+graph enqueue input  input_0 input_1 input_2 input_3
+graph enqueue output output_0 output_1 output_2 output_3
+
+graph launch-pipelined frames 120

@@ -28,6 +28,7 @@ include(GNUInstallDirs)
 
 if(EXISTS ${ROCM_PATH}/${CMAKE_INSTALL_LIBDIR}/libopenvx.so)
     message("-- MIVisionX Applications -- OpenVX Found, adding CV Apps")
+    add_subdirectory(adas_pipeline)
     add_subdirectory(bubble_pop)
     add_subdirectory(optical_flow)
 else()

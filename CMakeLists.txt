@@ -255,9 +255,6 @@ install(DIRECTORY cmake DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMP
 install(DIRECTORY tests/amd_openvx_gdfs DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 install(DIRECTORY tests/openvx_api_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 install(DIRECTORY tests/vision_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
-# tests/CMakeLists.txt registers openvx_hip_cu_mask_remap_4K against this
-# directory. Without the matching install() the -test package is not
-# self-consistent and the installed ctest fails with "No such file".
 install(DIRECTORY tests/hip_cu_mask_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 install(DIRECTORY data/videos DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 

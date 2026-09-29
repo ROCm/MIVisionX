@@ -1313,29 +1313,43 @@ int HafCpu_Remap_U8_U8_Bilinear_Constant
 		return (vx_uint8)((v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + 32) >> 6);
 	};
 
-	// SIMD path is valid for vectors where every pixel's 2x2 neighborhood is fully
-	// inside the source image. For the last row or last columns we must use scalar
-	// per-neighbor blending to match OpenVX constant-border semantics.
-	// lastSimdCol is the largest multiple-of-4 dst column count that is guaranteed
-	// interior. A SIMD vector covers 4 pixels; the rightmost covered pixel must
-	// satisfy floor(src_x) + 1 < srcWidth. With the standard +0.5 shift this means
-	// dst column cx <= srcWidth - 5. For general maps we keep the same conservative
-	// bound and fall back to scalar for the rightmost 4-pixel block.
-	vx_uint32 lastSimdCol = 0;
-	if (dstWidth > 4 && srcWidth > 4) {
-		lastSimdCol = (vx_uint32)(srcWidth - 5) + 1;
-		lastSimdCol = (lastSimdCol >> 2) << 2;
-		if (lastSimdCol > dstWidth) lastSimdCol = (dstWidth >> 2) << 2;
-	}
-	vx_uint32 scalarRowStart = (dstHeight > 1) ? (dstHeight - 1) : dstHeight;
+	// The SIMD path for a 4-pixel block is only valid when every pixel's 2x2 sample
+	// neighborhood lies fully inside the source image and none of the entries are the
+	// out-of-bounds sentinel (0xFFFF). The remap table is arbitrary, so an interior
+	// destination pixel can still reference a source-edge coordinate; the in-bounds
+	// test must therefore be made per block at run time. A destination-column heuristic
+	// derived from srcWidth is wrong for non-identity maps (e.g. a mirror table) and
+	// both over-reads the source buffer and skips constant-border substitution. Blocks
+	// that are not fully safe, and the sub-4-pixel tail, use the scalar per-neighbor path.
+	auto block_simd_safe = [&](const ago_coord2d_short_t *pMapY_X) -> bool {
+		for (int k = 0; k < 4; ++k) {
+			const ago_coord2d_short_t &m = pMapY_X[k];
+			if (m.x == (vx_int16)0xFFFF || m.y == (vx_int16)0xFFFF)
+				return false;
+			int mx = m.x >> 3, my = m.y >> 3;
+			if (mx < 0 || my < 0 || (mx + 3) >= (int)srcWidth || (my + 1) >= (int)srcHeight)
+				return false;
+		}
+		return true;
+	};
 
-	for (vx_uint32 y = 0; y < scalarRowStart; ++y)
+	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)(pchMap + y * mapStrideInBytes);
-		unsigned int *pdst = (unsigned int *)(pchDst + y * dstImageStrideInBytes);
+		ago_coord2d_short_t *pMapRow = (ago_coord2d_short_t *)(pchMap + y * mapStrideInBytes);
+		unsigned char *pDstRow = pchDst + y * dstImageStrideInBytes;
 
-		for (vx_uint32 x = 0; x < lastSimdCol; x += 4)
+		vx_uint32 x = 0;
+		for (; x + 4 <= dstWidth; x += 4)
 		{
+			ago_coord2d_short_t *pMapY_X = pMapRow + x;
+			if (!block_simd_safe(pMapY_X))
+			{
+				for (int k = 0; k < 4; ++k)
+					pDstRow[x + k] = scalar_pixel(pMapY_X + k);
+				continue;
+			}
+
+			unsigned int *pdst = (unsigned int *)(pDstRow + x);
 			__m128i temp0, temp1, w_xy, oneminusxy, p12, p34, mask;
 			unsigned char *p0;
 			mapxy = _mm_loadu_si128((__m128i *)pMapY_X);
@@ -1401,26 +1415,10 @@ int HafCpu_Remap_U8_U8_Bilinear_Constant
 			p34 = _mm_packus_epi32(p34, zeromask);
 			p34 = _mm_packus_epi16(p34, zeromask);
 			*pdst++ = M128I(p34).m128i_i32[0];
-
-			pMapY_X += 4;
 		}
 
-		for (vx_uint32 x = lastSimdCol; x < dstWidth; ++x, ++pMapY_X)
-		{
-			unsigned char *pd = (unsigned char *)pdst + (x - lastSimdCol);
-			pd[0] = scalar_pixel(pMapY_X);
-		}
-	}
-
-	if (dstHeight > 1)
-	{
-		vx_uint32 y = dstHeight - 1;
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)(pchMap + y * mapStrideInBytes);
-		unsigned char *pd = pchDst + y * dstImageStrideInBytes;
-		for (vx_uint32 x = 0; x < dstWidth; ++x, ++pd, ++pMapY_X)
-		{
-			*pd = scalar_pixel(pMapY_X);
-		}
+		for (; x < dstWidth; ++x)
+			pDstRow[x] = scalar_pixel(pMapRow + x);
 	}
 
 	return AGO_SUCCESS;

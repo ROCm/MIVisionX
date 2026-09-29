@@ -2778,6 +2778,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxAddParameterToKernel(vx_kernel kernel, vx_u
         // add parameter if the kernel is not finalized and not a built-in kernel and not initialized earlier
         if((data_type == VX_TYPE_DELAY && dir != VX_INPUT))
                 return VX_ERROR_INVALID_PARAMETERS;
+        // a user kernel declared its parameter count up front, so an index beyond it is invalid
+        if (kernel->user_kernel == vx_true_e && index >= kernel->argCount)
+                return VX_ERROR_INVALID_PARAMETERS;
         if (kernel->external_kernel && !kernel->finalized &&
             index < AGO_MAX_PARAMS &&
             (dir == VX_INPUT || dir == VX_OUTPUT || dir == VX_BIDIRECTIONAL) &&
@@ -8455,6 +8458,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxAddArrayItems(vx_array arr, vx_size count, 
         status = VX_ERROR_INVALID_PARAMETERS;
         if (data->isVirtual && !data->buffer) {
             status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if (ptr && (data->u.arr.numitems + count > data->u.arr.capacity)) {
+            status = VX_FAILURE;
         }
         else if (ptr && (data->u.arr.numitems + count <= data->u.arr.capacity)) {
             if (!data->buffer) {

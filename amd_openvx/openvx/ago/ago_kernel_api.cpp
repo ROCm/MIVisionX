@@ -1789,7 +1789,12 @@ int ovxKernel_WarpAffine(AgoNode * node, AgoKernelCommand cmd)
             return VX_ERROR_INVALID_FORMAT;
         else if (!width || !height)
             return VX_ERROR_INVALID_DIMENSION;
-        else if (node->paramList[1]->u.mat.type != VX_TYPE_FLOAT32 || node->paramList[1]->u.mat.columns != 2 || node->paramList[1]->u.mat.rows != 3)
+        // the spec calls for a 2x3 float32 matrix without fixing which dimension is
+        // which, and the kernel reads the six coefficients as a flat buffer, so accept
+        // either orientation
+        else if (node->paramList[1]->u.mat.type != VX_TYPE_FLOAT32 ||
+                 !((node->paramList[1]->u.mat.columns == 2 && node->paramList[1]->u.mat.rows == 3) ||
+                   (node->paramList[1]->u.mat.columns == 3 && node->paramList[1]->u.mat.rows == 2)))
             return VX_ERROR_INVALID_FORMAT;
         else if (node->paramList[2]->u.scalar.type != VX_TYPE_ENUM)
             return VX_ERROR_INVALID_TYPE;
@@ -19389,7 +19394,8 @@ int agoKernel_WarpAffine_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
         if (!status) {
             if (node->paramList[2]->u.mat.type != VX_TYPE_FLOAT32)
                 return VX_ERROR_INVALID_TYPE;
-            if (node->paramList[2]->u.mat.columns != 2 || node->paramList[2]->u.mat.rows != 3)
+            if (!((node->paramList[2]->u.mat.columns == 2 && node->paramList[2]->u.mat.rows == 3) ||
+                  (node->paramList[2]->u.mat.columns == 3 && node->paramList[2]->u.mat.rows == 2)))
                 return VX_ERROR_INVALID_DIMENSION;
             // output image dimensions have no constraints
             vx_meta_format meta;
@@ -19489,7 +19495,8 @@ int agoKernel_WarpAffine_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand
         if (!status) {
             if (node->paramList[2]->u.mat.type != VX_TYPE_FLOAT32)
                 return VX_ERROR_INVALID_TYPE;
-            if (node->paramList[2]->u.mat.columns != 2 || node->paramList[2]->u.mat.rows != 3)
+            if (!((node->paramList[2]->u.mat.columns == 2 && node->paramList[2]->u.mat.rows == 3) ||
+                  (node->paramList[2]->u.mat.columns == 3 && node->paramList[2]->u.mat.rows == 2)))
                 return VX_ERROR_INVALID_DIMENSION;
             if (node->paramList[3]->u.scalar.type != VX_TYPE_UINT8)
                 return VX_ERROR_INVALID_FORMAT;
@@ -19605,7 +19612,8 @@ int agoKernel_WarpAffine_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd)
         if (!status) {
             if (node->paramList[2]->u.mat.type != VX_TYPE_FLOAT32)
                 return VX_ERROR_INVALID_TYPE;
-            if (node->paramList[2]->u.mat.columns != 2 || node->paramList[2]->u.mat.rows != 3)
+            if (!((node->paramList[2]->u.mat.columns == 2 && node->paramList[2]->u.mat.rows == 3) ||
+                  (node->paramList[2]->u.mat.columns == 3 && node->paramList[2]->u.mat.rows == 2)))
                 return VX_ERROR_INVALID_DIMENSION;
             // output image dimensions have no constraints
             vx_meta_format meta;
@@ -19703,7 +19711,8 @@ int agoKernel_WarpAffine_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelComman
         if (!status) {
             if (node->paramList[2]->u.mat.type != VX_TYPE_FLOAT32)
                 return VX_ERROR_INVALID_TYPE;
-            if (node->paramList[2]->u.mat.columns != 2 || node->paramList[2]->u.mat.rows != 3)
+            if (!((node->paramList[2]->u.mat.columns == 2 && node->paramList[2]->u.mat.rows == 3) ||
+                  (node->paramList[2]->u.mat.columns == 3 && node->paramList[2]->u.mat.rows == 2)))
                 return VX_ERROR_INVALID_DIMENSION;
             if (node->paramList[3]->u.scalar.type != VX_TYPE_UINT8)
                 return VX_ERROR_INVALID_FORMAT;

@@ -256,6 +256,74 @@ static void test_laplacian_reconstruct(vx_context context)
     vxReleaseGraph(&graph);
 }
 
+// REQ-0499/0502/0504/0507: the spec calls for a 2x3 float32 affine matrix without
+// fixing which dimension is which, so either orientation has to be accepted.
+static void test_warp_affine_matrix(vx_context context)
+{
+    struct { const char *req; vx_size columns; vx_size rows; } cases[] = {
+        { "REQ-0500", 2, 3 },
+        { "REQ-0499", 3, 2 },
+    };
+    char detail[64];
+    for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+        vx_graph graph = vxCreateGraph(context);
+        vx_image input = vxCreateImage(context, 64, 64, VX_DF_IMAGE_U8);
+        vx_image output = vxCreateImage(context, 64, 64, VX_DF_IMAGE_U8);
+        vx_matrix matrix = vxCreateMatrix(context, VX_TYPE_FLOAT32, cases[i].columns, cases[i].rows);
+        vx_node node = vxWarpAffineNode(graph, input, matrix, VX_INTERPOLATION_NEAREST_NEIGHBOR, output);
+        snprintf(detail, sizeof(detail), "%zux%zu matrix",
+                 (size_t)cases[i].columns, (size_t)cases[i].rows);
+        check(cases[i].req, "vxWarpAffineNode accepts either matrix orientation",
+              vxGetStatus((vx_reference)node) == VX_SUCCESS && vxVerifyGraph(graph) == VX_SUCCESS, detail);
+        if (node) vxReleaseNode(&node);
+        vxReleaseMatrix(&matrix);
+        vxReleaseImage(&input);
+        vxReleaseImage(&output);
+        vxReleaseGraph(&graph);
+    }
+}
+
+// REQ-0726: adding past the capacity of an array reports VX_FAILURE and leaves
+// the item count untouched.
+static void test_array_full(vx_context context)
+{
+    vx_array array = vxCreateArray(context, VX_TYPE_KEYPOINT, 2);
+    vx_keypoint_t items[2];
+    memset(items, 0, sizeof(items));
+    vxAddArrayItems(array, 2, items, sizeof(items[0]));
+
+    vx_keypoint_t extra;
+    memset(&extra, 0, sizeof(extra));
+    vx_status status = vxAddArrayItems(array, 1, &extra, sizeof(extra));
+    vx_size numitems = 0;
+    vxQueryArray(array, VX_ARRAY_NUMITEMS, &numitems, sizeof(numitems));
+    check("REQ-0726", "vxAddArrayItems on a full array returns VX_FAILURE",
+          status == VX_FAILURE && numitems == 2, NULL);
+    vxReleaseArray(&array);
+}
+
+static vx_status VX_CALLBACK noop_kernel(vx_node, const vx_reference *, vx_uint32)
+{
+    return VX_SUCCESS;
+}
+
+// REQ-1896: a user kernel declares its parameter count up front, so an index
+// beyond it must be rejected.
+static void test_add_parameter_bounds(vx_context context)
+{
+    vx_enum kernel_id = 0;
+    vxAllocateUserKernelId(context, &kernel_id);
+    vx_kernel kernel = vxAddUserKernel(context, "org.khronos.test.reqtags_bounds",
+                                       kernel_id, noop_kernel, 2, NULL, NULL, NULL);
+    vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED);
+    vxAddParameterToKernel(kernel, 1, VX_OUTPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED);
+    vx_status status = vxAddParameterToKernel(kernel, 2, VX_INPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED);
+    check("REQ-1896", "vxAddParameterToKernel rejects an out of range index",
+          status != VX_SUCCESS, NULL);
+    vxFinalizeKernel(kernel);
+    vxRemoveKernel(kernel);
+}
+
 int main()
 {
     vx_context context = vxCreateContext();
@@ -274,6 +342,9 @@ int main()
     test_non_linear_filter(context);
     test_remap(context);
     test_laplacian_reconstruct(context);
+    test_warp_affine_matrix(context);
+    test_array_full(context);
+    test_add_parameter_bounds(context);
 
     printf("\n%s: %d failure(s)\n", errors ? "FAILED" : "PASSED", errors);
     vxReleaseContext(&context);

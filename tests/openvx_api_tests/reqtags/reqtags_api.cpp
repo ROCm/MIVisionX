@@ -340,6 +340,31 @@ static void test_parameter_meta_format(vx_context context)
     vxReleaseKernel(&kernel);
 }
 
+// REQ-1269: vxCopyRemapPatch addresses the user buffer relative to the patch origin,
+// so a write then read of the same patch round trips.
+static void test_remap_patch_roundtrip(vx_context context)
+{
+    char detail[96];
+    vx_remap map = vxCreateRemap(context, 64, 64, 32, 32);
+    vx_rectangle_t rect = { 5, 7, 6, 8 };
+    vx_coordinates2df_t written;
+    written.x = 12.5f;
+    written.y = 34.75f;
+    vx_status swrite = vxCopyRemapPatch(map, &rect, sizeof(vx_coordinates2df_t), &written,
+                                        VX_TYPE_COORDINATES2DF, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    vx_coordinates2df_t read;
+    read.x = 0.0f;
+    read.y = 0.0f;
+    vx_status sread = vxCopyRemapPatch(map, &rect, sizeof(vx_coordinates2df_t), &read,
+                                       VX_TYPE_COORDINATES2DF, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    snprintf(detail, sizeof(detail), "wrote (%g,%g) read (%g,%g)",
+             written.x, written.y, read.x, read.y);
+    check("REQ-1269", "vxCopyRemapPatch write then read round trips",
+          swrite == VX_SUCCESS && sread == VX_SUCCESS &&
+          read.x == written.x && read.y == written.y, detail);
+    vxReleaseRemap(&map);
+}
+
 int main()
 {
     vx_context context = vxCreateContext();
@@ -362,6 +387,7 @@ int main()
     test_array_full(context);
     test_add_parameter_bounds(context);
     test_parameter_meta_format(context);
+    test_remap_patch_roundtrip(context);
 
     printf("\n%s: %d failure(s)\n", errors ? "FAILED" : "PASSED", errors);
     vxReleaseContext(&context);

@@ -1272,12 +1272,14 @@ int agoUnloadModule(AgoContext * context, const char * module)
                 if (!unpublish_kernels_f && context->modules[index].hmodule) {
                     unpublish_kernels_f = (vx_unpublish_kernels_f)agoGetFunctionAddress(context->modules[index].hmodule, "vxUnpublishKernels");
                 }
-                if (!unpublish_kernels_f) {
+                if (!unpublish_kernels_f && context->modules[index].hmodule) {
+                    // a shared library is required to export vxUnpublishKernels
                     status = VX_ERROR_NOT_SUPPORTED;
                     agoAddLogEntry(&context->ref, status, "ERROR: vxUnpublishKernels symbol missing in %s\n", filePath);
                 }
                 else {
-                    status = unpublish_kernels_f(context);
+                    // a module registered without an unpublish callback has nothing to call
+                    status = unpublish_kernels_f ? unpublish_kernels_f(context) : VX_SUCCESS;
                     if (status == VX_SUCCESS) {
                         if (context->modules[index].hmodule) {
                             agoCloseModule(context->modules[index].hmodule);

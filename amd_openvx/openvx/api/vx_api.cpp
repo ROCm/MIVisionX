@@ -2437,9 +2437,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxRegisterKernelLibrary(vx_context context, c
     if (agoIsValidContext(context))
     {
         status = VX_ERROR_INVALID_PARAMETERS;
-        // A registered module has hmodule==NULL, so agoUnloadModule cannot look up an
-        // unpublish callback from a shared library later. Require it up front.
-        if (module && publish && unpublish)
+        // unpublish is optional: a registered module has hmodule==NULL so there is no shared
+        // library to recover vxUnpublishKernels from, and vxUnloadKernels then has nothing to
+        // call and simply drops the module.
+        if (module && publish)
         {
             CAgoLock lock(context->cs);
             // check if the module is already registered
@@ -7848,7 +7849,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyRemapPatch(vx_remap remap,
                 {
                     for (j = start_x; j < end_x; j++)
                     {
-                        vx_coordinates2df_t *coord_ptr = &(ptr[i * stride + j]);
+                        // user_ptr addresses the patch, not the whole remap
+                        vx_coordinates2df_t *coord_ptr = &(ptr[(i - start_y) * stride + (j - start_x)]);
                         status = vxGetRemapPoint(remap, j, i, &coord_ptr->x, &coord_ptr->y);
                         if(status != VX_SUCCESS)
                         {
@@ -7866,7 +7868,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyRemapPatch(vx_remap remap,
                 {
                     for (j = start_x; j < end_x; j++)
                     {
-                        vx_coordinates2df_t *coord_ptr = &(ptr[i * stride + j]);
+                        // user_ptr addresses the patch, not the whole remap
+                        vx_coordinates2df_t *coord_ptr = &(ptr[(i - start_y) * stride + (j - start_x)]);
                         status = vxSetRemapPoint(remap, j, i, coord_ptr->x, coord_ptr->y);
                         if(status != VX_SUCCESS)
                         {

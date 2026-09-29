@@ -72,6 +72,9 @@ AgoContext * agoCreateContextFromPlatform(struct _vx_platform * platform)
         acontext->ref.platform = platform;
         agoResetReference(&acontext->ref, VX_TYPE_CONTEXT, acontext, NULL);
         acontext->ref.external_count++;
+        // the context is itself a reference held by the application, and
+        // agoReleaseContext drops it again
+        acontext->num_active_references++;
         // initialize image formats
         if (agoInitializeImageComponentsAndPlanes(acontext)) {
             delete acontext;

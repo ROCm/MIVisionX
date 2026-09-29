@@ -422,7 +422,8 @@ int agoOptimizeDramaComputeGraphHierarchy(AgoGraph * graph)
 			}
 		}
 	}
-	if(num_head_nodes == 0){
+	// a graph with no nodes has no head nodes either, and is legal
+	if(num_head_nodes == 0 && graph->nodeList.count > 0){
 		vx_status status = VX_ERROR_INVALID_GRAPH;
 		vxAddLogEntry(&graph->ref, status, "ERROR: vxVerifyGraph: Cycle: Graph has no head nodes!");
 		return status;

@@ -623,6 +623,10 @@ struct AgoNode {
     vx_uint32 pipeup_output_depth;
     vx_bool local_data_change_is_enabled;
     vx_bool local_data_set_by_implementation;
+    // vxReplicateNode expands a node into one node per pyramid/object-array level, so the
+    // replication state has to be recorded here to be reportable through vxQueryNode
+    vx_bool is_replicated;
+    vx_bool replicate_flags[AGO_MAX_PARAMS];
     struct { bool enable; int paramIndexScalar; int paramIndexArray; } gpu_scalar_array_output_sync;
 #if ENABLE_OPENCL
     vx_uint32 opencl_type;

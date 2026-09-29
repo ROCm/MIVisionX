@@ -3030,6 +3030,8 @@ AgoNode * agoCreateNode(AgoGraph * graph, AgoKernel * kernel)
     node->newchildnode = NULL;
     node->local_data_change_is_enabled = vx_false_e;
     node->local_data_set_by_implementation = vx_false_e;
+    node->is_replicated = vx_false_e;
+    memset(node->replicate_flags, 0, sizeof(node->replicate_flags));
     memcpy(node->parameters, kernel->parameters, sizeof(node->parameters));
     for (vx_uint32 i = 0; i < node->paramCount; i++) {
         agoResetReference(&node->parameters[i].ref, VX_TYPE_PARAMETER, graph->ref.context, &graph->ref);
@@ -3389,7 +3391,7 @@ AgoNode::AgoNode()
       valid_rect_reset{ vx_true_e }, valid_rect_num_inputs{ 0 }, valid_rect_num_outputs{ 0 }, valid_rect_inputs{ nullptr }, valid_rect_outputs{ nullptr },
       paramCount{ 0 }, callback{ nullptr }, supernode{ nullptr }, initialized{ false }, target_support_flags{ 0 }, hierarchical_level{ 0 }, status{ VX_SUCCESS },
       node_state{ VX_NODE_STATE_PIPEUP }, node_exec_count{ 0 }, pipeup_output_depth{ 0 }
-    , drama_divide_invoked{ false }
+    , drama_divide_invoked{ false }, is_replicated{ vx_false_e }
 #if ENABLE_OPENCL
     , opencl_type{ 0 }, opencl_param_mem2reg_mask{ 0 }, opencl_param_discard_mask{ 0 }, opencl_param_as_value_mask{ 0 },
       opencl_param_atomic_mask{ 0 }, opencl_local_buffer_usage_mask{ 0 }, opencl_local_buffer_size_in_bytes{ 0 }, opencl_work_dim{ 0 },
@@ -3401,6 +3403,7 @@ AgoNode::AgoNode()
     memset(&attr_affinity, 0, sizeof(attr_affinity));
     memset(&paramList, 0, sizeof(paramList));
     memset(&paramListForAgeDelay, 0, sizeof(paramListForAgeDelay));
+    memset(&replicate_flags, 0, sizeof(replicate_flags));
     memset(&funcExchange, 0, sizeof(funcExchange));
     memset(&perf, 0, sizeof(perf));
     memset(&gpu_scalar_array_output_sync, 0, sizeof(gpu_scalar_array_output_sync));

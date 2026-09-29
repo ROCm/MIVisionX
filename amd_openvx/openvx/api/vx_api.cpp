@@ -1291,6 +1291,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryImage(vx_image image_, vx_enum attribu
                     *(vx_size *)ptr = image->u.img.planes;
                     status = VX_SUCCESS;
                 }
+                else if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = (vx_uint32)image->u.img.planes;
+                    status = VX_SUCCESS;
+                }
                 break;
             case VX_IMAGE_SPACE:
                 if (size == sizeof(vx_enum)) {
@@ -3605,6 +3609,18 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryNode(vx_node node, vx_enum attribute, 
                     status = VX_SUCCESS;
                 }
                 break;
+            case VX_NODE_IS_REPLICATED:
+                if (size == sizeof(vx_bool)) {
+                    *(vx_bool *)ptr = node->is_replicated;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_NODE_REPLICATE_FLAGS:
+                if (size == sizeof(vx_bool) * node->paramCount) {
+                    memcpy(ptr, node->replicate_flags, size);
+                    status = VX_SUCCESS;
+                }
+                break;
 #if OPENVX_USE_PIPELINING
             case VX_NODE_STATE:
                 if (size == sizeof(vx_uint32)) {
@@ -3886,7 +3902,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetNodeTarget(vx_node node, vx_enum target_
 VX_API_ENTRY vx_status VX_API_CALL vxReplicateNode(vx_graph graph, vx_node first_node, vx_bool replicate[], vx_uint32 number_of_parameters)
 {
     vx_status status = VX_ERROR_INVALID_REFERENCE;
-    if (agoIsValidGraph(graph) && agoIsValidNode(first_node)) {
+    if (agoIsValidGraph(graph) && agoIsValidNode(first_node) && replicate) {
         status = VX_FAILURE;
         if (first_node->ref.scope == &graph->ref && first_node->paramCount == number_of_parameters) {
             status = VX_SUCCESS;
@@ -3931,7 +3947,17 @@ VX_API_ENTRY vx_status VX_API_CALL vxReplicateNode(vx_graph graph, vx_node first
                             status = vxSetParameterByIndex(node, i, &paramList[i]->ref);
                         }
                     }
+                    if (status == VX_SUCCESS) {
+                        node->is_replicated = vx_true_e;
+                        for (vx_uint32 i = 0; i < number_of_parameters; i++)
+                            node->replicate_flags[i] = replicate[i];
+                    }
                 }
+            }
+            if (status == VX_SUCCESS) {
+                first_node->is_replicated = vx_true_e;
+                for (vx_uint32 i = 0; i < number_of_parameters; i++)
+                    first_node->replicate_flags[i] = replicate[i];
             }
         }
     }
@@ -4587,6 +4613,26 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyScalarWithSize(vx_scalar scalar_, vx_si
 REFERENCE
 =============================================================================*/
 
+/*! \brief Returns the name storage of a reference, or NULL when the object type has none.
+* Only AgoData backed objects and AgoGraph keep a name, and the two put it at different
+* offsets, so a reference must never be cast to AgoData without checking its type first.
+*/
+static std::string * agoGetReferenceNameStorage(vx_reference ref)
+{
+    if (ref) {
+        if (ref->type == VX_TYPE_GRAPH) {
+            return &((AgoGraph *)ref)->name;
+        }
+        else if ((ref->type >= VX_TYPE_DELAY && ref->type <= VX_TYPE_REMAP) ||
+                 (ref->type == VX_TYPE_OBJECT_ARRAY) || (ref->type == VX_TYPE_TENSOR) ||
+                 (ref->type >= VX_TYPE_VENDOR_OBJECT_START && ref->type <= VX_TYPE_VENDOR_OBJECT_END))
+        {
+            return &((AgoData *)ref)->name;
+        }
+    }
+    return nullptr;
+}
+
 /*! \brief Queries any reference type for some basic information (count, type).
 * \param [in] ref The reference to query.
 * \param [in] attribute The value for which to query. Use <tt>\ref vx_reference_attribute_e</tt>.
@@ -4626,23 +4672,24 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryReference(vx_reference ref, vx_enum at
                 }
                 break;
             case VX_REFERENCE_NAME:
-                if (size == sizeof(vx_char*)) {
-                    if(ref->type == VX_TYPE_GRAPH)
-                    {
-                        AgoGraph * graph = (AgoGraph *)ref;
-                        //strncpy((char *)ptr, data->name.c_str(), size);
-                        *(vx_char**)ptr = &graph->name[0];
-                        status = VX_SUCCESS;
-                    }
-                    else
-                    {
-                        AgoData * data = (AgoData *)ref;
-                        //strncpy((char *)ptr, data->name.c_str(), size);
-                        *(vx_char**)ptr = &data->name[0];
-                        status = VX_SUCCESS;
-                    }
+            {
+                static vx_char unnamed[1] = { '\0' };
+                std::string * refName = agoGetReferenceNameStorage(ref);
+                vx_char * name = refName ? &(*refName)[0] :
+                    ((ref->type == VX_TYPE_KERNEL) ? ((AgoKernel *)ref)->name : unnamed);
+                if (size == sizeof(vx_char *)) {
+                    // hand back the implementation's copy of the name
+                    *(vx_char **)ptr = name;
+                    status = VX_SUCCESS;
                 }
-                break;
+                else if (size > 0) {
+                    // copy into the caller's buffer
+                    strncpy((vx_char *)ptr, name, size);
+                    ((vx_char *)ptr)[size - 1] = '\0';
+                    status = VX_SUCCESS;
+                }
+            }
+            break;
             default:
                 status = VX_ERROR_NOT_SUPPORTED;
                 break;
@@ -4778,29 +4825,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxRetainReference(vx_reference ref)
 VX_API_ENTRY vx_status VX_API_CALL vxSetReferenceName(vx_reference ref, const vx_char *name)
 {
     vx_status status = VX_ERROR_INVALID_REFERENCE;
-    if (agoIsValidReference(ref) && ((ref->type >= VX_TYPE_DELAY && ref->type <= VX_TYPE_REMAP) ||
-        (ref->type == VX_TYPE_TENSOR) ||
-        (ref->type >= VX_TYPE_VENDOR_OBJECT_START && ref->type <= VX_TYPE_VENDOR_OBJECT_END)))
-    {
-        AgoData * data = (AgoData *)ref;
-        //printf("%s %s %lu\n", data->name.c_str(), name, strlen(name));
-        //printf("before:::strlen(data name) = %lu\n", data->name.length());
-        //data->name.assign(name, strlen(name));
-        data->name = name;
-        //std::copy(name, name + strlen(name), std::back_inserter(data->name));
-        //strncpy((char *)data->name.c_str(), name, strnlen(name, VX_MAX_REFERENCE_NAME));
-        //data->name.assign("name", 4);
-        //sscanf(name, "%s", (char *)data->name.c_str());
-        //printf("after:::strlen(data name) = %lu\n", data->name.length());
-        //printf("after == %s\n", data->name.c_str());
-
-        status = VX_SUCCESS;
-    }
-    else if(agoIsValidReference(ref) && (ref->type == VX_TYPE_GRAPH))
-    {
-        AgoGraph * graph = (AgoGraph *)ref;
-        graph->name = name;
-        status = VX_SUCCESS;
+    if (agoIsValidReference(ref)) {
+        std::string * refName = agoGetReferenceNameStorage(ref);
+        if (refName) {
+            // a NULL name un-names the reference
+            refName->assign(name ? name : "");
+            status = VX_SUCCESS;
+        }
     }
     return status;
 }
@@ -7522,6 +7553,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryPyramid(vx_pyramid pyr, vx_enum attrib
             case VX_PYRAMID_ATTRIBUTE_LEVELS:
                 if (size == sizeof(vx_size)) {
                     *(vx_size *)ptr = data->u.pyr.levels;
+                    status = VX_SUCCESS;
+                }
+                else if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = (vx_uint32)data->u.pyr.levels;
                     status = VX_SUCCESS;
                 }
                 break;

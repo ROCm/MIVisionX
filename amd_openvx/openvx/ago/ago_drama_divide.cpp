@@ -1988,7 +1988,10 @@ int agoDramaDivideNonLinearFilterNode(AgoNodeList * nodeList, AgoNode * anode)
 	SANITY_CHECK_DATA_TYPE(anode->paramList[3], VX_TYPE_IMAGE);
 	// save parameters
 	AgoData * paramList[AGO_MAX_PARAMS]; memcpy(paramList, anode->paramList, sizeof(paramList));
-	if (paramList[0]->u.scalar.u.e == VX_NONLINEAR_FILTER_MEDIAN &&
+	// the mask buffer is only there to be inspected once the application has written
+	// the mask; without it the generic kernel below has to be used
+	if (paramList[2]->buffer &&
+		paramList[0]->u.scalar.u.e == VX_NONLINEAR_FILTER_MEDIAN &&
 		paramList[1]->u.img.format == VX_DF_IMAGE_U8 &&
 		paramList[3]->u.img.format == VX_DF_IMAGE_U8 &&
 		paramList[2]->u.mat.type == VX_TYPE_UINT8 &&

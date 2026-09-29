@@ -2335,7 +2335,12 @@ int ovxKernel_LaplacianReconstruct(AgoNode * node, AgoKernelCommand cmd)
             return VX_ERROR_INVALID_FORMAT;
         else if (!width || !height)
             return VX_ERROR_INVALID_DIMENSION;
-        else if (node->paramList[2]->u.img.format != format)
+        // the spec output is U8 whatever the lowest resolution input is, and S16 output
+        // is also reconstructable, so the output format is independent of the input
+        vx_df_image outFormat = node->paramList[2]->u.img.format;
+        if (outFormat == VX_DF_IMAGE_VIRT)
+            outFormat = VX_DF_IMAGE_U8;
+        else if (outFormat != VX_DF_IMAGE_U8 && outFormat != VX_DF_IMAGE_S16)
             return VX_ERROR_INVALID_FORMAT;
 
         vx_float32 scale = node->paramList[0]->u.pyr.scale;
@@ -2349,7 +2354,7 @@ int ovxKernel_LaplacianReconstruct(AgoNode * node, AgoKernelCommand cmd)
         meta = &node->metaList[2];
         meta->data.u.img.width = (vx_int32)width;
         meta->data.u.img.height = (vx_int32)height;
-        meta->data.u.img.format = format;
+        meta->data.u.img.format = outFormat;
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -23034,6 +23039,12 @@ int agoKernel_LaplacianReconstruct_DATA_DATA_DATA(AgoNode * node, AgoKernelComma
             return VX_ERROR_INVALID_FORMAT;
         else if (!width || !height)
             return VX_ERROR_INVALID_DIMENSION;
+        // the output format is independent of the input format
+        vx_df_image outFormat = node->paramList[0]->u.img.format;
+        if (outFormat == VX_DF_IMAGE_VIRT)
+            outFormat = VX_DF_IMAGE_U8;
+        else if (outFormat != VX_DF_IMAGE_U8 && outFormat != VX_DF_IMAGE_S16)
+            return VX_ERROR_INVALID_FORMAT;
 
         vx_float32 scale = node->paramList[1]->u.pyr.scale;
         vx_size levels = node->paramList[1]->u.pyr.levels;
@@ -23047,7 +23058,7 @@ int agoKernel_LaplacianReconstruct_DATA_DATA_DATA(AgoNode * node, AgoKernelComma
         meta = &node->metaList[0];
         meta->data.u.img.width = (vx_uint32)width;
         meta->data.u.img.height = (vx_uint32)height;
-        meta->data.u.img.format = format;
+        meta->data.u.img.format = outFormat;
 
         status = VX_SUCCESS;
     }

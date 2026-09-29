@@ -3311,7 +3311,7 @@ AgoData::AgoData()
       hip_memory { nullptr}, hip_memory_allocated{nullptr},
 #endif
       gpu_buffer_offset{ 0 }, alias_data{ nullptr }, alias_offset{ 0 },
-      isVirtual{ vx_false_e }, isDelayed{ vx_false_e }, isNotFullyConfigured{ vx_false_e }, isInitialized{ vx_false_e }, siblingIndex{ 0 },
+      isVirtual{ vx_false_e }, isDelayed{ vx_false_e }, isNotFullyConfigured{ vx_false_e }, isInitialized{ vx_false_e }, isMetaFormat{ vx_false_e }, siblingIndex{ 0 },
       numChildren{ 0 }, children{ nullptr }, parent{ nullptr }, inputUsageCount{ 0 }, outputUsageCount{ 0 }, inoutUsageCount{ 0 },
       initialization_flags{ 0 }, device_type_unused{ 0 },
       nextMapId{ 0 }, hierarchical_level{ 0 }, hierarchical_life_start{ 0 }, hierarchical_life_end{ 0 }, ownerOfUserBufferGPU{ nullptr }
@@ -3343,13 +3343,19 @@ AgoData::~AgoData()
 AgoMetaFormat::AgoMetaFormat()
     : set_valid_rectangle_callback{ nullptr }
 {
+    data.isMetaFormat = vx_true_e;
 }
 AgoParameter::AgoParameter()
-    : scope{ nullptr }, index{ 0 }, direction{ VX_INPUT }, type{ VX_TYPE_REFERENCE }, state{ VX_PARAMETER_STATE_REQUIRED }
+    : scope{ nullptr }, index{ 0 }, direction{ VX_INPUT }, type{ VX_TYPE_REFERENCE }, state{ VX_PARAMETER_STATE_REQUIRED },
+      meta{ nullptr }
 {
 }
 AgoParameter::~AgoParameter()
 {
+    if (meta) {
+        delete meta;
+        meta = nullptr;
+    }
 }
 AgoKernel::AgoKernel()
     : next{ nullptr }, id{ VX_KERNEL_INVALID }, flags{ 0 }, func{ nullptr }, argCount{ 0 }, kernOpType{ 0 }, kernOpInfo{ 0 },

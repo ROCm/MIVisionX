@@ -470,6 +470,10 @@ struct AgoData {
     vx_bool isDelayed;
     vx_bool isNotFullyConfigured;
     vx_bool isInitialized;
+    // set when this AgoData is the one embedded in an AgoMetaFormat: such a reference carries
+    // the data type of the parameter it describes, so it is otherwise indistinguishable from a
+    // real object and vxReleaseReference would route it to the wrong release function
+    vx_bool isMetaFormat;
     vx_int32 siblingIndex;
     vx_uint32 numChildren;
     AgoData ** children;
@@ -510,6 +514,8 @@ struct AgoParameter {
     vx_direction_e direction;
     vx_enum type;
     vx_parameter_state_e state;
+    // created on the first VX_PARAMETER_META_FORMAT query and owned by this parameter
+    AgoMetaFormat * meta;
 public:
     AgoParameter();
     ~AgoParameter();

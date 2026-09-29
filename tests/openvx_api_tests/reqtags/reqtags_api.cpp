@@ -324,6 +324,22 @@ static void test_add_parameter_bounds(vx_context context)
     vxRemoveKernel(kernel);
 }
 
+// REQ-1760/1981: VX_PARAMETER_META_FORMAT returns the meta format of the parameter,
+// and each query hands out a reference the application has to release.
+static void test_parameter_meta_format(vx_context context)
+{
+    vx_kernel kernel = vxGetKernelByEnum(context, VX_KERNEL_BOX_3x3);
+    vx_parameter parameter = vxGetKernelParameterByIndex(kernel, 0);
+    vx_meta_format meta = 0;
+    vx_status squery = vxQueryParameter(parameter, VX_PARAMETER_META_FORMAT, &meta, sizeof(meta));
+    vx_reference meta_ref = (vx_reference)meta;
+    vx_status srelease = vxReleaseReference(&meta_ref);
+    check("REQ-1760", "vxQueryParameter VX_PARAMETER_META_FORMAT",
+          squery == VX_SUCCESS && meta != 0 && srelease == VX_SUCCESS, NULL);
+    vxReleaseParameter(&parameter);
+    vxReleaseKernel(&kernel);
+}
+
 int main()
 {
     vx_context context = vxCreateContext();
@@ -345,6 +361,7 @@ int main()
     test_warp_affine_matrix(context);
     test_array_full(context);
     test_add_parameter_bounds(context);
+    test_parameter_meta_format(context);
 
     printf("\n%s: %d failure(s)\n", errors ? "FAILED" : "PASSED", errors);
     vxReleaseContext(&context);

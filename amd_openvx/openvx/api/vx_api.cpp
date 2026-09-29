@@ -4134,6 +4134,19 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryParameter(vx_parameter param, vx_enum 
                     }
                 }
                 break;
+            case VX_PARAMETER_META_FORMAT:
+                if (size == sizeof(vx_meta_format)) {
+                    if (!param->meta) {
+                        param->meta = new AgoMetaFormat;
+                        agoResetReference(&param->meta->data.ref, param->type, param->ref.context, param->ref.scope);
+                        param->meta->data.isMetaFormat = vx_true_e;
+                    }
+                    // each query hands out one more reference for the application to release
+                    param->meta->data.ref.external_count++;
+                    *(vx_meta_format *)ptr = (vx_meta_format)param->meta;
+                    status = VX_SUCCESS;
+                }
+                break;
             default:
                 status = VX_ERROR_NOT_SUPPORTED;
                 break;
@@ -4616,9 +4629,19 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyScalarWithSize(vx_scalar scalar_, vx_si
 REFERENCE
 =============================================================================*/
 
+/*! \brief Returns true when the reference is backed by an AgoData. AgoContext, AgoGraph,
+* AgoNode, AgoKernel and AgoParameter share no layout with it, so a reference must never be
+* cast to AgoData without checking its type first.
+*/
+static bool agoIsDataReference(vx_reference ref)
+{
+    return ref && ((ref->type >= VX_TYPE_DELAY && ref->type <= VX_TYPE_REMAP) ||
+                   (ref->type == VX_TYPE_OBJECT_ARRAY) || (ref->type == VX_TYPE_TENSOR) ||
+                   (ref->type >= VX_TYPE_VENDOR_OBJECT_START && ref->type <= VX_TYPE_VENDOR_OBJECT_END));
+}
+
 /*! \brief Returns the name storage of a reference, or NULL when the object type has none.
-* Only AgoData backed objects and AgoGraph keep a name, and the two put it at different
-* offsets, so a reference must never be cast to AgoData without checking its type first.
+* Only AgoData backed objects and AgoGraph keep a name.
 */
 static std::string * agoGetReferenceNameStorage(vx_reference ref)
 {
@@ -4626,10 +4649,7 @@ static std::string * agoGetReferenceNameStorage(vx_reference ref)
         if (ref->type == VX_TYPE_GRAPH) {
             return &((AgoGraph *)ref)->name;
         }
-        else if ((ref->type >= VX_TYPE_DELAY && ref->type <= VX_TYPE_REMAP) ||
-                 (ref->type == VX_TYPE_OBJECT_ARRAY) || (ref->type == VX_TYPE_TENSOR) ||
-                 (ref->type >= VX_TYPE_VENDOR_OBJECT_START && ref->type <= VX_TYPE_VENDOR_OBJECT_END))
-        {
+        else if (agoIsDataReference(ref)) {
             return &((AgoData *)ref)->name;
         }
     }
@@ -4718,6 +4738,15 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseReference(vx_reference* ref_ptr)
     if (ref_ptr) {
         vx_reference ref = *ref_ptr;
         if (agoIsValidReference(ref)) {
+            // a meta format reports the data type it describes, so it has to be recognised
+            // before the type switch would route it to that type's release function. It is
+            // owned by the parameter or node that holds it and outlives these releases.
+            if (agoIsDataReference(ref) && ((AgoData *)ref)->isMetaFormat) {
+                if (ref->external_count > 0)
+                    ref->external_count--;
+                *ref_ptr = NULL;
+                return VX_SUCCESS;
+            }
             switch (ref->type) {
             case VX_TYPE_CONTEXT:
                 status = vxReleaseContext((vx_context *)ref_ptr);

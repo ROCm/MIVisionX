@@ -195,6 +195,34 @@ static void test_node_replication(vx_context context)
     vxReleaseGraph(&rgraph);
 }
 
+// REQ-0695: a node replicated over virtual pyramids verifies and runs. Nothing in
+// the graph writes the input pyramid, which is allowed even though its contents
+// are undefined, so verification must not reject it.
+static void test_replication_over_virtual_pyramids(vx_context context)
+{
+    char detail[96];
+    vx_graph graph = vxCreateGraph(context);
+    vx_pyramid pin = vxCreateVirtualPyramid(graph, 3, VX_SCALE_PYRAMID_HALF, 64, 64, VX_DF_IMAGE_U8);
+    vx_pyramid pout = vxCreateVirtualPyramid(graph, 3, VX_SCALE_PYRAMID_HALF, 64, 64, VX_DF_IMAGE_U8);
+    vx_image level0in = vxGetPyramidLevel(pin, 0);
+    vx_image level0out = vxGetPyramidLevel(pout, 0);
+    vx_node node = vxGaussian3x3Node(graph, level0in, level0out);
+    vx_bool replicate[2] = { vx_true_e, vx_true_e };
+    vx_status srep = vxReplicateNode(graph, node, replicate, 2);
+    vx_status sverify = vxVerifyGraph(graph);
+    vx_status sprocess = vxProcessGraph(graph);
+    snprintf(detail, sizeof(detail), "verify=%d process=%d", (int)sverify, (int)sprocess);
+    check("REQ-0695", "replicated node over virtual pyramids verifies",
+          srep == VX_SUCCESS && sverify == VX_SUCCESS && sprocess == VX_SUCCESS, detail);
+
+    vxReleaseNode(&node);
+    vxReleaseImage(&level0in);
+    vxReleaseImage(&level0out);
+    vxReleasePyramid(&pin);
+    vxReleasePyramid(&pout);
+    vxReleaseGraph(&graph);
+}
+
 // REQ-0333: the mask of a non-linear filter is only inspectable once written,
 // and an unwritten mask used to crash graph verification.
 static void test_non_linear_filter(vx_context context)
@@ -380,6 +408,7 @@ int main()
     test_reference_names(context);
     test_empty_graph(context);
     test_node_replication(context);
+    test_replication_over_virtual_pyramids(context);
     test_non_linear_filter(context);
     test_remap(context);
     test_laplacian_reconstruct(context);

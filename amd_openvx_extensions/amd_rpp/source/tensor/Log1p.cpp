@@ -30,6 +30,8 @@ struct Log1pLocalData {
     RpptGenericDescPtr pSrcGenericDesc;
     RpptGenericDescPtr pDstGenericDesc;
     Rpp32u *pSrcRoi;
+    RpptROI *pSrcRoiStaged;   // host-readable copy of an XYWH "image" ROI tensor
+    Rpp32u *pSrcDims;         // the per-dimension (begin, length) ROI rppt_log expects
     vxTensorLayout inputLayout;
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
     size_t outputTensorDims[RPP_MAX_TENSOR_DIMS];
@@ -49,7 +51,52 @@ static vx_status VX_CALLBACK refreshLog1p(vx_node node, const vx_reference *para
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
-    data->pSrcRoi = static_cast<unsigned *>(roi_tensor_ptr);
+    // rppt_log1p is a generic ND kernel: it expects a begin and a length for every
+    // non-batch dimension - 6 values per sample for a 4-D tensor - but the ROI
+    // tensor of an NHWC/NCHW "image" holds only the 4 XYWH values rocAL writes
+    // for every image layout. Handing those straight over made RPP read nonsense
+    // extents and leave the output untouched. Convert first, as Transpose and
+    // Normalize already do for the same kernels.
+    size_t numDims = data->pSrcGenericDesc->numDims;
+    if (numDims == 4 && (data->inputLayout == vxTensorLayout::VX_NHWC || data->inputLayout == vxTensorLayout::VX_NCHW)) {
+        const size_t batchSize = data->inputTensorDims[0];
+        const size_t roiDims = numDims - 1;
+        // the ROI tensor lives in device memory on the GPU backend, so stage it
+        STATUS_ERROR_CHECK(vxRppStageRoi(data->deviceType, roi_tensor_ptr, batchSize, batchSize, &data->pSrcRoiStaged));
+        if (!data->pSrcDims) {
+            if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+                if (hipHostMalloc(&data->pSrcDims, batchSize * roiDims * 2 * sizeof(Rpp32u), hipHostMallocDefault) != hipSuccess)
+                    return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of %zu ROI values failed\n", batchSize * roiDims * 2);
+#endif
+            } else {
+                data->pSrcDims = new Rpp32u[batchSize * roiDims * 2];
+            }
+        }
+        for (size_t i = 0; i < batchSize; i++) {
+            size_t index = i * roiDims * 2;
+            const RpptRoiXywh &roi = data->pSrcRoiStaged[i].xywhROI;
+            if (data->inputLayout == vxTensorLayout::VX_NHWC) {
+                data->pSrcDims[index + 0] = roi.xy.y;                             // StartH
+                data->pSrcDims[index + 1] = roi.xy.x;                             // StartW
+                data->pSrcDims[index + 2] = 0;                                    // StartC
+                data->pSrcDims[index + 3] = roi.roiHeight;                        // LengthH
+                data->pSrcDims[index + 4] = roi.roiWidth;                         // LengthW
+                data->pSrcDims[index + 5] = (Rpp32u)data->inputTensorDims[3];     // LengthC
+            } else {
+                data->pSrcDims[index + 0] = 0;                                    // StartC
+                data->pSrcDims[index + 1] = roi.xy.y;                             // StartH
+                data->pSrcDims[index + 2] = roi.xy.x;                             // StartW
+                data->pSrcDims[index + 3] = (Rpp32u)data->inputTensorDims[1];     // LengthC
+                data->pSrcDims[index + 4] = roi.roiHeight;                        // LengthH
+                data->pSrcDims[index + 5] = roi.roiWidth;                         // LengthW
+            }
+        }
+        data->pSrcRoi = data->pSrcDims;
+    } else {
+        // 5-D (NDHWC/NCDHW) ROI tensors already carry the per-dimension form
+        data->pSrcRoi = static_cast<unsigned *>(roi_tensor_ptr);
+    }
     return status;
 }
 
@@ -167,6 +214,17 @@ static vx_status VX_CALLBACK uninitializeLog1p(vx_node node, const vx_reference 
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
         if (data->pSrcGenericDesc) delete data->pSrcGenericDesc;
         if (data->pDstGenericDesc) delete data->pDstGenericDesc;
+    }
+    STATUS_ERROR_CHECK(vxRppFreeRoiScratch(data->deviceType, &data->pSrcRoiStaged));
+    if (data->pSrcDims) {
+        if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+            CHECK_HIP_RETURN_STATUS(hipHostFree(data->pSrcDims));
+#endif
+        } else {
+            delete[] data->pSrcDims;
+        }
+        data->pSrcDims = nullptr;
     }
     if (data) delete data;
     return VX_SUCCESS;

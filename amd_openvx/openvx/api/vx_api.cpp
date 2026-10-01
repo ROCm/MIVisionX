@@ -1787,6 +1787,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxAccessImagePatch(vx_image image_,
                 addr->step_y = 1 << img->u.img.y_scale_factor_is_2;
                 addr->stride_x = ((img->u.img.pixel_size_in_bits_num & 7) || (img->u.img.pixel_size_in_bits_denom > 1)) ?
                     0 : (img->u.img.pixel_size_in_bits_num >> 3);
+                // stride_x is zero for sub-byte formats such as VX_DF_IMAGE_U1, so the
+                // x-direction distance is only available through stride_x_bits
+                addr->stride_x_bits = (vx_uint16)(img->u.img.pixel_size_in_bits_num / img->u.img.pixel_size_in_bits_denom);
                 addr->stride_y = img->u.img.stride_in_bytes;
             }
             vx_uint8 * ptr_internal = img->buffer +
@@ -2227,6 +2230,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapImagePatch(vx_image image_, const vx_rec
                 addr->step_x = 1 << img->u.img.x_scale_factor_is_2;
                 addr->step_y = 1 << img->u.img.y_scale_factor_is_2;
                 addr->stride_x = (img->u.img.pixel_size_in_bits_denom > 1 || (img->u.img.pixel_size_in_bits_num & 7)) ? 0 : (img->u.img.pixel_size_in_bits_num >> 3);
+                // stride_x is zero for sub-byte formats such as VX_DF_IMAGE_U1, so the
+                // x-direction distance is only available through stride_x_bits
+                addr->stride_x_bits = (vx_uint16)(img->u.img.pixel_size_in_bits_num / img->u.img.pixel_size_in_bits_denom);
                 addr->stride_y = img->u.img.stride_in_bytes;
             }
         }

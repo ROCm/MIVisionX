@@ -550,6 +550,56 @@ Hip_ScaleImage_U8_U8_Area_Sad(uint dstWidth, uint dstHeight,
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
 
+// General exact-integer-ratio area average.
+//
+// Hip_ScaleImage_U8_U8_Area and Hip_ScaleImage_U8_U8_Area_Sad above are
+// hand-unrolled for 2x2 and 4x4 source blocks: they read a fixed number of rows
+// and consecutive bytes per output pixel, so for any other block shape they both
+// sum the wrong pixels and divide by the true 1/(Sx*Sy). This kernel walks the
+// whole Nx x Ny block instead and is used for every other exact integer ratio.
+//
+// The source reads need no bounds check: with an exact ratio the last output
+// pixel of a row covers source column (dstWidth - 1) * Nx + Nx - 1 = srcWidth - 1,
+// and likewise for rows.
+__global__ void __attribute__((visibility("default")))
+Hip_ScaleImage_U8_U8_Area_Int(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    int Nx, int Ny, float iSxSy) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    uint dstIdx = y * dstImageStrideInBytes + x;
+    const uchar *pSrcRow0 = pSrcImage + (uint)y * (uint)Ny * srcImageStrideInBytes;
+
+    d_float8 f;
+    for (int i = 0; i < 8; i++) {
+        uint sum = 0;
+        uint dx = (uint)x + (uint)i;
+        if (dx < dstWidth) {
+            const uchar *pSrcRow = pSrcRow0 + dx * (uint)Nx;
+            for (int iy = 0; iy < Ny; iy++) {
+                for (int ix = 0; ix < Nx; ix++) {
+                    sum += pSrcRow[ix];
+                }
+                pSrcRow += srcImageStrideInBytes;
+            }
+        }
+        f.data[i] = (float)sum;
+    }
+
+    uint2 dst;
+    dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
+    dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
+
+    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+}
+
 __global__ void __attribute__((visibility("default")))
 Hip_ScaleImage_U8_U8_Area_Bytealign(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
@@ -731,33 +781,42 @@ int HipExec_ScaleImage_U8_U8_Area(hipStream_t stream, vx_uint32 dstWidth, vx_uin
 
     float Sx = (float)srcWidth / (float)dstWidth;
     float Sy = (float)srcHeight / (float)dstHeight;
-    int Nx = (int)ceilf(Sx);
-    int Ny = (int)ceilf(Sy);
 
-    bool need_align = ((Sx * 2.0f) != floorf(Sx * 2.0f)) ? true : false;
-    bool use_sad = (Nx % 4) ? false : true;
+    // An exact integer ratio means every destination pixel covers a whole
+    // Nx x Ny source block. Hip_ScaleImage_U8_U8_Area is hand-unrolled for 2x2
+    // and Hip_ScaleImage_U8_U8_Area_Sad for 4x4; dispatching any other block
+    // shape to them returns garbage (3:1 of a constant 90 image gave 40, 5:1
+    // gave 14, 6:1 gave 10 and 8:1 gave 22), so select on the block shape
+    // explicitly and send everything else to the general kernel. A ratio that
+    // is not an exact integer has fractional edge weights and belongs to the
+    // bytealign path - the old `need_align` test let ratios such as 1.5 through
+    // to the 2x2 kernel as well.
+    bool exact_int = ((srcWidth % dstWidth) == 0) && ((srcHeight % dstHeight) == 0);
+    int Nx = exact_int ? (int)(srcWidth / dstWidth) : (int)ceilf(Sx);
+    int Ny = exact_int ? (int)(srcHeight / dstHeight) : (int)ceilf(Sy);
     float iSxSy = 1.0 / (double)(Sx * Sy);
     float factorc = Sx - (Nx - 1);
 
-    if ((srcWidth % dstWidth) > 0 || (srcHeight % dstHeight) > 0) {
-        use_sad = false;
-    }
-
-    if (use_sad) {
+    if (exact_int && Nx == 4 && Ny == 4) {
         hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Sad, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         Nx, Ny, iSxSy);
-    } else if (need_align) {
-        hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Bytealign, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
-                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                        Sx, Sy, factorc, iSxSy);
-    } else {
+    } else if (exact_int && Nx == 2 && Ny == 2) {
         hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         Nx, Ny, iSxSy);
+    } else if (exact_int) {
+        hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Int, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        Nx, Ny, iSxSy);
+    } else {
+        hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Bytealign, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        Sx, Sy, factorc, iSxSy);
     }
     HIP_CHECK(hipGetLastError()); // Check for launch error
 

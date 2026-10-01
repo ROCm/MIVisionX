@@ -175,7 +175,12 @@ static vx_status VX_CALLBACK initializeGaussianFilter(vx_node node, const vx_ref
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_dtype, sizeof(input_tensor_dtype)));
     data->pSrcDesc->dataType = getRpptDataType(input_tensor_dtype);
     // For filter ops, use offset to handle border reads
-    data->pSrcDesc->offsetInBytes = (12 * (data->kernelSize / 2));
+    // An OpenVX tensor has no padding in front of its data, so this must be 0 as
+    // it is in every other vx_rpp node. The expression came from RPP's own HIP
+    // test suite, which allocates its filter inputs with that much extra space
+    // in front and writes the image after it; copied here it simply skipped the
+    // first 12 * (kernelSize / 2) bytes of the real input.
+    data->pSrcDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pSrcDesc, data->inputLayout, data->inputTensorDims);
 
     // Querying for output tensor

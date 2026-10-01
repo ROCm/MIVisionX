@@ -140,9 +140,14 @@ Hip_Threshold_U1_U8_Binary(uint dstWidth, uint dstHeight,
     uint2 src = *((uint2 *)(&pSrcImage[srcIdx]));
     uint2 dst;
 
-    float4 thr = (float4)hip_unpack0(thresholdValue);
-    dst.x = hip_pack((hip_unpack(src.x) - thr) * (float4)256.0f);
-    dst.y = hip_pack((hip_unpack(src.y) - thr) * (float4)256.0f);
+    // A C-style `(float4)scalar` cast sets only .x and zeroes .y/.z/.w, so three
+    // of every four pixels would threshold against 0 and scale by 0. Use
+    // make_float4, as the U8 variants above already do.
+    float thr_val = hip_unpack0(thresholdValue);
+    float4 thr = make_float4(thr_val, thr_val, thr_val, thr_val);
+    float4 scale = make_float4(256.0f, 256.0f, 256.0f, 256.0f);
+    dst.x = hip_pack((hip_unpack(src.x) - thr) * scale);
+    dst.y = hip_pack((hip_unpack(src.y) - thr) * scale);
 
     hip_convert_U1_U8((uchar *)(&pDstImage[dstIdx]), dst);
 }
@@ -182,14 +187,18 @@ Hip_Threshold_U1_U8_Range(uint dstWidth, uint dstHeight,
     uint2 src = *((uint2 *)(&pSrcImage[srcIdx]));
     uint2 dst;
 
-    float4 thr0 = (float4)(hip_unpack0(thresholdLower) - 1.0f);
-    float4 thr1 = (float4)(hip_unpack0(thresholdUpper) + 1.0f);
+    // See Hip_Threshold_U1_U8_Binary: `(float4)scalar` only fills .x.
+    float thr0_val = hip_unpack0(thresholdLower) - 1.0f;
+    float thr1_val = hip_unpack0(thresholdUpper) + 1.0f;
+    float4 thr0 = make_float4(thr0_val, thr0_val, thr0_val, thr0_val);
+    float4 thr1 = make_float4(thr1_val, thr1_val, thr1_val, thr1_val);
+    float4 scale = make_float4(256.0f, 256.0f, 256.0f, 256.0f);
     float4 pix0 = hip_unpack(src.x);
     float4 pix1 = hip_unpack(src.y);
-    dst.x  = hip_pack((pix0 - thr0) * (float4)256.0f);
-    dst.x &= hip_pack((thr1 - pix0) * (float4)256.0f);
-    dst.y  = hip_pack((pix1 - thr0) * (float4)256.0f);
-    dst.y &= hip_pack((thr1 - pix1) * (float4)256.0f);
+    dst.x  = hip_pack((pix0 - thr0) * scale);
+    dst.x &= hip_pack((thr1 - pix0) * scale);
+    dst.y  = hip_pack((pix1 - thr0) * scale);
+    dst.y &= hip_pack((thr1 - pix1) * scale);
 
     hip_convert_U1_U8((uchar *)(&pDstImage[dstIdx]), dst);
 }

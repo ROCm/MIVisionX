@@ -223,7 +223,7 @@ __global__ void __attribute__((visibility("default")))
 Hip_Threshold_U8_S16_Binary(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
     const uchar *pSrcImage, uint srcImageStrideInBytes,
-    uint thresholdValue) {
+    int thresholdValue) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -239,23 +239,26 @@ Hip_Threshold_U8_S16_Binary(uint dstWidth, uint dstHeight,
     int4 dst;
 
     short2 p;
-    float4 thr = (float4)hip_unpack0(thresholdValue);
+    // The threshold is a signed 16-bit value, so compare against it directly.
+    // hip_unpack0() is `src & 0xFF`: it is meant for unpacking U8 pixels and
+    // silently turned every threshold outside 0..255 into threshold & 0xFF.
+    const int thr = thresholdValue;
     p.x = ((((int)src.x)  << 16) >> 16) & 0xffff;
     p.y = ((int)src.x >> 16) & 0xffff;
-    dst.x = (p.x > thr.x) ? 0xffff:0;
-    dst.x |= ((p.y > thr.x) ? 0xffff0000:0);
+    dst.x = (p.x > thr) ? 0xffff:0;
+    dst.x |= ((p.y > thr) ? 0xffff0000:0);
     p.x = ((((int)src.y)  << 16) >> 16) & 0xffff;
     p.y = ((int)src.y >> 16) & 0xffff;
-    dst.y = (p.x > thr.x) ? 0xffff:0;
-    dst.y |= ((p.y > thr.x) ? 0xffff0000:0);
+    dst.y = (p.x > thr) ? 0xffff:0;
+    dst.y |= ((p.y > thr) ? 0xffff0000:0);
     p.x = ((((int)src.z)  << 16) >> 16) & 0xffff;
     p.y = ((int)src.z >> 16) & 0xffff;
-    dst.z = (p.x > thr.x) ? 0xffff:0;
-    dst.z |= ((p.y > thr.x) ? 0xffff0000:0);
+    dst.z = (p.x > thr) ? 0xffff:0;
+    dst.z |= ((p.y > thr) ? 0xffff0000:0);
     p.x = ((((int)src.w)  << 16) >> 16) & 0xffff;
     p.y = ((int)src.w >> 16) & 0xffff;
-    dst.w = (p.x > thr.x) ? 0xffff:0;
-    dst.w |= ((p.y > thr.x) ? 0xffff0000:0);
+    dst.w = (p.x > thr) ? 0xffff:0;
+    dst.w |= ((p.y > thr) ? 0xffff0000:0);
 
     hip_convert_U8_S16((uint2 *)(&pDstImage[dstIdx]), dst);
 }
@@ -270,9 +273,9 @@ int HipExec_Threshold_U8_S16_Binary(hipStream_t stream, vx_uint32 dstWidth, vx_u
 
     hipLaunchKernelGGL(Hip_Threshold_U8_S16_Binary, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
-                       (const uchar *)pHipSrcImage, srcImageStrideInBytes, (uint)thresholdValue);
+                       (const uchar *)pHipSrcImage, srcImageStrideInBytes, (int)thresholdValue);
     HIP_CHECK(hipGetLastError()); // Check for launch error
-    
+
     return VX_SUCCESS;
 }
 
@@ -295,25 +298,27 @@ Hip_Threshold_U8_S16_Range(uint dstWidth, uint dstHeight,
     int4 src = *((int4 *)(&pSrcImage[srcIdx]));
     int4 dst;
 
-    float4 thr0 = (float4)(hip_unpack0(thresholdLower) - 1.0f);
-    float4 thr1 = (float4)(hip_unpack0(thresholdUpper) + 1.0f);
+    // Signed 16-bit bounds, compared directly - see Hip_Threshold_U8_S16_Binary
+    // for why hip_unpack0() is wrong here.
+    const int thr0 = thresholdLower - 1;
+    const int thr1 = thresholdUpper + 1;
     short2 p;
     p.x = ((((int)src.x)  << 16) >> 16) & 0xffff;
     p.y = ((int)src.x >> 16) & 0xffff;
-    dst.x = (p.x > thr0.x && thr1.x > p.x) ? 0xffff:0;
-    dst.x |= ((p.y > thr0.x && thr1.x > p.y) ? 0xffff0000:0);
+    dst.x = (p.x > thr0 && thr1 > p.x) ? 0xffff:0;
+    dst.x |= ((p.y > thr0 && thr1 > p.y) ? 0xffff0000:0);
     p.x = ((((int)src.y)  << 16) >> 16) & 0xffff;
     p.y = ((int)src.y >> 16) & 0xffff;
-    dst.y = (p.x > thr0.x && thr1.x > p.x) ? 0xffff:0;
-    dst.y |= ((p.y > thr0.x && thr1.x > p.y) ? 0xffff0000:0);
+    dst.y = (p.x > thr0 && thr1 > p.x) ? 0xffff:0;
+    dst.y |= ((p.y > thr0 && thr1 > p.y) ? 0xffff0000:0);
     p.x = ((((int)src.z)  << 16) >> 16) & 0xffff;
     p.y = ((int)src.z >> 16) & 0xffff;
-    dst.z = (p.x > thr0.x && thr1.x > p.x) ? 0xffff:0;
-    dst.z |= ((p.y > thr0.x && thr1.x > p.y) ? 0xffff0000:0);
+    dst.z = (p.x > thr0 && thr1 > p.x) ? 0xffff:0;
+    dst.z |= ((p.y > thr0 && thr1 > p.y) ? 0xffff0000:0);
     p.x = ((((int)src.w)  << 16) >> 16) & 0xffff;
     p.y = ((int)src.w >> 16) & 0xffff;
-    dst.w = (p.x > thr0.x && thr1.x > p.x) ? 0xffff:0;
-    dst.w |= ((p.y > thr0.x && thr1.x > p.y) ? 0xffff0000:0);
+    dst.w = (p.x > thr0 && thr1 > p.x) ? 0xffff:0;
+    dst.w |= ((p.y > thr0 && thr1 > p.y) ? 0xffff0000:0);
 
     hip_convert_U8_S16((uint2 *)(&pDstImage[dstIdx]), dst);
 }

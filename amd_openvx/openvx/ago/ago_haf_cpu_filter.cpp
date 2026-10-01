@@ -175,7 +175,11 @@ int HafCpu_Box_U8_U8_3x3
 
 			for (; x < dstWidth; x++)
 			{
-				vx_uint16 temp = (vx_uint16)pLocalSrc[x - 1] + (vx_uint16)pLocalSrc[x] + (vx_uint16)pLocalSrc[x + 1];
+				// x is unsigned: index from the pointer so that x == 0 reads the pixel
+				// to the left instead of wrapping to 0xFFFFFFFF. The SIMD loop above is
+				// skipped entirely when dstWidth < 16, which leaves x == 0 here.
+				unsigned char *pSrcPix = pLocalSrc + x;
+				vx_uint16 temp = (vx_uint16)pSrcPix[-1] + (vx_uint16)pSrcPix[0] + (vx_uint16)pSrcPix[1];
 				pLocalNextRow[x] = temp;
 				pLocalDst[x] = (vx_uint8)((temp + pLocalPrevRow[x] + pLocalCurrRow[x]) / 9);
 			}

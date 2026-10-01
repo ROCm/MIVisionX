@@ -2162,44 +2162,8 @@ __device__ __forceinline__ void hip_remap_load_sxy_nearest(int map, int *sx, int
     *sy = (map + 0x00040000) >> 19;
 }
 
-// Each thread produces up to 8 pixels. A full block is written with the wide
-// vector store, but when dstWidth is not a multiple of 8 the last block in a row
-// holds fewer than 8 valid pixels, and writing the whole block would run past
-// the row end and overflow the row stride. The tail is written pixel-wise so
-// only the valid bytes are touched.
-__device__ __forceinline__ void hip_remap_store_RGB(uchar *pDstImage, uint dstIdx, const uint3 *out, int valid)
-{
-    if (valid >= 8) {
-        uint *dst = (uint *)(pDstImage + dstIdx);
-        dst[0] = out[0].x; dst[1] = out[0].y; dst[2] = out[0].z;
-        dst[3] = out[1].x; dst[4] = out[1].y; dst[5] = out[1].z;
-    } else {
-        uchar *dst = pDstImage + dstIdx;
-        for (int i = 0; i < valid; i++) {
-            const uchar *src = (const uchar *)&out[i >> 2] + (i & 3) * 3;
-            dst[i * 3 + 0] = src[0];
-            dst[i * 3 + 1] = src[1];
-            dst[i * 3 + 2] = src[2];
-        }
-    }
-}
-
-__device__ __forceinline__ void hip_remap_store_RGBX(uchar *pDstImage, uint dstIdx, uint4 out0, uint4 out1, int valid)
-{
-    if (valid >= 8) {
-        *((uint4 *)(pDstImage + dstIdx)) = out0;
-        *((uint4 *)(pDstImage + dstIdx + 16)) = out1;
-    } else {
-        uchar *dst = pDstImage + dstIdx;
-        for (int i = 0; i < valid; i++) {
-            const uchar *src = ((i < 4) ? (const uchar *)&out0 : (const uchar *)&out1) + (i & 3) * 4;
-            dst[i * 4 + 0] = src[0];
-            dst[i * 4 + 1] = src[1];
-            dst[i * 4 + 2] = src[2];
-            dst[i * 4 + 3] = src[3];
-        }
-    }
-}
+// hip_remap_store_RGB / hip_remap_store_RGBX, and the d_uint6 / d_uint8 forms
+// used by the colour kernels, live in hip_common_funcs.h.
 
 __global__ void __attribute__((visibility("default")))
 Hip_Remap_RGB_RGB_Bilinear(uint dstWidth, uint dstHeight,

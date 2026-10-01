@@ -3629,6 +3629,19 @@ vx_uint32     srcImageStrideInBytes
 	return AGO_SUCCESS;
 }
 
+// Map an AREA output coordinate to the first source coordinate it covers.
+//
+// The general path below builds its Xmap/Ymap by *rounding*
+// ((pos + FP_ROUND) >> FP_BITS), which turns the -0.5 offset the AREA scale
+// matrix carries (agoKernel_ScaleImage_U8_U8_Area) back into pos * scale. The
+// 1:1 and 2:1 fast paths used a plain (int) cast instead, which truncates
+// toward zero: (int)(-0.5f + 2) is 1, not 2, so every output row but the first
+// was built from the source rows one above the correct pair.
+static inline int agoAreaFirstSrcCoord(float offset, int pos)
+{
+	return (int)floorf(offset + (float)pos + 0.5f);
+}
+
 int HafCpu_ScaleImage_U8_U8_Area
 (
 vx_uint32            dstWidth,
@@ -3648,7 +3661,7 @@ ago_scale_matrix_t * matrix
 		// no scaling. Just do a copy from src to dst
 		for (unsigned int y = 0; y < dstHeight; y++)
 		{
-			vx_uint8 *pSrc = pSrcImage + (int)(matrix->yoffset+y)*srcImageStrideInBytes + (int)matrix->xoffset;
+			vx_uint8 *pSrc = pSrcImage + agoAreaFirstSrcCoord(matrix->yoffset, y)*srcImageStrideInBytes + agoAreaFirstSrcCoord(matrix->xoffset, 0);
 			// clamp to boundary
 			if (pSrc < pSrcImage) pSrc = pSrcImage;
 			if (pSrc > pSrcB) pSrc = pSrcB;
@@ -3676,7 +3689,7 @@ ago_scale_matrix_t * matrix
 		// 2x2 image scaling
 		for (unsigned int y = 0; y < dstHeight; y++)
 		{
-			vx_uint8 *S0 = pSrcImage + (int)(matrix->yoffset+(y*2))*srcImageStrideInBytes + (int)(matrix->xoffset);
+			vx_uint8 *S0 = pSrcImage + agoAreaFirstSrcCoord(matrix->yoffset, y*2)*srcImageStrideInBytes + agoAreaFirstSrcCoord(matrix->xoffset, 0);
 			if (S0 < pSrcImage) S0 = pSrcImage;
 			if (S0 > pSrcB) S0 = pSrcB;
 			vx_uint8 *S1 = S0 + srcImageStrideInBytes;
@@ -3827,7 +3840,7 @@ vx_uint8             border
 		// no scaling. Just do a copy from src to dst
 		for (unsigned int y = 0; y < dstHeight; y++)
 		{
-			vx_uint8 *pSrc = pSrcImage + (int)(matrix->yoffset + y)*srcImageStrideInBytes + (int)matrix->xoffset;
+			vx_uint8 *pSrc = pSrcImage + agoAreaFirstSrcCoord(matrix->yoffset, y)*srcImageStrideInBytes + agoAreaFirstSrcCoord(matrix->xoffset, 0);
 			// clamp to boundary
 			if ((pSrc < pSrcImage) || (pSrc > pSrcB)){
 				memset(pDstImage, border, dstWidth) ;
@@ -3847,7 +3860,7 @@ vx_uint8             border
 		// 2x2 image scaling
 		for (unsigned int y = 0; y < dstHeight; y++)
 		{
-			vx_uint8 *S0 = pSrcImage + (int)(matrix->yoffset + (y*2))*srcImageStrideInBytes + (int)(matrix->xoffset);
+			vx_uint8 *S0 = pSrcImage + agoAreaFirstSrcCoord(matrix->yoffset, y*2)*srcImageStrideInBytes + agoAreaFirstSrcCoord(matrix->xoffset, 0);
 			if (S0 < pSrcImage) S0 = pSrcImage;
 			if (S0 > pSrcB) S0 = pSrcB;
 			vx_uint8 *S1 = S0 + srcImageStrideInBytes;

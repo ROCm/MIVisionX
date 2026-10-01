@@ -175,7 +175,9 @@ int HafCpu_Box_U8_U8_3x3
 
 			for (; x < dstWidth; x++)
 			{
-				vx_uint16 temp = (vx_uint16)pLocalSrc[x - 1] + (vx_uint16)pLocalSrc[x] + (vx_uint16)pLocalSrc[x + 1];
+				// index from the pointer: x is unsigned, so x - 1 would wrap at x == 0
+				unsigned char *pSrcPix = pLocalSrc + x;
+				vx_uint16 temp = (vx_uint16)pSrcPix[-1] + (vx_uint16)pSrcPix[0] + (vx_uint16)pSrcPix[1];
 				pLocalNextRow[x] = temp;
 				pLocalDst[x] = (vx_uint8)((temp + pLocalPrevRow[x] + pLocalCurrRow[x]) / 9);
 			}

@@ -32,6 +32,7 @@ struct PixelateLocalData {
     Rpp32f pixelationPercentage;
     Rpp32f *interDstPtr;
     RpptROI *pSrcRoi;
+    RpptROI *pSrcRoiScratch;   // node-owned copy of the ROI tensor; RPP rewrites it in place
     RpptRoiType roiType;
     vxTensorLayout inputLayout;
     vxTensorLayout outputLayout;
@@ -54,7 +55,15 @@ static vx_status VX_CALLBACK refreshPixelate(vx_node node, const vx_reference *p
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_HOST, &data->pSrc, sizeof(data->pSrc)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
-    data->pSrcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
+        // Hand RPP a node-owned copy: its kernels convert the ROI from XYWH to
+    // LTRB in place, and MIVisionX never re-uploads a node input, so passing
+    // the tensor's own buffer loses a pixel on every vxProcessGraph.
+    STATUS_ERROR_CHECK(vxRppStageRoi(data->deviceType, roi_tensor_ptr, data->inputTensorDims[0],
+                                     (data->inputLayout == vxTensorLayout::VX_NFHWC || data->inputLayout == vxTensorLayout::VX_NFCHW)
+                                         ? data->inputTensorDims[0] * data->inputTensorDims[1]
+                                         : data->inputTensorDims[0],
+                                     &data->pSrcRoiScratch));
+    data->pSrcRoi = data->pSrcRoiScratch;
     if (data->inputLayout == vxTensorLayout::VX_NFHWC || data->inputLayout == vxTensorLayout::VX_NFCHW) {
         unsigned num_of_frames = data->inputTensorDims[1]; // Num of frames 'F'
         for (int n = data->inputTensorDims[0] - 1; n >= 0; n--) {
@@ -179,6 +188,7 @@ static vx_status VX_CALLBACK uninitializePixelate(vx_node node, const vx_referen
         CHECK_HIP_RETURN_STATUS(hipHostFree(data->interDstPtr));
 #endif
     }
+    STATUS_ERROR_CHECK(vxRppFreeRoiScratch(data->deviceType, &data->pSrcRoiScratch));
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     delete data;
     return VX_SUCCESS;

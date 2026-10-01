@@ -3734,7 +3734,10 @@ ago_scale_matrix_t * matrix
 		int yscale = (int)(matrix->yscale + 0.5);
 		float inv_scale = 1.0f / (xscale*yscale);
 		int area_div = (int)(FP_MUL * inv_scale);
-		vx_uint8 *src_b = pSrcImage + srcWidth*(srcHeight - 1);
+		// the last row starts a stride, not a width, from the row before it: rows are
+		// padded to a multiple of 16 bytes, so using srcWidth here made the bottom
+		// clamp point into an earlier row
+		vx_uint8 *src_b = pSrcImage + (size_t)srcImageStrideInBytes*(srcHeight - 1);
 		//int area_sz = (area + (1 << (FP_BITS - 1))) >> FP_BITS;
 		// generate xmap;
 		for (x = 0, xpos = xoffs; x <= (int)dstWidth; x++, xpos += xinc)
@@ -3758,7 +3761,8 @@ ago_scale_matrix_t * matrix
 			// compute vertical sum and store in intermediate buffer
 			vx_uint8 *S0 = pSrcImage + (int)ymap*srcImageStrideInBytes;
 			vx_uint8 *D = pDstImage;
-			for (x = Xmap[0]; x <= (Xmap[dstWidth] - 7); x += 8)
+			int xLast = (int)Xmap[dstWidth];	// last source column the horizontal pass can read
+			for (x = Xmap[0]; x <= (xLast - 7); x += 8)
 			{
 				__m128i r0 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(S0 + x)), z);
 				vx_uint8 *S1 = S0 + srcImageStrideInBytes;
@@ -3769,6 +3773,20 @@ ago_scale_matrix_t * matrix
 					S1 += srcImageStrideInBytes;
 				}
 				_mm_store_si128((__m128i*)&Ymap[x], r0);
+			}
+			// The loop above walks 8 source columns at a time and had no tail, so when the
+			// source width was not a multiple of 8 the last source columns were never
+			// summed and the last output column added Ymap entries left from an earlier row.
+			for (; x <= xLast; x++)
+			{
+				vx_uint8 *S1 = S0 + srcImageStrideInBytes;
+				int sum = S0[x];
+				for (int i = 1; i < yscale; i++){
+					if (S1 > src_b)S1 = src_b;
+					sum += S1[x];
+					S1 += srcImageStrideInBytes;
+				}
+				Ymap[x] = (vx_uint16)sum;
 			}
 			// do horizontal scaling on intermediate buffer
 			for (x = 0; x < (int)dstWidth; x++)
@@ -3864,7 +3882,10 @@ vx_uint8             border
 		int yscale = (int)(matrix->yscale + 0.5);
 		float inv_scale = 1.0f / (xscale*yscale);
 		int area_div = (int)(FP_MUL * inv_scale);
-		vx_uint8 *src_b = pSrcImage + srcWidth*(srcHeight - 1);
+		// the last row starts a stride, not a width, from the row before it: rows are
+		// padded to a multiple of 16 bytes, so using srcWidth here made the bottom
+		// clamp point into an earlier row
+		vx_uint8 *src_b = pSrcImage + (size_t)srcImageStrideInBytes*(srcHeight - 1);
 		// generate xmap;
 		for (x = 0, xpos = xoffs; x <= (int)dstWidth; x++, xpos += xinc)
 		{
@@ -3887,7 +3908,8 @@ vx_uint8             border
 			// compute vertical sum and store in intermediate buffer
 			vx_uint8 *S0 = pSrcImage + (int)ymap*srcImageStrideInBytes;
 			vx_uint8 *D = pDstImage;
-			for (x = Xmap[0]; x <= (Xmap[dstWidth] - 7); x += 8)
+			int xLast = (int)Xmap[dstWidth];	// last source column the horizontal pass can read
+			for (x = Xmap[0]; x <= (xLast - 7); x += 8)
 			{
 				__m128i r0 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(S0 + x)), z);
 				vx_uint8 *S1 = S0 + srcImageStrideInBytes;
@@ -3898,6 +3920,20 @@ vx_uint8             border
 					S1 += srcImageStrideInBytes;
 				}
 				_mm_store_si128((__m128i*)&Ymap[x], r0);
+			}
+			// The loop above walks 8 source columns at a time and had no tail, so when the
+			// source width was not a multiple of 8 the last source columns were never
+			// summed and the last output column added Ymap entries left from an earlier row.
+			for (; x <= xLast; x++)
+			{
+				vx_uint8 *S1 = S0 + srcImageStrideInBytes;
+				int sum = S0[x];
+				for (int i = 1; i < yscale; i++){
+					if (S1 > src_b)S1 = src_b;
+					sum += S1[x];
+					S1 += srcImageStrideInBytes;
+				}
+				Ymap[x] = (vx_uint16)sum;
 			}
 			// do horizontal scaling on intermediate buffer
 			for (x = 0; x < (int)dstWidth; x++)

@@ -22,7 +22,9 @@ from datetime import datetime
 from subprocess import Popen, PIPE
 import argparse
 import os
+import shlex
 import shutil
+import subprocess
 import sys
 import platform
 
@@ -463,6 +465,121 @@ else:
 nodeList = []
 case_num_list = []
 
+# Cases that are known to fail at a given image size and must not fail the run.
+# A case listed here that unexpectedly passes is only reported, not an error, so
+# these lists stay valid on an SDK where fewer cases fail. Anything failing that
+# is NOT listed here fails the run - that is the point of the exit code.
+#
+#   1920x1080: the case table's invalid 'RGBA' entries, tracked by #1792.
+#   10x10 and 5x3: sizes the spec allows but these kernels reject or crash on,
+#   tracked by #1799 and #1792. Box_U8_U8_3x3 at these sizes was #1772.
+#
+# Measured on gfx1100 / ROCm 7.2.2 with MIVisionX at the commit that added this.
+EXPECTED_FAILURES = {
+    # 1920x1080: the case table's invalid 'RGBA' entries (#1792)
+    (1920, 1080): (
+        'ChannelExtract_U8_U32_Pos0_RGBX',
+        'ChannelExtract_U8_U32_Pos1_RGBX',
+        'ChannelExtract_U8_U32_Pos2_RGBX',
+        'ChannelExtract_U8_U32_Pos3_RGBX',
+        'ChannelExtract_U8U8U8_U32',
+        'ChannelExtract_U8U8U8U8_U32',
+        'ChannelCombine_U32_U8U8U8U8_RGBX',
+        'ColorConvert_RGB_RGBX',
+        'ColorConvert_RGBX_RGB',
+        'ColorConvert_RGBX_UYVY',
+        'ColorConvert_RGBX_YUYV',
+        'ColorConvert_RGBX_IYUV',
+        'ColorConvert_RGBX_NV12',
+        'ColorConvert_RGBX_NV21',
+        'ColorConvert_IYUV_RGBX',
+        'ColorConvert_NV12_RGBX',
+        'ColorConvert_YUV4_RGBX',
+    ),
+    # 10x10: the same invalid 'RGBA' entries (#1792), plus Box3x3 (#1772),
+    # WarpAffine nearest (#1843) and GPU FastCorners (#1799)
+    (10, 10): (
+        'Box_U8_U8_3x3',
+        'WarpAffine_U8_U8_Nearest',
+        'WarpAffine_U8_U8_Nearest_Constant',
+        'FastCorners_XY_U8_NoSupression',
+        'FastCorners_XY_U8_Supression',
+        'ChannelExtract_U8_U32_Pos0_RGBX',
+        'ChannelExtract_U8_U32_Pos1_RGBX',
+        'ChannelExtract_U8_U32_Pos2_RGBX',
+        'ChannelExtract_U8_U32_Pos3_RGBX',
+        'ChannelExtract_U8U8U8_U32',
+        'ChannelExtract_U8U8U8U8_U32',
+        'ChannelCombine_U32_U8U8U8U8_RGBX',
+        'ColorConvert_RGB_RGBX',
+        'ColorConvert_RGBX_RGB',
+        'ColorConvert_RGBX_UYVY',
+        'ColorConvert_RGBX_YUYV',
+        'ColorConvert_RGBX_IYUV',
+        'ColorConvert_RGBX_NV12',
+        'ColorConvert_RGBX_NV21',
+        'ColorConvert_IYUV_RGBX',
+        'ColorConvert_NV12_RGBX',
+        'ColorConvert_YUV4_RGBX',
+    ),
+    # 5x3: invalid 'RGBA' entries (#1792), sizes these kernels reject and GPU
+    # FastCorners (#1799), Box3x3 (#1772) and WarpAffine nearest (#1843)
+    (5, 3): (
+        'Box_U8_U8_3x3',
+        'WarpAffine_U8_U8_Nearest',
+        'WarpAffine_U8_U8_Nearest_Constant',
+        'FastCorners_XY_U8_NoSupression',
+        'FastCorners_XY_U8_Supression',
+        'ChannelExtract_U8_U16_Pos0',
+        'ChannelExtract_U8_U16_Pos1',
+        'ChannelExtract_U8_U24_Pos0',
+        'ChannelExtract_U8_U24_Pos1',
+        'ChannelExtract_U8_U24_Pos2',
+        'ChannelExtract_U8_U32_Pos0_UYVY',
+        'ChannelExtract_U8_U32_Pos1_YUYV',
+        'ChannelExtract_U8_U32_Pos2_UYVY',
+        'ChannelExtract_U8_U32_Pos3_YUYV',
+        'ChannelExtract_U8_U32_Pos0_RGBX',
+        'ChannelExtract_U8_U32_Pos1_RGBX',
+        'ChannelExtract_U8_U32_Pos2_RGBX',
+        'ChannelExtract_U8_U32_Pos3_RGBX',
+        'ChannelExtract_U8U8U8_U24',
+        'ChannelExtract_U8U8U8_U32',
+        'ChannelExtract_U8U8U8U8_U32',
+        'ChannelCombine_U32_U8U8U8U8_RGBX',
+        'ColorConvert_RGB_RGBX',
+        'ColorConvert_RGB_UYVY',
+        'ColorConvert_RGB_YUYV',
+        'ColorConvert_RGB_IYUV',
+        'ColorConvert_RGB_NV12',
+        'ColorConvert_RGB_NV21',
+        'ColorConvert_RGBX_RGB',
+        'ColorConvert_RGBX_UYVY',
+        'ColorConvert_RGBX_YUYV',
+        'ColorConvert_RGBX_IYUV',
+        'ColorConvert_RGBX_NV12',
+        'ColorConvert_RGBX_NV21',
+        'ColorConvert_IYUV_RGB',
+        'ColorConvert_IYUV_RGBX',
+        'FormatConvert_IYUV_UYVY',
+        'FormatConvert_IYUV_YUYV',
+        'ColorConvert_NV12_RGB',
+        'ColorConvert_NV12_RGBX',
+        'FormatConvert_NV12_UYVY',
+        'FormatConvert_NV12_YUYV',
+        'ColorConvert_YUV4_RGB',
+        'ColorConvert_YUV4_RGBX',
+        'FormatConvert_IUV_UV12',
+        'FormatConvert_UV12_IUV',
+        'FormatConvert_UV_UV12',
+        'ScaleUp2x2_U8_U8',
+        'ScaleGaussianHalf_U8_U8_3x3',
+        'ScaleGaussianHalf_U8_U8_5x5',
+    ),
+}
+failedCases = []
+unexpectedlyPassed = []
+
 
 def multiCaseProfilerOCL(nodeList, case_num_list):
     for i in nodeList:
@@ -610,16 +727,32 @@ if profilingOption == "YES":
 
 # Option B - All cases / single case without GPU profiling
 else:
-    for i in nodeList:
-        nodeName, nodeFormat = openvxNodes[i]
-        echo1 = 'Running OpenVX Node - '+str(i+1)+':'+nodeName
-        os.system('echo '+echo1 +  # nosec B605 - internal benchmark harness, fixed command strings
-                ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-        print(RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
-            hardwareMode+' -dump-gdf -dump-profile node '+nodeFormat)
-        os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode +  # nosec B605 - internal benchmark harness, fixed command strings
-                ' -dump-gdf -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
-        print("\n")
+    # Run over an argument list so the exit code survives. The log keeps the shape
+    # the awk post-processor below depends on: the 'Running OpenVX Node - N:name'
+    # marker interleaved with runvx's own 'CPU,GRAPH'/'GPU,GRAPH' lines, in order.
+    expected = EXPECTED_FAILURES.get((width, height), ())
+    with open('openvx_node_results/nodePerformanceOutput.log', 'a') as logFile:
+        for i in nodeList:
+            nodeName, nodeFormat = openvxNodes[i]
+            echo1 = 'Running OpenVX Node - '+str(i+1)+':'+nodeName
+            print(echo1)
+            logFile.write(echo1+'\n')
+            runvxCmd = [RunVXapp, '-frames:'+str(numFrames), '-affinity:'+hardwareMode,
+                        '-dump-gdf', '-dump-profile', 'node'] + shlex.split(nodeFormat)
+            print(' '.join(runvxCmd))
+            completed = subprocess.run(runvxCmd, stdout=subprocess.PIPE,
+                                       stderr=subprocess.STDOUT, text=True, check=False)
+            print(completed.stdout, end='')
+            logFile.write(completed.stdout)
+            logFile.flush()
+            if completed.returncode != 0:
+                if nodeName in expected:
+                    print('EXPECTED FAILURE: '+nodeName+' exit '+str(completed.returncode))
+                else:
+                    failedCases.append(nodeName+' (exit '+str(completed.returncode)+')')
+            elif nodeName in expected:
+                unexpectedlyPassed.append(nodeName)
+            print("\n")
     orig_stdout = sys.stdout
     sys.stdout = open('openvx_node_results/nodePerformance.md', 'a')
     echo_1 = '| OpenVX Node                             |Frames Count| tmp (ms) | avg (ms) | min (ms) | max (ms) |'
@@ -715,4 +848,15 @@ else:
         reportFileDir = os.path.abspath(reportFilename)
         print("\nSTATUS: Output Report File - "+reportFileDir)
 
+if unexpectedlyPassed:
+    print("\nNOTE: %d case(s) listed as expected failures at %dx%d passed: %s"
+          % (len(unexpectedlyPassed), width, height, ', '.join(unexpectedlyPassed)))
+
 print("\nrunVisionTests.py completed - V:"+__version__+"\n")
+
+if failedCases:
+    print("ERROR: %d of %d runvx case(s) failed at %dx%d on %s:"
+          % (len(failedCases), len(nodeList), width, height, hardwareMode))
+    for case in failedCases:
+        print("    "+case)
+    sys.exit(len(failedCases))

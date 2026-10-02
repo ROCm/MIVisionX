@@ -2301,8 +2301,17 @@ int ovxKernel_LaplacianPyramid(AgoNode * node, AgoKernelCommand cmd)
             height *= scale;
         }
 
-        // set output image sizes same as input image size
+        // the laplacian pyramid at index 1 is an output, so agoVerifyGraph checks it
+        // against this meta; it spans the input image and was format-checked above
         vx_meta_format meta;
+        meta = &node->metaList[1];
+        meta->data.u.pyr.levels = node->paramList[1]->u.pyr.levels;
+        meta->data.u.pyr.scale = scale;
+        meta->data.u.pyr.format = VX_DF_IMAGE_S16;
+        meta->data.u.pyr.width = node->paramList[0]->u.img.width;
+        meta->data.u.pyr.height = node->paramList[0]->u.img.height;
+
+        // set output image sizes same as input image size
         meta = &node->metaList[2];
         meta->data.u.img.width = (vx_int32)width;
         meta->data.u.img.height = (vx_int32)height;
@@ -3452,6 +3461,28 @@ int agoKernel_Lut_S16_S16(AgoNode * node, AgoKernelCommand cmd)
     return status;
 }
 
+/*! \brief Substitutes the true and false values carried on a vx_threshold object.
+* REQ-0490 and REQ-0491 define the output of a threshold node in terms of those two
+* values, but the HafCpu_Threshold* kernels can only emit the 0/255 mask that an SSE
+* or AVX compare produces. The fused HafCpu_ThresholdNot* kernels invert that mask,
+* so their two values invert and swap. Both default cases remap to themselves and
+* are skipped.
+*/
+static void agoThresholdRemapOutput(AgoData * oImg, AgoData * iThr, bool fusedNot)
+{
+    vx_uint8 trueValue = iThr->u.thr.true_value.U8;
+    vx_uint8 falseValue = iThr->u.thr.false_value.U8;
+    if (fusedNot) {
+        vx_uint8 swap = (vx_uint8)~falseValue;
+        falseValue = (vx_uint8)~trueValue;
+        trueValue = swap;
+    }
+    if (trueValue != 255 || falseValue != 0) {
+        HafCpu_ThresholdRemapOutput_U8(oImg->u.img.width, oImg->u.img.height,
+            oImg->buffer, oImg->u.img.stride_in_bytes, trueValue, falseValue);
+    }
+}
+
 int agoKernel_Threshold_U8_U8_Binary(AgoNode * node, AgoKernelCommand cmd)
 {
     vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
@@ -3462,6 +3493,9 @@ int agoKernel_Threshold_U8_U8_Binary(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iThr = node->paramList[2];
         if (HafCpu_Threshold_U8_U8_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_value.U1)) {
             status = VX_FAILURE;
+        }
+        else {
+            agoThresholdRemapOutput(oImg, iThr, false);
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -3531,6 +3565,9 @@ int agoKernel_Threshold_U8_U8_Range(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iThr = node->paramList[2];
         if (HafCpu_Threshold_U8_U8_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
             status = VX_FAILURE;
+        }
+        else {
+            agoThresholdRemapOutput(oImg, iThr, false);
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -3750,6 +3787,9 @@ int agoKernel_Threshold_U8_S16_Binary(AgoNode * node, AgoKernelCommand cmd)
         if (HafCpu_Threshold_U8_S16_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, (vx_int16 *)iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_value.S16)) {
             status = VX_FAILURE;
         }
+        else {
+            agoThresholdRemapOutput(oImg, iThr, false);
+        }
     }
     else if (cmd == ago_kernel_cmd_validate) {
         if (!(status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_S16))) {
@@ -3823,6 +3863,9 @@ int agoKernel_Threshold_U8_S16_Range(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iThr = node->paramList[2];
         if (HafCpu_Threshold_U8_S16_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, (vx_int16 *)iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower.S16, iThr->u.thr.threshold_upper.S16)) {
             status = VX_FAILURE;
+        }
+        else {
+            agoThresholdRemapOutput(oImg, iThr, false);
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -3900,6 +3943,9 @@ int agoKernel_ThresholdNot_U8_U8_Binary(AgoNode * node, AgoKernelCommand cmd)
         if (HafCpu_ThresholdNot_U8_U8_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_value.U1)) {
             status = VX_FAILURE;
         }
+        else {
+            agoThresholdRemapOutput(oImg, iThr, true);
+        }
     }
     else if (cmd == ago_kernel_cmd_validate) {
         if (!(status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_U8))) {
@@ -3957,6 +4003,9 @@ int agoKernel_ThresholdNot_U8_U8_Range(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iThr = node->paramList[2];
         if (HafCpu_ThresholdNot_U8_U8_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
             status = VX_FAILURE;
+        }
+        else {
+            agoThresholdRemapOutput(oImg, iThr, true);
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -4133,6 +4182,9 @@ int agoKernel_ThresholdNot_U8_S16_Binary(AgoNode * node, AgoKernelCommand cmd)
         if (HafCpu_ThresholdNot_U8_S16_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower.U1)) {
             status = VX_FAILURE;
         }
+        else {
+            agoThresholdRemapOutput(oImg, iThr, true);
+        }
     }
     else if (cmd == ago_kernel_cmd_validate) {
         if (!(status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_S16))) {
@@ -4190,6 +4242,9 @@ int agoKernel_ThresholdNot_U8_S16_Range(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iThr = node->paramList[2];
         if (HafCpu_ThresholdNot_U8_S16_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
             status = VX_FAILURE;
+        }
+        else {
+            agoThresholdRemapOutput(oImg, iThr, true);
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -21247,7 +21302,9 @@ int agoKernel_HarrisMergeSortAndPick_XY_XYS(AgoNode * node, AgoKernelCommand cmd
             return VX_ERROR_INVALID_FORMAT;
         else if (node->paramList[3]->u.scalar.type != VX_TYPE_FLOAT32)
             return VX_ERROR_INVALID_TYPE;
-        else if (node->paramList[3]->u.scalar.u.f <= 0.0f)
+        // REQ-0219: an implementation shall support all 0 <= min_distance <= 30,
+        // so zero is legal and keeps every feature above the strength threshold
+        else if (node->paramList[3]->u.scalar.u.f < 0.0f)
             return VX_ERROR_INVALID_VALUE;
         else if (node->paramList[4] && node->paramList[4]->u.scalar.type != VX_TYPE_UINT32)
             return VX_ERROR_INVALID_TYPE;

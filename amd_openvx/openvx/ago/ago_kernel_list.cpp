@@ -225,7 +225,9 @@ static struct {
 	OVX_KERNEL_ENTRY( VX_KERNEL_SELECT                , Select, "select",                          		AINx3_AOUT,           ATYPE_SRRR         , false ),
 	OVX_KERNEL_ENTRY( VX_KERNEL_WEIGHTED_AVERAGE      , WeightedAverage, "weighted_average",        		AINx3_AOUT,		      ATYPE_ISII         , false ),
 	OVX_KERNEL_ENTRY( VX_KERNEL_NON_LINEAR_FILTER     , NonLinearFilter, "non_linear_filter",      		AINx3_AOUT,	     	  ATYPE_SIMI         , false ),	
-	OVX_KERNEL_ENTRY( VX_KERNEL_LAPLACIAN_PYRAMID     , LaplacianPyramid, "laplacian_pyramid",     		AINx2_AOUT,	     	  ATYPE_IPI        	 , false ),	
+	// vxLaplacianPyramidNode(graph, input, laplacian, output): the laplacian
+	// pyramid at index 1 is an output, so the node also depends on it correctly
+	OVX_KERNEL_ENTRY( VX_KERNEL_LAPLACIAN_PYRAMID     , LaplacianPyramid, "laplacian_pyramid",     		AIN_AOUTx2,	     	  ATYPE_IPI        	 , false ),	
 	OVX_KERNEL_ENTRY( VX_KERNEL_LAPLACIAN_RECONSTRUCT , LaplacianReconstruct, "laplacian_reconstruct",  AINx2_AOUT,	     	  ATYPE_PII        	 , false ),	
 	// AMD low-level kernel primitives
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_SET_00_U8                                               , 1, 1, Set00_U8, { AOUT },                                           ATYPE_I                 , KOP_ELEMWISE  , false ),

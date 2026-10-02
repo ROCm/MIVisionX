@@ -178,6 +178,18 @@ int HafCpu_Lut_S16_S16
 		vx_int16    * pLut,
 		vx_uint32     offset
 	);
+// The Threshold kernels below emit a 0/255 mask. REQ-0490 and REQ-0491 instead
+// call for the true and false values carried on the vx_threshold object, so a
+// U8 output is passed through this remap whenever they are not 255 and 0.
+int HafCpu_ThresholdRemapOutput_U8
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8      trueValue,
+		vx_uint8      falseValue
+	);
 int HafCpu_Threshold_U8_U8_Binary
 	(
 		vx_uint32     dstWidth,

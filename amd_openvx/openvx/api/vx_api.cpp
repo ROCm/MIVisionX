@@ -4605,7 +4605,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyScalar(vx_scalar scalar_, void *user_pt
     if (agoIsValidData(scalar, VX_TYPE_SCALAR))
     {
         status = VX_ERROR_INVALID_PARAMETERS;
-        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr) {
+        if (scalar->isVirtual) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr) {
             if (usage == VX_READ_ONLY)
                 status = vxReadScalarValue(scalar_, user_ptr);
             else if (usage == VX_WRITE_ONLY)
@@ -4622,7 +4625,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyScalarWithSize(vx_scalar scalar_, vx_si
     if (agoIsValidData(scalar, VX_TYPE_SCALAR))
     {
         status = VX_ERROR_INVALID_PARAMETERS;
-        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr && (scalar->u.scalar.itemsize == size)) {
+        if (scalar->isVirtual) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr && (scalar->u.scalar.itemsize == size)) {
             if (usage == VX_READ_ONLY)
                 status = vxReadScalarValue(scalar_, user_ptr);
             else if (usage == VX_WRITE_ONLY)
@@ -6313,7 +6319,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdValue(vx_threshold thresh, vx_
     vx_status status = VX_ERROR_INVALID_REFERENCE;
     if (agoIsValidData(data, VX_TYPE_THRESHOLD)) {
         status = VX_ERROR_INVALID_PARAMETERS;
-        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && value_ptr) {
+        if (data->isVirtual) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if ((user_mem_type == VX_MEMORY_TYPE_HOST) && value_ptr) {
             status = VX_ERROR_NOT_COMPATIBLE;
             if(data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
                 status = VX_ERROR_NO_MEMORY;
@@ -6398,7 +6407,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdRange(vx_threshold thresh, vx_
     vx_status status = VX_ERROR_INVALID_REFERENCE;
     if (agoIsValidData(data, VX_TYPE_THRESHOLD)) {
         status = VX_ERROR_INVALID_PARAMETERS;
-        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && lower_value_ptr && upper_value_ptr) {
+        if (data->isVirtual) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if ((user_mem_type == VX_MEMORY_TYPE_HOST) && lower_value_ptr && upper_value_ptr) {
             status = VX_ERROR_NOT_COMPATIBLE;
             if(data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
                 status = VX_ERROR_NO_MEMORY;
@@ -6480,7 +6492,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdOutput(vx_threshold thresh, vx
     vx_status status = VX_ERROR_INVALID_REFERENCE;
     if (agoIsValidData(data, VX_TYPE_THRESHOLD)) {
         status = VX_ERROR_INVALID_PARAMETERS;
-        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && true_value_ptr && false_value_ptr) {
+        if (data->isVirtual) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if ((user_mem_type == VX_MEMORY_TYPE_HOST) && true_value_ptr && false_value_ptr) {
             status = VX_ERROR_NO_MEMORY;
                 AgoData * dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
 #if ENABLE_OPENCL
@@ -7793,6 +7808,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyRemapPatch(vx_remap remap,
         vx_bool zero_area = ((((end_x - start_x) == 0) || ((end_y - start_y) == 0)) ? vx_true_e : vx_false_e);
         bool paramsValid = true;
 
+        if (data->isVirtual)
+            return VX_ERROR_OPTIMIZED_AWAY;
+
         if(user_coordinate_type != VX_TYPE_COORDINATES2DF)
             paramsValid = false;
         if(user_stride_y < sizeof(vx_coordinates2df_t)*(rect->end_x - rect->start_x))
@@ -7985,6 +8003,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
         vx_uint32 end_y = rect ? rect->end_y : 0u;
         vx_bool zero_area = ((((end_x - start_x) == 0) || ((end_y - start_y) == 0)) ? vx_true_e : vx_false_e);
         bool paramsValid = true;
+
+        if (data->isVirtual)
+            return VX_ERROR_OPTIMIZED_AWAY;
 
         if(coordinate_type != VX_TYPE_COORDINATES2DF)
             paramsValid = false;

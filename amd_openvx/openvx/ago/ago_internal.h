@@ -425,6 +425,8 @@ struct MappedData {
     bool used_external_ptr;
     vx_size stride;
     vx_uint32 plane;
+    // rectangle covered by a remap patch map, so that unmap only rebuilds the entries it touched
+    vx_rectangle_t rect;
 };
 struct AgoData {
     AgoReference ref;

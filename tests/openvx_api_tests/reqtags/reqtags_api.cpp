@@ -393,6 +393,82 @@ static void test_remap_patch_roundtrip(vx_context context)
     vxReleaseRemap(&map);
 }
 
+// vxMapRemapPatch must reject a patch outside the destination dimensions rather than
+// hand back a pointer past the table, and an unmap of a sub-patch must publish only the
+// elements it covers.
+static void test_remap_map_patch(vx_context context)
+{
+    vx_remap map = vxCreateRemap(context, 64, 64, 32, 32);
+    vx_map_id map_id = 0;
+    vx_size stride_y = 0;
+    void *ptr = NULL;
+
+    vx_rectangle_t outside = { 0, 32, 1, 33 };
+    vx_status sbad = vxMapRemapPatch(map, &outside, &map_id, &stride_y, &ptr,
+                                     VX_TYPE_COORDINATES2DF, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    check("REQ-1269", "vxMapRemapPatch rejects a patch outside the remap",
+          sbad != VX_SUCCESS, NULL);
+
+    vx_rectangle_t rect = { 3, 4, 5, 6 };
+    vx_status smap = vxMapRemapPatch(map, &rect, &map_id, &stride_y, &ptr,
+                                     VX_TYPE_COORDINATES2DF, VX_READ_AND_WRITE, VX_MEMORY_TYPE_HOST);
+    bool ok = (smap == VX_SUCCESS && ptr != NULL && stride_y >= 2 * sizeof(vx_coordinates2df_t));
+    if (ok) {
+        // an out-of-source coordinate (-1 at 3 fractional bits) must not be converted blindly
+        vx_coordinates2df_t *first = (vx_coordinates2df_t *)ptr;
+        first[0].x = -1.0f;
+        first[0].y = 20.5f;
+        vx_coordinates2df_t *second = (vx_coordinates2df_t *)((vx_uint8 *)ptr + stride_y) + 1;
+        second->x = 10.25f;
+        second->y = 11.5f;
+        ok = (vxUnmapRemapPatch(map, map_id) == VX_SUCCESS);
+    }
+    vx_float32 x = 0.0f, y = 0.0f;
+    vx_status sget = vxGetRemapPoint(map, 4, 5, &x, &y);
+    check("REQ-1269", "vxMapRemapPatch sub-patch write is visible after unmap",
+          ok && sget == VX_SUCCESS && x == 10.25f && y == 11.5f, NULL);
+    vxReleaseRemap(&map);
+}
+
+// A node parameter owns its lazily created meta format. Querying the meta format of a kernel
+// parameter before nodes are created must not make the nodes share (and double free) it.
+static void test_node_parameter_meta_format_ownership(vx_context context)
+{
+    vx_kernel kernel = vxGetKernelByEnum(context, VX_KERNEL_BOX_3x3);
+    vx_parameter kparam = vxGetKernelParameterByIndex(kernel, 0);
+    vx_meta_format kmeta = 0;
+    vxQueryParameter(kparam, VX_PARAMETER_META_FORMAT, &kmeta, sizeof(kmeta));
+    vx_reference kmeta_ref = (vx_reference)kmeta;
+    vxReleaseReference(&kmeta_ref);
+
+    vx_graph graph = vxCreateGraph(context);
+    vx_image input = vxCreateImage(context, 16, 16, VX_DF_IMAGE_U8);
+    vx_image out0 = vxCreateImage(context, 16, 16, VX_DF_IMAGE_U8);
+    vx_image out1 = vxCreateImage(context, 16, 16, VX_DF_IMAGE_U8);
+    vx_node n0 = vxBox3x3Node(graph, input, out0);
+    vx_node n1 = vxBox3x3Node(graph, input, out1);
+    bool ok = true;
+    vx_node nodes[2] = { n0, n1 };
+    for (int i = 0; i < 2; i++) {
+        vx_parameter nparam = vxGetParameterByIndex(nodes[i], 0);
+        vx_meta_format nmeta = 0;
+        vx_status s = vxQueryParameter(nparam, VX_PARAMETER_META_FORMAT, &nmeta, sizeof(nmeta));
+        vx_reference nmeta_ref = (vx_reference)nmeta;
+        ok = ok && s == VX_SUCCESS && nmeta != 0 && nmeta != kmeta;
+        vxReleaseReference(&nmeta_ref);
+        vxReleaseParameter(&nparam);
+    }
+    vxReleaseNode(&n0);
+    vxReleaseNode(&n1);
+    vxReleaseGraph(&graph); // would double free a meta format shared with the kernel
+    vxReleaseImage(&input);
+    vxReleaseImage(&out0);
+    vxReleaseImage(&out1);
+    vxReleaseParameter(&kparam);
+    vxReleaseKernel(&kernel);
+    check("REQ-1760", "node parameters own independent meta formats", ok, NULL);
+}
+
 int main()
 {
     vx_context context = vxCreateContext();
@@ -417,6 +493,8 @@ int main()
     test_add_parameter_bounds(context);
     test_parameter_meta_format(context);
     test_remap_patch_roundtrip(context);
+    test_remap_map_patch(context);
+    test_node_parameter_meta_format_ownership(context);
 
     printf("\n%s: %d failure(s)\n", errors ? "FAILED" : "PASSED", errors);
     vxReleaseContext(&context);

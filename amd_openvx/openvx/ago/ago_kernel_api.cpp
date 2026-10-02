@@ -3478,18 +3478,40 @@ int agoKernel_Lut_S16_S16(AgoNode * node, AgoKernelCommand cmd)
 * so their two values invert and swap. Both default cases remap to themselves and
 * are skipped.
 */
+// returns true when the output of the threshold node is not the plain 255/0 mask
+static bool agoThresholdOutputNeedsRemap(AgoData * iThr, bool fusedNot, vx_uint8 * trueValue, vx_uint8 * falseValue)
+{
+    vx_uint8 t = iThr->u.thr.true_value.U8;
+    vx_uint8 f = iThr->u.thr.false_value.U8;
+    if (fusedNot) {
+        vx_uint8 swap = (vx_uint8)~f;
+        f = (vx_uint8)~t;
+        t = swap;
+    }
+    *trueValue = t;
+    *falseValue = f;
+    return (t != 255 || f != 0);
+}
+
 static void agoThresholdRemapOutput(AgoData * oImg, AgoData * iThr, bool fusedNot)
 {
-    vx_uint8 trueValue = iThr->u.thr.true_value.U8;
-    vx_uint8 falseValue = iThr->u.thr.false_value.U8;
-    if (fusedNot) {
-        vx_uint8 swap = (vx_uint8)~falseValue;
-        falseValue = (vx_uint8)~trueValue;
-        trueValue = swap;
-    }
-    if (trueValue != 255 || falseValue != 0) {
+    vx_uint8 trueValue, falseValue;
+    if (agoThresholdOutputNeedsRemap(iThr, fusedNot, &trueValue, &falseValue)) {
         HafCpu_ThresholdRemapOutput_U8(oImg->u.img.width, oImg->u.img.height,
             oImg->buffer, oImg->u.img.stride_in_bytes, trueValue, falseValue);
+    }
+}
+
+/*! \brief Keeps a threshold node on the CPU when its output needs the true/false remap.
+* The remap is applied by the CPU execute path only: the HIP kernels and the generated OpenCL
+* code emit the fixed 255/0 mask, so a node with other values would give different results
+* depending on the target it was scheduled on. The default 255/0 case stays GPU-capable.
+*/
+static void agoThresholdRestrictTargetSupport(AgoNode * node, bool fusedNot)
+{
+    vx_uint8 trueValue, falseValue;
+    if (agoThresholdOutputNeedsRemap(node->paramList[2], fusedNot, &trueValue, &falseValue)) {
+        node->target_support_flags &= ~(AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R);
     }
 }
 
@@ -3538,6 +3560,7 @@ int agoKernel_Threshold_U8_U8_Binary(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
+        agoThresholdRestrictTargetSupport(node, false);
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_valid_rect_callback) {
@@ -3610,6 +3633,7 @@ int agoKernel_Threshold_U8_U8_Range(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
+        agoThresholdRestrictTargetSupport(node, false);
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_valid_rect_callback) {
@@ -3836,6 +3860,7 @@ int agoKernel_Threshold_U8_S16_Binary(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
+        agoThresholdRestrictTargetSupport(node, false);
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_valid_rect_callback) {
@@ -3913,6 +3938,7 @@ int agoKernel_Threshold_U8_S16_Range(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
+        agoThresholdRestrictTargetSupport(node, false);
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_valid_rect_callback) {
@@ -3990,6 +4016,7 @@ int agoKernel_ThresholdNot_U8_U8_Binary(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
+        agoThresholdRestrictTargetSupport(node, true);
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_valid_rect_callback) {
@@ -4051,6 +4078,7 @@ int agoKernel_ThresholdNot_U8_U8_Range(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
+        agoThresholdRestrictTargetSupport(node, true);
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_valid_rect_callback) {
@@ -4229,6 +4257,7 @@ int agoKernel_ThresholdNot_U8_S16_Binary(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
+        agoThresholdRestrictTargetSupport(node, true);
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_valid_rect_callback) {
@@ -4290,6 +4319,7 @@ int agoKernel_ThresholdNot_U8_S16_Range(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #endif
                     ;
+        agoThresholdRestrictTargetSupport(node, true);
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_valid_rect_callback) {

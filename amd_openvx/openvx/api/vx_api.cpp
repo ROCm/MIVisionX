@@ -7922,6 +7922,28 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyRemapPatch(vx_remap remap,
     return status;
 }
 
+// Convert one floating-point remap coordinate to the fixed-point form read by the warp kernels.
+// Coordinates outside the source image (and NaN) get the 0xffff "invalid" sentinel. The range
+// check comes first because converting an out-of-range float to an unsigned type is undefined.
+static void agoRemapCoordToFixed(const AgoData * data, vx_float32 src_x, vx_float32 src_y, ago_coord2d_ushort_t * item_fixed)
+{
+    const vx_float32 scale = (vx_float32)(1 << data->u.remap.remap_fractional_bits);
+    // only fully out-of-bounds coordinates are marked invalid. Coordinates on or inside the src image
+    // rectangle are valid and the interpolation kernel applies the border mode per sample.
+    if (src_x >= 0.0f && src_y >= 0.0f &&
+        src_x < (vx_float32)data->u.remap.src_width && src_y < (vx_float32)data->u.remap.src_height) {
+        const vx_float32 fixed_x = src_x * scale + 0.5f; // convert to fixed-point with rounding
+        const vx_float32 fixed_y = src_y * scale + 0.5f;
+        if (fixed_x < 65535.0f && fixed_y < 65535.0f) {
+            item_fixed->x = (vx_uint16)fixed_x;
+            item_fixed->y = (vx_uint16)fixed_y;
+            return;
+        }
+    }
+    item_fixed->x = 0xffff;
+    item_fixed->y = 0xffff;
+}
+
 /*! \brief Allows the application to get direct access to a rectangular patch of a remap object.
  *
  * The patch is specified within the destination dimensions and its
@@ -8025,7 +8047,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
             paramsValid = false;
         if (zero_area == vx_false_e && ((start_x >= end_x) || (start_y >= end_y)))
             paramsValid = false;
-
+        // the patch has to lie within the destination dimensions, otherwise the pointer computed
+        // below would address memory outside the remap table
+        if (start_x > end_x || start_y > end_y ||
+            end_x > data->u.remap.dst_width || end_y > data->u.remap.dst_height)
+            paramsValid = false;
 
         if (paramsValid) {
             if (!data->buffer) {
@@ -8093,7 +8119,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
                     }
                 }
 #endif
-                MappedData item = { data->nextMapId++, ptr_returned, usage, false, row_stride, 0 };
+                MappedData item = { data->nextMapId++, ptr_returned, usage, false, row_stride, 0, { start_x, start_y, end_x, end_y } };
                 data->mapped.push_back(item);
                 *map_id = item.map_id;
                 *ptr = ptr_returned;
@@ -8127,24 +8153,21 @@ VX_API_ENTRY vx_status VX_API_CALL vxUnmapRemapPatch(vx_remap remap, vx_map_id m
         for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
             if (i->map_id == map_id) {
                 vx_enum usage = i->usage;
+                const vx_rectangle_t rect = i->rect;
                 data->mapped.erase(i);
                 if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
                     // the application wrote the float table directly; the fixed-point
-                    // mirror the warp kernels read is derived from it, so it has to be
-                    // rebuilt here or the graph would keep using the old coordinates
+                    // mirror the warp kernels read is derived from it, so the entries of
+                    // the mapped rectangle have to be rebuilt here or the graph would keep
+                    // using the old coordinates. Entries outside the rectangle are unchanged.
                     if (data->buffer && data->reserved) {
+                        const vx_size dst_width = data->u.remap.dst_width;
                         ago_coord2d_float_t * item_float = (ago_coord2d_float_t *)data->reserved;
                         ago_coord2d_ushort_t * item_fixed = (ago_coord2d_ushort_t *)data->buffer;
-                        vx_size count = (vx_size)data->u.remap.dst_width * data->u.remap.dst_height;
-                        vx_float32 scale = (vx_float32)(1 << data->u.remap.remap_fractional_bits);
-                        for (vx_size k = 0; k < count; k++) {
-                            item_fixed[k].x = (vx_uint16)(item_float[k].x * scale + 0.5f);
-                            item_fixed[k].y = (vx_uint16)(item_float[k].y * scale + 0.5f);
-                            if (item_float[k].x < 0.0f || item_float[k].y < 0.0f ||
-                                item_float[k].x >= (vx_float32)data->u.remap.src_width ||
-                                item_float[k].y >= (vx_float32)data->u.remap.src_height) {
-                                item_fixed[k].x = 0xffff;
-                                item_fixed[k].y = 0xffff;
+                        for (vx_uint32 y = rect.start_y; y < rect.end_y; y++) {
+                            for (vx_uint32 x = rect.start_x; x < rect.end_x; x++) {
+                                const vx_size k = (vx_size)y * dst_width + x;
+                                agoRemapCoordToFixed(data, item_float[k].x, item_float[k].y, &item_fixed[k]);
                             }
                         }
                     }
@@ -8210,15 +8233,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetRemapPoint(vx_remap table,
             ago_coord2d_float_t * item_float = ((ago_coord2d_float_t *)data->reserved) + (dst_y * data->u.remap.dst_width) + dst_x;
             item_float->x = src_x;
             item_float->y = src_y;
-            item_fixed->x = (vx_uint16)(src_x * (vx_float32)(1 << data->u.remap.remap_fractional_bits) + 0.5f); // convert to fixed-point with rounding
-            item_fixed->y = (vx_uint16)(src_y * (vx_float32)(1 << data->u.remap.remap_fractional_bits) + 0.5f); // convert to fixed-point with rounding
-            // special handing for border cases: only mark fully out-of-bounds coordinates
-            // as invalid. Coordinates on or inside the src image rectangle are valid and
-            // the interpolation kernel applies the border mode per sample.
-            if (src_x < 0.0f || src_y < 0.0f || src_x >= (vx_float32)data->u.remap.src_width || src_y >= (vx_float32)data->u.remap.src_height) {
-                item_fixed->x = 0xffff;
-                item_fixed->y = 0xffff;
-            }
+            agoRemapCoordToFixed(data, src_x, src_y, item_fixed);
             status = VX_SUCCESS;
             // update sync flags
             data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;

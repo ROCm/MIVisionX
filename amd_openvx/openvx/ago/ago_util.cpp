@@ -3032,8 +3032,14 @@ AgoNode * agoCreateNode(AgoGraph * graph, AgoKernel * kernel)
     node->local_data_set_by_implementation = vx_false_e;
     node->is_replicated = vx_false_e;
     memset(node->replicate_flags, 0, sizeof(node->replicate_flags));
-    memcpy(node->parameters, kernel->parameters, sizeof(node->parameters));
     for (vx_uint32 i = 0; i < node->paramCount; i++) {
+        // copy the parameter description field by field: AgoParameter owns its lazily created
+        // meta format, so a byte copy would make the kernel and every node share one allocation
+        node->parameters[i].index = kernel->parameters[i].index;
+        node->parameters[i].direction = kernel->parameters[i].direction;
+        node->parameters[i].type = kernel->parameters[i].type;
+        node->parameters[i].state = kernel->parameters[i].state;
+        node->parameters[i].meta = nullptr;
         agoResetReference(&node->parameters[i].ref, VX_TYPE_PARAMETER, graph->ref.context, &graph->ref);
         node->parameters[i].scope = &node->ref;
         vx_meta_format meta = &node->metaList[i];

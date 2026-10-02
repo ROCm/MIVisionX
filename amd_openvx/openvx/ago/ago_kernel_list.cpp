@@ -525,6 +525,12 @@ static struct {
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_NON_LINEAR_FILTER_DATA_DATA_DATA                        , 1, 0, NonLinearFilter_DATA_DATA_DATA, AOUT_AINx3,                   ATYPE_IMIS              , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_LAPLACIAN_PYRAMID_DATA_DATA_DATA                        , 1, 0, LaplacianPyramid_DATA_DATA_DATA, AOUT_AINx2,                  ATYPE_IPI               , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_LAPLACIAN_RECONSTRUCT_DATA_DATA_DATA                    , 1, 0, LaplacianReconstruct_DATA_DATA_DATA, AOUT_AINx2,              ATYPE_IIP               , KOP_UNKNOWN   , false ),
+	// Convert Bit Depth to and from U1. KOP_UNKNOWN keeps these out of the
+	// element-wise peephole merges, which assume one byte per pixel.
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_COLOR_DEPTH_U1_U8                                       , 1, 0, ColorDepth_U1_U8, AOUT_AINx2,                                 ATYPE_IIS               , KOP_UNKNOWN   , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_COLOR_DEPTH_U1_S16                                      , 1, 0, ColorDepth_U1_S16, AOUT_AINx2,                                ATYPE_IIS               , KOP_UNKNOWN   , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_COLOR_DEPTH_U8_U1                                       , 1, 0, ColorDepth_U8_U1, AOUT_AINx2,                                 ATYPE_IIS               , KOP_UNKNOWN   , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_COLOR_DEPTH_S16_U1                                      , 1, 0, ColorDepth_S16_U1, AOUT_AINx2,                                ATYPE_IIS               , KOP_UNKNOWN   , false ),
 #undef AGO_KERNEL_ENTRY
 #undef OVX_KERNEL_ENTRY
 };

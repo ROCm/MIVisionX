@@ -1180,7 +1180,16 @@ int agoDramaDivideConvertDepthNode(AgoNodeList * nodeList, AgoNode * anode)
 	anode->paramList[2] = paramList[3];
 	anode->paramCount = 3;
 	vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
-	if (paramList[1]->u.img.format == VX_DF_IMAGE_S16 || paramList[0]->u.img.format == VX_DF_IMAGE_U8) {
+	// paramList still holds the original order, so [0] is the input and [1] the output
+	if (paramList[1]->u.img.format == VX_DF_IMAGE_U1_AMD) {
+		if (paramList[0]->u.img.format == VX_DF_IMAGE_U8) new_kernel_id = VX_KERNEL_AMD_COLOR_DEPTH_U1_U8;
+		else if (paramList[0]->u.img.format == VX_DF_IMAGE_S16) new_kernel_id = VX_KERNEL_AMD_COLOR_DEPTH_U1_S16;
+	}
+	else if (paramList[0]->u.img.format == VX_DF_IMAGE_U1_AMD) {
+		if (paramList[1]->u.img.format == VX_DF_IMAGE_U8) new_kernel_id = VX_KERNEL_AMD_COLOR_DEPTH_U8_U1;
+		else if (paramList[1]->u.img.format == VX_DF_IMAGE_S16) new_kernel_id = VX_KERNEL_AMD_COLOR_DEPTH_S16_U1;
+	}
+	else if (paramList[1]->u.img.format == VX_DF_IMAGE_S16 || paramList[0]->u.img.format == VX_DF_IMAGE_U8) {
 		new_kernel_id = VX_KERNEL_AMD_COLOR_DEPTH_S16_U8;
 	}
 	else if (paramList[1]->u.img.format == VX_DF_IMAGE_U8 || paramList[0]->u.img.format == VX_DF_IMAGE_S16) {

@@ -1379,21 +1379,31 @@ int ovxKernel_ConvertDepth(AgoNode * node, AgoKernelCommand cmd)
         // validate parameters
         vx_uint32 width = node->paramList[0]->u.img.width;
         vx_uint32 height = node->paramList[0]->u.img.height;
-        if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[0]->u.img.format != VX_DF_IMAGE_S16)
+        vx_df_image inFmt = node->paramList[0]->u.img.format;
+        vx_df_image outFmt = node->paramList[1]->u.img.format;
+        // a conversion with U1 on either side is governed by three fixed rules that
+        // take neither the convert policy nor the shift into account
+        bool isU1 = (inFmt == VX_DF_IMAGE_U1_AMD) || (outFmt == VX_DF_IMAGE_U1_AMD);
+        if (inFmt != VX_DF_IMAGE_U8 && inFmt != VX_DF_IMAGE_S16 && inFmt != VX_DF_IMAGE_U1_AMD)
+            return VX_ERROR_INVALID_FORMAT;
+        else if (inFmt == VX_DF_IMAGE_U1_AMD && outFmt != VX_DF_IMAGE_U8 && outFmt != VX_DF_IMAGE_S16)
+            return VX_ERROR_INVALID_FORMAT;
+        else if (outFmt == VX_DF_IMAGE_U1_AMD && inFmt != VX_DF_IMAGE_U8 && inFmt != VX_DF_IMAGE_S16)
             return VX_ERROR_INVALID_FORMAT;
         else if (!width || !height)
             return VX_ERROR_INVALID_DIMENSION;
         else if (node->paramList[2]->u.scalar.type != VX_TYPE_ENUM || node->paramList[3]->u.scalar.type != VX_TYPE_INT32)
             return VX_ERROR_INVALID_TYPE;
         else if ((node->paramList[2]->u.scalar.u.e != VX_CONVERT_POLICY_WRAP && node->paramList[2]->u.scalar.u.e != VX_CONVERT_POLICY_SATURATE) ||
-                 (node->paramList[3]->u.scalar.u.i < 0 || node->paramList[3]->u.scalar.u.i >= 8))
+                 (!isU1 && (node->paramList[3]->u.scalar.u.i < 0 || node->paramList[3]->u.scalar.u.i >= 8)))
             return VX_ERROR_INVALID_VALUE;
         // set output image sizes are same as input image size
         vx_meta_format meta;
         meta = &node->metaList[1];
         meta->data.u.img.width = width;
         meta->data.u.img.height = height;
-        meta->data.u.img.format = (node->paramList[0]->u.img.format == VX_DF_IMAGE_U8) ? VX_DF_IMAGE_S16 : VX_DF_IMAGE_U8;
+        meta->data.u.img.format = isU1 ? outFmt
+                                       : ((inFmt == VX_DF_IMAGE_U8) ? VX_DF_IMAGE_S16 : VX_DF_IMAGE_U8);
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -4453,6 +4463,134 @@ int agoKernel_ColorDepth_U8_S16_Sat(AgoNode * node, AgoKernelCommand cmd)
         }
     }
 #endif
+    return status;
+}
+
+int agoKernel_ColorDepth_U1_U8(AgoNode * node, AgoKernelCommand cmd)
+{
+    vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+    if (cmd == ago_kernel_cmd_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        // the shift at paramList[2] is deliberately unused: a U1 conversion ignores it
+        if (HafCpu_ColorDepth_U1_U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_validate) {
+        status = ValidateArguments_Img_1OUT_1IN_S(node, VX_DF_IMAGE_U1_AMD, VX_DF_IMAGE_U8, VX_TYPE_INT32);
+    }
+    else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+        status = VX_SUCCESS;
+    }
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
+                    ;
+        status = VX_SUCCESS;
+    }
+    else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+        AgoData * out = node->paramList[0];
+        AgoData * inp = node->paramList[1];
+        out->u.img.rect_valid = inp->u.img.rect_valid;
+    }
+    return status;
+}
+
+int agoKernel_ColorDepth_U1_S16(AgoNode * node, AgoKernelCommand cmd)
+{
+    vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+    if (cmd == ago_kernel_cmd_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        // the shift at paramList[2] is deliberately unused: a U1 conversion ignores it
+        if (HafCpu_ColorDepth_U1_S16(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, (vx_int16 *)iImg->buffer, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_validate) {
+        status = ValidateArguments_Img_1OUT_1IN_S(node, VX_DF_IMAGE_U1_AMD, VX_DF_IMAGE_S16, VX_TYPE_INT32);
+    }
+    else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+        status = VX_SUCCESS;
+    }
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
+                    ;
+        status = VX_SUCCESS;
+    }
+    else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+        AgoData * out = node->paramList[0];
+        AgoData * inp = node->paramList[1];
+        out->u.img.rect_valid = inp->u.img.rect_valid;
+    }
+    return status;
+}
+
+int agoKernel_ColorDepth_U8_U1(AgoNode * node, AgoKernelCommand cmd)
+{
+    vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+    if (cmd == ago_kernel_cmd_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        // the shift at paramList[2] is deliberately unused: a U1 conversion ignores it
+        if (HafCpu_ColorDepth_U8_U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_validate) {
+        status = ValidateArguments_Img_1OUT_1IN_S(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_U1_AMD, VX_TYPE_INT32);
+    }
+    else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+        status = VX_SUCCESS;
+    }
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
+                    ;
+        status = VX_SUCCESS;
+    }
+    else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+        AgoData * out = node->paramList[0];
+        AgoData * inp = node->paramList[1];
+        out->u.img.rect_valid = inp->u.img.rect_valid;
+    }
+    return status;
+}
+
+int agoKernel_ColorDepth_S16_U1(AgoNode * node, AgoKernelCommand cmd)
+{
+    vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+    if (cmd == ago_kernel_cmd_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        // the shift at paramList[2] is deliberately unused: a U1 conversion ignores it
+        if (HafCpu_ColorDepth_S16_U1(oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_validate) {
+        status = ValidateArguments_Img_1OUT_1IN_S(node, VX_DF_IMAGE_S16, VX_DF_IMAGE_U1_AMD, VX_TYPE_INT32);
+    }
+    else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+        status = VX_SUCCESS;
+    }
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
+                    ;
+        status = VX_SUCCESS;
+    }
+    else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+        AgoData * out = node->paramList[0];
+        AgoData * inp = node->paramList[1];
+        out->u.img.rect_valid = inp->u.img.rect_valid;
+    }
     return status;
 }
 

@@ -1463,12 +1463,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetImageAttribute(vx_image image_, vx_enum 
                     status = VX_SUCCESS;
                 }
                 break;
-            case VX_IMAGE_ATTRIBUTE_RANGE:
-                if (size == sizeof(vx_enum)) {
-                    image->u.img.channel_range = *(vx_channel_range_e *)ptr;
-                    status = VX_SUCCESS;
-                }
-                break;
+            // VX_IMAGE_RANGE is read-only, unlike VX_IMAGE_SPACE above; it falls
+            // through to the default arm, which reports VX_ERROR_NOT_SUPPORTED
 #if ENABLE_OPENCL
             case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER:
                 if (size == sizeof(cl_mem) && image->u.img.enableUserBufferGPU) {
@@ -3073,6 +3069,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
         graph->isReadyToExecute = vx_false_e;
         graph->state = VX_GRAPH_STATE_UNVERIFIED;
 
+        // this call performs a complete verification, so a failure recorded by an
+        // earlier one must not stand: agoOptimizeGraph skips the whole optimizer
+        // while graph->status is set, which would make the failure permanent even
+        // after the application has corrected what caused it
+        graph->status = VX_SUCCESS;
+
         // check to see if user requested for graph dump
         vx_uint32 ago_graph_dump = 0;
         char textBuffer[256];
@@ -3107,8 +3109,16 @@ VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
             else {
                 graph->isReadyToExecute = vx_true_e;
             }
-            graph->verified = vx_true_e;
-            graph->state = VX_GRAPH_STATE_VERIFIED;
+            // only a graph that came through the optimizer and the initializer is
+            // verified; the two arms above report failure, so claiming
+            // VX_GRAPH_STATE_VERIFIED for them contradicts the status returned
+            if (status == VX_SUCCESS) {
+                graph->verified = vx_true_e;
+                graph->state = VX_GRAPH_STATE_VERIFIED;
+            }
+            else {
+                graph->state = VX_GRAPH_STATE_UNVERIFIED;
+            }
         }
 
         if (ago_graph_dump) {
@@ -8011,7 +8021,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
             paramsValid = false;
         if(mem_type != VX_MEMORY_TYPE_HOST && mem_type != VX_MEMORY_TYPE_NONE)
             paramsValid = false;
-        if((usage != VX_READ_ONLY && usage != VX_WRITE_ONLY) || (rect == NULL) || (ptr == NULL) || (map_id == NULL))
+        if((usage != VX_READ_ONLY && usage != VX_WRITE_ONLY && usage != VX_READ_AND_WRITE) || (rect == NULL) || (ptr == NULL) || (map_id == NULL))
             paramsValid = false;
         if (zero_area == vx_false_e && ((start_x >= end_x) || (start_y >= end_y)))
             paramsValid = false;
@@ -8032,9 +8042,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
             }
 #endif
 
-            vx_size stride = (end_x - start_x);
-            vx_size size = (stride * (end_y - start_y)) * sizeof(vx_coordinates2df_t);
-            ago_coord2d_float_t* ptr_returned = (ago_coord2d_float_t *)data->reserved;
+            // the mapped patch is a window onto the table, so the returned pointer
+            // addresses the top-left element of the rectangle and the rows are
+            // separated by a whole table row, not by the width of the patch
+            vx_size row_stride = (vx_size)data->u.remap.dst_width * sizeof(ago_coord2d_float_t);
+            ago_coord2d_float_t* ptr_returned = ((ago_coord2d_float_t *)data->reserved)
+                                              + ((vx_size)start_y * data->u.remap.dst_width) + start_x;
 
             // save the pointer and usage for use in vxUnmapRemapPatch
             status = VX_SUCCESS;
@@ -8080,11 +8093,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
                     }
                 }
 #endif
-                MappedData item = { data->nextMapId++, ptr_returned, usage, false };
+                MappedData item = { data->nextMapId++, ptr_returned, usage, false, row_stride, 0 };
                 data->mapped.push_back(item);
                 *map_id = item.map_id;
                 *ptr = ptr_returned;
-                *stride_y = stride * sizeof(vx_coordinates2df_t);
+                *stride_y = row_stride;
             }
         }
     }
@@ -8116,6 +8129,25 @@ VX_API_ENTRY vx_status VX_API_CALL vxUnmapRemapPatch(vx_remap remap, vx_map_id m
                 vx_enum usage = i->usage;
                 data->mapped.erase(i);
                 if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
+                    // the application wrote the float table directly; the fixed-point
+                    // mirror the warp kernels read is derived from it, so it has to be
+                    // rebuilt here or the graph would keep using the old coordinates
+                    if (data->buffer && data->reserved) {
+                        ago_coord2d_float_t * item_float = (ago_coord2d_float_t *)data->reserved;
+                        ago_coord2d_ushort_t * item_fixed = (ago_coord2d_ushort_t *)data->buffer;
+                        vx_size count = (vx_size)data->u.remap.dst_width * data->u.remap.dst_height;
+                        vx_float32 scale = (vx_float32)(1 << data->u.remap.remap_fractional_bits);
+                        for (vx_size k = 0; k < count; k++) {
+                            item_fixed[k].x = (vx_uint16)(item_float[k].x * scale + 0.5f);
+                            item_fixed[k].y = (vx_uint16)(item_float[k].y * scale + 0.5f);
+                            if (item_float[k].x < 0.0f || item_float[k].y < 0.0f ||
+                                item_float[k].x >= (vx_float32)data->u.remap.src_width ||
+                                item_float[k].y >= (vx_float32)data->u.remap.src_height) {
+                                item_fixed[k].x = 0xffff;
+                                item_fixed[k].y = 0xffff;
+                            }
+                        }
+                    }
                     // update sync flags
                     AgoData * dataToSync = data;
                     dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;

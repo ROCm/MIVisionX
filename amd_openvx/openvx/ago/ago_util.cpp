@@ -3529,6 +3529,10 @@ AgoContext::AgoContext()
     memset(&dataList, 0, sizeof(dataList));
     memset(&graphList, 0, sizeof(graphList));
     memset(&immediate_border_mode, 0, sizeof(immediate_border_mode));
+    // zero is not a member of vx_border_e, and the default for immediate mode
+    // functions is VX_BORDER_UNDEFINED; leaving it zero makes vxQueryContext
+    // report a value that vxSetContextAttribute then refuses to take back
+    immediate_border_mode.mode = VX_BORDER_UNDEFINED;
     memset(&extensions, 0, sizeof(extensions));
 #if ENABLE_OPENCL
     // NOTE: opencl_extensions is a std::string and is already default-constructed

@@ -1425,9 +1425,9 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         return 0;
     }
     else if (!strncmp(desc, "objectarray:", 12) || !strncmp(desc, "objectarray-virtual:", 12 + 8)) {
-        if (!strncmp(desc, "objectarray-virtual:", 14)) {
+        if (!strncmp(desc, "objectarray-virtual:", 12 + 8)) {
             data->isVirtual = vx_true_e;
-            desc += 8;
+            desc += 12 + 8; // skip the whole "objectarray-virtual:" prefix
         }
         else desc += 12;
         // get configuration

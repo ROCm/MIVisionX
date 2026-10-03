@@ -469,6 +469,115 @@ static void test_node_parameter_meta_format_ownership(vx_context context)
     check("REQ-1760", "node parameters own independent meta formats", ok, NULL);
 }
 
+// REQ-0938: a VX_DF_IMAGE_U1 patch that does not end on a byte boundary only writes the pixels
+// inside the patch, and reads back exactly those pixels.
+static void test_u1_partial_byte_patch(vx_context context)
+{
+    char detail[96];
+    const vx_uint32 width = 16, height = 4;
+    vx_image image = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
+    vx_rectangle_t full = { 0, 0, width, height };
+    vx_imagepatch_addressing_t addr = VX_IMAGEPATCH_ADDR_INIT;
+    addr.dim_x = width; addr.dim_y = height;
+    addr.stride_x = 0; addr.stride_x_bits = 1; addr.stride_y = 2;
+
+    vx_uint8 zeros[8] = { 0 };
+    vx_status s0 = vxCopyImagePatch(image, &full, 0, &addr, zeros, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+
+    // 12 pixels wide: one whole byte plus the low four bits of the next one
+    vx_rectangle_t part = { 0, 0, 12, height };
+    vx_imagepatch_addressing_t paddr = addr;
+    paddr.dim_x = 12;
+    vx_uint8 ones[8] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+    vx_status s1 = vxCopyImagePatch(image, &part, 0, &paddr, ones, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+
+    vx_uint8 out[8];
+    memset(out, 0xaa, sizeof(out));
+    vx_status s2 = vxCopyImagePatch(image, &full, 0, &addr, out, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    bool ok = (s0 == VX_SUCCESS && s1 == VX_SUCCESS && s2 == VX_SUCCESS);
+    int bad = 0;
+    for (vx_uint32 y = 0; y < height; y++) {
+        for (vx_uint32 x = 0; x < width; x++) {
+            int bit = (out[y * 2 + (x >> 3)] >> (x & 7)) & 1;
+            if (bit != (x < 12 ? 1 : 0)) bad++;
+        }
+    }
+    snprintf(detail, sizeof(detail), "%d pixel(s) wrong", bad);
+    check("REQ-0938", "U1 patch ending inside a byte writes only its pixels", ok && bad == 0, detail);
+
+    // a read of a partial patch leaves the bits of the user's byte beyond the patch alone
+    vx_rectangle_t rpart = { 0, 0, 12, 1 };
+    vx_imagepatch_addressing_t raddr = addr;
+    raddr.dim_x = 12; raddr.dim_y = 1;
+    vx_uint8 rout[2] = { 0x00, 0xa0 };
+    vx_status s3 = vxCopyImagePatch(image, &rpart, 0, &raddr, rout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    check("REQ-0938", "U1 patch read keeps the user's bits outside the patch",
+          s3 == VX_SUCCESS && rout[0] == 0xff && rout[1] == 0xaf, NULL);
+    vxReleaseImage(&image);
+}
+
+// REQ-1463: a virtual object array, and the items taken from it, cannot be accessed from outside
+// the graph. The array still has to be usable as a replicated node's data inside it.
+static void test_virtual_object_array(vx_context context)
+{
+    char detail[96];
+    vx_graph graph = vxCreateGraph(context);
+    vx_image exemplar = vxCreateImage(context, 32, 32, VX_DF_IMAGE_U8);
+    vx_object_array varr = vxCreateVirtualObjectArray(graph, (vx_reference)exemplar, 2);
+    vx_image item = (vx_image)vxGetObjectArrayItem(varr, 0);
+
+    vx_uint8 pixels[32 * 32];
+    memset(pixels, 0, sizeof(pixels));
+    vx_rectangle_t rect = { 0, 0, 32, 32 };
+    vx_imagepatch_addressing_t addr = VX_IMAGEPATCH_ADDR_INIT;
+    addr.dim_x = 32; addr.dim_y = 32; addr.stride_x = 1; addr.stride_y = 32;
+    vx_status scopy = vxCopyImagePatch(item, &rect, 0, &addr, pixels, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    check("REQ-1463", "virtual object array item rejects vxCopyImagePatch",
+          varr != 0 && item != 0 && scopy != VX_SUCCESS, NULL);
+
+    // input array -> replicated Box3x3 -> virtual array -> replicated Box3x3 -> output array
+    vx_object_array in = vxCreateObjectArray(context, (vx_reference)exemplar, 2);
+    vx_object_array out = vxCreateObjectArray(context, (vx_reference)exemplar, 2);
+    vx_image in0 = (vx_image)vxGetObjectArrayItem(in, 0);
+    vx_image out0 = (vx_image)vxGetObjectArrayItem(out, 0);
+    vx_image mid0 = (vx_image)vxGetObjectArrayItem(varr, 0);
+    vx_node n1 = vxBox3x3Node(graph, in0, mid0);
+    vx_node n2 = vxBox3x3Node(graph, mid0, out0);
+    vx_bool replicate[2] = { vx_true_e, vx_true_e };
+    vx_status sr1 = vxReplicateNode(graph, n1, replicate, 2);
+    vx_status sr2 = vxReplicateNode(graph, n2, replicate, 2);
+    vx_status sverify = vxVerifyGraph(graph);
+    vx_status sprocess = vxProcessGraph(graph);
+    snprintf(detail, sizeof(detail), "verify=%d process=%d", (int)sverify, (int)sprocess);
+    check("REQ-1463", "replicated nodes chained through a virtual object array run",
+          sr1 == VX_SUCCESS && sr2 == VX_SUCCESS && sverify == VX_SUCCESS && sprocess == VX_SUCCESS, detail);
+
+    vxReleaseNode(&n1);
+    vxReleaseNode(&n2);
+    vxReleaseImage(&in0);
+    vxReleaseImage(&out0);
+    vxReleaseImage(&mid0);
+    vxReleaseImage(&item);
+    vxReleaseObjectArray(&in);
+    vxReleaseObjectArray(&out);
+    vxReleaseObjectArray(&varr);
+    vxReleaseImage(&exemplar);
+    vxReleaseGraph(&graph);
+}
+
+// REQ-1378: VX_THRESHOLD_TYPE is read-only.
+static void test_threshold_type_read_only(vx_context context)
+{
+    vx_threshold thr = vxCreateThresholdForImage(context, VX_THRESHOLD_TYPE_BINARY, VX_DF_IMAGE_U8, VX_DF_IMAGE_U8);
+    vx_enum type = VX_THRESHOLD_TYPE_RANGE;
+    vx_status sset = vxSetThresholdAttribute(thr, VX_THRESHOLD_TYPE, &type, sizeof(type));
+    vx_enum current = 0;
+    vx_status sget = vxQueryThreshold(thr, VX_THRESHOLD_TYPE, &current, sizeof(current));
+    check("REQ-1378", "vxSetThresholdAttribute rejects VX_THRESHOLD_TYPE",
+          sset != VX_SUCCESS && sget == VX_SUCCESS && current == VX_THRESHOLD_TYPE_BINARY, NULL);
+    vxReleaseThreshold(&thr);
+}
+
 int main()
 {
     vx_context context = vxCreateContext();
@@ -495,6 +604,9 @@ int main()
     test_remap_patch_roundtrip(context);
     test_remap_map_patch(context);
     test_node_parameter_meta_format_ownership(context);
+    test_u1_partial_byte_patch(context);
+    test_virtual_object_array(context);
+    test_threshold_type_read_only(context);
 
     printf("\n%s: %d failure(s)\n", errors ? "FAILED" : "PASSED", errors);
     vxReleaseContext(&context);

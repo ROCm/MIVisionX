@@ -44,6 +44,48 @@ THE SOFTWARE.
 #include "ago_internal.h"
 #define VX_MAX_TENSOR_DIMENSIONS 6
 
+// Copies the pixels of a VX_DF_IMAGE_U1 patch between two bit-packed buffers (pixel x lives at bit
+// (x & 7) of byte (x >> 3)). Only the dim_x pixels of each row are written: a patch does not have
+// to start or end on a byte boundary [REQ-0938], and the bits of a partially covered byte that lie
+// outside the patch have to keep their value. src_bit_offset/dst_bit_offset are the bit position
+// (0..7) of the first pixel of the patch in the first byte of each row.
+static void agoCopyU1Patch(vx_uint8 * dst, vx_size dst_stride, vx_uint32 dst_bit_offset,
+                           const vx_uint8 * src, vx_size src_stride, vx_uint32 src_bit_offset,
+                           vx_uint32 dim_x, vx_uint32 dim_y)
+{
+    for (vx_uint32 y = 0; y < dim_y; y++, dst += dst_stride, src += src_stride) {
+        if (src_bit_offset == dst_bit_offset) {
+            // same alignment on both sides: whole bytes are moved as they are and only the first
+            // and last byte of the row need masking
+            vx_uint32 bit = dst_bit_offset;
+            vx_uint32 remaining = dim_x;
+            vx_uint8 * d = dst;
+            const vx_uint8 * s = src;
+            if (bit) {
+                vx_uint32 count = (8 - bit) < remaining ? (8 - bit) : remaining;
+                vx_uint8 mask = (vx_uint8)(((1u << count) - 1u) << bit);
+                *d = (vx_uint8)((*d & ~mask) | (*s & mask));
+                remaining -= count; d++; s++;
+            }
+            if (remaining >> 3) {
+                memcpy(d, s, remaining >> 3);
+                d += remaining >> 3; s += remaining >> 3;
+            }
+            if (remaining & 7) {
+                vx_uint8 mask = (vx_uint8)((1u << (remaining & 7)) - 1u);
+                *d = (vx_uint8)((*d & ~mask) | (*s & mask));
+            }
+        }
+        else {
+            for (vx_uint32 x = 0; x < dim_x; x++) {
+                vx_uint32 sb = src_bit_offset + x, db = dst_bit_offset + x;
+                vx_uint8 value = (vx_uint8)((src[sb >> 3] >> (sb & 7)) & 1u);
+                dst[db >> 3] = (vx_uint8)((dst[db >> 3] & ~(1u << (db & 7))) | ((vx_uint32)value << (db & 7)));
+            }
+        }
+    }
+}
+
 static inline vx_uint32 vxComputePatchOffset(vx_uint32 x, vx_uint32 y, const vx_imagepatch_addressing_t *addr)
 {
 #if VX_SCALE_UNITY == (1024u)
@@ -1838,7 +1880,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxAccessImagePatch(vx_image image_,
 #endif
                     if (item.used_external_ptr) {
                         // copy if read is requested with explicit external buffer
-                        if (addr->stride_x == 0 || ((addr->stride_x << 3) == img->u.img.pixel_size_in_bits_num && img->u.img.pixel_size_in_bits_denom == 1))
+                        if (img->u.img.format == VX_DF_IMAGE_U1) {
+                            // sub-byte pixels: the patch may start and end inside a byte, so it
+                            // is copied bit-exactly rather than in whole bytes
+                            agoCopyU1Patch(ptr_returned, addr->stride_y, 0,
+                                ptr_internal, img->u.img.stride_in_bytes, rect->start_x & 7,
+                                rect->end_x - rect->start_x, rect->end_y - rect->start_y);
+                        }
+                        else if (addr->stride_x == 0 || ((addr->stride_x << 3) == img->u.img.pixel_size_in_bits_num && img->u.img.pixel_size_in_bits_denom == 1))
                             HafCpu_ChannelCopy_U8_U8(ImageWidthInBytesFloor((rect->end_x - rect->start_x) >> img->u.img.x_scale_factor_is_2, img),
                                 ((rect->end_y - rect->start_y) >> img->u.img.y_scale_factor_is_2), ptr_returned, addr->stride_y, ptr_internal, img->u.img.stride_in_bytes);
                         else
@@ -1923,7 +1972,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxCommitImagePatch(vx_image image_,
                         vx_uint8 * buffer = img->buffer + (rect->start_y >> img->u.img.y_scale_factor_is_2) * img->u.img.stride_in_bytes +
                             ImageWidthInBytesFloor((rect->start_x >> img->u.img.x_scale_factor_is_2), img);
 
-                        if (addr->stride_x == 0 || ((addr->stride_x << 3) == img->u.img.pixel_size_in_bits_num && img->u.img.pixel_size_in_bits_denom == 1))
+                        if (img->u.img.format == VX_DF_IMAGE_U1) {
+                            // sub-byte pixels: only the pixels inside the patch are written, so a
+                            // patch that ends inside a byte leaves the rest of that byte alone
+                            agoCopyU1Patch(buffer, img->u.img.stride_in_bytes, rect->start_x & 7,
+                                (const vx_uint8 *)ptr, addr->stride_y, 0,
+                                rect->end_x - rect->start_x, rect->end_y - rect->start_y);
+                        }
+                        else if (addr->stride_x == 0 || ((addr->stride_x << 3) == img->u.img.pixel_size_in_bits_num && img->u.img.pixel_size_in_bits_denom == 1))
                             HafCpu_ChannelCopy_U8_U8(ImageWidthInBytesFloor(((rect->end_x - rect->start_x) >> img->u.img.x_scale_factor_is_2), img),
                                 ((rect->end_y - rect->start_y) >> img->u.img.y_scale_factor_is_2), buffer, img->u.img.stride_in_bytes, (vx_uint8 *)ptr, addr->stride_y);
                         else
@@ -6600,12 +6656,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetThresholdAttribute(vx_threshold thresh, 
                     status = VX_SUCCESS;
                 }
                 break;
-            case VX_THRESHOLD_TYPE:
-                if (size == sizeof(vx_enum)) {
-                    data->u.thr.thresh_type = *(vx_enum *)ptr;
-                    status = VX_SUCCESS;
-                }
-                break;
+            // VX_THRESHOLD_TYPE is read-only [REQ-1378]: it falls through to the default
+            // case and reports VX_ERROR_NOT_SUPPORTED
             case VX_THRESHOLD_INPUT_FORMAT:
                 if (size == sizeof(vx_df_image)) {
                     data->u.thr.input_format = *(vx_df_image *)ptr;
@@ -9289,17 +9341,29 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateVirtualObjectArray(vx_graph gra
     if (agoIsValidGraph(graph) && agoIsValidReference(exemplar) && count > 0) {
         CAgoLock lock(graph->cs);
         char desc_exemplar[MAX_DESCRIPTION_DATA_SIZE]; agoGetDescriptionFromData(graph->ref.context, desc_exemplar, (AgoData *)exemplar);
-        char desc[2048]; snprintf(desc, sizeof(desc), "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
-        data = agoCreateDataFromDescription(graph->ref.context, NULL, desc, true);
+        // the object array and every one of its items are virtual and scoped to the graph, like
+        // the other vxCreateVirtual* objects. The parser requires the items to agree with the
+        // array, so turn the exemplar's description (a real object's carries no "-virtual"
+        // tag) into the virtual form of the same type.
+        char desc_item[MAX_DESCRIPTION_DATA_SIZE + 8];
+        const char * colon = strchr(desc_exemplar, ':');
+        if (colon && !(colon - desc_exemplar >= 8 && !strncmp(colon - 8, "-virtual", 8))) {
+            snprintf(desc_item, sizeof(desc_item), "%.*s-virtual%s", (int)(colon - desc_exemplar), desc_exemplar, colon);
+        }
+        else {
+            snprintf(desc_item, sizeof(desc_item), "%s", desc_exemplar);
+        }
+        char desc[2048 + 64]; snprintf(desc, sizeof(desc), "objectarray-virtual:" VX_FMT_SIZE ",[%s]", count, desc_item);
+        data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
         if (data) {
             agoGenerateVirtualDataName(graph, "objectarray", data->name);
-            agoAddData(&graph->ref.context->dataList, data);
+            agoAddData(&graph->dataList, data);
             // add the children too
             for (vx_uint32 i = 0; i < data->numChildren; i++) {
-                agoAddData(&graph->ref.context->dataList, data->children[i]);
+                agoAddData(&graph->dataList, data->children[i]);
                 for (vx_uint32 j = 0; j < data->children[i]->numChildren; j++) {
                     if (data->children[i]->children[j]) {
-                        agoAddData(&graph->ref.context->dataList, data->children[i]->children[j]);
+                        agoAddData(&graph->dataList, data->children[i]->children[j]);
                     }
                 }
             }

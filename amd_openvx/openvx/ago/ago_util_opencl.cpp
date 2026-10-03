@@ -1386,7 +1386,10 @@ static std::string agoGpuOclData2Decl(AgoData * data, vx_uint32 index, vx_uint32
         code += item;
     }
     else if (data->ref.type == VX_TYPE_MATRIX) {
-        if (data->u.mat.type == VX_TYPE_FLOAT32 && data->u.mat.columns == 2 && data->u.mat.rows == 3) {
+        // the six affine coefficients are passed by value as a flat buffer, so either orientation
+        // of the 2x3 matrix that warp affine validation accepts maps to ago_affine_matrix_t
+        if (data->u.mat.type == VX_TYPE_FLOAT32 &&
+            ((data->u.mat.columns == 2 && data->u.mat.rows == 3) || (data->u.mat.columns == 3 && data->u.mat.rows == 2))) {
             snprintf(item, sizeof(item), "ago_affine_matrix_t p%d", index);
             code += item;
         }

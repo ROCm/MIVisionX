@@ -423,10 +423,13 @@ static void test_remap_map_patch(vx_context context)
         second->y = 11.5f;
         ok = (vxUnmapRemapPatch(map, map_id) == VX_SUCCESS);
     }
-    vx_float32 x = 0.0f, y = 0.0f;
-    vx_status sget = vxGetRemapPoint(map, 4, 5, &x, &y);
+    vx_rectangle_t one = { 4, 5, 5, 6 };
+    vx_coordinates2df_t got;
+    got.x = 0.0f; got.y = 0.0f;
+    vx_status sget = vxCopyRemapPatch(map, &one, sizeof(got), &got, VX_TYPE_COORDINATES2DF,
+                                      VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     check("REQ-1269", "vxMapRemapPatch sub-patch write is visible after unmap",
-          ok && sget == VX_SUCCESS && x == 10.25f && y == 11.5f, NULL);
+          ok && sget == VX_SUCCESS && got.x == 10.25f && got.y == 11.5f, NULL);
     vxReleaseRemap(&map);
 }
 

@@ -239,6 +239,19 @@ add_test(
 )
 set_property(TEST openvx_threshold_query_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
 
+# 11_g_a - reqtags - OpenVX 1.3.2 requirement tag coverage test
+add_test(
+  NAME
+    openvx_reqtags_api
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/reqtags"
+                              "${CMAKE_CURRENT_BINARY_DIR}/reqtags"
+            --build-generator "${CMAKE_GENERATOR}"
+            --test-command "openvx_reqtags_api"
+)
+set_property(TEST openvx_reqtags_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+
 # 11_h - graph_import - graph import API test
 add_test(
   NAME

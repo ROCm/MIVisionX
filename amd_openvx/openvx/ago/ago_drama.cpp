@@ -293,8 +293,7 @@ int agoOptimizeDramaComputeGraphHierarchy(AgoGraph * graph)
 	agoOptimizeDramaMarkDataUsage(graph);
 
 	////////////////////////////////////////////////
-	// make sure that there is only one writer and
-	// make sure that virtual buffers always have a writer
+	// make sure that there is only one writer
 	////////////////////////////////////////////////
 	for (AgoNode * node = graph->nodeList.head; node; node = node->next)
 	{
@@ -312,11 +311,9 @@ int agoOptimizeDramaComputeGraphHierarchy(AgoGraph * graph)
 					agoAddLogEntry(&graph->ref, status, "ERROR: vxVerifyGraph: kernel %s: multiple writers for argument#%d (%s)\n", node->akernel->name, arg, data->name.c_str());
 					return status;
 				}
-				else if (data->isVirtual && data->outputUsageCount == 0 && !data->isInitialized) {
-					vx_status status = VX_ERROR_MULTIPLE_WRITERS;
-					agoAddLogEntry(&graph->ref, status, "ERROR: vxVerifyGraph: kernel %s: no writer/initializer for virtual buffer at argument#%d (%s)\n", node->akernel->name, arg, data->name.c_str());
-					return status;
-				}
+				// a virtual object that no node writes to holds undefined data, but the
+				// specification does not make that a verification failure, so the graph is
+				// accepted and the buffer is allocated uninitialized
 			}
 		}
 	}
@@ -422,7 +419,8 @@ int agoOptimizeDramaComputeGraphHierarchy(AgoGraph * graph)
 			}
 		}
 	}
-	if(num_head_nodes == 0){
+	// a graph with no nodes has no head nodes either, and is legal
+	if(num_head_nodes == 0 && graph->nodeList.count > 0){
 		vx_status status = VX_ERROR_INVALID_GRAPH;
 		vxAddLogEntry(&graph->ref, status, "ERROR: vxVerifyGraph: Cycle: Graph has no head nodes!");
 		return status;

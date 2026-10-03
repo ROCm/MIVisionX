@@ -279,6 +279,10 @@ struct AgoReference {
     bool         enable_logging;  // enable logging
     bool         read_only;       // read only
     bool 		 enable_perf; 	  // enable performance counter
+    bool         is_meta_format;  // set on the reference embedded in an AgoMetaFormat. Such a reference
+                                  // carries the data type of the parameter it describes (possibly
+                                  // VX_TYPE_REFERENCE), so this flag is the only reliable way to tell
+                                  // it from a real object, e.g. in vxReleaseReference
     vx_status    status;          // error status
 public:
     AgoReference();
@@ -472,10 +476,6 @@ struct AgoData {
     vx_bool isDelayed;
     vx_bool isNotFullyConfigured;
     vx_bool isInitialized;
-    // set when this AgoData is the one embedded in an AgoMetaFormat: such a reference carries
-    // the data type of the parameter it describes, so it is otherwise indistinguishable from a
-    // real object and vxReleaseReference would route it to the wrong release function
-    vx_bool isMetaFormat;
     vx_int32 siblingIndex;
     vx_uint32 numChildren;
     AgoData ** children;

@@ -3298,7 +3298,7 @@ void agoAddLogEntry(vx_reference ref, vx_status status, const char *message, ...
 AgoReference::AgoReference()
 : platform{ nullptr }, magic{ AGO_MAGIC_VALID }, type{ VX_TYPE_REFERENCE }, context{ nullptr }, scope{ nullptr },
   external_count{ 0 }, internal_count{ 0 }, read_count{ 0 }, write_count{ 0 }, hint_serialize{ false }, enable_logging{ ENABLE_LOG_MESSAGES_DEFAULT },
-  read_only{ false }, status{ VX_SUCCESS }
+  read_only{ false }, enable_perf{ false }, is_meta_format{ false }, status{ VX_SUCCESS }
 {
 }
 AgoReference::~AgoReference()
@@ -3317,7 +3317,7 @@ AgoData::AgoData()
       hip_memory { nullptr}, hip_memory_allocated{nullptr},
 #endif
       gpu_buffer_offset{ 0 }, alias_data{ nullptr }, alias_offset{ 0 },
-      isVirtual{ vx_false_e }, isDelayed{ vx_false_e }, isNotFullyConfigured{ vx_false_e }, isInitialized{ vx_false_e }, isMetaFormat{ vx_false_e }, siblingIndex{ 0 },
+      isVirtual{ vx_false_e }, isDelayed{ vx_false_e }, isNotFullyConfigured{ vx_false_e }, isInitialized{ vx_false_e }, siblingIndex{ 0 },
       numChildren{ 0 }, children{ nullptr }, parent{ nullptr }, inputUsageCount{ 0 }, outputUsageCount{ 0 }, inoutUsageCount{ 0 },
       initialization_flags{ 0 }, device_type_unused{ 0 },
       nextMapId{ 0 }, hierarchical_level{ 0 }, hierarchical_life_start{ 0 }, hierarchical_life_end{ 0 }, ownerOfUserBufferGPU{ nullptr }
@@ -3349,7 +3349,7 @@ AgoData::~AgoData()
 AgoMetaFormat::AgoMetaFormat()
     : set_valid_rectangle_callback{ nullptr }
 {
-    data.isMetaFormat = vx_true_e;
+    data.ref.is_meta_format = true;
 }
 AgoParameter::AgoParameter()
     : scope{ nullptr }, index{ 0 }, direction{ VX_INPUT }, type{ VX_TYPE_REFERENCE }, state{ VX_PARAMETER_STATE_REQUIRED },

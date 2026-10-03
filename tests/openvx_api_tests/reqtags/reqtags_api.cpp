@@ -581,6 +581,161 @@ static void test_threshold_type_read_only(vx_context context)
     vxReleaseThreshold(&thr);
 }
 
+// REQ-0938: the bit offsets of the pixels are preserved on both sides of a U1 copy, so a patch
+// that starts inside a byte is read from / written to the same bit positions of the user's buffer.
+static void test_u1_unaligned_patch(vx_context context)
+{
+    const vx_uint32 width = 16, height = 2;
+    vx_image image = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
+    vx_rectangle_t full = { 0, 0, width, height };
+    vx_imagepatch_addressing_t faddr = VX_IMAGEPATCH_ADDR_INIT;
+    faddr.dim_x = width; faddr.dim_y = height;
+    faddr.stride_x = 0; faddr.stride_x_bits = 1; faddr.stride_y = 2;
+    vx_uint8 zeros[4] = { 0 };
+    vx_status s0 = vxCopyImagePatch(image, &full, 0, &faddr, zeros, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+
+    // pixels 5..10 of row 0 cover the top three bits of byte 0 and the low three bits of byte 1
+    vx_rectangle_t rect = { 5, 0, 11, 1 };
+    vx_imagepatch_addressing_t addr = faddr;
+    addr.dim_x = 6; addr.dim_y = 1;
+    vx_uint8 user[2] = { 0xff, 0xff }; // bits outside the patch are not written to the image
+    vx_status s1 = vxCopyImagePatch(image, &rect, 0, &addr, user, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    vx_uint8 whole[4] = { 0 };
+    vx_status s2 = vxCopyImagePatch(image, &full, 0, &faddr, whole, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    check("REQ-0938", "U1 patch starting inside a byte is written at its bit offsets",
+          s0 == VX_SUCCESS && s1 == VX_SUCCESS && s2 == VX_SUCCESS &&
+          whole[0] == 0xe0 && whole[1] == 0x07 && whole[2] == 0 && whole[3] == 0, NULL);
+
+    // a one pixel patch at x = 5 reads back to bit 5 of the user's byte, other bits untouched
+    vx_rectangle_t one = { 5, 0, 6, 1 };
+    vx_imagepatch_addressing_t oaddr = faddr;
+    oaddr.dim_x = 1; oaddr.dim_y = 1;
+    vx_uint8 out = 0x01;
+    vx_status s3 = vxCopyImagePatch(image, &one, 0, &oaddr, &out, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    check("REQ-0938", "U1 patch starting inside a byte is read to its bit offsets",
+          s3 == VX_SUCCESS && out == 0x21, NULL);
+
+    // mapping widens dim_x down to the byte boundary, and the addressing helpers agree with it
+    vx_map_id map_id = 0;
+    vx_imagepatch_addressing_t maddr = VX_IMAGEPATCH_ADDR_INIT;
+    void *base = NULL;
+    vx_status s4 = vxMapImagePatch(image, &rect, 0, &map_id, &maddr, &base, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
+    bool ok = (s4 == VX_SUCCESS && base != NULL && maddr.dim_x == 6 + 5);
+    if (ok) {
+        // the patch starts at bit 5 of the first byte, so pixel x = 8 of the widened layout is
+        // in the second byte of the row
+        ok = (vxFormatImagePatchAddress2d(base, 8, 0, &maddr) == (vx_uint8 *)base + 1);
+        vxUnmapImagePatch(image, map_id);
+    }
+    check("REQ-0938", "U1 map widens dim_x and addresses by bit offset", ok, NULL);
+    vxReleaseImage(&image);
+}
+
+// REQ-1760: a meta format queried from a parameter whose declared type is the generic
+// VX_TYPE_REFERENCE has to be releasable like any other.
+static void test_reference_parameter_meta_format(vx_context context)
+{
+    vx_enum kernel_id = 0;
+    vxAllocateUserKernelId(context, &kernel_id);
+    vx_kernel kernel = vxAddUserKernel(context, "org.khronos.test.reqtags_refmeta",
+                                       kernel_id, noop_kernel, 1, NULL, NULL, NULL);
+    vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_REFERENCE, VX_PARAMETER_STATE_REQUIRED);
+    vxFinalizeKernel(kernel);
+
+    vx_parameter parameter = vxGetKernelParameterByIndex(kernel, 0);
+    vx_meta_format meta = 0;
+    vx_status squery = vxQueryParameter(parameter, VX_PARAMETER_META_FORMAT, &meta, sizeof(meta));
+    vx_reference meta_ref = (vx_reference)meta;
+    vx_status srelease = vxReleaseReference(&meta_ref);
+    check("REQ-1760", "VX_TYPE_REFERENCE parameter meta format is releasable",
+          squery == VX_SUCCESS && meta != 0 && srelease == VX_SUCCESS && meta_ref == 0, NULL);
+    vxReleaseParameter(&parameter);
+    vxRemoveKernel(kernel);
+}
+
+// vxCopyRemapPatch's stride is in bytes and may be padded to something that is not a multiple
+// of the element size.
+static void test_remap_padded_stride(vx_context context)
+{
+    vx_remap map = vxCreateRemap(context, 64, 64, 32, 32);
+    // a one column, two row patch whose rows are 12 bytes apart
+    vx_rectangle_t rect = { 3, 4, 4, 6 };
+    vx_uint8 buffer[24];
+    memset(buffer, 0, sizeof(buffer));
+    vx_coordinates2df_t row0 = { 10.5f, 20.25f }, row1 = { 30.75f, 40.5f };
+    memcpy(buffer, &row0, sizeof(row0));
+    memcpy(buffer + 12, &row1, sizeof(row1));
+    vx_status swrite = vxCopyRemapPatch(map, &rect, 12, buffer, VX_TYPE_COORDINATES2DF,
+                                        VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+
+    vx_uint8 back[24];
+    memset(back, 0, sizeof(back));
+    vx_status sread = vxCopyRemapPatch(map, &rect, 12, back, VX_TYPE_COORDINATES2DF,
+                                       VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    bool ok = (swrite == VX_SUCCESS && sread == VX_SUCCESS &&
+               memcmp(back, &row0, sizeof(row0)) == 0 && memcmp(back + 12, &row1, sizeof(row1)) == 0);
+
+    // the elements really landed on the right rows of the remap
+    vx_rectangle_t second = { 3, 5, 4, 6 };
+    vx_coordinates2df_t got = { 0.0f, 0.0f };
+    vx_status sget = vxCopyRemapPatch(map, &second, sizeof(got), &got, VX_TYPE_COORDINATES2DF,
+                                      VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    check("REQ-1269", "vxCopyRemapPatch honours a byte stride that is not a multiple of 8",
+          ok && sget == VX_SUCCESS && got.x == row1.x && got.y == row1.y, NULL);
+    vxReleaseRemap(&map);
+}
+
+// The true/false output values of a threshold are only honoured on the CPU, so changing them on
+// a threshold used by an already verified graph has to be picked up by the next execution.
+static void test_threshold_output_after_verify(vx_context context)
+{
+    char detail[96];
+    vx_graph graph = vxCreateGraph(context);
+    vx_image input = vxCreateImage(context, 16, 16, VX_DF_IMAGE_U8);
+    vx_image output = vxCreateImage(context, 16, 16, VX_DF_IMAGE_U8);
+    vx_threshold thr = vxCreateThresholdForImage(context, VX_THRESHOLD_TYPE_BINARY, VX_DF_IMAGE_U8, VX_DF_IMAGE_U8);
+    vx_pixel_value_t value;
+    memset(&value, 0, sizeof(value));
+    value.U8 = 100;
+    vxCopyThresholdValue(thr, &value, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+
+    vx_uint8 pixels[16 * 16];
+    for (int i = 0; i < 16 * 16; i++) pixels[i] = (vx_uint8)((i & 1) ? 200 : 50);
+    vx_rectangle_t rect = { 0, 0, 16, 16 };
+    vx_imagepatch_addressing_t addr = VX_IMAGEPATCH_ADDR_INIT;
+    addr.dim_x = 16; addr.dim_y = 16; addr.stride_x = 1; addr.stride_y = 16;
+    vxCopyImagePatch(input, &rect, 0, &addr, pixels, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+
+    vx_node node = vxThresholdNode(graph, input, thr, output);
+    vx_status sverify = vxVerifyGraph(graph);
+    vx_status sprocess = vxProcessGraph(graph);
+
+    // now ask for different true/false values and run the same graph again
+    vx_pixel_value_t tv, fv;
+    memset(&tv, 0, sizeof(tv)); memset(&fv, 0, sizeof(fv));
+    tv.U8 = 7; fv.U8 = 3;
+    vx_status sset = vxCopyThresholdOutput(thr, &tv, &fv, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    vx_status sprocess2 = vxProcessGraph(graph);
+
+    vx_uint8 result[16 * 16];
+    memset(result, 0, sizeof(result));
+    vx_status sread = vxCopyImagePatch(output, &rect, 0, &addr, result, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    int bad = 0;
+    for (int i = 0; i < 16 * 16; i++) {
+        if (result[i] != ((i & 1) ? 7 : 3)) bad++;
+    }
+    snprintf(detail, sizeof(detail), "%d pixel(s) wrong", bad);
+    check("REQ-0490", "threshold true/false change after verify takes effect",
+          sverify == VX_SUCCESS && sprocess == VX_SUCCESS && sset == VX_SUCCESS &&
+          sprocess2 == VX_SUCCESS && sread == VX_SUCCESS && bad == 0, detail);
+
+    vxReleaseNode(&node);
+    vxReleaseThreshold(&thr);
+    vxReleaseImage(&input);
+    vxReleaseImage(&output);
+    vxReleaseGraph(&graph);
+}
+
 int main()
 {
     vx_context context = vxCreateContext();
@@ -610,6 +765,10 @@ int main()
     test_u1_partial_byte_patch(context);
     test_virtual_object_array(context);
     test_threshold_type_read_only(context);
+    test_u1_unaligned_patch(context);
+    test_reference_parameter_meta_format(context);
+    test_remap_padded_stride(context);
+    test_threshold_output_after_verify(context);
 
     printf("\n%s: %d failure(s)\n", errors ? "FAILED" : "PASSED", errors);
     vxReleaseContext(&context);

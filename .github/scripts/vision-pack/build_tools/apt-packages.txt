@@ -1,0 +1,77 @@
+# Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+# Ubuntu 24.04 packages for the test job container, installed by
+# install_deps.sh (apt-get install --no-install-recommends). One package per
+# line; '#' starts a comment.
+#
+# Python packages come from Ubuntu's apt archive (numpy 1.26, pytest, Pillow,
+# pandas, matplotlib, OpenCV 4.6) so python3-opencv keeps its numpy ABI; only
+# the CPU torch wheel comes from pip (requirements-test.txt, hash-pinned).
+
+# Build tools for the shipped test trees and consumer projects.
+build-essential
+cmake
+ninja-build
+pkg-config
+git
+git-lfs
+curl
+ca-certificates
+jq
+file
+binutils
+patchelf
+elfutils
+time
+procps
+psmisc
+util-linux
+xz-utils
+zstd
+pigz
+
+# python3-dev provides libpython, which the rocAL tests link (finding H1).
+python3
+python3-dev
+python3-pip
+python3-venv
+python3-numpy
+python3-pytest
+python3-pil
+python3-pandas
+python3-matplotlib
+python3-yaml
+python3-opencv
+libopencv-dev
+
+# Host copies of the bundled libraries, loaded first by the loader-audit
+# interposition checks (finding M1).
+libjpeg-turbo8
+libturbojpeg
+liblmdb0
+libprotobuf32t64
+libsndfile1
+
+# dpkg-dev and equivs build the local repository and stub packages for
+# install-test; gh is the GitHub CLI.
+dpkg-dev
+equivs
+gh

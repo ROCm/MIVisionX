@@ -29,7 +29,7 @@ The MIVisionX public repository is located at `https://github.com/ROCm/MIVisionX
 
     * :doc:`AMD OpenVX <./reference/MIVisionX-AMD-Openvx>`
     * :doc:`MIVisionX environment variables <./reference/MIVisionX-env-variables>`
-    * :doc:`MIVisionX API reference <doxygen/html/modules>`
+    * :doc:`MIVisionX API reference <doxygen/html/topics>`
 
 
 To contribute to the documentation, refer to

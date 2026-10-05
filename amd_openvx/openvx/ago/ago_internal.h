@@ -279,6 +279,10 @@ struct AgoReference {
     bool         enable_logging;  // enable logging
     bool         read_only;       // read only
     bool 		 enable_perf; 	  // enable performance counter
+    bool         is_meta_format;  // set on the reference embedded in an AgoMetaFormat. Such a reference
+                                  // carries the data type of the parameter it describes (possibly
+                                  // VX_TYPE_REFERENCE), so this flag is the only reliable way to tell
+                                  // it from a real object, e.g. in vxReleaseReference
     vx_status    status;          // error status
 public:
     AgoReference();
@@ -425,6 +429,8 @@ struct MappedData {
     bool used_external_ptr;
     vx_size stride;
     vx_uint32 plane;
+    // rectangle covered by a remap patch map, so that unmap only rebuilds the entries it touched
+    vx_rectangle_t rect;
 };
 struct AgoData {
     AgoReference ref;
@@ -510,6 +516,8 @@ struct AgoParameter {
     vx_direction_e direction;
     vx_enum type;
     vx_parameter_state_e state;
+    // created on the first VX_PARAMETER_META_FORMAT query and owned by this parameter
+    AgoMetaFormat * meta;
 public:
     AgoParameter();
     ~AgoParameter();
@@ -623,6 +631,10 @@ struct AgoNode {
     vx_uint32 pipeup_output_depth;
     vx_bool local_data_change_is_enabled;
     vx_bool local_data_set_by_implementation;
+    // vxReplicateNode expands a node into one node per pyramid/object-array level, so the
+    // replication state has to be recorded here to be reportable through vxQueryNode
+    vx_bool is_replicated;
+    vx_bool replicate_flags[AGO_MAX_PARAMS];
     struct { bool enable; int paramIndexScalar; int paramIndexArray; } gpu_scalar_array_output_sync;
 #if ENABLE_OPENCL
     vx_uint32 opencl_type;
@@ -703,6 +715,12 @@ struct AgoGraphPipeliningState {
     std::atomic<bool> executor_stop;
     std::mutex enqueue_mtx;
     std::condition_variable enqueue_cv;
+    // A QUEUE_MANUAL request runs every complete set of references it finds, so
+    // it can run the sets that later requests were made for. Each request
+    // claims one execution; the ones no request has claimed yet are counted
+    // here, and are what tells a request that arrived after its work was
+    // already done from one the application enqueued nothing for.
+    std::atomic<uint32_t> manual_unclaimed_executions;
     std::vector<std::unique_ptr<AgoGraphParameterQueue>> param_queues;
 public:
     AgoGraphPipeliningState();

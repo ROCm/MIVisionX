@@ -225,7 +225,9 @@ static struct {
 	OVX_KERNEL_ENTRY( VX_KERNEL_SELECT                , Select, "select",                          		AINx3_AOUT,           ATYPE_SRRR         , false ),
 	OVX_KERNEL_ENTRY( VX_KERNEL_WEIGHTED_AVERAGE      , WeightedAverage, "weighted_average",        		AINx3_AOUT,		      ATYPE_ISII         , false ),
 	OVX_KERNEL_ENTRY( VX_KERNEL_NON_LINEAR_FILTER     , NonLinearFilter, "non_linear_filter",      		AINx3_AOUT,	     	  ATYPE_SIMI         , false ),	
-	OVX_KERNEL_ENTRY( VX_KERNEL_LAPLACIAN_PYRAMID     , LaplacianPyramid, "laplacian_pyramid",     		AINx2_AOUT,	     	  ATYPE_IPI        	 , false ),	
+	// vxLaplacianPyramidNode(graph, input, laplacian, output): the laplacian
+	// pyramid at index 1 is an output, so the node also depends on it correctly
+	OVX_KERNEL_ENTRY( VX_KERNEL_LAPLACIAN_PYRAMID     , LaplacianPyramid, "laplacian_pyramid",     		AIN_AOUTx2,	     	  ATYPE_IPI        	 , false ),	
 	OVX_KERNEL_ENTRY( VX_KERNEL_LAPLACIAN_RECONSTRUCT , LaplacianReconstruct, "laplacian_reconstruct",  AINx2_AOUT,	     	  ATYPE_PII        	 , false ),	
 	// AMD low-level kernel primitives
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_SET_00_U8                                               , 1, 1, Set00_U8, { AOUT },                                           ATYPE_I                 , KOP_ELEMWISE  , false ),
@@ -462,6 +464,12 @@ static struct {
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_REMAP_U24_U24_BILINEAR                                  , 1, 1, Remap_U24_U24_Bilinear, AOUT_AINx2,                           ATYPE_IIR               , KOP_UNKNOWN   , true  ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_REMAP_U24_U32_BILINEAR                                  , 1, 1, Remap_U24_U32_Bilinear, AOUT_AINx2,                           ATYPE_IIR               , KOP_UNKNOWN   , true  ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_REMAP_U32_U32_BILINEAR                                  , 1, 1, Remap_U32_U32_Bilinear, AOUT_AINx2,                           ATYPE_IIR               , KOP_UNKNOWN   , true  ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_REMAP_U24_U24_NEAREST                                   , 1, 1, Remap_U24_U24_Nearest, AOUT_AINx2,                           ATYPE_IIR               , KOP_UNKNOWN   , true  ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_REMAP_U32_U32_NEAREST                                   , 1, 1, Remap_U32_U32_Nearest, AOUT_AINx2,                           ATYPE_IIR               , KOP_UNKNOWN   , true  ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_REMAP_U24_U24_BILINEAR_CONSTANT                         , 1, 1, Remap_U24_U24_Bilinear_Constant, AOUT_AINx3,                  ATYPE_IIRS              , KOP_UNKNOWN   , true  ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_REMAP_U32_U32_BILINEAR_CONSTANT                         , 1, 1, Remap_U32_U32_Bilinear_Constant, AOUT_AINx3,                  ATYPE_IIRS              , KOP_UNKNOWN   , true  ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_REMAP_U24_U24_NEAREST_CONSTANT                          , 1, 1, Remap_U24_U24_Nearest_Constant, AOUT_AINx3,                    ATYPE_IIRS              , KOP_UNKNOWN   , true  ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_REMAP_U32_U32_NEAREST_CONSTANT                          , 1, 1, Remap_U32_U32_Nearest_Constant, AOUT_AINx3,                    ATYPE_IIRS              , KOP_UNKNOWN   , true  ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_WARP_AFFINE_U8_U8_NEAREST                               , 1, 1, WarpAffine_U8_U8_Nearest, AOUT_AINx2,                         ATYPE_IIM               , KOP_UNKNOWN   , true  ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_WARP_AFFINE_U8_U8_NEAREST_CONSTANT                      , 1, 1, WarpAffine_U8_U8_Nearest_Constant, AOUT_AINx3,                ATYPE_IIMS              , KOP_UNKNOWN   , true  ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_WARP_AFFINE_U8_U8_BILINEAR                              , 1, 1, WarpAffine_U8_U8_Bilinear, AOUT_AINx2,                        ATYPE_IIM               , KOP_UNKNOWN   , true  ),
@@ -517,6 +525,12 @@ static struct {
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_NON_LINEAR_FILTER_DATA_DATA_DATA                        , 1, 0, NonLinearFilter_DATA_DATA_DATA, AOUT_AINx3,                   ATYPE_IMIS              , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_LAPLACIAN_PYRAMID_DATA_DATA_DATA                        , 1, 0, LaplacianPyramid_DATA_DATA_DATA, AOUT_AINx2,                  ATYPE_IPI               , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_LAPLACIAN_RECONSTRUCT_DATA_DATA_DATA                    , 1, 0, LaplacianReconstruct_DATA_DATA_DATA, AOUT_AINx2,              ATYPE_IIP               , KOP_UNKNOWN   , false ),
+	// Convert Bit Depth to and from U1. KOP_UNKNOWN keeps these out of the
+	// element-wise peephole merges, which assume one byte per pixel.
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_COLOR_DEPTH_U1_U8                                       , 1, 0, ColorDepth_U1_U8, AOUT_AINx2,                                 ATYPE_IIS               , KOP_UNKNOWN   , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_COLOR_DEPTH_U1_S16                                      , 1, 0, ColorDepth_U1_S16, AOUT_AINx2,                                ATYPE_IIS               , KOP_UNKNOWN   , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_COLOR_DEPTH_U8_U1                                       , 1, 0, ColorDepth_U8_U1, AOUT_AINx2,                                 ATYPE_IIS               , KOP_UNKNOWN   , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_COLOR_DEPTH_S16_U1                                      , 1, 0, ColorDepth_S16_U1, AOUT_AINx2,                                ATYPE_IIS               , KOP_UNKNOWN   , false ),
 #undef AGO_KERNEL_ENTRY
 #undef OVX_KERNEL_ENTRY
 };

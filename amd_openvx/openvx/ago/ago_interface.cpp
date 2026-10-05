@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 
 #include "ago_internal.h"
+#include "ago_roctx.h"
 #include <mutex>
 
 #if _WIN32
@@ -71,6 +72,9 @@ AgoContext * agoCreateContextFromPlatform(struct _vx_platform * platform)
         acontext->ref.platform = platform;
         agoResetReference(&acontext->ref, VX_TYPE_CONTEXT, acontext, NULL);
         acontext->ref.external_count++;
+        // the context is itself a reference held by the application, and
+        // agoReleaseContext drops it again
+        acontext->num_active_references++;
         // initialize image formats
         if (agoInitializeImageComponentsAndPlanes(acontext)) {
             delete acontext;
@@ -409,11 +413,15 @@ static const char * agoReadLine(char * line, int size, const char * str)
     return str;
 }
 
-static void agoUpdateLine(char * line, std::vector< std::pair< std::string, std::string > >& vars, std::string localPrefix)
+static void agoUpdateLine(char * line, size_t line_size, std::vector< std::pair< std::string, std::string > >& vars, std::string localPrefix)
 {
-    char lineOriginal[2048]; strcpy(lineOriginal, line);
+    if (line_size == 0) return;
+    const int cap = (int)(line_size - 1);           // reserve last byte for the terminating NUL
+    char lineOriginal[2048];
+    strncpy(lineOriginal, line, sizeof(lineOriginal) - 1);
+    lineOriginal[sizeof(lineOriginal) - 1] = 0;
     int ki = 0;
-    for (int i = 0; lineOriginal[i]; i++, ki++) {
+    for (int i = 0; lineOriginal[i] && ki < cap; i++, ki++) {
         line[ki] = lineOriginal[i];
         if (lineOriginal[i] == '$' && lineOriginal[i + 1] >= 'A' && lineOriginal[i + 1] <= 'Z') {
             // get variable name
@@ -424,7 +432,8 @@ static void agoUpdateLine(char * line, std::vector< std::pair< std::string, std:
             // search variable name
             for (std::vector< std::pair< std::string, std::string > >::iterator it = vars.begin(); it != vars.end(); ++it) {
                 if (!strncmp(it->first.c_str(), s, k)) {
-                    strcpy(&line[ki], it->second.c_str());
+                    strncpy(&line[ki], it->second.c_str(), (size_t)(cap - ki));
+                    line[cap] = 0;
                     ki = (int)strlen(line) - 1;
                     i += k;
                     break;
@@ -432,9 +441,10 @@ static void agoUpdateLine(char * line, std::vector< std::pair< std::string, std:
             }
         }
         else if (lineOriginal[i] == '$' && lineOriginal[i + 1] == '!') {
-            strcpy(&line[ki], localPrefix.c_str());
+            strncpy(&line[ki], localPrefix.c_str(), (size_t)(cap - ki));
+            line[cap] = 0;
             ki = (int)strlen(line) - 1;
-            line[++ki] = '!';
+            if (ki + 1 < cap) line[++ki] = '!';
             i += 1;
         }
     }
@@ -507,7 +517,7 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
             if (dumpToConsole) agoAddLogEntry(NULL, VX_SUCCESS, "%s\n", line+pos);
             lineno++;
         }
-        agoUpdateLine(line, vars, localPrefix);
+        agoUpdateLine(line, sizeof(line), vars, localPrefix);
         char lineCopy[sizeof(line)]; strcpy(lineCopy, line);
         char * s = strstr(line, "#");
         if (s) { *s = 0; N = (int)strlen(line); }
@@ -902,12 +912,12 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
                 }
             }
             else if (narg == 2 && !strcmp(arg[0], "def-macro")) {
-                char macro_name[256]; strncpy(macro_name, arg[1], sizeof(macro_name));
+                char macro_name[256]; strncpy(macro_name, arg[1], sizeof(macro_name) - 1); macro_name[sizeof(macro_name) - 1] = 0;
                 const char * str_begin = str;
                 const char * str_end = str;
                 for (; (str = agoReadLine(line, sizeof(line)-16, str)) != NULL; lineno++) {
                     if (dumpToConsole) agoAddLogEntry(NULL, VX_SUCCESS, "%s", line);
-                    agoUpdateLine(line, vars, localPrefix);
+                    agoUpdateLine(line, sizeof(line), vars, localPrefix);
                     char word[256];
                     if (sscanf(line, "%255s", word) == 1 && !strcmp(word, "endmacro"))
                         break;
@@ -1262,12 +1272,14 @@ int agoUnloadModule(AgoContext * context, const char * module)
                 if (!unpublish_kernels_f && context->modules[index].hmodule) {
                     unpublish_kernels_f = (vx_unpublish_kernels_f)agoGetFunctionAddress(context->modules[index].hmodule, "vxUnpublishKernels");
                 }
-                if (!unpublish_kernels_f) {
+                if (!unpublish_kernels_f && context->modules[index].hmodule) {
+                    // a shared library is required to export vxUnpublishKernels
                     status = VX_ERROR_NOT_SUPPORTED;
                     agoAddLogEntry(&context->ref, status, "ERROR: vxUnpublishKernels symbol missing in %s\n", filePath);
                 }
                 else {
-                    status = unpublish_kernels_f(context);
+                    // a module registered without an unpublish callback has nothing to call
+                    status = unpublish_kernels_f ? unpublish_kernels_f(context) : VX_SUCCESS;
                     if (status == VX_SUCCESS) {
                         if (context->modules[index].hmodule) {
                             agoCloseModule(context->modules[index].hmodule);
@@ -2021,6 +2033,9 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
     if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
         if (node->flags & AGO_KERNEL_FLAG_DEVICE_GPU) {
             if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
+                // Copy-out (device->host) of this node's output, attributed to the node.
+                AGO_ROCTX_RANGE_FMT("MIVisionX: copy-out %s",
+                         (node->akernel && node->akernel->name[0] != '\0') ? node->akernel->name : "unknown");
                 int64_t stime = agoGetClockCounter();
                 vx_size size = dataToSync->size;
                 if (dataToSync->ref.type == VX_TYPE_LUT) {
@@ -2144,6 +2159,9 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
     if (dataToSync->hip_memory && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
         if (node->flags & AGO_KERNEL_FLAG_DEVICE_GPU) {
             if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
+                // Copy-out (device->host) of this node's output, attributed to the node.
+                AGO_ROCTX_RANGE_FMT("MIVisionX: copy-out %s",
+                         (node->akernel && node->akernel->name[0] != '\0') ? node->akernel->name : "unknown");
                 int64_t stime = agoGetClockCounter();
                 vx_size size = dataToSync->size;
                 if (dataToSync->ref.type == VX_TYPE_LUT) {
@@ -2244,6 +2262,7 @@ int agoUpdateDelaySlots(AgoNode * node)
 
 int agoExecuteGraph(AgoGraph * graph)
 {
+    AGO_ROCTX_RANGE("MIVisionX: agoExecuteGraph");
     if (graph->detectedInvalidNode) {
         agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoExecuteGraph: detected invalid node\n");
         return VX_FAILURE;
@@ -2323,11 +2342,16 @@ int agoExecuteGraph(AgoGraph * graph)
         auto snode = enode; enode = enode->next;
         while (enode && enode->hierarchical_level == hierarchical_level)
             enode = enode->next;
+        // RAII guard ensures the level range is popped on every exit path.
+        // Formatted lazily so we only pay for snprintf when tracing is on.
+        AGO_ROCTX_RANGE_FMT("MIVisionX: level %u", hierarchical_level);
 #if ENABLE_OPENCL
         // process GPU nodes at current hierarchical level
         for (auto node = snode; node != enode; node = node->next) {
             if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU) {
                 bool launched = true;
+                AGO_ROCTX_RANGE_FMT("MIVisionX: GPU node %s",
+                         (node->akernel && node->akernel->name[0] != '\0') ? node->akernel->name : "unknown");
                 agoPerfProfileEntry(graph, ago_profile_type_launch_begin, &node->ref);
                 agoPerfCaptureStart(&node->perf);
                 // make sure that all input buffers are synched
@@ -2340,6 +2364,11 @@ int agoExecuteGraph(AgoGraph * graph)
                         if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT) &&
                             dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED))
                         {
+                            // Copy-in (host->device) for this input. Attributing it to
+                            // node+param lets a developer see which input drove a costly
+                            // transfer, rather than an anonymous copy in the memory trace.
+                            AGO_ROCTX_RANGE_FMT("MIVisionX: copy-in %s param%u",
+                                     (node->akernel && node->akernel->name[0] != '\0') ? node->akernel->name : "unknown", i);
                             status = agoDirective((vx_reference)dataToSync, VX_DIRECTIVE_AMD_COPY_TO_OPENCL);
                             if(status != VX_SUCCESS) {
                                 agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: agoDirective(*,VX_DIRECTIVE_AMD_COPY_TO_OPENCL) failed (%d:%s)\n", status, agoEnum2Name(status));
@@ -2379,6 +2408,8 @@ int agoExecuteGraph(AgoGraph * graph)
             if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU) {
                 bool launched = true;
                 node->hip_stream0 = graph->hip_stream0;
+                AGO_ROCTX_RANGE((node->akernel && node->akernel->name[0] != '\0') ?
+                                  node->akernel->name : "MIVisionX: GPU node unknown");
                 agoPerfProfileEntry(graph, ago_profile_type_launch_begin, &node->ref);
                 agoPerfCaptureStart(&node->perf);
                 // make sure that all input buffers are synched
@@ -2391,6 +2422,11 @@ int agoExecuteGraph(AgoGraph * graph)
                         if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT) &&
                             dataToSync->hip_memory && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED))
                         {
+                            // Copy-in (host->device) for this input. Attributing it to
+                            // node+param lets a developer see which input drove a costly
+                            // transfer, rather than an anonymous copy in the memory trace.
+                            AGO_ROCTX_RANGE_FMT("MIVisionX: copy-in %s param%u",
+                                     (node->akernel && node->akernel->name[0] != '\0') ? node->akernel->name : "unknown", i);
                             status = agoDirective((vx_reference)dataToSync, VX_DIRECTIVE_AMD_COPY_TO_HIPMEM);
                             if(status != VX_SUCCESS) {
                                 agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: agoDirective(*,VX_DIRECTIVE_AMD_COPY_TO_HIPMEM) failed (%d:%s)\n", status, agoEnum2Name(status));
@@ -2513,6 +2549,8 @@ int agoExecuteGraph(AgoGraph * graph)
                 // execute node
                 agoPerfProfileEntry(graph, ago_profile_type_exec_begin, &node->ref);
                 agoPerfCaptureStart(&node->perf);
+                AGO_ROCTX_RANGE((node->akernel && node->akernel->name[0] != '\0') ?
+                                  node->akernel->name : "MIVisionX: CPU node unknown");
                 AgoKernel * kernel = node->akernel;
                 status = VX_SUCCESS;
                 if (kernel->func) {
@@ -2534,31 +2572,26 @@ int agoExecuteGraph(AgoGraph * graph)
                 }
                 agoPerfCaptureStop(&node->perf);
                 agoPerfProfileEntry(graph, ago_profile_type_exec_end, &node->ref);
-                // mark that node outputs are dirty
+                // Mark that node outputs are dirty. This is recorded whether or
+                // not the data has device memory yet: a graph that hands its
+                // output to another graph often writes a buffer that no GPU
+                // node has bound so far, and the device copy is only reserved
+                // later, when the consuming graph binds it. Remembering that
+                // the host copy is the newer one is what makes that later
+                // binding upload it instead of reading uninitialised memory.
                 for (vx_uint32 i = 0; i < node->paramCount; i++) {
-#if ENABLE_OPENCL
+#if (ENABLE_OPENCL||ENABLE_HIP)
                     AgoData * data = node->paramList[i];
-                    if (data && data->opencl_buffer &&
+                    if (data &&
                         (node->parameters[i].direction == VX_OUTPUT || node->parameters[i].direction == (vx_direction_e)VX_BIDIRECTIONAL))
                     {
                         auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
+                        bool deviceCopyIsNewer = node->akernel->opencl_buffer_access_enable ||
+                            (data->ref.type == VX_TYPE_IMAGE && data->u.img.enableUserBufferGPU);
                         dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-                        dataToSync->buffer_sync_flags |=
-                            ((node->akernel->opencl_buffer_access_enable || data->u.img.enableUserBufferGPU)
+                        dataToSync->buffer_sync_flags |= deviceCopyIsNewer
                                 ? AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL
-                                : AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE);
-                    }
-#elif ENABLE_HIP
-                    AgoData * data = node->paramList[i];
-                    if (data && data->hip_memory &&
-                            (node->parameters[i].direction == VX_OUTPUT || node->parameters[i].direction == (vx_direction_e)VX_BIDIRECTIONAL))
-                    {
-                        auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
-                        dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-                        dataToSync->buffer_sync_flags |=
-                            ((node->akernel->opencl_buffer_access_enable || data->u.img.enableUserBufferGPU)
-                                ? AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL
-                                : AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE);
+                                : AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE;
                     }
 #endif
                 }
@@ -2575,6 +2608,12 @@ int agoExecuteGraph(AgoGraph * graph)
         }
     }
 #if (ENABLE_OPENCL||ENABLE_HIP)
+    {
+    // Per-node GPU ranges above only cover the asynchronous launch; the device
+    // does the real work here. This range bounds the actual GPU completion
+    // (stream sync / node wait), so the trace shows where kernel time lands.
+    // RAII range (not push/pop) because the wait paths below return early.
+    AGO_ROCTX_RANGE("MIVisionX: GPU sync/wait");
     agoPerfProfileEntry(graph, ago_profile_type_wait_begin, &graph->ref);
     if (nodeLaunchHierarchicalLevel > 0) {
         status = agoWaitForNodesCompletion(graph);
@@ -2604,6 +2643,7 @@ int agoExecuteGraph(AgoGraph * graph)
             agoNotifyNodeCompleted(graph, node);
     }
     agoPerfProfileEntry(graph, ago_profile_type_wait_end, &graph->ref);
+    }
     graph->gpu_perf_total.kernel_enqueue += graph->gpu_perf.kernel_enqueue;
     graph->gpu_perf_total.kernel_wait += graph->gpu_perf.kernel_wait;
     graph->gpu_perf_total.buffer_read += graph->gpu_perf.buffer_read;
@@ -2631,6 +2671,7 @@ int agoExecuteGraph(AgoGraph * graph)
             node->node_state = VX_NODE_STATE_STEADY;
         }
     }
+
     return status;
 }
 

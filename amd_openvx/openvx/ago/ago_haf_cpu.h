@@ -178,6 +178,18 @@ int HafCpu_Lut_S16_S16
 		vx_int16    * pLut,
 		vx_uint32     offset
 	);
+// The Threshold kernels below emit a 0/255 mask. REQ-0490 and REQ-0491 instead
+// call for the true and false values carried on the vx_threshold object, so a
+// U8 output is passed through this remap whenever they are not 255 and 0.
+int HafCpu_ThresholdRemapOutput_U8
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8      trueValue,
+		vx_uint8      falseValue
+	);
 int HafCpu_Threshold_U8_U8_Binary
 	(
 		vx_uint32     dstWidth,
@@ -333,6 +345,44 @@ int HafCpu_ColorDepth_S16_U8
 		vx_uint8    * pSrcImage,
 		vx_uint32     srcImageStrideInBytes,
 		vx_int32      shift
+	);
+// REQ-0130 to REQ-0132: conversions between U1 and the other formats are governed
+// by three fixed rules and ignore the convert policy and the shift.
+int HafCpu_ColorDepth_U1_U8
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes
+	);
+int HafCpu_ColorDepth_U1_S16
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_int16    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes
+	);
+int HafCpu_ColorDepth_U8_U1
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes
+	);
+int HafCpu_ColorDepth_S16_U1
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_int16    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes
 	);
 int HafCpu_Add_U8_U8U8_Wrap
 	(
@@ -2474,6 +2524,63 @@ int HafCpu_Remap_U8_U8_Nearest_Constant
 		vx_uint8               border
 	);
 int HafCpu_Remap_U8_U8_Bilinear
+	(
+		vx_uint32              dstWidth,
+		vx_uint32              dstHeight,
+		vx_uint8             * pDstImage,
+		vx_uint32              dstImageStrideInBytes,
+		vx_uint32              srcWidth,
+		vx_uint32              srcHeight,
+		vx_uint8             * pSrcImage,
+		vx_uint32              srcImageStrideInBytes,
+		ago_coord2d_ushort_t * pMap,
+		vx_uint32              mapStrideInBytes
+	);
+int HafCpu_Remap_U24_U24_Nearest
+	(
+		vx_uint32              dstWidth,
+		vx_uint32              dstHeight,
+		vx_uint8             * pDstImage,
+		vx_uint32              dstImageStrideInBytes,
+		vx_uint32              srcWidth,
+		vx_uint32              srcHeight,
+		vx_uint8             * pSrcImage,
+		vx_uint32              srcImageStrideInBytes,
+		ago_coord2d_ushort_t * pMap,
+		vx_uint32              mapStrideInBytes
+	);
+int HafCpu_Remap_U24_U24_Bilinear
+	(
+		vx_uint32              dstWidth,
+		vx_uint32              dstHeight,
+		vx_uint8             * pDstImage,
+		vx_uint32              dstImageStrideInBytes,
+		vx_uint32              srcWidth,
+		vx_uint32              srcHeight,
+		vx_uint8             * pSrcImage,
+		vx_uint32              srcImageStrideInBytes,
+		ago_coord2d_ushort_t * pMap,
+		vx_uint32              mapStrideInBytes
+	);
+int HafCpu_Remap_U32_U32_Nearest
+	(
+		vx_uint32              dstWidth,
+		vx_uint32              dstHeight,
+		vx_uint8             * pDstImage,
+		vx_uint32              dstImageStrideInBytes,
+		vx_uint32              srcWidth,
+		vx_uint32              srcHeight,
+		vx_uint8             * pSrcImage,
+		vx_uint32              srcImageStrideInBytes,
+		ago_coord2d_ushort_t * pMap,
+		vx_uint32              mapStrideInBytes
+	);
+int HafCpu_Remap_U24_U24_Bilinear_Constant(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *pDstImage, vx_uint32 dstImageStrideInBytes, vx_uint32 srcWidth, vx_uint32 srcHeight, vx_uint8 *pSrcImage, vx_uint32 srcImageStrideInBytes, ago_coord2d_ushort_t *pMap, vx_uint32 mapStrideInBytes, vx_uint8 borderValue);
+int HafCpu_Remap_U24_U24_Nearest_Constant(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *pDstImage, vx_uint32 dstImageStrideInBytes, vx_uint32 srcWidth, vx_uint32 srcHeight, vx_uint8 *pSrcImage, vx_uint32 srcImageStrideInBytes, ago_coord2d_ushort_t *pMap, vx_uint32 mapStrideInBytes, vx_uint8 borderValue);
+int HafCpu_Remap_U32_U32_Bilinear_Constant(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *pDstImage, vx_uint32 dstImageStrideInBytes, vx_uint32 srcWidth, vx_uint32 srcHeight, vx_uint8 *pSrcImage, vx_uint32 srcImageStrideInBytes, ago_coord2d_ushort_t *pMap, vx_uint32 mapStrideInBytes, vx_uint8 borderValue);
+int HafCpu_Remap_U32_U32_Nearest_Constant(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *pDstImage, vx_uint32 dstImageStrideInBytes, vx_uint32 srcWidth, vx_uint32 srcHeight, vx_uint8 *pSrcImage, vx_uint32 srcImageStrideInBytes, ago_coord2d_ushort_t *pMap, vx_uint32 mapStrideInBytes, vx_uint8 borderValue);
+
+int HafCpu_Remap_U32_U32_Bilinear
 	(
 		vx_uint32              dstWidth,
 		vx_uint32              dstHeight,

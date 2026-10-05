@@ -1180,7 +1180,16 @@ int agoDramaDivideConvertDepthNode(AgoNodeList * nodeList, AgoNode * anode)
 	anode->paramList[2] = paramList[3];
 	anode->paramCount = 3;
 	vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
-	if (paramList[1]->u.img.format == VX_DF_IMAGE_S16 || paramList[0]->u.img.format == VX_DF_IMAGE_U8) {
+	// paramList still holds the original order, so [0] is the input and [1] the output
+	if (paramList[1]->u.img.format == VX_DF_IMAGE_U1_AMD) {
+		if (paramList[0]->u.img.format == VX_DF_IMAGE_U8) new_kernel_id = VX_KERNEL_AMD_COLOR_DEPTH_U1_U8;
+		else if (paramList[0]->u.img.format == VX_DF_IMAGE_S16) new_kernel_id = VX_KERNEL_AMD_COLOR_DEPTH_U1_S16;
+	}
+	else if (paramList[0]->u.img.format == VX_DF_IMAGE_U1_AMD) {
+		if (paramList[1]->u.img.format == VX_DF_IMAGE_U8) new_kernel_id = VX_KERNEL_AMD_COLOR_DEPTH_U8_U1;
+		else if (paramList[1]->u.img.format == VX_DF_IMAGE_S16) new_kernel_id = VX_KERNEL_AMD_COLOR_DEPTH_S16_U1;
+	}
+	else if (paramList[1]->u.img.format == VX_DF_IMAGE_S16 || paramList[0]->u.img.format == VX_DF_IMAGE_U8) {
 		new_kernel_id = VX_KERNEL_AMD_COLOR_DEPTH_S16_U8;
 	}
 	else if (paramList[1]->u.img.format == VX_DF_IMAGE_U8 || paramList[0]->u.img.format == VX_DF_IMAGE_S16) {
@@ -1527,16 +1536,46 @@ int agoDramaDivideRemapNode(AgoNodeList * nodeList, AgoNode * anode)
 		}
 	}
 	else if (anode->paramList[0]->u.img.format == VX_DF_IMAGE_RGB && anode->paramList[1]->u.img.format == VX_DF_IMAGE_RGB) {
-		if (anode->attr_border_mode.mode == VX_BORDER_MODE_UNDEFINED && interpolation == VX_INTERPOLATION_TYPE_BILINEAR) 
-			new_kernel_id = VX_KERNEL_AMD_REMAP_U24_U24_BILINEAR;
+		if (anode->attr_border_mode.mode == VX_BORDER_MODE_UNDEFINED) {
+			if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_REMAP_U24_U24_NEAREST;
+			else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) new_kernel_id = VX_KERNEL_AMD_REMAP_U24_U24_BILINEAR;
+		}
+		else if (anode->attr_border_mode.mode == VX_BORDER_MODE_CONSTANT) {
+			if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_REMAP_U24_U24_NEAREST_CONSTANT;
+			else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) new_kernel_id = VX_KERNEL_AMD_REMAP_U24_U24_BILINEAR_CONSTANT;
+			if (new_kernel_id != VX_KERNEL_AMD_INVALID) {
+				AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
+				char desc[64]; snprintf(desc, sizeof(desc), "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
+				AgoData * dataBorder = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
+				if (!dataBorder) return -1;
+				agoGenerateVirtualDataName(agraph, "scalar", dataBorder->name);
+				agoAddData(&agraph->dataList, dataBorder);
+				anode->paramList[anode->paramCount++] = dataBorder;
+			}
+		}
 	}
 	else if (anode->paramList[0]->u.img.format == VX_DF_IMAGE_RGB && anode->paramList[1]->u.img.format == VX_DF_IMAGE_RGBX) {
 		if (anode->attr_border_mode.mode == VX_BORDER_MODE_UNDEFINED && interpolation == VX_INTERPOLATION_TYPE_BILINEAR)
 			new_kernel_id = VX_KERNEL_AMD_REMAP_U24_U32_BILINEAR;
 	}
 	else if (anode->paramList[0]->u.img.format == VX_DF_IMAGE_RGBX && anode->paramList[1]->u.img.format == VX_DF_IMAGE_RGBX) {
-		if (anode->attr_border_mode.mode == VX_BORDER_MODE_UNDEFINED && interpolation == VX_INTERPOLATION_TYPE_BILINEAR)
-			new_kernel_id = VX_KERNEL_AMD_REMAP_U32_U32_BILINEAR;
+		if (anode->attr_border_mode.mode == VX_BORDER_MODE_UNDEFINED) {
+			if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_REMAP_U32_U32_NEAREST;
+			else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) new_kernel_id = VX_KERNEL_AMD_REMAP_U32_U32_BILINEAR;
+		}
+		else if (anode->attr_border_mode.mode == VX_BORDER_MODE_CONSTANT) {
+			if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_REMAP_U32_U32_NEAREST_CONSTANT;
+			else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) new_kernel_id = VX_KERNEL_AMD_REMAP_U32_U32_BILINEAR_CONSTANT;
+			if (new_kernel_id != VX_KERNEL_AMD_INVALID) {
+				AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
+				char desc[64]; snprintf(desc, sizeof(desc), "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
+				AgoData * dataBorder = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
+				if (!dataBorder) return -1;
+				agoGenerateVirtualDataName(agraph, "scalar", dataBorder->name);
+				agoAddData(&agraph->dataList, dataBorder);
+				anode->paramList[anode->paramCount++] = dataBorder;
+			}
+		}
 	}
 	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
 }
@@ -1958,7 +1997,10 @@ int agoDramaDivideNonLinearFilterNode(AgoNodeList * nodeList, AgoNode * anode)
 	SANITY_CHECK_DATA_TYPE(anode->paramList[3], VX_TYPE_IMAGE);
 	// save parameters
 	AgoData * paramList[AGO_MAX_PARAMS]; memcpy(paramList, anode->paramList, sizeof(paramList));
-	if (paramList[0]->u.scalar.u.e == VX_NONLINEAR_FILTER_MEDIAN &&
+	// the mask buffer is only there to be inspected once the application has written
+	// the mask; without it the generic kernel below has to be used
+	if (paramList[2]->buffer &&
+		paramList[0]->u.scalar.u.e == VX_NONLINEAR_FILTER_MEDIAN &&
 		paramList[1]->u.img.format == VX_DF_IMAGE_U8 &&
 		paramList[3]->u.img.format == VX_DF_IMAGE_U8 &&
 		paramList[2]->u.mat.type == VX_TYPE_UINT8 &&

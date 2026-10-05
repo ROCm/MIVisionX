@@ -239,6 +239,19 @@ add_test(
 )
 set_property(TEST openvx_threshold_query_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
 
+# 11_g_a - reqtags - OpenVX 1.3.2 requirement tag coverage test
+add_test(
+  NAME
+    openvx_reqtags_api
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/reqtags"
+                              "${CMAKE_CURRENT_BINARY_DIR}/reqtags"
+            --build-generator "${CMAKE_GENERATOR}"
+            --test-command "openvx_reqtags_api"
+)
+set_property(TEST openvx_reqtags_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+
 # 11_h - graph_import - graph import API test
 add_test(
   NAME
@@ -358,6 +371,33 @@ if(Python3_FOUND)
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
   set_property(TEST openvx_gdf_tests_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+
+  # 16_b - Per-Remap GDF regression tests on CPU
+  if(RUNVX_EXECUTABLE)
+    set(REMAP_GDFS
+      Remap_U8_U8_Nearest
+      Remap_U8_U8_Nearest_Constant
+      Remap_U8_U8_Bilinear
+      Remap_U8_U8_Bilinear_Constant
+      Remap_U8_U8_Bilinear_4K
+      Remap_RGB_RGB_Nearest
+      Remap_RGB_RGB_Nearest_Constant
+      Remap_RGB_RGB_Bilinear
+      Remap_RGB_RGB_Bilinear_Constant
+      Remap_RGBX_RGBX_Nearest
+      Remap_RGBX_RGBX_Nearest_Constant
+      Remap_RGBX_RGBX_Bilinear
+      Remap_RGBX_RGBX_Bilinear_Constant
+    )
+    foreach(gdf_base ${REMAP_GDFS})
+      add_test(NAME openvx_remap_${gdf_base}_CPU
+            COMMAND ${RUNVX_EXECUTABLE} -frames:10
+              ${CMAKE_CURRENT_SOURCE_DIR}/amd_openvx_gdfs/geometric/${gdf_base}.gdf
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
+      set_property(TEST openvx_remap_${gdf_base}_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+    endforeach()
+  endif()
 endif(Python3_FOUND)
 
 # HIP Tests
@@ -410,6 +450,41 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       )
       set_property(TEST openvx_hip_cu_mask_remap_4K PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+    endif()
+
+    # 23 - Per-Remap GDF regression tests on GPU
+    if(RUNVX_EXECUTABLE)
+      set(REMAP_GDFS
+        Remap_U8_U8_Nearest
+        Remap_U8_U8_Nearest_Constant
+        Remap_U8_U8_Bilinear
+        Remap_U8_U8_Bilinear_Constant
+        Remap_U8_U8_Bilinear_4K
+        Remap_RGB_RGB_Nearest
+        Remap_RGB_RGB_Nearest_Constant
+        Remap_RGB_RGB_Bilinear
+        Remap_RGB_RGB_Bilinear_Constant
+        Remap_RGBX_RGBX_Nearest
+        Remap_RGBX_RGBX_Nearest_Constant
+        Remap_RGBX_RGBX_Bilinear
+        Remap_RGBX_RGBX_Bilinear_Constant
+      )
+      foreach(gdf_base ${REMAP_GDFS})
+        add_test(NAME openvx_remap_${gdf_base}_GPU
+              COMMAND ${RUNVX_EXECUTABLE} -frames:10
+                ${CMAKE_CURRENT_SOURCE_DIR}/amd_openvx_gdfs/geometric/${gdf_base}.gdf
+              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
+        set_property(TEST openvx_remap_${gdf_base}_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+      endforeach()
+
+      # 24 - Constant-border correctness test for RGB/RGBX Remap
+      add_test(NAME openvx_remap_rgb_rgbx_constant_border
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/remap_constant_border_tests/test_remap_constant_border.py
+            --runvx ${RUNVX_EXECUTABLE}
+            --gdf-dir ${CMAKE_CURRENT_SOURCE_DIR}/amd_openvx_gdfs/geometric
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
     endif()
   endif(Python3_FOUND)
 endif(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "OPENCL"))

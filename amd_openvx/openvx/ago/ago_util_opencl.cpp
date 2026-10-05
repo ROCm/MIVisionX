@@ -905,6 +905,25 @@ static int agoGpuOclSetKernelArgs(cl_kernel opencl_kernel, vx_uint32& kernelArgI
     return 0;
 }
 
+// Buffer arguments are set once, when the graph is verified, because the object
+// bound to a node parameter normally stays put for the life of the graph. A
+// delay slot is the exception the code below already knows about; a queued graph
+// parameter is the same exception, since the application binds a different
+// reference to it on every execution. Either way the argument set at
+// verification time no longer names the buffer the node is meant to work on.
+static bool agoGpuOclQueuedRefNeedsBufferArg(AgoGraph * graph, AgoData * data)
+{
+    if (!graph->pipelining || graph->pipelining->param_queues.empty())
+        return false;
+    if (data->opencl_buffer)
+        return true;
+#if defined(CL_VERSION_2_0)
+    if (data->opencl_svm_buffer)
+        return true;
+#endif
+    return false;
+}
+
 static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_uint32& kernelArgIndex, AgoData * data, vx_uint32 dataFlags, vx_uint32 group, bool need_access, bool need_read_access, bool need_atomic_access)
 {
     cl_command_queue opencl_cmdq = graph->opencl_cmdq ? graph->opencl_cmdq : graph->ref.context->opencl_cmdq;
@@ -939,6 +958,10 @@ static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_
                     return -1;
                 }
             }
+            else if (agoGpuOclQueuedRefNeedsBufferArg(graph, data)) {
+                if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
+                    return -1;
+            }
             kernelArgIndex += 3;
             if (need_read_access) {
                 auto dataToSync = data->u.img.isROI ? data->u.img.roiMasterImage : data;
@@ -965,7 +988,7 @@ static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_
         }
     }
     else if (data->ref.type == VX_TYPE_ARRAY) {
-        if (data->isDelayed) {
+        if (data->isDelayed || agoGpuOclQueuedRefNeedsBufferArg(graph, data)) {
             // needs to set opencl_buffer everytime when the buffer is part of a delay object
             if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
                 return -1;
@@ -1002,7 +1025,7 @@ static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_
         }
     }
     else if (data->ref.type == AGO_TYPE_CANNY_STACK) {
-        if (data->isDelayed) {
+        if (data->isDelayed || agoGpuOclQueuedRefNeedsBufferArg(graph, data)) {
             // needs to set opencl_buffer everytime when the buffer is part of a delay object
             if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
                 return -1;
@@ -1096,7 +1119,7 @@ static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_
             kernelArgIndex++;
         }
         else {
-            if (data->isDelayed) {
+            if (data->isDelayed || agoGpuOclQueuedRefNeedsBufferArg(graph, data)) {
                 // needs to set opencl_buffer everytime when the buffer is part of a delay object
                 if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
                     return -1;
@@ -1129,7 +1152,7 @@ static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_
     }
     else if (data->ref.type == VX_TYPE_LUT) {
         if (need_access) { // only use lut objects that need read access
-            if (data->isDelayed) {
+            if (data->isDelayed || agoGpuOclQueuedRefNeedsBufferArg(graph, data)) {
                 // needs to set opencl_buffer everytime when the buffer is part of a delay object
                 if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
                     return -1;
@@ -1156,7 +1179,7 @@ static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_
     }
     else if (data->ref.type == VX_TYPE_REMAP) {
         if (need_access) { // only use image objects that need read access
-            if (data->isDelayed) {
+            if (data->isDelayed || agoGpuOclQueuedRefNeedsBufferArg(graph, data)) {
                 // needs to set opencl_buffer everytime when the buffer is part of a delay object
                 if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
                     return -1;
@@ -1180,7 +1203,7 @@ static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_
         }
     }
     else if (data->ref.type == VX_TYPE_TENSOR) {
-        if (data->isDelayed) {
+        if (data->isDelayed || agoGpuOclQueuedRefNeedsBufferArg(graph, data)) {
             // needs to set opencl_buffer everytime when the buffer is part of a delay object
             if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
                 return -1;
@@ -1363,7 +1386,10 @@ static std::string agoGpuOclData2Decl(AgoData * data, vx_uint32 index, vx_uint32
         code += item;
     }
     else if (data->ref.type == VX_TYPE_MATRIX) {
-        if (data->u.mat.type == VX_TYPE_FLOAT32 && data->u.mat.columns == 2 && data->u.mat.rows == 3) {
+        // the six affine coefficients are passed by value as a flat buffer, so either orientation
+        // of the 2x3 matrix that warp affine validation accepts maps to ago_affine_matrix_t
+        if (data->u.mat.type == VX_TYPE_FLOAT32 &&
+            ((data->u.mat.columns == 2 && data->u.mat.rows == 3) || (data->u.mat.columns == 3 && data->u.mat.rows == 2))) {
             snprintf(item, sizeof(item), "ago_affine_matrix_t p%d", index);
             code += item;
         }
@@ -1473,7 +1499,7 @@ static void agoEmulateAmdMediaOpsInOpenCL(std::string& code)
             "#define amd_bitalign amd_bitalign_emu\n"
             "\n"
             "inline uint amd_bytealign_emu(uint src0,uint src1, uint src2){\n"
-            "	uint dst = (uint)(as_ulong((uint2)(src1,src0)) >> (src2 & 31) * 8 );\n"
+            "	uint dst = (uint)(as_ulong((uint2)(src1,src0)) >> (src2 & 3) * 8 );\n"
             "	return dst;\n"
             "}\n"
             "#define amd_bytealign amd_bytealign_emu\n"

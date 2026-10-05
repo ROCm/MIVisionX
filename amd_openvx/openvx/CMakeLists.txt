@@ -121,6 +121,21 @@ else()
     message("-- ${Red}WARNING: OpenCL/HIP Not Found or GPU Support Turned OFF -- OpenVX built for CPU only${ColourReset}")
 endif()
 
+# Optional rocprof / ROCTX tracing support.
+option(MIVISIONX_ENABLE_ROCPROF "Enable ROCTX markers for rocprof tracing" OFF)
+if(MIVISIONX_ENABLE_ROCPROF)
+    find_library(ROCTX_LIB roctx64 PATHS ${ROCM_PATH}/lib)
+    if(ROCTX_LIB)
+        include_directories(${ROCM_PATH}/include)
+        target_link_libraries(openvx ${ROCTX_LIB})
+        target_compile_definitions(openvx PRIVATE MIVISIONX_ENABLE_ROCPROF=1)
+        message("-- ${Green}AMD OpenVX -- ROCTX/rocprof tracing enabled${ColourReset}")
+        message("-- ${Blue}Using ROCTX Library -- ${ROCTX_LIB}${ColourReset}")
+    else()
+        message("-- ${Red}WARNING: roctx64 not found; rocprof tracing disabled${ColourReset}")
+    endif()
+endif()
+
 target_compile_definitions(openvx PRIVATE ENABLE_OPENCL=${ENABLE_OPENCL})
 target_compile_definitions(openvx PRIVATE ENABLE_HIP=${ENABLE_HIP})
 target_compile_definitions(vxu PRIVATE ENABLE_OPENCL=${ENABLE_OPENCL})
@@ -180,14 +195,7 @@ else()
     # -mavx2   -- Support AVX2 256-bit SIMD operations for arithmetic and filter kernels.
     # -mfma    -- Support FMA3 fused multiply-add for polynomial-heavy kernels (e.g. phase/atan2).
     # -mbmi2   -- Support BMI2 bit manipulation instructions for U1 image format operations.
-    # -fno-vectorize -- Disable LLVM's loop auto-vectorizer. The ago_haf_cpu_*.cpp kernels are
-    #   already hand-vectorized with AVX2/SSE intrinsics; ROCm 7.14's amdclang++ (LLVM 23)
-    #   miscompiles these loops at -O3 by re-vectorizing them with a corrupt induction variable,
-    #   causing out-of-bounds accesses and segfaults (e.g. HafCpu_ChannelCopy_U8_U8).
     target_compile_options(openvx PRIVATE -msse4.2 -mavx2 -mfma -mbmi2)
-    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        target_compile_options(openvx PRIVATE -fno-vectorize)
-    endif()
     target_compile_definitions(openvx PRIVATE USE_AVX=1)
     target_compile_definitions(openvx PRIVATE USE_FMA=1)
     target_compile_definitions(openvx PRIVATE USE_BMI2=1)

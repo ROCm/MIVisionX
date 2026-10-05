@@ -121,6 +121,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetGraphScheduleConfig(
         CAgoLock lock(graph->cs);
 
         pipe->schedule_mode = graph_schedule_mode;
+        // Reconfiguring discards whatever was queued, so the executions that
+        // went with it are no longer anything a later request can claim.
+        pipe->manual_unclaimed_executions.store(0);
         pipe->param_queues.clear();
         pipe->param_queues.resize(graph->parameters.size());
         for (size_t i = 0; i < pipe->param_queues.size(); i++) { if (!pipe->param_queues[i]) pipe->param_queues[i].reset(new AgoGraphParameterQueue()); pipe->param_queues[i]->index = (vx_uint32)i; }

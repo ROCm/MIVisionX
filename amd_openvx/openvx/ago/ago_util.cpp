@@ -1425,9 +1425,9 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         return 0;
     }
     else if (!strncmp(desc, "objectarray:", 12) || !strncmp(desc, "objectarray-virtual:", 12 + 8)) {
-        if (!strncmp(desc, "objectarray-virtual:", 14)) {
+        if (!strncmp(desc, "objectarray-virtual:", 12 + 8)) {
             data->isVirtual = vx_true_e;
-            desc += 8;
+            desc += 12 + 8; // skip the whole "objectarray-virtual:" prefix
         }
         else desc += 12;
         // get configuration
@@ -1554,6 +1554,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->ref.type = VX_TYPE_THRESHOLD;
         const char *s = strstr(desc, ","); if (!s) return -1;
         char thresh_type[64];
+        if ((size_t)(s - desc) >= sizeof(thresh_type)) return -1;
         memcpy(thresh_type, desc, s - desc); thresh_type[s - desc] = 0;
         data->u.thr.thresh_type = agoName2Enum(thresh_type);
         s++;
@@ -2205,7 +2206,7 @@ void agoGetDataName(vx_char * name, AgoData * data)
 {
     name[0] = 0;
     for (AgoData * pdata = data; pdata; pdata = pdata->parent) {
-        char tmp[512]; strcpy(tmp, name);
+        char tmp[MAX_MODULE_NAME_SIZE]; strncpy(tmp, name, sizeof(tmp) - 1); tmp[sizeof(tmp) - 1] = 0;
         if (pdata->parent) {
             snprintf(name, MAX_MODULE_NAME_SIZE, "[%d]%s", (pdata->parent->ref.type == VX_TYPE_DELAY || pdata->parent->ref.type == VX_TYPE_OBJECT_ARRAY) ? -pdata->siblingIndex : pdata->siblingIndex, tmp);
         }
@@ -3029,8 +3030,16 @@ AgoNode * agoCreateNode(AgoGraph * graph, AgoKernel * kernel)
     node->newchildnode = NULL;
     node->local_data_change_is_enabled = vx_false_e;
     node->local_data_set_by_implementation = vx_false_e;
-    memcpy(node->parameters, kernel->parameters, sizeof(node->parameters));
+    node->is_replicated = vx_false_e;
+    memset(node->replicate_flags, 0, sizeof(node->replicate_flags));
     for (vx_uint32 i = 0; i < node->paramCount; i++) {
+        // copy the parameter description field by field: AgoParameter owns its lazily created
+        // meta format, so a byte copy would make the kernel and every node share one allocation
+        node->parameters[i].index = kernel->parameters[i].index;
+        node->parameters[i].direction = kernel->parameters[i].direction;
+        node->parameters[i].type = kernel->parameters[i].type;
+        node->parameters[i].state = kernel->parameters[i].state;
+        node->parameters[i].meta = nullptr;
         agoResetReference(&node->parameters[i].ref, VX_TYPE_PARAMETER, graph->ref.context, &graph->ref);
         node->parameters[i].scope = &node->ref;
         vx_meta_format meta = &node->metaList[i];
@@ -3289,7 +3298,7 @@ void agoAddLogEntry(vx_reference ref, vx_status status, const char *message, ...
 AgoReference::AgoReference()
 : platform{ nullptr }, magic{ AGO_MAGIC_VALID }, type{ VX_TYPE_REFERENCE }, context{ nullptr }, scope{ nullptr },
   external_count{ 0 }, internal_count{ 0 }, read_count{ 0 }, write_count{ 0 }, hint_serialize{ false }, enable_logging{ ENABLE_LOG_MESSAGES_DEFAULT },
-  read_only{ false }, status{ VX_SUCCESS }
+  read_only{ false }, enable_perf{ false }, is_meta_format{ false }, status{ VX_SUCCESS }
 {
 }
 AgoReference::~AgoReference()
@@ -3340,13 +3349,19 @@ AgoData::~AgoData()
 AgoMetaFormat::AgoMetaFormat()
     : set_valid_rectangle_callback{ nullptr }
 {
+    data.ref.is_meta_format = true;
 }
 AgoParameter::AgoParameter()
-    : scope{ nullptr }, index{ 0 }, direction{ VX_INPUT }, type{ VX_TYPE_REFERENCE }, state{ VX_PARAMETER_STATE_REQUIRED }
+    : scope{ nullptr }, index{ 0 }, direction{ VX_INPUT }, type{ VX_TYPE_REFERENCE }, state{ VX_PARAMETER_STATE_REQUIRED },
+      meta{ nullptr }
 {
 }
 AgoParameter::~AgoParameter()
 {
+    if (meta) {
+        delete meta;
+        meta = nullptr;
+    }
 }
 AgoKernel::AgoKernel()
     : next{ nullptr }, id{ VX_KERNEL_INVALID }, flags{ 0 }, func{ nullptr }, argCount{ 0 }, kernOpType{ 0 }, kernOpInfo{ 0 },
@@ -3388,7 +3403,7 @@ AgoNode::AgoNode()
       valid_rect_reset{ vx_true_e }, valid_rect_num_inputs{ 0 }, valid_rect_num_outputs{ 0 }, valid_rect_inputs{ nullptr }, valid_rect_outputs{ nullptr },
       paramCount{ 0 }, callback{ nullptr }, supernode{ nullptr }, initialized{ false }, target_support_flags{ 0 }, hierarchical_level{ 0 }, status{ VX_SUCCESS },
       node_state{ VX_NODE_STATE_PIPEUP }, node_exec_count{ 0 }, pipeup_output_depth{ 0 }
-    , drama_divide_invoked{ false }
+    , drama_divide_invoked{ false }, is_replicated{ vx_false_e }
 #if ENABLE_OPENCL
     , opencl_type{ 0 }, opencl_param_mem2reg_mask{ 0 }, opencl_param_discard_mask{ 0 }, opencl_param_as_value_mask{ 0 },
       opencl_param_atomic_mask{ 0 }, opencl_local_buffer_usage_mask{ 0 }, opencl_local_buffer_size_in_bytes{ 0 }, opencl_work_dim{ 0 },
@@ -3400,6 +3415,7 @@ AgoNode::AgoNode()
     memset(&attr_affinity, 0, sizeof(attr_affinity));
     memset(&paramList, 0, sizeof(paramList));
     memset(&paramListForAgeDelay, 0, sizeof(paramListForAgeDelay));
+    memset(&replicate_flags, 0, sizeof(replicate_flags));
     memset(&funcExchange, 0, sizeof(funcExchange));
     memset(&perf, 0, sizeof(perf));
     memset(&gpu_scalar_array_output_sync, 0, sizeof(gpu_scalar_array_output_sync));
@@ -3519,6 +3535,10 @@ AgoContext::AgoContext()
     memset(&dataList, 0, sizeof(dataList));
     memset(&graphList, 0, sizeof(graphList));
     memset(&immediate_border_mode, 0, sizeof(immediate_border_mode));
+    // zero is not a member of vx_border_e, and the default for immediate mode
+    // functions is VX_BORDER_UNDEFINED; leaving it zero makes vxQueryContext
+    // report a value that vxSetContextAttribute then refuses to take back
+    immediate_border_mode.mode = VX_BORDER_UNDEFINED;
     memset(&extensions, 0, sizeof(extensions));
 #if ENABLE_OPENCL
     // NOTE: opencl_extensions is a std::string and is already default-constructed
@@ -3631,7 +3651,7 @@ AgoGraphPipeliningState::AgoGraphPipeliningState()
     : schedule_mode{ VX_GRAPH_SCHEDULE_MODE_NORMAL }, timeout_ms{ VX_TIMEOUT_WAIT_FOREVER },
       event_timeout_ms{ VX_TIMEOUT_WAIT_FOREVER }, pipeline_depth{ 1 },
       streaming_enabled{ false }, trigger_node{ nullptr }, streaming_stop{ false },
-      active_executions{ 0 }, executor_stop{ false }
+      active_executions{ 0 }, executor_stop{ false }, manual_unclaimed_executions{ 0 }
 {
 }
 

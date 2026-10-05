@@ -1,0 +1,71 @@
+# Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+# Suites of the MIVisionX vision-pack QA workflow: the mivisionx suite, plus
+# robustness and robustness-nogpu cut down to their MIVisionX checks. The
+# entries keep the values of the full vision-pack QA matrix, and the file keeps
+# to "  name:" / "    key: value" lines so it can also be read without PyYAML.
+#
+#   runner:  where plan_matrix.py places the suite (hosted, gpu or cpu). Here
+#            the gpu job runs mivisionx and robustness, and the cpu job runs
+#            robustness-nogpu in a container without GPU devices.
+#   tiers:   the tiers that include the suite. Inside a suite, run.sh scales the
+#            work further with vp_tier_ge (quick < standard < comprehensive < full).
+#   image:   test (install_deps.sh) or media (install_deps.sh --media, adds ffmpeg).
+#   entrypoint: script to run (default suites/<name>/run.sh).
+#   gpu_access: chosen (default: the detected GPU only),
+#               all    (also the GPUs the build does not target, for
+#                       unsupported-GPU negatives), or
+#               none   (no GPU device at all: CPU paths must still work).
+#   needs_gpu:  true (default) or false. On a run without a usable GPU,
+#               merge.py reports a missing suite that needs one as
+#               <suite>::infra::no-gpu instead of <suite>::infra::no-results.
+#
+# Timeouts are about three times the comprehensive wall time measured on
+# 27 Sep 2026 (nightly-20260926, RX 9070 XT), with room for the full tier's
+# extras and the downloads. A timeout is an infrastructure error, so keep them
+# tight enough to catch hangs.
+
+suites:
+  mivisionx:
+    runner: gpu
+    tiers: [quick, standard, comprehensive, full]
+    # Measured: comprehensive 11 min, full 14 min (plus the OpenVX-cts clone and build).
+    timeout_minutes: 60
+    image: test
+    description: ctest, API tests on both targets, Khronos CTS shards, GDF sweep, parity, vx_rpp
+
+  robustness:
+    runner: gpu
+    tiers: [comprehensive, full]
+    timeout_minutes: 15  # measured 66 s with every library's checks
+    image: test
+    gpu_access: all
+    description: unsupported-GPU negatives, exit-code honesty, hang guards
+
+  robustness-nogpu:
+    runner: gpu
+    tiers: [comprehensive, full]
+    timeout_minutes: 10  # measured 3 s with every library's checks
+    image: test
+    gpu_access: none
+    needs_gpu: false
+    entrypoint: suites/robustness/nogpu.sh
+    description: CPU pipelines in a container with no GPU device

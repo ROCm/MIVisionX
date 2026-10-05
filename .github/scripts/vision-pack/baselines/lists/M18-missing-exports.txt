@@ -1,0 +1,92 @@
+# Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+# M18: functions declared in the shipped headers but not exported
+# Generated 2026-09-27 by build_tools/baseline_lists.py from results.jsonl; 69 IDs.
+# group=api-probe.exports name-contains=- exclude-name=- also-failing-in=-
+mivisionx::api-probe.exports::vxActivationLayer
+mivisionx::api-probe.exports::vxAddTilingKernel
+mivisionx::api-probe.exports::vxAliasParameterIndexHint
+mivisionx::api-probe.exports::vxBilateralFilterNode
+mivisionx::api-probe.exports::vxConvolutionLayer
+mivisionx::api-probe.exports::vxCopyUserDataObject
+mivisionx::api-probe.exports::vxCreateUserDataObject
+mivisionx::api-probe.exports::vxCreateVirtualUserDataObject
+mivisionx::api-probe.exports::vxDeconvolutionLayer
+mivisionx::api-probe.exports::vxExportObjectsToMemory
+mivisionx::api-probe.exports::vxExportToXML
+mivisionx::api-probe.exports::vxFullyConnectedLayer
+mivisionx::api-probe.exports::vxGetGraphParameterConfig
+mivisionx::api-probe.exports::vxGetImportReferenceByIndex
+mivisionx::api-probe.exports::vxGetImportReferenceByName
+mivisionx::api-probe.exports::vxHOGCellsNode
+mivisionx::api-probe.exports::vxHOGFeaturesNode
+mivisionx::api-probe.exports::vxHoughLinesPNode
+mivisionx::api-probe.exports::vxImportClassifierModel
+mivisionx::api-probe.exports::vxImportFromXML
+mivisionx::api-probe.exports::vxImportKernelFromURL
+mivisionx::api-probe.exports::vxImportObjectsFromMemory
+mivisionx::api-probe.exports::vxIsParameterAliased
+mivisionx::api-probe.exports::vxLBPNode
+mivisionx::api-probe.exports::vxLocalResponseNormalizationLayer
+mivisionx::api-probe.exports::vxMapUserDataObject
+mivisionx::api-probe.exports::vxMatchTemplateNode
+mivisionx::api-probe.exports::vxMaxNode
+mivisionx::api-probe.exports::vxMinNode
+mivisionx::api-probe.exports::vxNonMaxSuppressionNode
+mivisionx::api-probe.exports::vxNormalizationLayer
+mivisionx::api-probe.exports::vxPoolingLayer
+mivisionx::api-probe.exports::vxQueryImport
+mivisionx::api-probe.exports::vxQueryUserDataObject
+mivisionx::api-probe.exports::vxROIPoolingLayer
+mivisionx::api-probe.exports::vxReleaseClassifierModel
+mivisionx::api-probe.exports::vxReleaseExportedMemory
+mivisionx::api-probe.exports::vxReleaseImport
+mivisionx::api-probe.exports::vxReleaseUserDataObject
+mivisionx::api-probe.exports::vxScalarOperationNode
+mivisionx::api-probe.exports::vxScanClassifierNode
+mivisionx::api-probe.exports::vxSelectNode
+mivisionx::api-probe.exports::vxSetUserDataObjectAttribute
+mivisionx::api-probe.exports::vxSoftmaxLayer
+mivisionx::api-probe.exports::vxTensorAddNode
+mivisionx::api-probe.exports::vxTensorConvertDepthNode
+mivisionx::api-probe.exports::vxTensorMatrixMultiplyNode
+mivisionx::api-probe.exports::vxTensorMultiplyNode
+mivisionx::api-probe.exports::vxTensorSubtractNode
+mivisionx::api-probe.exports::vxTensorTableLookupNode
+mivisionx::api-probe.exports::vxTensorTransposeNode
+mivisionx::api-probe.exports::vxUnmapUserDataObject
+mivisionx::api-probe.exports::vxuBilateralFilter
+mivisionx::api-probe.exports::vxuCopy
+mivisionx::api-probe.exports::vxuHOGCells
+mivisionx::api-probe.exports::vxuHOGFeatures
+mivisionx::api-probe.exports::vxuHoughLinesP
+mivisionx::api-probe.exports::vxuLBP
+mivisionx::api-probe.exports::vxuMatchTemplate
+mivisionx::api-probe.exports::vxuMax
+mivisionx::api-probe.exports::vxuMin
+mivisionx::api-probe.exports::vxuNonMaxSuppression
+mivisionx::api-probe.exports::vxuTensorAdd
+mivisionx::api-probe.exports::vxuTensorConvertDepth
+mivisionx::api-probe.exports::vxuTensorMatrixMultiply
+mivisionx::api-probe.exports::vxuTensorMultiply
+mivisionx::api-probe.exports::vxuTensorSubtract
+mivisionx::api-probe.exports::vxuTensorTableLookup
+mivisionx::api-probe.exports::vxuTensorTranspose

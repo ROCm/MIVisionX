@@ -1,0 +1,125 @@
+# Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+# M19: runVisionTests cases with the invalid RGBA format fail at every size
+# Generated 2026-09-27 by build_tools/baseline_lists.py from results.jsonl; 102 IDs.
+# group=vision.*.* name-contains=- exclude-name=['script-exit-honesty', 'Box_U8_U8_3x3'] also-failing-in=vision.{target}.1080p
+mivisionx::vision.CPU.1080p::ChannelCombine_U32_U8U8U8U8_RGBX
+mivisionx::vision.CPU.1080p::ChannelExtract_U8U8U8U8_U32
+mivisionx::vision.CPU.1080p::ChannelExtract_U8U8U8_U32
+mivisionx::vision.CPU.1080p::ChannelExtract_U8_U32_Pos0_RGBX
+mivisionx::vision.CPU.1080p::ChannelExtract_U8_U32_Pos1_RGBX
+mivisionx::vision.CPU.1080p::ChannelExtract_U8_U32_Pos2_RGBX
+mivisionx::vision.CPU.1080p::ChannelExtract_U8_U32_Pos3_RGBX
+mivisionx::vision.CPU.1080p::ColorConvert_IYUV_RGBX
+mivisionx::vision.CPU.1080p::ColorConvert_NV12_RGBX
+mivisionx::vision.CPU.1080p::ColorConvert_RGBX_IYUV
+mivisionx::vision.CPU.1080p::ColorConvert_RGBX_NV12
+mivisionx::vision.CPU.1080p::ColorConvert_RGBX_NV21
+mivisionx::vision.CPU.1080p::ColorConvert_RGBX_RGB
+mivisionx::vision.CPU.1080p::ColorConvert_RGBX_UYVY
+mivisionx::vision.CPU.1080p::ColorConvert_RGBX_YUYV
+mivisionx::vision.CPU.1080p::ColorConvert_RGB_RGBX
+mivisionx::vision.CPU.1080p::ColorConvert_YUV4_RGBX
+mivisionx::vision.CPU.10x10::ChannelCombine_U32_U8U8U8U8_RGBX
+mivisionx::vision.CPU.10x10::ChannelExtract_U8U8U8U8_U32
+mivisionx::vision.CPU.10x10::ChannelExtract_U8U8U8_U32
+mivisionx::vision.CPU.10x10::ChannelExtract_U8_U32_Pos0_RGBX
+mivisionx::vision.CPU.10x10::ChannelExtract_U8_U32_Pos1_RGBX
+mivisionx::vision.CPU.10x10::ChannelExtract_U8_U32_Pos2_RGBX
+mivisionx::vision.CPU.10x10::ChannelExtract_U8_U32_Pos3_RGBX
+mivisionx::vision.CPU.10x10::ColorConvert_IYUV_RGBX
+mivisionx::vision.CPU.10x10::ColorConvert_NV12_RGBX
+mivisionx::vision.CPU.10x10::ColorConvert_RGBX_IYUV
+mivisionx::vision.CPU.10x10::ColorConvert_RGBX_NV12
+mivisionx::vision.CPU.10x10::ColorConvert_RGBX_NV21
+mivisionx::vision.CPU.10x10::ColorConvert_RGBX_RGB
+mivisionx::vision.CPU.10x10::ColorConvert_RGBX_UYVY
+mivisionx::vision.CPU.10x10::ColorConvert_RGBX_YUYV
+mivisionx::vision.CPU.10x10::ColorConvert_RGB_RGBX
+mivisionx::vision.CPU.10x10::ColorConvert_YUV4_RGBX
+mivisionx::vision.CPU.5x3::ChannelCombine_U32_U8U8U8U8_RGBX
+mivisionx::vision.CPU.5x3::ChannelExtract_U8U8U8U8_U32
+mivisionx::vision.CPU.5x3::ChannelExtract_U8U8U8_U32
+mivisionx::vision.CPU.5x3::ChannelExtract_U8_U32_Pos0_RGBX
+mivisionx::vision.CPU.5x3::ChannelExtract_U8_U32_Pos1_RGBX
+mivisionx::vision.CPU.5x3::ChannelExtract_U8_U32_Pos2_RGBX
+mivisionx::vision.CPU.5x3::ChannelExtract_U8_U32_Pos3_RGBX
+mivisionx::vision.CPU.5x3::ColorConvert_IYUV_RGBX
+mivisionx::vision.CPU.5x3::ColorConvert_NV12_RGBX
+mivisionx::vision.CPU.5x3::ColorConvert_RGBX_IYUV
+mivisionx::vision.CPU.5x3::ColorConvert_RGBX_NV12
+mivisionx::vision.CPU.5x3::ColorConvert_RGBX_NV21
+mivisionx::vision.CPU.5x3::ColorConvert_RGBX_RGB
+mivisionx::vision.CPU.5x3::ColorConvert_RGBX_UYVY
+mivisionx::vision.CPU.5x3::ColorConvert_RGBX_YUYV
+mivisionx::vision.CPU.5x3::ColorConvert_RGB_RGBX
+mivisionx::vision.CPU.5x3::ColorConvert_YUV4_RGBX
+mivisionx::vision.GPU.1080p::ChannelCombine_U32_U8U8U8U8_RGBX
+mivisionx::vision.GPU.1080p::ChannelExtract_U8U8U8U8_U32
+mivisionx::vision.GPU.1080p::ChannelExtract_U8U8U8_U32
+mivisionx::vision.GPU.1080p::ChannelExtract_U8_U32_Pos0_RGBX
+mivisionx::vision.GPU.1080p::ChannelExtract_U8_U32_Pos1_RGBX
+mivisionx::vision.GPU.1080p::ChannelExtract_U8_U32_Pos2_RGBX
+mivisionx::vision.GPU.1080p::ChannelExtract_U8_U32_Pos3_RGBX
+mivisionx::vision.GPU.1080p::ColorConvert_IYUV_RGBX
+mivisionx::vision.GPU.1080p::ColorConvert_NV12_RGBX
+mivisionx::vision.GPU.1080p::ColorConvert_RGBX_IYUV
+mivisionx::vision.GPU.1080p::ColorConvert_RGBX_NV12
+mivisionx::vision.GPU.1080p::ColorConvert_RGBX_NV21
+mivisionx::vision.GPU.1080p::ColorConvert_RGBX_RGB
+mivisionx::vision.GPU.1080p::ColorConvert_RGBX_UYVY
+mivisionx::vision.GPU.1080p::ColorConvert_RGBX_YUYV
+mivisionx::vision.GPU.1080p::ColorConvert_RGB_RGBX
+mivisionx::vision.GPU.1080p::ColorConvert_YUV4_RGBX
+mivisionx::vision.GPU.10x10::ChannelCombine_U32_U8U8U8U8_RGBX
+mivisionx::vision.GPU.10x10::ChannelExtract_U8U8U8U8_U32
+mivisionx::vision.GPU.10x10::ChannelExtract_U8U8U8_U32
+mivisionx::vision.GPU.10x10::ChannelExtract_U8_U32_Pos0_RGBX
+mivisionx::vision.GPU.10x10::ChannelExtract_U8_U32_Pos1_RGBX
+mivisionx::vision.GPU.10x10::ChannelExtract_U8_U32_Pos2_RGBX
+mivisionx::vision.GPU.10x10::ChannelExtract_U8_U32_Pos3_RGBX
+mivisionx::vision.GPU.10x10::ColorConvert_IYUV_RGBX
+mivisionx::vision.GPU.10x10::ColorConvert_NV12_RGBX
+mivisionx::vision.GPU.10x10::ColorConvert_RGBX_IYUV
+mivisionx::vision.GPU.10x10::ColorConvert_RGBX_NV12
+mivisionx::vision.GPU.10x10::ColorConvert_RGBX_NV21
+mivisionx::vision.GPU.10x10::ColorConvert_RGBX_RGB
+mivisionx::vision.GPU.10x10::ColorConvert_RGBX_UYVY
+mivisionx::vision.GPU.10x10::ColorConvert_RGBX_YUYV
+mivisionx::vision.GPU.10x10::ColorConvert_RGB_RGBX
+mivisionx::vision.GPU.10x10::ColorConvert_YUV4_RGBX
+mivisionx::vision.GPU.5x3::ChannelCombine_U32_U8U8U8U8_RGBX
+mivisionx::vision.GPU.5x3::ChannelExtract_U8U8U8U8_U32
+mivisionx::vision.GPU.5x3::ChannelExtract_U8U8U8_U32
+mivisionx::vision.GPU.5x3::ChannelExtract_U8_U32_Pos0_RGBX
+mivisionx::vision.GPU.5x3::ChannelExtract_U8_U32_Pos1_RGBX
+mivisionx::vision.GPU.5x3::ChannelExtract_U8_U32_Pos2_RGBX
+mivisionx::vision.GPU.5x3::ChannelExtract_U8_U32_Pos3_RGBX
+mivisionx::vision.GPU.5x3::ColorConvert_IYUV_RGBX
+mivisionx::vision.GPU.5x3::ColorConvert_NV12_RGBX
+mivisionx::vision.GPU.5x3::ColorConvert_RGBX_IYUV
+mivisionx::vision.GPU.5x3::ColorConvert_RGBX_NV12
+mivisionx::vision.GPU.5x3::ColorConvert_RGBX_NV21
+mivisionx::vision.GPU.5x3::ColorConvert_RGBX_RGB
+mivisionx::vision.GPU.5x3::ColorConvert_RGBX_UYVY
+mivisionx::vision.GPU.5x3::ColorConvert_RGBX_YUYV
+mivisionx::vision.GPU.5x3::ColorConvert_RGB_RGBX
+mivisionx::vision.GPU.5x3::ColorConvert_YUV4_RGBX

@@ -1,0 +1,56 @@
+# Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+# Floors on the number of result IDs per suite and group, so silently dropped
+# tests turn the run red (report/triage.py). `group` is a glob over the second
+# ID component (<suite>::<group>::<name>); `tiers` default to every tier the
+# suite runs in. Values come from the validation run of 27 Sep 2026 on
+# nightly-20260926. When upstream legitimately adds or removes tests, update the
+# floor in the same PR. Hardware-dependent groups (unsupported-GPU probes) and
+# environment-dependent ones (build.*, harness) are deliberately not guarded.
+schema: 1
+counts:
+  # ------------------------------------------------------------- mivisionx
+  - {suite: mivisionx, group: ctest, min: 6, tiers: [quick]}
+  - {suite: mivisionx, group: ctest, min: 32, tiers: [standard, comprehensive, full]}
+  - {suite: mivisionx, group: api.CPU, min: 16, tiers: [standard, comprehensive, full]}
+  - {suite: mivisionx, group: api.GPU, min: 16, tiers: [standard, comprehensive, full]}
+  - {suite: mivisionx, group: samples.gdf, min: 5, tiers: [standard, comprehensive, full]}
+  - {suite: mivisionx, group: api-probe.exports, min: 369, tiers: [standard, comprehensive, full]}
+  - {suite: mivisionx, group: cts.CPU.*, min: 5957, tiers: [comprehensive, full],
+     note: "5,824 required + pipelining 109 + streaming 24"}
+  - {suite: mivisionx, group: cts.GPU.*, min: 5957, tiers: [comprehensive, full]}
+  - {suite: mivisionx, group: cts.CPU.optional, min: 7439, tiers: [full]}
+  - {suite: mivisionx, group: cts.GPU.optional, min: 7439, tiers: [full]}
+  - {suite: mivisionx, group: gdf.CPU.*, min: 441, tiers: [comprehensive, full], note: "416 GDFs + 25 hidden"}
+  - {suite: mivisionx, group: gdf.GPU.*, min: 441, tiers: [comprehensive, full]}
+  - {suite: mivisionx, group: vision.CPU.*, min: 351, tiers: [comprehensive, full], note: "116 nodes x 3 sizes + honesty"}
+  - {suite: mivisionx, group: vision.GPU.*, min: 351, tiers: [comprehensive, full]}
+  - {suite: mivisionx, group: parity.*, min: 572, tiers: [comprehensive, full]}
+  - {suite: mivisionx, group: vxrpp.*, min: 224, tiers: [comprehensive, full]}
+  - {suite: mivisionx, group: crash.*, min: 138, tiers: [comprehensive, full]}
+  - {suite: mivisionx, group: perf.openvx-mark.GPU, min: 40, tiers: [full]}
+
+  # ------------------------------------------------------------ robustness
+  # Only this repository's checks: runvisiontests-ignores-runvx-failure, and
+  # no-gpu-agents plus the two runvx probes without a GPU.
+  - {suite: robustness, group: exit-code, min: 1}
+  - {suite: robustness-nogpu, group: env, min: 1}
+  - {suite: robustness-nogpu, group: mivisionx, min: 2}

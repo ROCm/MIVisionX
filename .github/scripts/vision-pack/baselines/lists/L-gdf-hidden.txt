@@ -1,0 +1,69 @@
+# Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+# L-gdf-hidden: GDFs upstream keeps in cpu/hidden because they fail (expected to fail)
+# Generated 2026-09-27 by build_tools/baseline_lists.py from results.jsonl; 46 IDs.
+# group=gdf.*.cpu-hidden name-contains=- exclude-name=- also-failing-in=-
+mivisionx::gdf.CPU.cpu-hidden::CannyEdgeTrace_U8_U8.gdf
+mivisionx::gdf.CPU.cpu-hidden::CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM.gdf
+mivisionx::gdf.CPU.cpu-hidden::CannySobelSuppThreshold_U8XY_U8_5X5_L1NORM.gdf
+mivisionx::gdf.CPU.cpu-hidden::CannySobelSuppThreshold_U8XY_U8_5X5_L2NORM.gdf
+mivisionx::gdf.CPU.cpu-hidden::CannySobelSuppThreshold_U8XY_U8_7X7_L1NORM.gdf
+mivisionx::gdf.CPU.cpu-hidden::CannySobelSuppThreshold_U8XY_U8_7X7_L2NORM.gdf
+mivisionx::gdf.CPU.cpu-hidden::ColorConvert_IUV_RGB.gdf
+mivisionx::gdf.CPU.cpu-hidden::ColorConvert_IUV_RGBX.gdf
+mivisionx::gdf.CPU.cpu-hidden::ColorConvert_IU_RGB.gdf
+mivisionx::gdf.CPU.cpu-hidden::ColorConvert_IU_RGBX.gdf
+mivisionx::gdf.CPU.cpu-hidden::ColorConvert_IV_RGB.gdf
+mivisionx::gdf.CPU.cpu-hidden::ColorConvert_IV_RGBX.gdf
+mivisionx::gdf.CPU.cpu-hidden::ColorConvert_UV12_RGB.gdf
+mivisionx::gdf.CPU.cpu-hidden::ColorConvert_UV12_RGBX.gdf
+mivisionx::gdf.CPU.cpu-hidden::CopyNode.gdf
+mivisionx::gdf.CPU.cpu-hidden::FastCornerMerge_XY_XY.gdf
+mivisionx::gdf.CPU.cpu-hidden::GeometricScale.gdf
+mivisionx::gdf.CPU.cpu-hidden::HistogramMerge_DATA_DATA.gdf
+mivisionx::gdf.CPU.cpu-hidden::LinearFilter_ANY_2_ANY.gdf
+mivisionx::gdf.CPU.cpu-hidden::LinearFilter_ANY_ANY.gdf
+mivisionx::gdf.CPU.cpu-hidden::Mul_U24_U24U8_Sat_Round.gdf
+mivisionx::gdf.CPU.cpu-hidden::SelectNode.gdf
+mivisionx::gdf.GPU.cpu-hidden::CannyEdgeTrace_U8_U8.gdf
+mivisionx::gdf.GPU.cpu-hidden::CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM.gdf
+mivisionx::gdf.GPU.cpu-hidden::CannySobelSuppThreshold_U8XY_U8_5X5_L1NORM.gdf
+mivisionx::gdf.GPU.cpu-hidden::CannySobelSuppThreshold_U8XY_U8_5X5_L2NORM.gdf
+mivisionx::gdf.GPU.cpu-hidden::CannySobelSuppThreshold_U8XY_U8_7X7_L1NORM.gdf
+mivisionx::gdf.GPU.cpu-hidden::CannySobelSuppThreshold_U8XY_U8_7X7_L2NORM.gdf
+mivisionx::gdf.GPU.cpu-hidden::ColorConvert_IUV_RGB.gdf
+mivisionx::gdf.GPU.cpu-hidden::ColorConvert_IUV_RGBX.gdf
+mivisionx::gdf.GPU.cpu-hidden::ColorConvert_IU_RGB.gdf
+mivisionx::gdf.GPU.cpu-hidden::ColorConvert_IU_RGBX.gdf
+mivisionx::gdf.GPU.cpu-hidden::ColorConvert_IV_RGB.gdf
+mivisionx::gdf.GPU.cpu-hidden::ColorConvert_IV_RGBX.gdf
+mivisionx::gdf.GPU.cpu-hidden::ColorConvert_UV12_RGB.gdf
+mivisionx::gdf.GPU.cpu-hidden::ColorConvert_UV12_RGBX.gdf
+mivisionx::gdf.GPU.cpu-hidden::CopyNode.gdf
+mivisionx::gdf.GPU.cpu-hidden::FastCornerMerge_XY_XY.gdf
+mivisionx::gdf.GPU.cpu-hidden::GPU_FAIL_Convolve_S16_U8_odd.gdf
+mivisionx::gdf.GPU.cpu-hidden::GPU_FAIL_Convolve_U8_U8_odd.gdf
+mivisionx::gdf.GPU.cpu-hidden::GeometricScale.gdf
+mivisionx::gdf.GPU.cpu-hidden::HistogramMerge_DATA_DATA.gdf
+mivisionx::gdf.GPU.cpu-hidden::LinearFilter_ANY_2_ANY.gdf
+mivisionx::gdf.GPU.cpu-hidden::LinearFilter_ANY_ANY.gdf
+mivisionx::gdf.GPU.cpu-hidden::Mul_U24_U24U8_Sat_Round.gdf
+mivisionx::gdf.GPU.cpu-hidden::SelectNode.gdf

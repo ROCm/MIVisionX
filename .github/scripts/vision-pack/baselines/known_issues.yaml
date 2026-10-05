@@ -1,0 +1,361 @@
+# Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+# Known MIVisionX findings: the only place a failing result becomes "known".
+#
+# The entries of the vision-pack QA known-issue baseline that cover the
+# mivisionx suite and this repository's robustness checks, without the globs
+# of other suites. IDs are unchanged: C, H and M come from the functional test
+# report of 25 Sep 2026 (critical, high, medium), N were found while porting
+# the suites (27 Sep 2026), and L-* are low items. issue: links the upstream
+# issue each finding was filed as; ROCm/MIVisionX#1767 lists the MIVisionX ones.
+#
+# Each entry:
+#   id, title, severity (critical|high|medium|low), owner
+#   kind:   xfail (expected to fail; a pass is reported as "fixed"),
+#           flaky, skip (expected to be blocked/skipped), quarantine (ignored)
+#   match:  shell-style globs over result IDs <suite>::<group>::<name>. Match
+#           only the failing tests: a glob that also covers passing tests turns
+#           them into "fixed" on every run. "[" must be written "[[]".
+#   match_file: a list under lists/ (relative to this file), one result ID or
+#           glob per line, for findings that cover many parameterised results
+#   gfx:    optional globs over the tested GPU (default: every GPU, and runs
+#           without one); [none] scopes an entry to runs on a runner without
+#           a usable GPU, when only the needs_gpu: false suites run
+#   tiers:  optional; issue: upstream URL; added / review_by: YYYY-MM-DD
+#   strict: report the entry in the verdict reasons once all its tests pass
+# By review_by, re-verify each entry: extend review_by while the upstream issue
+# is open, or remove the entry once the fix has shipped.
+schema: 1
+issues:
+  # ------------------------------------------------------------------ critical
+  - id: C1
+    title: GPU 1-bit threshold kernel writes wrong bits, so threshold -> AND/OR/XOR graphs are wrong on GPU
+    severity: critical
+    owner: MIVisionX
+    kind: xfail
+    match:
+      - "mivisionx::parity.*.GPU::U1_Threshold_And"
+      - "mivisionx::parity.*.GPU::U1_Threshold_And3"
+      - "mivisionx::parity.*.GPU::U1_Threshold_Or"
+      - "mivisionx::parity.*.GPU::U1_Threshold_Xor"
+      - "mivisionx::samples.GPU::skintone"
+    issue: https://github.com/ROCm/MIVisionX/issues/1768
+    added: 2026-09-25
+    review_by: 2026-12-31
+    strict: true
+
+  # ---------------------------------------------------------------------- high
+  - id: H6
+    title: vx_rpp Blur, Median, Gaussian, Dilate and Erode return an image shifted by 12 bytes
+    severity: high
+    owner: MIVisionX
+    kind: xfail
+    match:
+      - "mivisionx::vxrpp.*.ref::Blur"
+      - "mivisionx::vxrpp.*.ref::Dilate3"
+      - "mivisionx::vxrpp.*.ref::Erode3"
+      - "mivisionx::vxrpp.*.ref::GaussianFilter5"
+      - "mivisionx::vxrpp.*.ref::MedianFilter3"
+    issue: https://github.com/ROCm/MIVisionX/issues/1770
+    added: 2026-09-25
+    review_by: 2026-12-31
+    strict: true
+  - id: H10
+    title: vx_rpp on GPU corrupts output from the 2nd graph execution onward
+    severity: high
+    owner: MIVisionX
+    kind: xfail
+    match:
+      - "mivisionx::vxrpp.GPU.repeat::FishEye"
+      - "mivisionx::vxrpp.GPU.repeat::Flip"
+      - "mivisionx::vxrpp.GPU.repeat::LensCorrection"
+      - "mivisionx::vxrpp.GPU.repeat::Pixelate"
+      - "mivisionx::vxrpp.GPU.repeat::Resize_*"
+      - "mivisionx::vxrpp.GPU.repeat::Rotate"
+      - "mivisionx::vxrpp.GPU.repeat::WarpAffine"
+      - "mivisionx::vxrpp.GPU.repeat::WarpPerspective"
+      - "mivisionx::vxrpp.GPU.repeat::Water"
+    issue: https://github.com/ROCm/MIVisionX/issues/1771
+    added: 2026-09-25
+    review_by: 2026-12-31
+    strict: true
+  - id: H11
+    title: CPU Box3x3 segfaults for image widths below 16
+    severity: high
+    owner: MIVisionX
+    kind: xfail
+    match:
+      - "mivisionx::vision.CPU.5x3::Box_U8_U8_3x3"
+      - "mivisionx::vision.CPU.10x10::Box_U8_U8_3x3"
+      # The width sweep (CI containers only): widths below 16 crash, 16 and up are controls.
+      - "mivisionx::crash.CPU::box_3x3/3x3"
+      - "mivisionx::crash.CPU::box_3x3/4x4"
+      - "mivisionx::crash.CPU::box_3x3/5x3"
+      - "mivisionx::crash.CPU::box_3x3/8x8"
+      - "mivisionx::crash.CPU::box_3x3/10x10"
+      - "mivisionx::crash.CPU::box_3x3/15x15"
+    issue: https://github.com/ROCm/MIVisionX/issues/1772
+    added: 2026-09-25
+    review_by: 2026-12-31
+    strict: true
+  - id: H12
+    title: Use-after-free when a parent image is released before its ROI child
+    severity: high
+    owner: MIVisionX
+    kind: xfail
+    match:
+      - "mivisionx::crash.*::roi-release/*"
+      - "mivisionx::crash.cts.*::Image.DISABLED_testAccessCopyWriteUniformImage"
+    issue: https://github.com/ROCm/MIVisionX/issues/1773
+    added: 2026-09-25
+    review_by: 2026-12-31
+    strict: true
+  - id: H13
+    title: CPU S16 threshold is wrong when the width is not a multiple of 16
+    severity: high
+    owner: MIVisionX
+    kind: xfail
+    match:
+      - "mivisionx::parity.1282x722.CPU::Threshold_U8_S16_Binary"
+    issue: https://github.com/ROCm/MIVisionX/issues/1774
+    added: 2026-09-25
+    review_by: 2026-12-31
+    strict: true
+  - id: H14
+    title: AREA scaling is wrong at specific ratios (CPU 2x rows, GPU 3x)
+    severity: high
+    owner: MIVisionX
+    kind: xfail
+    match:
+      - "mivisionx::parity.*.CPU::ScaleImage_U8_U8_Area"
+      - "mivisionx::parity.1282x722.CPU::ScaleImage_U8_U8_Area_3x"
+      - "mivisionx::parity.*.GPU::ScaleImage_U8_U8_Area_3x"
+    # Three issues: #1775 is the CPU 2:1 case, #1776 the GPU 3:1 case and #1777 the CPU 3:1 case at width 1282.
+    issue: https://github.com/ROCm/MIVisionX/issues/1775
+    added: 2026-09-25
+    review_by: 2026-12-31
+    strict: true
+  - id: H15
+    title: GPU packed RGB/RGBX outputs race when the width is not a multiple of 8
+    severity: high
+    owner: MIVisionX
+    # A race: which conversions fail changes between identical runs, so passes are not "fixed".
+    kind: flaky
+    match:
+      - "mivisionx::parity.1282x722.GPU::ColorConvert_RGB*"
+      - "mivisionx::parity.1282x722.GPU::ChannelCombine_*"
+    issue: https://github.com/ROCm/MIVisionX/issues/1778
+    added: 2026-09-25
+    review_by: 2026-12-31
+    strict: true
+  - id: H16
+    title: runVisionTests.py never fails (ignores runvx exit codes)
+    severity: high
+    owner: MIVisionX
+    kind: xfail
+    match:
+      - "robustness::exit-code::runvisiontests-ignores-runvx-failure"
+      - "mivisionx::vision.*::script-exit-honesty"
+    issue: https://github.com/ROCm/MIVisionX/issues/1781
+    added: 2026-09-25
+    review_by: 2026-12-31
+    strict: true
+
+  # -------------------------------------------------------------------- medium
+  - id: M2
+    title: runvx ships without OpenCV; documented canny.gdf and skintonedetect.gdf fail with a misleading error
+    severity: medium
+    owner: vision-pack
+    kind: xfail
+    match:
+      - "mivisionx::samples.gdf::canny.gdf"
+      - "mivisionx::samples.gdf::skintonedetect.gdf"
+    issue: https://github.com/kiritigowda/vision-pack/issues/68
+    added: 2026-09-25
+    review_by: 2026-12-31
+  # M4 (hip_cu_mask ctest script not installed) is fixed in nightly-20260926 (0.2.0+gd440925):
+  # that tarball ships share/mivisionx/test/hip_cu_mask_tests/ and openvx_hip_cu_mask_remap_4K
+  # passed in the 27 Sep 2026 validation run, so the entry was removed. A bundle without the
+  # script fails that ctest within milliseconds ("can't open file ... test_hip_cu_mask_remap.py"),
+  # a new failure here: check the installed bundle before re-adding M4.
+  - id: M15
+    title: GPU S16 multiply with round-to-nearest loses precision
+    severity: medium
+    owner: MIVisionX
+    kind: xfail
+    match:
+      - "mivisionx::parity.*.GPU::Mul_S16_S16S16_Wrap_Round"
+    issue: https://github.com/ROCm/MIVisionX/issues/1785
+    added: 2026-09-25
+    review_by: 2026-12-31
+  - id: M16
+    title: CPU and GPU disagree on half-scale Gaussian and Canny L2
+    severity: medium
+    owner: MIVisionX
+    kind: xfail
+    match:
+      - "mivisionx::parity.*.GPU::ScaleGaussianHalf_U8_U8_3x3"
+      - "mivisionx::parity.*.GPU::Canny_3x3_L2Norm"
+      - "mivisionx::parity.1282x722.GPU::GaussianPyramid_4L"
+      - "mivisionx::samples.CPU::canny_3_NORM_L2"
+      - "mivisionx::cts.CPU.optional::vxuCanny.DISABLED_BitExactL1/0/3x3 thresh=120 output=VX_DF_IMAGE_U8"
+      - "mivisionx::cts.CPU.optional::vxCanny.DISABLED_BitExactL1/0/3x3 thresh=120 output=VX_DF_IMAGE_U8"
+      - "mivisionx::cts.*.optional::vxuCanny.DISABLED_BitExactL1/1/5x5 thresh=100 output=VX_DF_IMAGE_U8"
+      - "mivisionx::cts.*.optional::vxCanny.DISABLED_BitExactL1/1/5x5 thresh=100 output=VX_DF_IMAGE_U8"
+    # Two issues: #1786 is the CPU Canny 3x3 L2 gradient, #1787 the HalfScaleGaussian sampling (and the pyramid).
+    issue: https://github.com/ROCm/MIVisionX/issues/1786
+    added: 2026-09-25
+    review_by: 2026-12-31
+  - id: M17
+    title: REPLICATE / CONSTANT border modes are accepted but ignored
+    severity: medium
+    owner: MIVisionX
+    kind: xfail
+    match:
+      - "mivisionx::parity.*.CPU::Box3x3_Border_*"
+      - "mivisionx::parity.1920x1080.GPU::Box3x3_Border_*"
+      - "mivisionx::parity.1282x722.GPU::Box3x3_Border_Replicate"
+    # The CTS optional tests with border modes (full tier): passing and failing
+    # parameter combinations interleave, so the failing ones are listed exactly.
+    match_file: lists/M17-cts-optional-borders.txt
+    issue: https://github.com/ROCm/MIVisionX/issues/1789
+    added: 2026-09-25
+    review_by: 2026-12-31
+  - id: M18
+    title: 71 functions declared in shipped headers but not exported
+    severity: medium
+    owner: MIVisionX
+    kind: xfail
+    match_file: lists/M18-missing-exports.txt
+    issue: https://github.com/ROCm/MIVisionX/issues/1790
+    added: 2026-09-25
+    review_by: 2026-12-31
+  - id: M19
+    title: runVisionTests case definitions have defects (invalid RGBA format, duplicate and swapped names)
+    severity: medium
+    owner: MIVisionX
+    kind: xfail
+    match:
+      - "mivisionx::vision.static::case-names"
+      - "mivisionx::vision.static::duplicate-cases"
+      - "mivisionx::vision.static::rgba-format"
+    match_file: lists/M19-vision-rgba.txt
+    issue: https://github.com/ROCm/MIVisionX/issues/1792
+    added: 2026-09-25
+    review_by: 2026-12-31
+
+  # ------------------------------------------- found while porting (N5 onwards)
+  - id: N11
+    title: MIVisionX Copy kernel is not supported ("not supported yet") - vxCopyNode and Copy graphs fail
+    severity: medium
+    owner: MIVisionX
+    kind: xfail
+    match:
+      - "mivisionx::parity.*::Copy_U8"
+      - "mivisionx::api-probe.*::copy-node"
+    issue: https://github.com/ROCm/MIVisionX/issues/1791
+    added: 2026-09-27
+    review_by: 2026-12-31
+  - id: N12
+    title: vx_rpp CPU second execution zeroes 3-8 bytes at the start of the second image (RPP multi-thread family, H7)
+    severity: medium
+    owner: ROCm SDK
+    # Which cases are hit varies between runs.
+    kind: flaky
+    match:
+      - "mivisionx::vxrpp.CPU.repeat::ChannelPermute"
+      - "mivisionx::vxrpp.CPU.repeat::ColorJitter"
+      - "mivisionx::vxrpp.CPU.repeat::Resize_*"
+    issue: https://github.com/ROCm/MIVisionX/issues/1782
+    added: 2026-09-27
+    review_by: 2026-12-31
+  - id: N13
+    title: GPU Phase differs from CPU by up to 128 at width 1282 (also breaks the Magnitude/Phase-via-Sobel graph)
+    severity: medium
+    owner: MIVisionX
+    kind: xfail
+    match:
+      - "mivisionx::parity.1282x722.GPU::Phase_U8_S16S16"
+      - "mivisionx::parity.1282x722.GPU::Magnitude_Phase_via_Sobel"
+    issue: https://github.com/ROCm/MIVisionX/issues/1788
+    added: 2026-09-27
+    review_by: 2026-12-31
+
+  # ----------------------------------------------------------------- low items
+  - id: L-headers
+    title: Public headers that are not self-contained (Khronos VX headers, rocal_api_*, internal rocCV headers; vx_ext_amd.h not valid C)
+    severity: low
+    owner: vision-pack
+    kind: xfail
+    match:
+      - "mivisionx::api-probe::vx_ext_amd.h-compiles-as-C"
+    issue: https://github.com/ROCm/MIVisionX/issues/1798
+    added: 2026-09-25
+    review_by: 2026-12-31
+  - id: L-mvx-gaps
+    title: MIVisionX low items (vx_rpp ColorJitter/Glitch/ColorToGreyscale gaps, RGBA NO_RESOURCES, GPU 9x7 convolution, silent CPU fallback, GPU Box3x3 off by one, threshold attribute, read-gdf-sample.gdf, ctest race)
+    severity: low
+    owner: MIVisionX
+    kind: xfail
+    match:
+      - "mivisionx::vxrpp.GPU::ColorJitter"
+      - "mivisionx::vxrpp.*::Glitch"
+      - "mivisionx::vxrpp.*::ColorToGreyscale_NHWC1"
+      - "mivisionx::api-probe.*::rgba-create"
+      - "mivisionx::api-probe.GPU::convolution-9x7"
+      - "mivisionx::api-probe.*::threshold-readonly-attribute"
+      - "mivisionx::cts.*.optional::Threshold.DISABLED_testvxSetThresholdAttribute_negative"
+      - "mivisionx::gpu-fallback::*"
+      - "mivisionx::samples.gdf::read-gdf-sample.gdf"
+      - "mivisionx::ctest-race::*"
+    # Filed as #1794 (vx_rpp), #1783 (RGBA), #1795 (9x7 convolution), #1796 (threshold attributes) and
+    # #1800 (read-gdf-sample.gdf, ctest race); the GPU fallbacks are the existing #1744 (Canny) and #1700 (Harris).
+    issue: https://github.com/ROCm/MIVisionX/issues/1767
+    added: 2026-09-25
+    review_by: 2026-12-31
+  - id: L-gdf-hidden
+    title: GDFs upstream keeps in cpu/hidden because they fail (incl. the GPU odd-size Convolve cases)
+    severity: low
+    owner: MIVisionX
+    kind: xfail
+    match_file: lists/L-gdf-hidden.txt
+    # The GPU odd-size Convolve cases are #1795.
+    issue: https://github.com/ROCm/MIVisionX/issues/1800
+    added: 2026-09-25
+    review_by: 2026-12-31
+  - id: L-vision-small-sizes
+    title: Vision nodes that reject 5x3 and 10x10 images (runVisionTests' small sizes hit validation branches)
+    severity: low
+    owner: MIVisionX
+    kind: xfail
+    match_file: lists/L-vision-small-sizes.txt
+    issue: https://github.com/ROCm/MIVisionX/issues/1799
+    added: 2026-09-25
+    review_by: 2026-12-31
+  - id: L-openvx-mark
+    title: openvx-mark reports no timing for MinMaxLoc on GPU
+    severity: low
+    owner: vision-pack QA
+    kind: xfail
+    match:
+      - "mivisionx::perf.openvx-mark.GPU::MinMaxLoc"
+    added: 2026-09-27
+    review_by: 2026-12-31

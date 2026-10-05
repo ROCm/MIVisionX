@@ -1,0 +1,564 @@
+# Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+# Tests the newest vision-pack nightly bundle (kiritigowda/vision-pack
+# releases) on the matching TheRock "-tests" ROCm SDK. Only the mivisionx
+# checks run: the mivisionx suite and its robustness slice on a GPU runner, and
+# its CPU-only robustness slice in a container without GPU devices.
+name: MIVisionX vision-pack QA
+
+on:
+  schedule:
+    - cron: "37 14,18,22 * * *"
+      timezone: "Asia/Kolkata"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "vision-pack nightly-YYYYMMDD tag (default: the newest)"
+        type: string
+        default: ""
+      tier:
+        description: "auto: comprehensive, or full on Sundays (IST)"
+        type: choice
+        options:
+          - auto
+          - quick
+          - standard
+          - comprehensive
+          - full
+        default: auto
+      force:
+        description: "Test even if this release and tier were already tested"
+        type: boolean
+        default: false
+      crash_tests:
+        description: "Also run the deliberate crash reproducers (VP_ALLOW_CRASH_TESTS=1)"
+        type: boolean
+        default: false
+      sdk_family:
+        description: "Override the TheRock SDK family (e.g. gfx120X-all-tests)"
+        type: string
+        default: ""
+      sdk_date:
+        description: "Override the TheRock SDK date (YYYYMMDD)"
+        type: string
+        default: ""
+      sdk_url:
+        description: "Pin the TheRock SDK tarball URL (overrides family and date)"
+        type: string
+        default: ""
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  KIT: .github/scripts/vision-pack
+
+jobs:
+  resolve:
+    name: resolve
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read  # looks up the already-tested marker artifact
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      sha: ${{ steps.resolve.outputs.sha }}
+      version: ${{ steps.resolve.outputs.version }}
+      date: ${{ steps.resolve.outputs.date }}
+      fingerprint: ${{ steps.resolve.outputs.fingerprint }}
+      tier: ${{ steps.tier.outputs.tier }}
+      expected: ${{ steps.plan.outputs.expected }}
+      skip: ${{ steps.tested.outputs.skip }}
+      marker: ${{ steps.tested.outputs.marker }}
+      stale: ${{ steps.resolve.outputs.stale }}
+      problems: ${{ steps.resolve.outputs.problems }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Pick the tier
+        id: tier
+        env:
+          IN_TIER: ${{ inputs.tier }}
+        run: |
+          tier="${IN_TIER:-auto}"
+          if [[ "${tier}" == auto ]]; then
+            tier=comprehensive
+            if [[ "$(TZ=Asia/Kolkata date +%u)" == 7 ]]; then
+              tier=full
+            fi
+          fi
+          case "${tier}" in
+            quick|standard|comprehensive|full) ;;
+            *) echo "::error::unknown tier ${tier}"; exit 1 ;;
+          esac
+          echo "tier: ${tier}"
+          echo "tier=${tier}" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve the vision-pack release
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag }}
+          TIER: ${{ steps.tier.outputs.tier }}
+          FORCE: ${{ inputs.force }}
+          SDK_FAMILY: ${{ inputs.sdk_family }}
+          SDK_DATE: ${{ inputs.sdk_date }}
+          SDK_URL: ${{ inputs.sdk_url }}
+        run: |
+          mkdir -p vp-out
+          args=(--mode release --tier "${TIER}" --sdk-family "${SDK_FAMILY}" --sdk-date "${SDK_DATE}"
+                --sdk-url "${SDK_URL}" --out "${GITHUB_WORKSPACE}/vp-out/run-plan.json" --github)
+          if [[ -n "${TAG}" ]]; then
+            args+=(--tag "${TAG}")
+          fi
+          if [[ "${FORCE}" == true ]]; then
+            args+=(--force)
+          fi
+          python3 "${KIT}/build_tools/resolve_release.py" "${args[@]}"
+
+      - name: Skip a release this workflow already tested
+        id: tested
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE: ${{ inputs.force }}
+          FINGERPRINT: ${{ steps.resolve.outputs.fingerprint }}
+        run: |
+          # The report job leaves an artifact named vision-pack-<state>-<fingerprint>
+          # behind once a release and tier have been tested; its name is built
+          # here once, and the report job reuses it.
+          state=tested
+          marker="vision-pack-${state}-${FINGERPRINT}"
+          skip=false
+          if [[ "${FORCE}" == true ]]; then
+            echo "force is set: testing even if ${marker} exists"
+          elif count="$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=${marker}&per_page=100" \
+                 --jq '[.artifacts[] | select(.expired | not)] | length')"; then
+            if (( count > 0 )); then
+              skip=true
+              echo "::notice::${marker} exists: this release and tier were already tested (dispatch with force to test again)"
+            else
+              echo "no ${marker} artifact: testing"
+            fi
+          else
+            echo "::warning::could not look up ${marker}; testing anyway"
+          fi
+          {
+            echo "skip=${skip}"
+            echo "marker=${marker}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Plan the suites
+        id: plan
+        env:
+          TIER: ${{ steps.tier.outputs.tier }}
+        run: |
+          python3 -c 'import yaml' 2>/dev/null \
+            || { sudo apt-get update -qq && sudo apt-get install -y -qq python3-yaml >/dev/null; }
+          python3 "${KIT}/build_tools/plan_matrix.py" --tier "${TIER}" --github > "${RUNNER_TEMP}/matrix.json"
+          echo "expected suites at the ${TIER} tier: $(jq -r '.expected | join(", ")' "${RUNNER_TEMP}/matrix.json")"
+
+      - name: Report release warnings
+        run: |
+          jq -r '.problems[]? | "::warning title=vision-pack release problem::" + gsub("[\r\n]+"; " ")' vp-out/run-plan.json
+          jq -r 'select(.stale) | "::warning title=stale vision-pack nightly::the newest nightly (\(.tag)) is \(.age_days) days old"' \
+            vp-out/run-plan.json
+
+      - name: Upload the run plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-plan
+          path: vp-out/run-plan.json
+          retention-days: 30
+          if-no-files-found: error
+
+  gpu:
+    name: gpu (mivisionx, robustness)
+    needs: resolve
+    if: >-
+      needs.resolve.outputs.skip != 'true'
+      && (contains(format(',{0},', needs.resolve.outputs.expected), ',mivisionx,')
+      || contains(format(',{0},', needs.resolve.outputs.expected), ',robustness,'))
+    runs-on:
+      group: linux-shark39-runner-group
+    container:
+      image: ghcr.io/rocm/no_rocm_image_ubuntu24_04@sha256:405945a40deaff9db90b9839c0f41d4cba4a383c1a7459b28627047bf6302a26
+      options: >-
+        --device /dev/kfd --device /dev/dri --ipc=host --security-opt seccomp=unconfined
+        --ulimit memlock=-1:-1 --ulimit nofile=1048576:1048576 --ulimit core=0
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    outputs:
+      gfx: ${{ steps.gpu.outputs.gfx }}
+    env:
+      VP_ALLOW_CRASH_TESTS: ${{ github.event_name == 'workflow_dispatch' && inputs.crash_tests && '1' || '0' }}
+    steps:
+      # In a container job github.workspace and runner.temp are host paths, so
+      # run: scripts use $GITHUB_WORKSPACE and $RUNNER_TEMP, and the artifact
+      # steps take workspace-relative paths (everything is staged in vp-out/).
+      # The image has no git, curl or jq: this checkout falls back to the REST
+      # API, and install_deps.sh must run before any step that needs them.
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install the test dependencies
+        run: bash "${KIT}/build_tools/install_deps.sh"
+
+      - name: Check out vision-pack build_tools at the release commit
+        uses: actions/checkout@v4
+        with:
+          repository: kiritigowda/vision-pack
+          ref: ${{ needs.resolve.outputs.sha }}
+          path: ${{ env.KIT }}/vision-pack
+          sparse-checkout: build_tools
+          persist-credentials: false
+
+      - name: Download and verify the vision-pack tarball
+        id: fetch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.resolve.outputs.tag }}
+          SHA: ${{ needs.resolve.outputs.sha }}
+        run: |
+          bash "${KIT}/build_tools/fetch_release.sh" --tag "${TAG}" --sha "${SHA}" --tarball-only \
+            --dest "${RUNNER_TEMP}/vp/release" --github
+
+      - name: Extract the bundle manifest
+        id: manifest
+        env:
+          TARBALL: ${{ steps.fetch.outputs.tarball }}
+        run: |
+          path="${RUNNER_TEMP}/vp/vision-pack-manifest.json"
+          tar -xzOf "${TARBALL}" ./share/vision-pack/vision-pack-manifest.json > "${path}" 2>/dev/null \
+            || tar -xzOf "${TARBALL}" share/vision-pack/vision-pack-manifest.json > "${path}"
+          jq -e '.sha' "${path}" > /dev/null || { echo "::error::the bundle manifest has no sha"; exit 1; }
+          echo "manifest=${path}" >> "$GITHUB_OUTPUT"
+
+      - name: Detect the GPU
+        id: gpu
+        env:
+          MANIFEST: ${{ steps.manifest.outputs.manifest }}
+        run: |
+          source "${KIT}/build_tools/gpu_env.sh"
+          bash "${KIT}/build_tools/detect_gpu.sh" --manifest "${MANIFEST}" --github
+
+      - name: Prepare the ROCm prefix
+        id: prepare
+        env:
+          TARBALL: ${{ steps.fetch.outputs.tarball }}
+          GFX: ${{ steps.gpu.outputs.gfx }}
+          SDK_FAMILY: ${{ inputs.sdk_family }}
+          SDK_DATE: ${{ inputs.sdk_date }}
+          SDK_URL: ${{ inputs.sdk_url }}
+        run: |
+          args=(--tarball "${TARBALL}" --run-dir "${RUNNER_TEMP}/vp/run" --gfx "${GFX}" --github)
+          if [[ -n "${SDK_FAMILY}" ]]; then args+=(--family "${SDK_FAMILY}"); fi
+          if [[ -n "${SDK_DATE}" ]]; then args+=(--date "${SDK_DATE}"); fi
+          if [[ -n "${SDK_URL}" ]]; then args+=(--url "${SDK_URL}"); fi
+          timeout -k 60 3600 bash "${KIT}/build_tools/prepare_rocm.sh" "${args[@]}"
+
+      - name: GPU pre-flight
+        id: preflight
+        env:
+          PREFIX: ${{ steps.prepare.outputs.prefix }}
+          GFX: ${{ steps.gpu.outputs.gfx }}
+        run: |
+          source "${KIT}/build_tools/gpu_env.sh"
+          export ROCM_PATH="${PREFIX}" VP_GFX="${GFX}" VP_NO_CONTAINER=1
+          export VP_OUT="${GITHUB_WORKSPACE}/vp-out/results/preflight"
+          timeout -k 30 240 bash "${KIT}/build_tools/preflight.sh"
+
+
+      - name: Run the mivisionx suite
+        if: >-
+          !cancelled() && steps.preflight.outcome == 'success'
+          && contains(format(',{0},', needs.resolve.outputs.expected), ',mivisionx,')
+        timeout-minutes: 60
+        env:
+          PREFIX: ${{ steps.prepare.outputs.prefix }}
+          TARBALL: ${{ steps.fetch.outputs.tarball }}
+          GFX: ${{ steps.gpu.outputs.gfx }}
+          TIER: ${{ needs.resolve.outputs.tier }}
+        run: |
+          args=(--suite mivisionx --prefix "${PREFIX}" --out "${GITHUB_WORKSPACE}/vp-out/results/mivisionx"
+                --tier "${TIER}" --gfx "${GFX}" --dist-tarball "${TARBALL}")
+          if [[ -n "${VP_DATA_DIR:-}" ]]; then args+=(--data "${VP_DATA_DIR}"); fi
+          bash "${KIT}/build_tools/run_suite.sh" "${args[@]}"
+
+      - name: Run the robustness slice
+        if: >-
+          !cancelled() && steps.preflight.outcome == 'success'
+          && contains(format(',{0},', needs.resolve.outputs.expected), ',robustness,')
+        timeout-minutes: 15
+        env:
+          PREFIX: ${{ steps.prepare.outputs.prefix }}
+          TARBALL: ${{ steps.fetch.outputs.tarball }}
+          GFX: ${{ steps.gpu.outputs.gfx }}
+          TIER: ${{ needs.resolve.outputs.tier }}
+        run: |
+          args=(--suite robustness --prefix "${PREFIX}" --out "${GITHUB_WORKSPACE}/vp-out/results/robustness"
+                --tier "${TIER}" --gfx "${GFX}" --dist-tarball "${TARBALL}" --gpu-access all)
+          if [[ -n "${VP_DATA_DIR:-}" ]]; then args+=(--data "${VP_DATA_DIR}"); fi
+          bash "${KIT}/build_tools/run_suite.sh" "${args[@]}"
+
+      - name: Record the environment
+        if: ${{ !cancelled() }}
+        env:
+          RUNNER: ${{ runner.name }}
+          IMAGE: ghcr.io/rocm/no_rocm_image_ubuntu24_04@sha256:405945a40deaff9db90b9839c0f41d4cba4a383c1a7459b28627047bf6302a26
+          GPU_LIST: ${{ steps.gpu.outputs.gpu_list }}
+          GPU_PRESENT: ${{ steps.gpu.outputs.gpu_present }}
+          MANIFEST: ${{ steps.manifest.outputs.manifest }}
+        run: |
+          dir="${GITHUB_WORKSPACE}/vp-out/results/environment"
+          mkdir -p "${dir}"
+          cp "${RUNNER_TEMP}/vp/run/prepared.json" "${dir}/" 2>/dev/null || true
+          if [[ -n "${MANIFEST}" ]]; then cp "${MANIFEST}" "${dir}/manifest.json" 2>/dev/null || true; fi
+          # gpu_present stays null when the detection itself failed.
+          jq -n --arg runner "${RUNNER}" --arg kernel "$(uname -r)" \
+            --arg driver "$(cat /sys/module/amdgpu/version 2>/dev/null || echo in-tree)" \
+            --arg gpus "${GPU_LIST}" --arg image "${IMAGE}" --arg present "${GPU_PRESENT}" \
+            --arg rocr "${ROCR_VISIBLE_DEVICES:-}" \
+            '{runner:$runner, kernel:$kernel, amdgpu_driver:$driver, docker:"", gpus:$gpus,
+              gpu_present:(if $present == "1" then true elif $present == "0" then false else null end),
+              no_gpu_reason:"", rocr_visible_devices:$rocr, images:{test:$image, media:"", extended:""}}' \
+            > "${dir}/environment.json"
+
+      - name: Upload the GPU job results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-gpu
+          path: |
+            vp-out/results
+            !vp-out/results/*/work/**
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Remove the prefix, downloads and staged results
+        if: always()
+        run: rm -rf "${RUNNER_TEMP}/vp" "${GITHUB_WORKSPACE}/vp-out"
+
+  cpu:
+    name: cpu (robustness-nogpu)
+    needs: resolve
+    if: >-
+      needs.resolve.outputs.skip != 'true'
+      && contains(format(',{0},', needs.resolve.outputs.expected), ',robustness-nogpu,')
+    runs-on:
+      group: linux-shark39-runner-group
+    container:
+      image: ghcr.io/rocm/no_rocm_image_ubuntu24_04@sha256:405945a40deaff9db90b9839c0f41d4cba4a383c1a7459b28627047bf6302a26
+      options: >-
+        --ipc=host --security-opt seccomp=unconfined
+        --ulimit memlock=-1:-1 --ulimit nofile=1048576:1048576 --ulimit core=0
+    timeout-minutes: 75
+    permissions:
+      contents: read
+    env:
+      VP_ALLOW_CRASH_TESTS: ${{ github.event_name == 'workflow_dispatch' && inputs.crash_tests && '1' || '0' }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install the test dependencies
+        run: bash "${KIT}/build_tools/install_deps.sh"
+
+      - name: Check out vision-pack build_tools at the release commit
+        uses: actions/checkout@v4
+        with:
+          repository: kiritigowda/vision-pack
+          ref: ${{ needs.resolve.outputs.sha }}
+          path: ${{ env.KIT }}/vision-pack
+          sparse-checkout: build_tools
+          persist-credentials: false
+
+      - name: Download and verify the vision-pack tarball
+        id: fetch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.resolve.outputs.tag }}
+          SHA: ${{ needs.resolve.outputs.sha }}
+        run: |
+          bash "${KIT}/build_tools/fetch_release.sh" --tag "${TAG}" --sha "${SHA}" --tarball-only \
+            --dest "${RUNNER_TEMP}/vp/release" --github
+
+      # --no-gpu takes the build SDK named in the bundle manifest.
+      - name: Prepare the ROCm prefix (no GPU)
+        id: prepare
+        env:
+          TARBALL: ${{ steps.fetch.outputs.tarball }}
+          SDK_FAMILY: ${{ inputs.sdk_family }}
+          SDK_DATE: ${{ inputs.sdk_date }}
+          SDK_URL: ${{ inputs.sdk_url }}
+        run: |
+          args=(--tarball "${TARBALL}" --run-dir "${RUNNER_TEMP}/vp/run" --no-gpu --github)
+          if [[ -n "${SDK_FAMILY}" ]]; then args+=(--family "${SDK_FAMILY}"); fi
+          if [[ -n "${SDK_DATE}" ]]; then args+=(--date "${SDK_DATE}"); fi
+          if [[ -n "${SDK_URL}" ]]; then args+=(--url "${SDK_URL}"); fi
+          timeout -k 60 3600 bash "${KIT}/build_tools/prepare_rocm.sh" "${args[@]}"
+
+      - name: Run the robustness-nogpu slice
+        timeout-minutes: 10
+        env:
+          PREFIX: ${{ steps.prepare.outputs.prefix }}
+          TARBALL: ${{ steps.fetch.outputs.tarball }}
+          TIER: ${{ needs.resolve.outputs.tier }}
+        run: |
+          bash "${KIT}/build_tools/run_suite.sh" --suite robustness-nogpu --prefix "${PREFIX}" \
+            --out "${GITHUB_WORKSPACE}/vp-out/results/robustness-nogpu" --tier "${TIER}" \
+            --dist-tarball "${TARBALL}" --gpu-access none
+
+      # Suite results only: a prepared.json from this no-GPU prefix would make
+      # the report record the whole run as having had no GPU.
+      - name: Upload the CPU job results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-cpu
+          path: |
+            vp-out/results
+            !vp-out/results/*/work/**
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Remove the prefix, downloads and staged results
+        if: always()
+        run: rm -rf "${RUNNER_TEMP}/vp" "${GITHUB_WORKSPACE}/vp-out"
+
+  report:
+    name: report
+    needs: [resolve, gpu, cpu]
+    if: always() && needs.resolve.result == 'success' && needs.resolve.outputs.skip != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Python dependencies
+        run: |
+          python3 -c 'import yaml' 2>/dev/null \
+            || { sudo apt-get update -qq && sudo apt-get install -y -qq python3-yaml >/dev/null; }
+
+      - name: Download the job results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: results-*
+          path: vp-in
+
+      - name: Download the run plan
+        uses: actions/download-artifact@v4
+        with:
+          name: run-plan
+          path: vp-plan
+
+      - name: Merge and triage
+        id: triage
+        env:
+          EXPECTED: ${{ needs.resolve.outputs.expected }}
+          TIER: ${{ needs.resolve.outputs.tier }}
+          GFX: ${{ needs.gpu.outputs.gfx }}
+          STALE: ${{ needs.resolve.outputs.stale }}
+        run: |
+          mkdir -p vp-in vp-report
+          python3 "${KIT}/build_tools/results/merge.py" --results vp-in --out vp-report/merged --expect "${EXPECTED}"
+          python3 "${KIT}/report/triage.py" --merged vp-report/merged --plan vp-plan/run-plan.json \
+            --known "${KIT}/baselines/known_issues.yaml" --tier "${TIER}" --gfx "${GFX}" --night "$(date -u +%F)" \
+            --run-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            --out vp-report/triage.json --summary vp-report/summary.md
+          echo "verdict=$(jq -r .verdict vp-report/triage.json)" >> "$GITHUB_OUTPUT"
+          {
+            cat vp-report/summary.md
+            if [[ "${STALE}" == true ]]; then
+              jq -r '"\n> **Warning:** the newest vision-pack nightly (\(.tag)) is \(.age_days) days old."' \
+                vp-plan/run-plan.json
+            fi
+            jq -r '.problems[]? | "\n> **Release problem:** \(.)"' vp-plan/run-plan.json
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vision-pack-report
+          path: |
+            vp-report/triage.json
+            vp-report/summary.md
+            vp-report/merged
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Write the tested marker
+        if: needs.gpu.result == 'success' && needs.gpu.outputs.gfx != ''
+        env:
+          FINGERPRINT: ${{ needs.resolve.outputs.fingerprint }}
+          TAG: ${{ needs.resolve.outputs.tag }}
+          SHA: ${{ needs.resolve.outputs.sha }}
+          TIER: ${{ needs.resolve.outputs.tier }}
+          GFX: ${{ needs.gpu.outputs.gfx }}
+          VERDICT: ${{ steps.triage.outputs.verdict }}
+        run: |
+          mkdir -p vp-tested
+          jq -n --arg fingerprint "${FINGERPRINT}" --arg tag "${TAG}" --arg sha "${SHA}" --arg tier "${TIER}" \
+            --arg gfx "${GFX}" --arg verdict "${VERDICT}" --arg run_id "${GITHUB_RUN_ID}" \
+            --arg at "$(date -u +%FT%TZ)" \
+            '{fingerprint:$fingerprint, tag:$tag, sha:$sha, tier:$tier, gfx:$gfx, verdict:$verdict,
+              run_id:$run_id, tested_at:$at}' > vp-tested/tested.json
+          cat vp-tested/tested.json
+
+      - name: Upload the tested marker
+        if: needs.gpu.result == 'success' && needs.gpu.outputs.gfx != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.resolve.outputs.marker }}
+          path: vp-tested/tested.json
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Fail on a red verdict
+        env:
+          VERDICT: ${{ steps.triage.outputs.verdict }}
+        run: |
+          echo "verdict: ${VERDICT:-unknown}"
+          if [[ "${VERDICT}" == red ]]; then
+            echo "::error::the vision-pack QA verdict is red; see the run summary and the vision-pack-report artifact"
+            exit 1
+          fi

@@ -478,6 +478,15 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
         set_property(TEST openvx_remap_${gdf_base}_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
       endforeach()
 
+      # 24_a - Exact-value correctness test for the CPU AREA scale paths. The
+      # shipped AREA GDFs use a uniform image, where a row shift is invisible.
+      # CPU only: these defects are CPU-side and the script sets the backend.
+      add_test(NAME openvx_scale_area_cpu
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scale_area_tests/test_scale_area.py
+            --runvx ${RUNVX_EXECUTABLE}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
+
       # 24 - Constant-border correctness test for RGB/RGBX Remap
       add_test(NAME openvx_remap_rgb_rgbx_constant_border
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/remap_constant_border_tests/test_remap_constant_border.py

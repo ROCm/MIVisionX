@@ -485,6 +485,16 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
             --gdf-dir ${CMAKE_CURRENT_SOURCE_DIR}/amd_openvx_gdfs/geometric
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       )
+
+      # 25 - Exact-value correctness test for the threshold kernels. Covers the
+      # U1 lowering (threshold -> and/or/xor through virtual images) across all
+      # four float4 lanes, and S16 thresholds outside 0..255. The script runs
+      # both backends itself.
+      add_test(NAME openvx_threshold_kernels
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/threshold_tests/test_threshold_kernels.py
+            --runvx ${RUNVX_EXECUTABLE}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
     endif()
   endif(Python3_FOUND)
 endif(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "OPENCL"))

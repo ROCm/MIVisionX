@@ -579,7 +579,7 @@ Hip_ScaleImage_U8_U8_Area_Int(uint dstWidth, uint dstHeight,
 
     d_float8 f;
     for (int i = 0; i < 8; i++) {
-        uint sum = 0;
+        unsigned long long sum = 0;
         uint dx = (uint)x + (uint)i;
         if (dx < dstWidth) {
             const uchar *pSrcRow = pSrcRow0 + dx * (uint)Nx;

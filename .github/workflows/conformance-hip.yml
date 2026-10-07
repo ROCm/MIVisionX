@@ -103,7 +103,7 @@ jobs:
       image: mivisionx/ubuntu-24.04:rocm-20260818
       options: --device /dev/kfd --device /dev/dri
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           # Shallow clone: the build does not use git history.
           fetch-depth: 1
@@ -130,7 +130,7 @@ jobs:
           make -j$(nproc)
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: build-artifacts-hip
           path: |
@@ -149,7 +149,7 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     steps:
       - name: Checkout merge target ref
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           # Shallow: this job only builds the base ref for the perf baseline and
@@ -179,7 +179,7 @@ jobs:
           make -j$(nproc)
 
       - name: Upload main build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: build-artifacts-hip-main
           path: |
@@ -198,7 +198,7 @@ jobs:
       image: mivisionx/ubuntu-24.04:rocm-20260818
       options: --device /dev/kfd --device /dev/dri
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           # Shallow clone: the build does not use git history.
           fetch-depth: 1
@@ -321,7 +321,7 @@ jobs:
           ls -lh test-bundle-hip.tar.gz
 
       - name: Upload debug build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: build-artifacts-hip-debug
           path: test-bundle-hip.tar.gz
@@ -353,7 +353,7 @@ jobs:
       - build-hip-main
     steps:
       - name: Checkout repo (for perf_gate.py script)
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 1
 
@@ -368,13 +368,13 @@ jobs:
           amd-smi || true
 
       - name: Download PR build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip
           path: ${{ github.workspace }}/pr-pkg
 
       - name: Download main build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-main
           path: ${{ github.workspace }}/main-pkg
@@ -498,7 +498,7 @@ jobs:
 
       - name: Upload PR benchmark results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: perf-gate-hip-results-pr
           path: ${{ github.workspace }}/openvx-mark/build-pr/benchmark_results/
@@ -506,7 +506,7 @@ jobs:
 
       - name: Upload main benchmark results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: perf-gate-hip-results-main
           path: ${{ github.workspace }}/openvx-mark/build-main/benchmark_results/
@@ -536,7 +536,7 @@ jobs:
     steps:
       # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-debug
       - name: Unpack test bundle
@@ -569,7 +569,7 @@ jobs:
         # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: profraw-hip-baseline
           path: profraw/
@@ -586,7 +586,7 @@ jobs:
     steps:
       # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-debug
       - name: Unpack test bundle
@@ -618,7 +618,7 @@ jobs:
         # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: profraw-hip-graph
           path: profraw/
@@ -635,7 +635,7 @@ jobs:
     steps:
       # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-debug
       - name: Unpack test bundle
@@ -667,7 +667,7 @@ jobs:
         # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: profraw-hip-data-objects
           path: profraw/
@@ -684,7 +684,7 @@ jobs:
     steps:
       # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-debug
       - name: Unpack test bundle
@@ -716,7 +716,7 @@ jobs:
         # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: profraw-hip-image-ops
           path: profraw/
@@ -733,7 +733,7 @@ jobs:
     steps:
       # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-debug
       - name: Unpack test bundle
@@ -765,7 +765,7 @@ jobs:
         # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: profraw-hip-vision-color
           path: profraw/
@@ -782,7 +782,7 @@ jobs:
     steps:
       # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-debug
       - name: Unpack test bundle
@@ -814,7 +814,7 @@ jobs:
         # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: profraw-hip-vision-filters
           path: profraw/
@@ -831,7 +831,7 @@ jobs:
     steps:
       # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-debug
       - name: Unpack test bundle
@@ -863,7 +863,7 @@ jobs:
         # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: profraw-hip-vision-arithmetic
           path: profraw/
@@ -880,7 +880,7 @@ jobs:
     steps:
       # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-debug
       - name: Unpack test bundle
@@ -912,7 +912,7 @@ jobs:
         # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: profraw-hip-vision-geometric
           path: profraw/
@@ -929,7 +929,7 @@ jobs:
     steps:
       # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-debug
       - name: Unpack test bundle
@@ -961,7 +961,7 @@ jobs:
         # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: profraw-hip-vision-features
           path: profraw/
@@ -978,7 +978,7 @@ jobs:
     steps:
       # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-debug
       - name: Unpack test bundle
@@ -1010,7 +1010,7 @@ jobs:
         # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: profraw-hip-vision-statistics
           path: profraw/
@@ -1027,7 +1027,7 @@ jobs:
     steps:
       # No checkout: this job only runs the prebuilt CTS from the artifact.
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-debug
       - name: Unpack test bundle
@@ -1059,7 +1059,7 @@ jobs:
         # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: profraw-hip-vision-pyramid
           path: profraw/
@@ -1075,7 +1075,7 @@ jobs:
     needs: build-hip-debug
     steps:
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-debug
       - name: Unpack test bundle
@@ -1102,7 +1102,7 @@ jobs:
       - name: Upload profraw
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: profraw-hip-pipelining
           path: profraw/
@@ -1118,7 +1118,7 @@ jobs:
     needs: build-hip-debug
     steps:
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-debug
       - name: Unpack test bundle
@@ -1145,7 +1145,7 @@ jobs:
       - name: Upload profraw
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: profraw-hip-streaming
           path: profraw/
@@ -1164,7 +1164,7 @@ jobs:
     steps:
       # No checkout: this job only runs the prebuilt API tests from the artifact.
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-debug
       - name: Unpack test bundle
@@ -1227,7 +1227,7 @@ jobs:
         # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: profraw-hip-api-tests
           path: profraw/
@@ -1242,9 +1242,9 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-debug
       - name: Unpack test bundle
@@ -1285,7 +1285,7 @@ jobs:
         # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: profraw-hip-gdf-tests
           path: profraw/
@@ -1300,9 +1300,9 @@ jobs:
       options: --device /dev/kfd --device /dev/dri
     needs: build-hip-debug
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Download debug build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-debug
       - name: Unpack test bundle
@@ -1349,7 +1349,7 @@ jobs:
         # coverage-summary step tolerates missing profraw via --failure-mode=all).
         if: always()
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: profraw-hip-vision-tests
           path: profraw/
@@ -1399,7 +1399,7 @@ jobs:
       - gdf-tests-hip
     if: always() && needs.build-hip.result == 'success' && needs.baseline-hip.result == 'success'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Install benchmark dependencies
         run: |
@@ -1416,7 +1416,7 @@ jobs:
           amd-smi || true
 
       - name: Download AMD OpenVX HIP Release artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip
           path: ${{ github.workspace }}/artifacts
@@ -1581,7 +1581,7 @@ jobs:
 
       - name: Upload per-impl benchmark results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: benchmark-results-hip
           path: |
@@ -1592,7 +1592,7 @@ jobs:
 
       - name: Upload pairwise comparison
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: benchmark-comparison-hip
           path: ${{ github.workspace }}/openvx-mark/comparisons/
@@ -1605,7 +1605,7 @@ jobs:
       # inspectable after the fact for any divergence the verifier flagged.
       - name: Upload sentinel output dumps
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: cross-verify-dumps-hip
           path: |
@@ -1648,7 +1648,7 @@ jobs:
       - gdf-tests-hip
       - vision-tests-hip
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Install coverage tools
         run: |
@@ -1667,7 +1667,7 @@ jobs:
           amd-smi || true
 
       - name: Download debug build (for libopenvx.so)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: build-artifacts-hip-debug
 
@@ -1675,7 +1675,7 @@ jobs:
         run: tar -xzf test-bundle-hip.tar.gz
 
       - name: Download all HIP profraw artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           pattern: profraw-hip-*
           path: all-profraw
@@ -1941,7 +1941,7 @@ jobs:
 
       - name: Upload coverage artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: code-coverage-report-hip
           path: |

@@ -401,9 +401,20 @@ __device__ __forceinline__ void hip_store_RGB8(uchar *pDstImage, uint dstIdx, co
     if (valid >= 8) {
         *((d_uint6 *)(&pDstImage[dstIdx])) = pix;
     } else {
-        uchar *dst = pDstImage + dstIdx;
-        const uchar *src = (const uchar *)&pix;
-        for (int i = 0; i < valid * 3; i++) {
+        // dstIdx starts a group of 8 pixels, so it is a multiple of 24 inside a
+        // row whose stride is a multiple of 16: the partial store is dword
+        // aligned. Write whole dwords and leave only the 1-3 byte remainder
+        // (valid * 3 is a multiple of 3, not of 4) to a byte copy.
+        int bytes = valid * 3;
+        int words = bytes >> 2;
+        uint *dstWord = (uint *)(pDstImage + dstIdx);
+        const uint *srcWord = (const uint *)&pix;
+        for (int i = 0; i < words; i++) {
+            dstWord[i] = srcWord[i];
+        }
+        uchar *dst = pDstImage + dstIdx + (words << 2);
+        const uchar *src = (const uchar *)&pix + (words << 2);
+        for (int i = 0; i < (bytes & 3); i++) {
             dst[i] = src[i];
         }
     }
@@ -413,10 +424,12 @@ __device__ __forceinline__ void hip_store_RGBX8(uchar *pDstImage, uint dstIdx, c
     if (valid >= 8) {
         *((d_uint8 *)(&pDstImage[dstIdx])) = pix;
     } else {
-        uchar *dst = pDstImage + dstIdx;
-        const uchar *src = (const uchar *)&pix;
-        for (int i = 0; i < valid * 4; i++) {
-            dst[i] = src[i];
+        // RGBX is 4 bytes per pixel and dstIdx is dword aligned, so a partial
+        // store is exactly `valid` whole dwords with no byte remainder.
+        uint *dstWord = (uint *)(pDstImage + dstIdx);
+        const uint *srcWord = (const uint *)&pix;
+        for (int i = 0; i < valid; i++) {
+            dstWord[i] = srcWord[i];
         }
     }
 }

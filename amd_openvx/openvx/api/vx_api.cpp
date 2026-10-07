@@ -44,15 +44,62 @@ THE SOFTWARE.
 #include "ago_internal.h"
 #define VX_MAX_TENSOR_DIMENSIONS 6
 
+// Copies the pixels of a VX_DF_IMAGE_U1 patch between two bit-packed buffers (pixel x lives at bit
+// (x & 7) of byte (x >> 3)). Only the dim_x pixels of each row are written: a patch does not have
+// to start or end on a byte boundary [REQ-0938], and the bits of a partially covered byte that lie
+// outside the patch have to keep their value. src_bit_offset/dst_bit_offset are the bit position
+// (0..7) of the first pixel of the patch in the first byte of each row.
+static void agoCopyU1Patch(vx_uint8 * dst, vx_size dst_stride, vx_uint32 dst_bit_offset,
+                           const vx_uint8 * src, vx_size src_stride, vx_uint32 src_bit_offset,
+                           vx_uint32 dim_x, vx_uint32 dim_y)
+{
+    for (vx_uint32 y = 0; y < dim_y; y++, dst += dst_stride, src += src_stride) {
+        if (src_bit_offset == dst_bit_offset) {
+            // same alignment on both sides: whole bytes are moved as they are and only the first
+            // and last byte of the row need masking
+            vx_uint32 bit = dst_bit_offset;
+            vx_uint32 remaining = dim_x;
+            vx_uint8 * d = dst;
+            const vx_uint8 * s = src;
+            if (bit) {
+                vx_uint32 count = (8 - bit) < remaining ? (8 - bit) : remaining;
+                vx_uint8 mask = (vx_uint8)(((1u << count) - 1u) << bit);
+                *d = (vx_uint8)((*d & ~mask) | (*s & mask));
+                remaining -= count; d++; s++;
+            }
+            if (remaining >> 3) {
+                memcpy(d, s, remaining >> 3);
+                d += remaining >> 3; s += remaining >> 3;
+            }
+            if (remaining & 7) {
+                vx_uint8 mask = (vx_uint8)((1u << (remaining & 7)) - 1u);
+                *d = (vx_uint8)((*d & ~mask) | (*s & mask));
+            }
+        }
+        else {
+            for (vx_uint32 x = 0; x < dim_x; x++) {
+                vx_uint32 sb = src_bit_offset + x, db = dst_bit_offset + x;
+                vx_uint8 value = (vx_uint8)((src[sb >> 3] >> (sb & 7)) & 1u);
+                dst[db >> 3] = (vx_uint8)((dst[db >> 3] & ~(1u << (db & 7))) | ((vx_uint32)value << (db & 7)));
+            }
+        }
+    }
+}
+
 static inline vx_uint32 vxComputePatchOffset(vx_uint32 x, vx_uint32 y, const vx_imagepatch_addressing_t *addr)
 {
 #if VX_SCALE_UNITY == (1024u)
-    return ((addr->stride_y * ((addr->scale_y * y) >> 10)) +
-        (addr->stride_x * ((addr->scale_x * x) >> 10)));
+    const vx_uint32 scaled_x = (addr->scale_x * x) >> 10;
+    const vx_uint32 row_offset = addr->stride_y * ((addr->scale_y * y) >> 10);
 #else
-    return ((addr->stride_y * ((addr->scale_y * y) / VX_SCALE_UNITY)) +
-        (addr->stride_x * ((addr->scale_x * x) / VX_SCALE_UNITY)));
+    const vx_uint32 scaled_x = (addr->scale_x * x) / VX_SCALE_UNITY;
+    const vx_uint32 row_offset = addr->stride_y * ((addr->scale_y * y) / VX_SCALE_UNITY);
 #endif
+    // sub-byte formats (VX_DF_IMAGE_U1) report stride_x == 0 and carry the pixel distance in
+    // stride_x_bits; the address is that of the byte containing the pixel (rounded down)
+    if (addr->stride_x == 0 && addr->stride_x_bits != 0)
+        return row_offset + ((scaled_x * addr->stride_x_bits) >> 3);
+    return row_offset + addr->stride_x * scaled_x;
 }
 
 /*! \brief Creates a <tt>\ref vx_context</tt>.
@@ -1291,6 +1338,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryImage(vx_image image_, vx_enum attribu
                     *(vx_size *)ptr = image->u.img.planes;
                     status = VX_SUCCESS;
                 }
+                else if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = (vx_uint32)image->u.img.planes;
+                    status = VX_SUCCESS;
+                }
                 break;
             case VX_IMAGE_SPACE:
                 if (size == sizeof(vx_enum)) {
@@ -1459,12 +1510,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetImageAttribute(vx_image image_, vx_enum 
                     status = VX_SUCCESS;
                 }
                 break;
-            case VX_IMAGE_ATTRIBUTE_RANGE:
-                if (size == sizeof(vx_enum)) {
-                    image->u.img.channel_range = *(vx_channel_range_e *)ptr;
-                    status = VX_SUCCESS;
-                }
-                break;
+            // VX_IMAGE_RANGE is read-only, unlike VX_IMAGE_SPACE above; it falls
+            // through to the default arm, which reports VX_ERROR_NOT_SUPPORTED
 #if ENABLE_OPENCL
             case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER:
                 if (size == sizeof(cl_mem) && image->u.img.enableUserBufferGPU) {
@@ -1783,6 +1830,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxAccessImagePatch(vx_image image_,
                 addr->step_y = 1 << img->u.img.y_scale_factor_is_2;
                 addr->stride_x = ((img->u.img.pixel_size_in_bits_num & 7) || (img->u.img.pixel_size_in_bits_denom > 1)) ?
                     0 : (img->u.img.pixel_size_in_bits_num >> 3);
+                // stride_x is zero for sub-byte formats such as VX_DF_IMAGE_U1, so the
+                // x-direction distance is only available through stride_x_bits
+                addr->stride_x_bits = (vx_uint16)(img->u.img.pixel_size_in_bits_num / img->u.img.pixel_size_in_bits_denom);
                 addr->stride_y = img->u.img.stride_in_bytes;
             }
             vx_uint8 * ptr_internal = img->buffer +
@@ -1835,7 +1885,15 @@ VX_API_ENTRY vx_status VX_API_CALL vxAccessImagePatch(vx_image image_,
 #endif
                     if (item.used_external_ptr) {
                         // copy if read is requested with explicit external buffer
-                        if (addr->stride_x == 0 || ((addr->stride_x << 3) == img->u.img.pixel_size_in_bits_num && img->u.img.pixel_size_in_bits_denom == 1))
+                        if (img->u.img.format == VX_DF_IMAGE_U1) {
+                            // sub-byte pixels: the patch may start and end inside a byte, so it
+                            // is copied bit-exactly rather than in whole bytes
+                            // the bit offsets of the pixels are preserved in the caller's buffer too
+                            agoCopyU1Patch(ptr_returned, addr->stride_y, rect->start_x & 7,
+                                ptr_internal, img->u.img.stride_in_bytes, rect->start_x & 7,
+                                rect->end_x - rect->start_x, rect->end_y - rect->start_y);
+                        }
+                        else if (addr->stride_x == 0 || ((addr->stride_x << 3) == img->u.img.pixel_size_in_bits_num && img->u.img.pixel_size_in_bits_denom == 1))
                             HafCpu_ChannelCopy_U8_U8(ImageWidthInBytesFloor((rect->end_x - rect->start_x) >> img->u.img.x_scale_factor_is_2, img),
                                 ((rect->end_y - rect->start_y) >> img->u.img.y_scale_factor_is_2), ptr_returned, addr->stride_y, ptr_internal, img->u.img.stride_in_bytes);
                         else
@@ -1920,7 +1978,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxCommitImagePatch(vx_image image_,
                         vx_uint8 * buffer = img->buffer + (rect->start_y >> img->u.img.y_scale_factor_is_2) * img->u.img.stride_in_bytes +
                             ImageWidthInBytesFloor((rect->start_x >> img->u.img.x_scale_factor_is_2), img);
 
-                        if (addr->stride_x == 0 || ((addr->stride_x << 3) == img->u.img.pixel_size_in_bits_num && img->u.img.pixel_size_in_bits_denom == 1))
+                        if (img->u.img.format == VX_DF_IMAGE_U1) {
+                            // sub-byte pixels: only the pixels inside the patch are written, so a
+                            // patch that ends inside a byte leaves the rest of that byte alone
+                            agoCopyU1Patch(buffer, img->u.img.stride_in_bytes, rect->start_x & 7,
+                                (const vx_uint8 *)ptr, addr->stride_y, rect->start_x & 7,
+                                rect->end_x - rect->start_x, rect->end_y - rect->start_y);
+                        }
+                        else if (addr->stride_x == 0 || ((addr->stride_x << 3) == img->u.img.pixel_size_in_bits_num && img->u.img.pixel_size_in_bits_denom == 1))
                             HafCpu_ChannelCopy_U8_U8(ImageWidthInBytesFloor(((rect->end_x - rect->start_x) >> img->u.img.x_scale_factor_is_2), img),
                                 ((rect->end_y - rect->start_y) >> img->u.img.y_scale_factor_is_2), buffer, img->u.img.stride_in_bytes, (vx_uint8 *)ptr, addr->stride_y);
                         else
@@ -2218,11 +2283,20 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapImagePatch(vx_image image_, const vx_rec
                 *ptr = ptr_returned;
                 addr->dim_x = rect->end_x - rect->start_x;
                 addr->dim_y = rect->end_y - rect->start_y;
+                if (img->u.img.format == VX_DF_IMAGE_U1) {
+                    // the returned pointer is the byte holding the first pixel, so the layout is
+                    // widened as if the patch began at that byte boundary; the application shifts
+                    // by (rect->start_x & 7) to reach its first pixel
+                    addr->dim_x += rect->start_x & 7;
+                }
                 addr->scale_x = VX_SCALE_UNITY >> img->u.img.x_scale_factor_is_2;
                 addr->scale_y = VX_SCALE_UNITY >> img->u.img.y_scale_factor_is_2;
                 addr->step_x = 1 << img->u.img.x_scale_factor_is_2;
                 addr->step_y = 1 << img->u.img.y_scale_factor_is_2;
                 addr->stride_x = (img->u.img.pixel_size_in_bits_denom > 1 || (img->u.img.pixel_size_in_bits_num & 7)) ? 0 : (img->u.img.pixel_size_in_bits_num >> 3);
+                // stride_x is zero for sub-byte formats such as VX_DF_IMAGE_U1, so the
+                // x-direction distance is only available through stride_x_bits
+                addr->stride_x_bits = (vx_uint16)(img->u.img.pixel_size_in_bits_num / img->u.img.pixel_size_in_bits_denom);
                 addr->stride_y = img->u.img.stride_in_bytes;
             }
         }
@@ -2433,9 +2507,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxRegisterKernelLibrary(vx_context context, c
     if (agoIsValidContext(context))
     {
         status = VX_ERROR_INVALID_PARAMETERS;
-        // A registered module has hmodule==NULL, so agoUnloadModule cannot look up an
-        // unpublish callback from a shared library later. Require it up front.
-        if (module && publish && unpublish)
+        // unpublish is optional: a registered module has hmodule==NULL so there is no shared
+        // library to recover vxUnpublishKernels from, and vxUnloadKernels then has nothing to
+        // call and simply drops the module.
+        if (module && publish)
         {
             CAgoLock lock(context->cs);
             // check if the module is already registered
@@ -2774,6 +2849,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxAddParameterToKernel(vx_kernel kernel, vx_u
         // add parameter if the kernel is not finalized and not a built-in kernel and not initialized earlier
         if((data_type == VX_TYPE_DELAY && dir != VX_INPUT))
                 return VX_ERROR_INVALID_PARAMETERS;
+        // a user kernel declared its parameter count up front, so an index beyond it is invalid
+        if (kernel->user_kernel == vx_true_e && index >= kernel->argCount)
+                return VX_ERROR_INVALID_PARAMETERS;
         if (kernel->external_kernel && !kernel->finalized &&
             index < AGO_MAX_PARAMS &&
             (dir == VX_INPUT || dir == VX_OUTPUT || dir == VX_BIDIRECTIONAL) &&
@@ -3059,6 +3137,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
         graph->isReadyToExecute = vx_false_e;
         graph->state = VX_GRAPH_STATE_UNVERIFIED;
 
+        // this call performs a complete verification, so a failure recorded by an
+        // earlier one must not stand: agoOptimizeGraph skips the whole optimizer
+        // while graph->status is set, which would make the failure permanent even
+        // after the application has corrected what caused it
+        graph->status = VX_SUCCESS;
+
         // check to see if user requested for graph dump
         vx_uint32 ago_graph_dump = 0;
         char textBuffer[256];
@@ -3093,8 +3177,16 @@ VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
             else {
                 graph->isReadyToExecute = vx_true_e;
             }
-            graph->verified = vx_true_e;
-            graph->state = VX_GRAPH_STATE_VERIFIED;
+            // only a graph that came through the optimizer and the initializer is
+            // verified; the two arms above report failure, so claiming
+            // VX_GRAPH_STATE_VERIFIED for them contradicts the status returned
+            if (status == VX_SUCCESS) {
+                graph->verified = vx_true_e;
+                graph->state = VX_GRAPH_STATE_VERIFIED;
+            }
+            else {
+                graph->state = VX_GRAPH_STATE_UNVERIFIED;
+            }
         }
 
         if (ago_graph_dump) {
@@ -3605,6 +3697,18 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryNode(vx_node node, vx_enum attribute, 
                     status = VX_SUCCESS;
                 }
                 break;
+            case VX_NODE_IS_REPLICATED:
+                if (size == sizeof(vx_bool)) {
+                    *(vx_bool *)ptr = node->is_replicated;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_NODE_REPLICATE_FLAGS:
+                if (size == sizeof(vx_bool) * node->paramCount) {
+                    memcpy(ptr, node->replicate_flags, size);
+                    status = VX_SUCCESS;
+                }
+                break;
 #if OPENVX_USE_PIPELINING
             case VX_NODE_STATE:
                 if (size == sizeof(vx_uint32)) {
@@ -3886,7 +3990,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetNodeTarget(vx_node node, vx_enum target_
 VX_API_ENTRY vx_status VX_API_CALL vxReplicateNode(vx_graph graph, vx_node first_node, vx_bool replicate[], vx_uint32 number_of_parameters)
 {
     vx_status status = VX_ERROR_INVALID_REFERENCE;
-    if (agoIsValidGraph(graph) && agoIsValidNode(first_node)) {
+    if (agoIsValidGraph(graph) && agoIsValidNode(first_node) && replicate) {
         status = VX_FAILURE;
         if (first_node->ref.scope == &graph->ref && first_node->paramCount == number_of_parameters) {
             status = VX_SUCCESS;
@@ -3931,7 +4035,17 @@ VX_API_ENTRY vx_status VX_API_CALL vxReplicateNode(vx_graph graph, vx_node first
                             status = vxSetParameterByIndex(node, i, &paramList[i]->ref);
                         }
                     }
+                    if (status == VX_SUCCESS) {
+                        node->is_replicated = vx_true_e;
+                        for (vx_uint32 i = 0; i < number_of_parameters; i++)
+                            node->replicate_flags[i] = replicate[i];
+                    }
                 }
+            }
+            if (status == VX_SUCCESS) {
+                first_node->is_replicated = vx_true_e;
+                for (vx_uint32 i = 0; i < number_of_parameters; i++)
+                    first_node->replicate_flags[i] = replicate[i];
             }
         }
     }
@@ -4103,6 +4217,18 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryParameter(vx_parameter param, vx_enum 
                     else {
                         status = VX_ERROR_NOT_SUPPORTED;
                     }
+                }
+                break;
+            case VX_PARAMETER_META_FORMAT:
+                if (size == sizeof(vx_meta_format)) {
+                    if (!param->meta) {
+                        param->meta = new AgoMetaFormat;
+                        agoResetReference(&param->meta->data.ref, param->type, param->ref.context, param->ref.scope);
+                    }
+                    // each query hands out one more reference for the application to release
+                    param->meta->data.ref.external_count++;
+                    *(vx_meta_format *)ptr = (vx_meta_format)param->meta;
+                    status = VX_SUCCESS;
                 }
                 break;
             default:
@@ -4556,7 +4682,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyScalar(vx_scalar scalar_, void *user_pt
     if (agoIsValidData(scalar, VX_TYPE_SCALAR))
     {
         status = VX_ERROR_INVALID_PARAMETERS;
-        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr) {
+        if (scalar->isVirtual) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr) {
             if (usage == VX_READ_ONLY)
                 status = vxReadScalarValue(scalar_, user_ptr);
             else if (usage == VX_WRITE_ONLY)
@@ -4573,7 +4702,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyScalarWithSize(vx_scalar scalar_, vx_si
     if (agoIsValidData(scalar, VX_TYPE_SCALAR))
     {
         status = VX_ERROR_INVALID_PARAMETERS;
-        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr && (scalar->u.scalar.itemsize == size)) {
+        if (scalar->isVirtual) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr && (scalar->u.scalar.itemsize == size)) {
             if (usage == VX_READ_ONLY)
                 status = vxReadScalarValue(scalar_, user_ptr);
             else if (usage == VX_WRITE_ONLY)
@@ -4586,6 +4718,33 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyScalarWithSize(vx_scalar scalar_, vx_si
 /*==============================================================================
 REFERENCE
 =============================================================================*/
+
+/*! \brief Returns true when the reference is backed by an AgoData. AgoContext, AgoGraph,
+* AgoNode, AgoKernel and AgoParameter share no layout with it, so a reference must never be
+* cast to AgoData without checking its type first.
+*/
+static bool agoIsDataReference(vx_reference ref)
+{
+    return ref && ((ref->type >= VX_TYPE_DELAY && ref->type <= VX_TYPE_REMAP) ||
+                   (ref->type == VX_TYPE_OBJECT_ARRAY) || (ref->type == VX_TYPE_TENSOR) ||
+                   (ref->type >= VX_TYPE_VENDOR_OBJECT_START && ref->type <= VX_TYPE_VENDOR_OBJECT_END));
+}
+
+/*! \brief Returns the name storage of a reference, or NULL when the object type has none.
+* Only AgoData backed objects and AgoGraph keep a name.
+*/
+static std::string * agoGetReferenceNameStorage(vx_reference ref)
+{
+    if (ref) {
+        if (ref->type == VX_TYPE_GRAPH) {
+            return &((AgoGraph *)ref)->name;
+        }
+        else if (agoIsDataReference(ref)) {
+            return &((AgoData *)ref)->name;
+        }
+    }
+    return nullptr;
+}
 
 /*! \brief Queries any reference type for some basic information (count, type).
 * \param [in] ref The reference to query.
@@ -4626,23 +4785,24 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryReference(vx_reference ref, vx_enum at
                 }
                 break;
             case VX_REFERENCE_NAME:
-                if (size == sizeof(vx_char*)) {
-                    if(ref->type == VX_TYPE_GRAPH)
-                    {
-                        AgoGraph * graph = (AgoGraph *)ref;
-                        //strncpy((char *)ptr, data->name.c_str(), size);
-                        *(vx_char**)ptr = &graph->name[0];
-                        status = VX_SUCCESS;
-                    }
-                    else
-                    {
-                        AgoData * data = (AgoData *)ref;
-                        //strncpy((char *)ptr, data->name.c_str(), size);
-                        *(vx_char**)ptr = &data->name[0];
-                        status = VX_SUCCESS;
-                    }
+            {
+                static vx_char unnamed[1] = { '\0' };
+                std::string * refName = agoGetReferenceNameStorage(ref);
+                vx_char * name = refName ? &(*refName)[0] :
+                    ((ref->type == VX_TYPE_KERNEL) ? ((AgoKernel *)ref)->name : unnamed);
+                if (size == sizeof(vx_char *)) {
+                    // hand back the implementation's copy of the name
+                    *(vx_char **)ptr = name;
+                    status = VX_SUCCESS;
                 }
-                break;
+                else if (size > 0) {
+                    // copy into the caller's buffer
+                    strncpy((vx_char *)ptr, name, size);
+                    ((vx_char *)ptr)[size - 1] = '\0';
+                    status = VX_SUCCESS;
+                }
+            }
+            break;
             default:
                 status = VX_ERROR_NOT_SUPPORTED;
                 break;
@@ -4668,6 +4828,16 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseReference(vx_reference* ref_ptr)
     if (ref_ptr) {
         vx_reference ref = *ref_ptr;
         if (agoIsValidReference(ref)) {
+            // a meta format reports the data type it describes (which may even be the generic
+            // VX_TYPE_REFERENCE), so it has to be recognised by its flag before the type switch
+            // would route it to that type's release function. It is owned by the parameter or
+            // node that holds it and outlives these releases.
+            if (ref->is_meta_format) {
+                if (ref->external_count > 0)
+                    ref->external_count--;
+                *ref_ptr = NULL;
+                return VX_SUCCESS;
+            }
             switch (ref->type) {
             case VX_TYPE_CONTEXT:
                 status = vxReleaseContext((vx_context *)ref_ptr);
@@ -4778,29 +4948,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxRetainReference(vx_reference ref)
 VX_API_ENTRY vx_status VX_API_CALL vxSetReferenceName(vx_reference ref, const vx_char *name)
 {
     vx_status status = VX_ERROR_INVALID_REFERENCE;
-    if (agoIsValidReference(ref) && ((ref->type >= VX_TYPE_DELAY && ref->type <= VX_TYPE_REMAP) ||
-        (ref->type == VX_TYPE_TENSOR) ||
-        (ref->type >= VX_TYPE_VENDOR_OBJECT_START && ref->type <= VX_TYPE_VENDOR_OBJECT_END)))
-    {
-        AgoData * data = (AgoData *)ref;
-        //printf("%s %s %lu\n", data->name.c_str(), name, strlen(name));
-        //printf("before:::strlen(data name) = %lu\n", data->name.length());
-        //data->name.assign(name, strlen(name));
-        data->name = name;
-        //std::copy(name, name + strlen(name), std::back_inserter(data->name));
-        //strncpy((char *)data->name.c_str(), name, strnlen(name, VX_MAX_REFERENCE_NAME));
-        //data->name.assign("name", 4);
-        //sscanf(name, "%s", (char *)data->name.c_str());
-        //printf("after:::strlen(data name) = %lu\n", data->name.length());
-        //printf("after == %s\n", data->name.c_str());
-
-        status = VX_SUCCESS;
-    }
-    else if(agoIsValidReference(ref) && (ref->type == VX_TYPE_GRAPH))
-    {
-        AgoGraph * graph = (AgoGraph *)ref;
-        graph->name = name;
-        status = VX_SUCCESS;
+    if (agoIsValidReference(ref)) {
+        std::string * refName = agoGetReferenceNameStorage(ref);
+        if (refName) {
+            // a NULL name un-names the reference
+            refName->assign(name ? name : "");
+            status = VX_SUCCESS;
+        }
     }
     return status;
 }
@@ -6243,7 +6397,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdValue(vx_threshold thresh, vx_
     vx_status status = VX_ERROR_INVALID_REFERENCE;
     if (agoIsValidData(data, VX_TYPE_THRESHOLD)) {
         status = VX_ERROR_INVALID_PARAMETERS;
-        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && value_ptr) {
+        if (data->isVirtual) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if ((user_mem_type == VX_MEMORY_TYPE_HOST) && value_ptr) {
             status = VX_ERROR_NOT_COMPATIBLE;
             if(data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
                 status = VX_ERROR_NO_MEMORY;
@@ -6328,7 +6485,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdRange(vx_threshold thresh, vx_
     vx_status status = VX_ERROR_INVALID_REFERENCE;
     if (agoIsValidData(data, VX_TYPE_THRESHOLD)) {
         status = VX_ERROR_INVALID_PARAMETERS;
-        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && lower_value_ptr && upper_value_ptr) {
+        if (data->isVirtual) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if ((user_mem_type == VX_MEMORY_TYPE_HOST) && lower_value_ptr && upper_value_ptr) {
             status = VX_ERROR_NOT_COMPATIBLE;
             if(data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
                 status = VX_ERROR_NO_MEMORY;
@@ -6410,7 +6570,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdOutput(vx_threshold thresh, vx
     vx_status status = VX_ERROR_INVALID_REFERENCE;
     if (agoIsValidData(data, VX_TYPE_THRESHOLD)) {
         status = VX_ERROR_INVALID_PARAMETERS;
-        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && true_value_ptr && false_value_ptr) {
+        if (data->isVirtual) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if ((user_mem_type == VX_MEMORY_TYPE_HOST) && true_value_ptr && false_value_ptr) {
             status = VX_ERROR_NO_MEMORY;
                 AgoData * dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
 #if ENABLE_OPENCL
@@ -6452,8 +6615,33 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdOutput(vx_threshold thresh, vx
                 status = VX_SUCCESS;
             }
             else if (usage == VX_WRITE_ONLY){
+                // The threshold kernels apply non-default true/false values on the CPU only, and
+                // the target of a node is chosen when its graph is verified (see
+                // agoThresholdRestrictTargetSupport). A change between the default 255/0 and any
+                // other pair can therefore make that choice stale, so the graphs using this
+                // threshold have to be verified again before they run.
+                const bool wasDefault = (data->u.thr.true_value.U8 == 255 && data->u.thr.false_value.U8 == 0);
                 memcpy(&data->u.thr.true_value, true_value_ptr, sizeof(vx_pixel_value_t));
                 memcpy(&data->u.thr.false_value, false_value_ptr, sizeof(vx_pixel_value_t));
+                const bool isDefault = (data->u.thr.true_value.U8 == 255 && data->u.thr.false_value.U8 == 0);
+                if (wasDefault != isDefault && data->ref.context) {
+                    CAgoLock lock(data->ref.context->cs);
+                    for (AgoGraph * graph = data->ref.context->graphList.head; graph; graph = graph->next) {
+                        if (!graph->verified)
+                            continue;
+                        for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
+                            bool uses = false;
+                            for (vx_uint32 i = 0; i < node->paramCount && !uses; i++)
+                                uses = (node->paramList[i] == data);
+                            if (uses) {
+                                graph->reverify = graph->verified;
+                                graph->verified = vx_false_e;
+                                graph->state = VX_GRAPH_STATE_UNVERIFIED;
+                                break;
+                            }
+                        }
+                    }
+                }
                 status = VX_SUCCESS;
             }
         }
@@ -6505,12 +6693,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetThresholdAttribute(vx_threshold thresh, 
                     status = VX_SUCCESS;
                 }
                 break;
-            case VX_THRESHOLD_TYPE:
-                if (size == sizeof(vx_enum)) {
-                    data->u.thr.thresh_type = *(vx_enum *)ptr;
-                    status = VX_SUCCESS;
-                }
-                break;
+            // VX_THRESHOLD_TYPE is read-only [REQ-1378]: it falls through to the default
+            // case and reports VX_ERROR_NOT_SUPPORTED
             case VX_THRESHOLD_INPUT_FORMAT:
                 if (size == sizeof(vx_df_image)) {
                     data->u.thr.input_format = *(vx_df_image *)ptr;
@@ -7524,6 +7708,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryPyramid(vx_pyramid pyr, vx_enum attrib
                     *(vx_size *)ptr = data->u.pyr.levels;
                     status = VX_SUCCESS;
                 }
+                else if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = (vx_uint32)data->u.pyr.levels;
+                    status = VX_SUCCESS;
+                }
                 break;
             case VX_PYRAMID_ATTRIBUTE_SCALE:
                 if (size == sizeof(vx_float32)) {
@@ -7719,9 +7907,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyRemapPatch(vx_remap remap,
         vx_bool zero_area = ((((end_x - start_x) == 0) || ((end_y - start_y) == 0)) ? vx_true_e : vx_false_e);
         bool paramsValid = true;
 
+        if (data->isVirtual)
+            return VX_ERROR_OPTIMIZED_AWAY;
+
         if(user_coordinate_type != VX_TYPE_COORDINATES2DF)
             paramsValid = false;
-        if(user_stride_y < sizeof(vx_coordinates2df_t)*(rect->end_x - rect->start_x))
+        if(user_stride_y < sizeof(vx_coordinates2df_t)*(vx_size)(end_x - start_x))
             paramsValid = false;
         if(user_mem_type != VX_MEMORY_TYPE_HOST && user_mem_type != VX_MEMORY_TYPE_NONE)
             paramsValid = false;
@@ -7738,7 +7929,6 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyRemapPatch(vx_remap remap,
                     return VX_FAILURE;
                 }
             }
-            vx_size stride = user_stride_y / sizeof(vx_coordinates2df_t);
             AgoData * dataToSync = data;
 #if ENABLE_OPENCL
             if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
@@ -7773,49 +7963,53 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyRemapPatch(vx_remap remap,
                 }
             }
 #endif
-            if (usage == VX_READ_ONLY) {
-                vx_coordinates2df_t *ptr = (vx_coordinates2df_t*)user_ptr;
-                vx_uint32 i;
-                vx_uint32 j;
-                for (i = start_y; i < end_y; i++)
+            // user_ptr addresses the patch, not the whole remap, and user_stride_y is in bytes
+            // (it may include padding that is not a multiple of the element size), so rows are
+            // located with a byte offset
+            vx_status copy_status = VX_SUCCESS;
+            for (vx_uint32 i = start_y; i < end_y && copy_status == VX_SUCCESS; i++)
+            {
+                vx_uint8 * row = (vx_uint8 *)user_ptr + (vx_size)(i - start_y) * user_stride_y;
+                for (vx_uint32 j = start_x; j < end_x; j++)
                 {
-                    for (j = start_x; j < end_x; j++)
-                    {
-                        vx_coordinates2df_t *coord_ptr = &(ptr[i * stride + j]);
-                        status = vxGetRemapPoint(remap, j, i, &coord_ptr->x, &coord_ptr->y);
-                        if(status != VX_SUCCESS)
-                        {
-                            break;
-                        }
-
-                    }
-                }
-            }
-            else {
-                vx_coordinates2df_t *ptr = (vx_coordinates2df_t*)user_ptr;
-                vx_uint32 i;
-                vx_uint32 j;
-                for (i = start_y; i < end_y; i++)
-                {
-                    for (j = start_x; j < end_x; j++)
-                    {
-                        vx_coordinates2df_t *coord_ptr = &(ptr[i * stride + j]);
-                        status = vxSetRemapPoint(remap, j, i, coord_ptr->x, coord_ptr->y);
-                        if(status != VX_SUCCESS)
-                        {
-                            break;
-                        }
-
-                    }
+                    vx_coordinates2df_t *coord_ptr = (vx_coordinates2df_t *)(row + (vx_size)(j - start_x) * sizeof(vx_coordinates2df_t));
+                    if (usage == VX_READ_ONLY)
+                        copy_status = vxGetRemapPoint(remap, j, i, &coord_ptr->x, &coord_ptr->y);
+                    else
+                        copy_status = vxSetRemapPoint(remap, j, i, coord_ptr->x, coord_ptr->y);
+                    if (copy_status != VX_SUCCESS)
+                        break;
                 }
             }
             // update sync flags
             dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
             dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-            status = VX_SUCCESS;
+            status = copy_status;
         }
     }
     return status;
+}
+
+// Convert one floating-point remap coordinate to the fixed-point form read by the warp kernels.
+// Coordinates outside the source image (and NaN) get the 0xffff "invalid" sentinel. The range
+// check comes first because converting an out-of-range float to an unsigned type is undefined.
+static void agoRemapCoordToFixed(const AgoData * data, vx_float32 src_x, vx_float32 src_y, ago_coord2d_ushort_t * item_fixed)
+{
+    const vx_float32 scale = (vx_float32)(1 << data->u.remap.remap_fractional_bits);
+    // only fully out-of-bounds coordinates are marked invalid. Coordinates on or inside the src image
+    // rectangle are valid and the interpolation kernel applies the border mode per sample.
+    if (src_x >= 0.0f && src_y >= 0.0f &&
+        src_x < (vx_float32)data->u.remap.src_width && src_y < (vx_float32)data->u.remap.src_height) {
+        const vx_float32 fixed_x = src_x * scale + 0.5f; // convert to fixed-point with rounding
+        const vx_float32 fixed_y = src_y * scale + 0.5f;
+        if (fixed_x < 65535.0f && fixed_y < 65535.0f) {
+            item_fixed->x = (vx_uint16)fixed_x;
+            item_fixed->y = (vx_uint16)fixed_y;
+            return;
+        }
+    }
+    item_fixed->x = 0xffff;
+    item_fixed->y = 0xffff;
 }
 
 /*! \brief Allows the application to get direct access to a rectangular patch of a remap object.
@@ -7910,15 +8104,22 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
         vx_bool zero_area = ((((end_x - start_x) == 0) || ((end_y - start_y) == 0)) ? vx_true_e : vx_false_e);
         bool paramsValid = true;
 
+        if (data->isVirtual)
+            return VX_ERROR_OPTIMIZED_AWAY;
+
         if(coordinate_type != VX_TYPE_COORDINATES2DF)
             paramsValid = false;
         if(mem_type != VX_MEMORY_TYPE_HOST && mem_type != VX_MEMORY_TYPE_NONE)
             paramsValid = false;
-        if((usage != VX_READ_ONLY && usage != VX_WRITE_ONLY) || (rect == NULL) || (ptr == NULL) || (map_id == NULL))
+        if((usage != VX_READ_ONLY && usage != VX_WRITE_ONLY && usage != VX_READ_AND_WRITE) || (rect == NULL) || (ptr == NULL) || (map_id == NULL))
             paramsValid = false;
         if (zero_area == vx_false_e && ((start_x >= end_x) || (start_y >= end_y)))
             paramsValid = false;
-
+        // the patch has to lie within the destination dimensions, otherwise the pointer computed
+        // below would address memory outside the remap table
+        if (start_x > end_x || start_y > end_y ||
+            end_x > data->u.remap.dst_width || end_y > data->u.remap.dst_height)
+            paramsValid = false;
 
         if (paramsValid) {
             if (!data->buffer) {
@@ -7935,9 +8136,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
             }
 #endif
 
-            vx_size stride = (end_x - start_x);
-            vx_size size = (stride * (end_y - start_y)) * sizeof(vx_coordinates2df_t);
-            ago_coord2d_float_t* ptr_returned = (ago_coord2d_float_t *)data->reserved;
+            // the mapped patch is a window onto the table, so the returned pointer
+            // addresses the top-left element of the rectangle and the rows are
+            // separated by a whole table row, not by the width of the patch
+            vx_size row_stride = (vx_size)data->u.remap.dst_width * sizeof(ago_coord2d_float_t);
+            ago_coord2d_float_t* ptr_returned = ((ago_coord2d_float_t *)data->reserved)
+                                              + ((vx_size)start_y * data->u.remap.dst_width) + start_x;
 
             // save the pointer and usage for use in vxUnmapRemapPatch
             status = VX_SUCCESS;
@@ -7983,11 +8187,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
                     }
                 }
 #endif
-                MappedData item = { data->nextMapId++, ptr_returned, usage, false };
+                MappedData item = { data->nextMapId++, ptr_returned, usage, false, row_stride, 0, { start_x, start_y, end_x, end_y } };
                 data->mapped.push_back(item);
                 *map_id = item.map_id;
                 *ptr = ptr_returned;
-                *stride_y = stride * sizeof(vx_coordinates2df_t);
+                *stride_y = row_stride;
             }
         }
     }
@@ -8017,8 +8221,24 @@ VX_API_ENTRY vx_status VX_API_CALL vxUnmapRemapPatch(vx_remap remap, vx_map_id m
         for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
             if (i->map_id == map_id) {
                 vx_enum usage = i->usage;
+                const vx_rectangle_t rect = i->rect;
                 data->mapped.erase(i);
                 if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
+                    // the application wrote the float table directly; the fixed-point
+                    // mirror the warp kernels read is derived from it, so the entries of
+                    // the mapped rectangle have to be rebuilt here or the graph would keep
+                    // using the old coordinates. Entries outside the rectangle are unchanged.
+                    if (data->buffer && data->reserved) {
+                        const vx_size dst_width = data->u.remap.dst_width;
+                        ago_coord2d_float_t * item_float = (ago_coord2d_float_t *)data->reserved;
+                        ago_coord2d_ushort_t * item_fixed = (ago_coord2d_ushort_t *)data->buffer;
+                        for (vx_uint32 y = rect.start_y; y < rect.end_y; y++) {
+                            for (vx_uint32 x = rect.start_x; x < rect.end_x; x++) {
+                                const vx_size k = (vx_size)y * dst_width + x;
+                                agoRemapCoordToFixed(data, item_float[k].x, item_float[k].y, &item_fixed[k]);
+                            }
+                        }
+                    }
                     // update sync flags
                     AgoData * dataToSync = data;
                     dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
@@ -8081,13 +8301,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetRemapPoint(vx_remap table,
             ago_coord2d_float_t * item_float = ((ago_coord2d_float_t *)data->reserved) + (dst_y * data->u.remap.dst_width) + dst_x;
             item_float->x = src_x;
             item_float->y = src_y;
-            item_fixed->x = (vx_uint16)(src_x * (vx_float32)(1 << data->u.remap.remap_fractional_bits) + 0.5f); // convert to fixed-point with rounding
-            item_fixed->y = (vx_uint16)(src_y * (vx_float32)(1 << data->u.remap.remap_fractional_bits) + 0.5f); // convert to fixed-point with rounding
-            // special handing for border cases
-            if (src_x < 0.0f || src_y < 0.0f || src_x >= (vx_float32)(data->u.remap.src_width-1) || src_y >= (vx_float32)(data->u.remap.src_height-1)) {
-                item_fixed->x = 0xffff;
-                item_fixed->y = 0xffff;
-            }
+            agoRemapCoordToFixed(data, src_x, src_y, item_fixed);
             status = VX_SUCCESS;
             // update sync flags
             data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
@@ -8420,6 +8634,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxAddArrayItems(vx_array arr, vx_size count, 
         status = VX_ERROR_INVALID_PARAMETERS;
         if (data->isVirtual && !data->buffer) {
             status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if (ptr && (data->u.arr.numitems + count > data->u.arr.capacity)) {
+            status = VX_FAILURE;
         }
         else if (ptr && (data->u.arr.numitems + count <= data->u.arr.capacity)) {
             if (!data->buffer) {
@@ -9140,17 +9357,29 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateVirtualObjectArray(vx_graph gra
     if (agoIsValidGraph(graph) && agoIsValidReference(exemplar) && count > 0) {
         CAgoLock lock(graph->cs);
         char desc_exemplar[MAX_DESCRIPTION_DATA_SIZE]; agoGetDescriptionFromData(graph->ref.context, desc_exemplar, (AgoData *)exemplar);
-        char desc[2048]; snprintf(desc, sizeof(desc), "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
-        data = agoCreateDataFromDescription(graph->ref.context, NULL, desc, true);
+        // the object array and every one of its items are virtual and scoped to the graph, like
+        // the other vxCreateVirtual* objects. The parser requires the items to agree with the
+        // array, so turn the exemplar's description (a real object's carries no "-virtual"
+        // tag) into the virtual form of the same type.
+        char desc_item[MAX_DESCRIPTION_DATA_SIZE + 8];
+        const char * colon = strchr(desc_exemplar, ':');
+        if (colon && !(colon - desc_exemplar >= 8 && !strncmp(colon - 8, "-virtual", 8))) {
+            snprintf(desc_item, sizeof(desc_item), "%.*s-virtual%s", (int)(colon - desc_exemplar), desc_exemplar, colon);
+        }
+        else {
+            snprintf(desc_item, sizeof(desc_item), "%s", desc_exemplar);
+        }
+        char desc[2048 + 64]; snprintf(desc, sizeof(desc), "objectarray-virtual:" VX_FMT_SIZE ",[%s]", count, desc_item);
+        data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
         if (data) {
             agoGenerateVirtualDataName(graph, "objectarray", data->name);
-            agoAddData(&graph->ref.context->dataList, data);
+            agoAddData(&graph->dataList, data);
             // add the children too
             for (vx_uint32 i = 0; i < data->numChildren; i++) {
-                agoAddData(&graph->ref.context->dataList, data->children[i]);
+                agoAddData(&graph->dataList, data->children[i]);
                 for (vx_uint32 j = 0; j < data->children[i]->numChildren; j++) {
                     if (data->children[i]->children[j]) {
-                        agoAddData(&graph->ref.context->dataList, data->children[i]->children[j]);
+                        agoAddData(&graph->dataList, data->children[i]->children[j]);
                     }
                 }
             }

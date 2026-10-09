@@ -16,10 +16,15 @@ Two scenarios, both on the CPU backend:
    (2*20y + 2*(20y+10) + 2) >> 2 == 20*y + 5. A fast path that truncates the
    -0.5 scale-matrix offset instead of rounding it reads rows 2y-1 and 2y for
    every row but the first and returns 20*y - 5, so the shift is unambiguous
-   rather than a similarity score. Run with the default border and with
-   VX_BORDER_MODE_CONSTANT, because HafCpu_ScaleImage_U8_U8_Area and
-   HafCpu_ScaleImage_U8_U8_Area_Constant are separate near-copies of each other
-   and both carry the coordinate mapping.
+   rather than a similarity score.
+
+   Only HafCpu_ScaleImage_U8_U8_Area is reachable from a graph. Its near-copy
+   HafCpu_ScaleImage_U8_U8_Area_Constant carries the same coordinate mapping and
+   is fixed alongside it, but it is dead code today: it has no declaration in
+   ago_haf_cpu.h, no kernel id of its own, and ago_drama_divide.cpp routes
+   UNDEFINED, REPLICATE and CONSTANT borders alike to the plain AREA kernel. A
+   VX_BORDER_MODE_CONSTANT run would therefore re-test this same path rather
+   than that one, so it is not attempted here.
 
 2. "blocks-3to1": an input in which every 3x3 block holds a single value --
    pixel(x, y) = y // 3 -- downscaled 3:1, so output pixel (x, y) must equal
@@ -62,27 +67,26 @@ def run_runvx(runvx_exe, gdf_path):
                           stderr=subprocess.STDOUT, text=True, timeout=300)
 
 
-def build_gdf(path, src, src_w, src_h, dst, dst_w, dst_h, border):
-    attr = f" attr:BORDER_MODE:{border}" if border else ""
+def build_gdf(path, src, src_w, src_h, dst, dst_w, dst_h):
     path.write_text(
         f"data in  = image:{src_w},{src_h},U008:read,{src}\n"
         f"data out = image:{dst_w},{dst_h},U008:write,{dst}\n"
-        f"node org.khronos.openvx.scale_image in out !AREA{attr}\n")
+        "node org.khronos.openvx.scale_image in out !AREA\n")
 
 
-def check_ramp_2to1(work_dir, runvx_exe, border, label):
+def check_ramp_2to1(work_dir, runvx_exe):
     """2:1 downscale of a vertical ramp; out[y] must be 20*y + 5 on every column."""
     src_w, src_h = 48, 24
     dst_w, dst_h = src_w // 2, src_h // 2
     src = work_dir / "ramp.u8"
     write_rows(src, [10 * y for y in range(src_h)], src_w)
 
-    dst = work_dir / f"ramp_out_{label}.u8"
-    gdf = work_dir / f"ramp_{label}.gdf"
-    build_gdf(gdf, src, src_w, src_h, dst, dst_w, dst_h, border)
+    dst = work_dir / "ramp_out.u8"
+    gdf = work_dir / "ramp.gdf"
+    build_gdf(gdf, src, src_w, src_h, dst, dst_w, dst_h)
 
     result = run_runvx(runvx_exe, gdf)
-    tag = f"ramp-2to1 {label}"
+    tag = "ramp-2to1"
     if result.returncode != 0:
         return [(tag, f"runvx exited {result.returncode}:\n{result.stdout[-1000:]}")]
     if not dst.exists():
@@ -113,7 +117,7 @@ def check_blocks_3to1(work_dir, runvx_exe, src_w):
 
     dst = work_dir / f"blocks_out_{src_w}.u8"
     gdf = work_dir / f"blocks_{src_w}.gdf"
-    build_gdf(gdf, src, src_w, src_h, dst, dst_w, dst_h, None)
+    build_gdf(gdf, src, src_w, src_h, dst, dst_w, dst_h)
 
     result = run_runvx(runvx_exe, gdf)
     tag = f"blocks-3to1 {src_w}x{src_h}"
@@ -161,10 +165,7 @@ def main():
     failures = []
     with tempfile.TemporaryDirectory() as tmp:
         work_dir = Path(tmp)
-        # HafCpu_ScaleImage_U8_U8_Area and ..._Area_Constant are separate
-        # near-copies; the default border reaches the first, CONSTANT the second.
-        failures += check_ramp_2to1(work_dir, runvx_exe, None, "default-border")
-        failures += check_ramp_2to1(work_dir, runvx_exe, "CONSTANT,0", "constant-border")
+        failures += check_ramp_2to1(work_dir, runvx_exe)
         for src_w in (1296, 1320, 1281):
             failures += check_blocks_3to1(work_dir, runvx_exe, src_w)
 

@@ -792,31 +792,47 @@ int HipExec_ScaleImage_U8_U8_Area(hipStream_t stream, vx_uint32 dstWidth, vx_uin
     // shape to them returns garbage (3:1 of a constant 90 image gave 40, 5:1
     // gave 14, 6:1 gave 10 and 8:1 gave 22), so select on the block shape
     // explicitly and send everything else to the general kernel. A ratio that
-    // is not an exact integer has fractional edge weights and belongs to the
+    // is not an exact integer has fractional edge weights and goes to the
     // bytealign path - the old `need_align` test let ratios such as 1.5 through
     // to the 2x2 kernel as well.
+    //
+    // NOTE: Hip_ScaleImage_U8_U8_Area_Bytealign is itself hand-unrolled - two
+    // source rows and three x-taps per output pixel - so it is only correct for
+    // roughly Sx < 3 and Sy <= 2. Larger fractional ratios such as 3.5:1 are
+    // still wrong there. That is pre-existing rather than introduced here (the
+    // old selector sent them to the 2x2 kernel, equally wrong) and is tracked
+    // separately. Giving Hip_ScaleImage_U8_U8_Area_Int fractional edge weights
+    // would let it absorb those cases and retire this kernel.
     bool exact_int = ((srcWidth % dstWidth) == 0) && ((srcHeight % dstHeight) == 0);
-    int Nx = exact_int ? (int)(srcWidth / dstWidth) : (int)ceilf(Sx);
-    int Ny = exact_int ? (int)(srcHeight / dstHeight) : (int)ceilf(Sy);
-    float iSxSy = 1.0 / (double)(Sx * Sy);
-    float factorc = Sx - (Nx - 1);
 
-    if (exact_int && Nx == 4 && Ny == 4) {
-        hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Sad, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
-                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                        Nx, Ny, iSxSy);
-    } else if (exact_int && Nx == 2 && Ny == 2) {
-        hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
-                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                        Nx, Ny, iSxSy);
-    } else if (exact_int) {
-        hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Int, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
-                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                        Nx, Ny, iSxSy);
+    if (exact_int) {
+        int Nx = (int)(srcWidth / dstWidth);
+        int Ny = (int)(srcHeight / dstHeight);
+        // Exact whenever Nx * Ny is a power of two, and correctly rounded
+        // otherwise - unlike 1.0 / (Sx * Sy), which goes through two floats.
+        float iSxSy = 1.0f / (float)(Nx * Ny);
+
+        if (Nx == 4 && Ny == 4) {
+            hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Sad, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            Nx, Ny, iSxSy);
+        } else if (Nx == 2 && Ny == 2) {
+            hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            Nx, Ny, iSxSy);
+        } else {
+            hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Int, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            Nx, Ny, iSxSy);
+        }
     } else {
+        int Nx = (int)ceilf(Sx);
+        float factorc = Sx - (Nx - 1);
+        float iSxSy = 1.0 / (double)(Sx * Sy);
+
         hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Bytealign, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,

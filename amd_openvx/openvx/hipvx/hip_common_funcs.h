@@ -401,20 +401,19 @@ __device__ __forceinline__ void hip_store_RGB8(uchar *pDstImage, uint dstIdx, co
     if (valid >= 8) {
         *((d_uint6 *)(&pDstImage[dstIdx])) = pix;
     } else {
-        // dstIdx starts a group of 8 pixels, so it is a multiple of 24 inside a
-        // row whose stride is a multiple of 16: the partial store is dword
-        // aligned. Write whole dwords and leave only the 1-3 byte remainder
-        // (valid * 3 is a multiple of 3, not of 4) to a byte copy.
+        // Byte-wise, matching hip_remap_store_RGB below, which handles the same
+        // pixel format the same way. A dword copy would need dstIdx to be 4-byte
+        // aligned, and that only holds for a top-level image: for a child image
+        // or ROI the base pointer already carries 3 * x0 from
+        // ImageWidthInBytesFloor (ago_util.cpp:1318-1320), and x0 is not
+        // constrained to a multiple of 8, so x0 = 1 makes every dstIdx here odd.
+        // d_uint6 is 6 tightly packed uints, so pixel i occupies bytes
+        // 3*i .. 3*i+2 and a flat byte copy is correct. The tail runs at most
+        // once per row, so the cost is immaterial.
+        uchar *dst = pDstImage + dstIdx;
+        const uchar *src = (const uchar *)&pix;
         int bytes = valid * 3;
-        int words = bytes >> 2;
-        uint *dstWord = (uint *)(pDstImage + dstIdx);
-        const uint *srcWord = (const uint *)&pix;
-        for (int i = 0; i < words; i++) {
-            dstWord[i] = srcWord[i];
-        }
-        uchar *dst = pDstImage + dstIdx + (words << 2);
-        const uchar *src = (const uchar *)&pix + (words << 2);
-        for (int i = 0; i < (bytes & 3); i++) {
+        for (int i = 0; i < bytes; i++) {
             dst[i] = src[i];
         }
     }
@@ -424,12 +423,30 @@ __device__ __forceinline__ void hip_store_RGBX8(uchar *pDstImage, uint dstIdx, c
     if (valid >= 8) {
         *((d_uint8 *)(&pDstImage[dstIdx])) = pix;
     } else {
-        // RGBX is 4 bytes per pixel and dstIdx is dword aligned, so a partial
-        // store is exactly `valid` whole dwords with no byte remainder.
+        // Dwords are safe here where they are not in hip_store_RGB8 above:
+        // RGBX is 4 bytes per pixel, so a child image / ROI shifts the base by
+        // 4 * x0 and dstIdx stays dword aligned for any origin. A partial store
+        // is exactly `valid` whole dwords with no byte remainder.
         uint *dstWord = (uint *)(pDstImage + dstIdx);
         const uint *srcWord = (const uint *)&pix;
         for (int i = 0; i < valid; i++) {
             dstWord[i] = srcWord[i];
+        }
+    }
+}
+
+// Same idea for single-plane U8 kernels that produce 8 pixels per thread. The
+// last group of a row is partial when dstWidth % 8 != 0; a whole uint2 would
+// write into the row padding, and would overrun a row whose stride is not
+// ALIGN16 - an imported handle via vxSwapImageHandle, for instance.
+__device__ __forceinline__ void hip_store_U8x8(uchar *pDstImage, uint dstIdx, const uint2 &pix, int valid) {
+    if (valid >= 8) {
+        *((uint2 *)(&pDstImage[dstIdx])) = pix;
+    } else {
+        uchar *dst = pDstImage + dstIdx;
+        const uchar *src = (const uchar *)&pix;
+        for (int i = 0; i < valid; i++) {
+            dst[i] = src[i];
         }
     }
 }

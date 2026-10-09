@@ -16,6 +16,10 @@ or non-zero, so a mask that returned 1 for true would be reported as a failure.
    lanes leaves pixels 1-3 of every group of four permanently 0. The per-lane
    mismatch counts are reported alongside the total so that signature is
    immediately visible rather than showing up as an undifferentiated count.
+   The same graph also thresholds into two real images, which are not lowered
+   and so stay on Threshold_U8_U8_Binary / _Range -- the pair #1628 fixed, and
+   otherwise untested here. Which kernels the optimizer selected is asserted
+   from -dump-profile rather than assumed.
 
 2. "s16-threshold": a signed 16-bit source thresholded to a U8 mask, with
    values deliberately outside 0..255 as well as inside. S16 images hold Sobel
@@ -58,10 +62,15 @@ def s16_pattern(i):
     return ((i * 97) % 2000) - 1000
 
 
-def run_runvx(runvx_exe, gdf_path, backend):
+def run_runvx(runvx_exe, gdf_path, backend, profile=False):
     env = os.environ.copy()
     env["AGO_DEFAULT_TARGET"] = backend
-    cmd = [str(runvx_exe), "-frames:1", str(gdf_path)]
+    cmd = [str(runvx_exe), "-frames:1"]
+    if profile:
+        # the kernel list goes to stdout on both backends, so the caller can
+        # assert on which kernels the optimizer actually selected
+        cmd.append("-dump-profile")
+    cmd.append(str(gdf_path))
     return subprocess.run(cmd, env=env, stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT, text=True, timeout=120)
 
@@ -75,7 +84,8 @@ def check_u1_logic(work_dir, runvx_exe, backend):
     (work_dir / "b.u8").write_bytes(b)
 
     gdf = work_dir / f"u1_logic_{backend}.gdf"
-    outs = {op: work_dir / f"{op}_{backend}.u8" for op in ("and", "or", "xor")}
+    outs = {op: work_dir / f"{op}_{backend}.u8"
+            for op in ("and", "or", "xor", "u8_binary", "u8_range")}
     gdf.write_text(
         f"data a   = image:{WIDTH},{HEIGHT},U008:read,{work_dir / 'a.u8'}\n"
         f"data b   = image:{WIDTH},{HEIGHT},U008:read,{work_dir / 'b.u8'}\n"
@@ -86,16 +96,39 @@ def check_u1_logic(work_dir, runvx_exe, backend):
         f"data and = image:{WIDTH},{HEIGHT},U008:write,{outs['and']}\n"
         f"data or  = image:{WIDTH},{HEIGHT},U008:write,{outs['or']}\n"
         f"data xor = image:{WIDTH},{HEIGHT},U008:write,{outs['xor']}\n"
+        # Real outputs rather than virtual ones, so these two are not lowered
+        # and stay on Threshold_U8_U8_Binary / _Range -- the pair #1628 fixed,
+        # which nothing else in this file exercises. The same threshold objects
+        # are reused; -dump-profile confirms the lowering of the virtual path
+        # above is unaffected.
+        f"data ua  = image:{WIDTH},{HEIGHT},U008:write,{outs['u8_binary']}\n"
+        f"data ub  = image:{WIDTH},{HEIGHT},U008:write,{outs['u8_range']}\n"
         "node org.khronos.openvx.threshold a ta va\n"
         "node org.khronos.openvx.threshold b tb vb\n"
+        "node org.khronos.openvx.threshold a ta ua\n"
+        "node org.khronos.openvx.threshold b tb ub\n"
         "node org.khronos.openvx.and va vb and\n"
         "node org.khronos.openvx.or  va vb or\n"
         "node org.khronos.openvx.xor va vb xor\n")
 
-    result = run_runvx(runvx_exe, gdf, backend)
+    result = run_runvx(runvx_exe, gdf, backend, profile=True)
     if result.returncode != 0:
         return [(f"u1-logic {backend}",
                  f"runvx exited {result.returncode}:\n{result.stdout[-1000:]}")]
+
+    # The U1 kernels are reachable only through the optimizer lowering this
+    # graph. Assert the lowering really happened: if a future drama change, a
+    # different virtual-image decision or an added target restriction stopped
+    # it, this graph would quietly run Threshold_U8_U8_* instead, produce
+    # correct pixels and pass while covering nothing -- the same silent absence
+    # of coverage that let #1768 survive. Likewise check the two non-virtual
+    # thresholds were *not* lowered, or the U8 pair would go untested instead.
+    for kernel in ("Threshold_U1_U8_Binary", "Threshold_U1_U8_Range",
+                   "Threshold_U8_U8_Binary", "Threshold_U8_U8_Range"):
+        if kernel not in result.stdout:
+            return [(f"u1-logic {backend}",
+                     f"graph was not lowered as expected: {kernel} did not run, "
+                     f"so those kernels were not exercised:\n{result.stdout[-1500:]}")]
 
     ta = [x > 95 for x in a]
     tb = [40 <= x <= 200 for x in b]
@@ -103,6 +136,8 @@ def check_u1_logic(work_dir, runvx_exe, backend):
         "and": [p and q for p, q in zip(ta, tb)],
         "or": [p or q for p, q in zip(ta, tb)],
         "xor": [p != q for p, q in zip(ta, tb)],
+        "u8_binary": ta,
+        "u8_range": tb,
     }
 
     failures = []

@@ -101,7 +101,7 @@ def check_ramp_2to1(work_dir, runvx_exe):
         for x, got in enumerate(row):
             if got != expected:
                 return [(tag, f"row {y} column {x}: got {got}, expected {expected} "
-                              f"(a value of {expected - 20} means source rows "
+                              f"(a value of {expected - 10} means source rows "
                               f"{2 * y - 1} and {2 * y} were averaged instead of "
                               f"{2 * y} and {2 * y + 1})")]
     print(f"PASS [{tag}]: {dst_h} rows exact, out[y] == 20*y + 5")

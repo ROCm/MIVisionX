@@ -810,7 +810,10 @@ int HipExec_ScaleImage_U8_U8_Area(hipStream_t stream, vx_uint32 dstWidth, vx_uin
         int Ny = (int)(srcHeight / dstHeight);
         // Exact whenever Nx * Ny is a power of two, and correctly rounded
         // otherwise - unlike 1.0 / (Sx * Sy), which goes through two floats.
-        float iSxSy = 1.0f / (float)(Nx * Ny);
+        // Multiplied as floats: (int)Nx * (int)Ny overflows for a block of more
+        // than 2^31 pixels, which a downscale of a 46341x46341 image to 1x1
+        // reaches.
+        float iSxSy = 1.0f / ((float)Nx * (float)Ny);
 
         if (Nx == 4 && Ny == 4) {
             hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Sad, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),

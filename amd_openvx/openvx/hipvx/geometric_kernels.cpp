@@ -577,18 +577,22 @@ Hip_ScaleImage_U8_U8_Area_Int(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x;
     const uchar *pSrcRow0 = pSrcImage + (uint)y * (uint)Ny * srcImageStrideInBytes;
 
-    d_float8 f;
-    for (int i = 0; i < 8; i++) {
+    // Number of destination pixels this thread may touch. It also bounds the
+    // source reads, since a block past dstWidth has no source block behind it,
+    // and it is what the bounded store below needs.
+    int valid = (int)min(dstWidth - (uint)x, 8u);
+
+    d_float8 f = {0.0f};
+    for (int i = 0; i < valid; i++) {
+        // A 32-bit accumulator is not enough: a legal downscale to 1x1 sums the
+        // whole image, and 255 * 4105 * 4105 already exceeds UINT_MAX.
         unsigned long long sum = 0;
-        uint dx = (uint)x + (uint)i;
-        if (dx < dstWidth) {
-            const uchar *pSrcRow = pSrcRow0 + dx * (uint)Nx;
-            for (int iy = 0; iy < Ny; iy++) {
-                for (int ix = 0; ix < Nx; ix++) {
-                    sum += pSrcRow[ix];
-                }
-                pSrcRow += srcImageStrideInBytes;
+        const uchar *pSrcRow = pSrcRow0 + ((uint)x + (uint)i) * (uint)Nx;
+        for (int iy = 0; iy < Ny; iy++) {
+            for (int ix = 0; ix < Nx; ix++) {
+                sum += pSrcRow[ix];
             }
+            pSrcRow += srcImageStrideInBytes;
         }
         f.data[i] = (float)sum;
     }
@@ -597,7 +601,7 @@ Hip_ScaleImage_U8_U8_Area_Int(uint dstWidth, uint dstHeight,
     dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
     dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, valid);
 }
 
 __global__ void __attribute__((visibility("default")))

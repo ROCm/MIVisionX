@@ -466,6 +466,7 @@ Hip_ScaleImage_U8_U8_Area(uint dstWidth, uint dstHeight,
     }
 
     uint dstIdx =  y * dstImageStrideInBytes + x;
+    int valid = (int)min(dstWidth - (uint)x, 8u);
 
     uint offset = srcImageStrideInBytes * (y * Ny) + (x * Nx);
     pSrcImage += offset;
@@ -497,7 +498,7 @@ Hip_ScaleImage_U8_U8_Area(uint dstWidth, uint dstHeight,
     dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
     dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, valid);
 }
 
 __global__ void __attribute__((visibility("default")))
@@ -513,6 +514,7 @@ Hip_ScaleImage_U8_U8_Area_Sad(uint dstWidth, uint dstHeight,
     }
 
     uint dstIdx =  y * dstImageStrideInBytes + x;
+    int valid = (int)min(dstWidth - (uint)x, 8u);
 
     uint offset = srcImageStrideInBytes * (y * Ny) + (x * Nx);
     pSrcImage += offset;
@@ -547,7 +549,7 @@ Hip_ScaleImage_U8_U8_Area_Sad(uint dstWidth, uint dstHeight,
     dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
     dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, valid);
 }
 
 // General exact-integer-ratio area average.

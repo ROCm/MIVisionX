@@ -28,7 +28,16 @@ answer, independent of how the kernel rounds:
    the row padding or, for a destination whose stride is not ALIGN16, the next
    row.
 
-3. "accumulate": a constant-255 4105x4105 image scaled to 1x1. The block sums to
+3. "tight": the same check into a destination imported with
+   vxCreateImageFromHandle at a tight stride. vxCreateImageFromHandle stores the
+   caller's stride_y verbatim (vx_api.cpp:1048) rather than padding it to
+   ALIGN16, so for a width that is not a multiple of 8 an unbounded 8-pixel
+   store crosses into the next row rather than landing in padding. This is what
+   distinguishes a bounded store from one that merely stays inside the padding,
+   and it covers all three kernels the selector can dispatch to: 2:1 to
+   Hip_ScaleImage_U8_U8_Area, 3:1 to _Area_Int, 4:1 to _Area_Sad.
+
+4. "accumulate": a constant-255 4105x4105 image scaled to 1x1. The block sums to
    4,297,011,375, which overflows a 32-bit accumulator and returns 0 instead of
    255. 4105 is the first square side that does so.
 
@@ -119,6 +128,53 @@ def check_blocks(work_dir, runvx_exe, dst_w, dst_h, nx, ny, tag):
     return []
 
 
+def check_tight_stride(work_dir, runvx_exe, dst_w, dst_h, nx, ny):
+    """Same block check, but into a handle whose stride is tight rather than ALIGN16."""
+    tag = f"tight stride {nx}:1 {dst_w} wide"
+    src_w, src_h = dst_w * nx, dst_h * ny
+    src = work_dir / f"tight_src_{nx}_{dst_w}.u8"
+    dst = work_dir / f"tight_out_{nx}_{dst_w}.u8"
+    gdf = work_dir / f"tight_{nx}_{dst_w}.gdf"
+    write_blocks(src, dst_w, dst_h, nx, ny)
+    gdf.write_text(
+        f"data in  = image:{src_w},{src_h},U008:read,{src}\n"
+        f"data out = image-from-handle:U008,{{{dst_w};{dst_h};1;{dst_w}}},"
+        f"VX_MEMORY_TYPE_HOST:write,{dst}\n"
+        "node org.khronos.openvx.scale_image in out !AREA\n")
+
+    result = run_runvx(runvx_exe, gdf)
+    if result.returncode != 0:
+        return [(tag, f"runvx exited {result.returncode}:\n{result.stdout[-1000:]}")]
+    data = dst.read_bytes()
+    if len(data) != dst_w * dst_h:
+        return [(tag, f"size mismatch: expected {dst_w * dst_h}, got {len(data)}")]
+
+    wrong = 0
+    first = None
+    head_of_row = 0
+    for by in range(dst_h):
+        for bx in range(dst_w):
+            want = block_value(bx, by)
+            got = data[by * dst_w + bx]
+            if got != want:
+                wrong += 1
+                if bx < 8:
+                    head_of_row += 1
+                if first is None:
+                    first = (bx, by, got, want)
+    if wrong:
+        bx, by, got, want = first
+        detail = (f"{wrong} of {dst_w * dst_h} outputs wrong; first at "
+                  f"(x={bx}, y={by}) got {got}, expected {want}")
+        if head_of_row:
+            detail += (f"; {head_of_row} of them in the first 8 columns of a row, "
+                       f"which is where the previous row's last thread overruns a "
+                       f"stride of {dst_w}")
+        return [(tag, detail)]
+    print(f"PASS [{tag}]: {dst_w * dst_h} outputs exact at a {dst_w}-byte stride")
+    return []
+
+
 def check_accumulate(work_dir, runvx_exe):
     """4105x4105 of 255 to 1x1: sums to 4,297,011,375, past a 32-bit accumulator."""
     side = 4105
@@ -175,6 +231,13 @@ def main():
         for dst_w in (101, 150):
             failures += check_blocks(work_dir, runvx_exe, dst_w, 120, 3, 3,
                                      f"tail {dst_w} wide")
+
+        # A tight imported stride, where a partial group genuinely crosses into
+        # the next row instead of landing in ALIGN16 padding. One ratio per
+        # kernel the selector can reach: 2:1 -> _Area, 3:1 -> _Area_Int,
+        # 4:1 -> _Area_Sad.
+        for nx in (2, 3, 4):
+            failures += check_tight_stride(work_dir, runvx_exe, 101, 40, nx, nx)
 
         failures += check_accumulate(work_dir, runvx_exe)
 

@@ -258,6 +258,8 @@ install(DIRECTORY tests/vision_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisi
 install(DIRECTORY tests/remap_constant_border_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 install(DIRECTORY tests/remap_benchmark DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 install(DIRECTORY tests/hip_cu_mask_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
+install(DIRECTORY tests/scale_area_gpu_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
+install(DIRECTORY tests/color_convert_partial_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 install(DIRECTORY data/videos DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 
 # CTests

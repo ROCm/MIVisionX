@@ -4,7 +4,9 @@ CTest helper: exact-value regression for the OpenVX threshold kernels.
 
 Two independent scenarios are exercised on both CPU and GPU backends. Both
 assert every output pixel against a reference computed here, because threshold
-is exact integer logic -- there is no rounding to tolerate.
+is exact integer logic -- there is no rounding to tolerate. The comparison is
+against the exact 0 or 255 the specification requires, not merely against zero
+or non-zero, so a mask that returned 1 for true would be reported as a failure.
 
 1. "u1-logic": a threshold feeding and/or/xor through virtual images. The graph
    optimizer lowers this to the 1-bit kernels (Threshold_U1_U8_Binary /
@@ -118,7 +120,7 @@ def check_u1_logic(work_dir, runvx_exe, backend):
         lanes = [0, 0, 0, 0]
         first = None
         for i, (got, want) in enumerate(zip(data, ref)):
-            if (got > 0) != want:
+            if got != (255 if want else 0):
                 lanes[(i % WIDTH) % 4] += 1
                 if first is None:
                     first = (i % WIDTH, i // WIDTH, got, 255 if want else 0)
@@ -180,7 +182,7 @@ def check_s16(work_dir, runvx_exe, backend):
         wrong = 0
         first = None
         for i, (got, want) in enumerate(zip(data, ref)):
-            if (got > 0) != want:
+            if got != (255 if want else 0):
                 wrong += 1
                 if first is None:
                     first = (i % WIDTH, i // WIDTH, values[i], got, 255 if want else 0)

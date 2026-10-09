@@ -397,6 +397,17 @@ if(Python3_FOUND)
       )
       set_property(TEST openvx_remap_${gdf_base}_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
     endforeach()
+
+    # 16_c - Exact-value correctness test for the CPU AREA scale paths. The
+    # shipped AREA GDFs use a uniform image, where a row shift is invisible.
+    # Registered here, in the CPU section, because the defects it guards are
+    # CPU-side: the script sets AGO_DEFAULT_TARGET=CPU itself and the test must
+    # run on a CPU/HOST configuration, not only on a GPU one.
+    add_test(NAME openvx_scale_area_cpu
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scale_area_tests/test_scale_area.py
+          --runvx ${RUNVX_EXECUTABLE}
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
   endif()
 endif(Python3_FOUND)
 
@@ -477,15 +488,6 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
         )
         set_property(TEST openvx_remap_${gdf_base}_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
       endforeach()
-
-      # 24_a - Exact-value correctness test for the CPU AREA scale paths. The
-      # shipped AREA GDFs use a uniform image, where a row shift is invisible.
-      # CPU only: these defects are CPU-side and the script sets the backend.
-      add_test(NAME openvx_scale_area_cpu
-            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scale_area_tests/test_scale_area.py
-            --runvx ${RUNVX_EXECUTABLE}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      )
 
       # 24 - Constant-border correctness test for RGB/RGBX Remap
       add_test(NAME openvx_remap_rgb_rgbx_constant_border

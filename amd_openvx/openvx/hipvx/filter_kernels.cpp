@@ -79,6 +79,7 @@ Hip_Box_U8_U8_3x3(uint dstWidth, uint dstHeight,
 
     uint2 dst = {0, 0};
     for (int i = 0; i < 4; i++) {
+        // (sum * 7282) >> 16 == sum / 9
         dst.x |= (((colSum[i] + colSum[i + 1] + colSum[i + 2]) * 7282) >> 16) << (i * 8);
         dst.y |= (((colSum[i + 4] + colSum[i + 5] + colSum[i + 6]) * 7282) >> 16) << (i * 8);
     }

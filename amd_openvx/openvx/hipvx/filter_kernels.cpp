@@ -59,135 +59,29 @@ Hip_Box_U8_U8_3x3(uint dstWidth, uint dstHeight,
         }
         __syncthreads();
     }
-    d_float8 sum = {0.0f};
-    uint2 pix;
-    float fval;
-    uint2 *lbufptr;
-    lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
-    // filterRow = 0
-    pix = lbufptr[0];
-    fval = hip_unpack3(pix.x);
-    sum.data[0] = fmaf(fval, 1.111111119390e-01f, sum.data[0]);
-    fval = hip_unpack0(pix.y);
-    sum.data[0] = fmaf(fval, 1.111111119390e-01f, sum.data[0]);
-    sum.data[1] = fmaf(fval, 1.111111119390e-01f, sum.data[1]);
-    fval = hip_unpack1(pix.y);
-    sum.data[0] = fmaf(fval, 1.111111119390e-01f, sum.data[0]);
-    sum.data[1] = fmaf(fval, 1.111111119390e-01f, sum.data[1]);
-    sum.data[2] = fmaf(fval, 1.111111119390e-01f, sum.data[2]);
-    fval = hip_unpack2(pix.y);
-    sum.data[1] = fmaf(fval, 1.111111119390e-01f, sum.data[1]);
-    sum.data[2] = fmaf(fval, 1.111111119390e-01f, sum.data[2]);
-    sum.data[3] = fmaf(fval, 1.111111119390e-01f, sum.data[3]);
-    fval = hip_unpack3(pix.y);
-    sum.data[2] = fmaf(fval, 1.111111119390e-01f, sum.data[2]);
-    sum.data[3] = fmaf(fval, 1.111111119390e-01f, sum.data[3]);
-    sum.data[4] = fmaf(fval, 1.111111119390e-01f, sum.data[4]);
-    pix = lbufptr[1];
-    fval = hip_unpack0(pix.x);
-    sum.data[3] = fmaf(fval, 1.111111119390e-01f, sum.data[3]);
-    sum.data[4] = fmaf(fval, 1.111111119390e-01f, sum.data[4]);
-    sum.data[5] = fmaf(fval, 1.111111119390e-01f, sum.data[5]);
-    fval = hip_unpack1(pix.x);
-    sum.data[4] = fmaf(fval, 1.111111119390e-01f, sum.data[4]);
-    sum.data[5] = fmaf(fval, 1.111111119390e-01f, sum.data[5]);
-    sum.data[6] = fmaf(fval, 1.111111119390e-01f, sum.data[6]);
-    fval = hip_unpack2(pix.x);
-    sum.data[5] = fmaf(fval, 1.111111119390e-01f, sum.data[5]);
-    sum.data[6] = fmaf(fval, 1.111111119390e-01f, sum.data[6]);
-    sum.data[7] = fmaf(fval, 1.111111119390e-01f, sum.data[7]);
-    fval = hip_unpack3(pix.x);
-    sum.data[6] = fmaf(fval, 1.111111119390e-01f, sum.data[6]);
-    sum.data[7] = fmaf(fval, 1.111111119390e-01f, sum.data[7]);
-    fval = hip_unpack0(pix.y);
-    sum.data[7] = fmaf(fval, 1.111111119390e-01f, sum.data[7]);
-    // filterRow = 1
-    pix = lbufptr[17];
-    fval = hip_unpack3(pix.x);
-    sum.data[0] = fmaf(fval, 1.111111119390e-01f, sum.data[0]);
-    fval = hip_unpack0(pix.y);
-    sum.data[0] = fmaf(fval, 1.111111119390e-01f, sum.data[0]);
-    sum.data[1] = fmaf(fval, 1.111111119390e-01f, sum.data[1]);
-    fval = hip_unpack1(pix.y);
-    sum.data[0] = fmaf(fval, 1.111111119390e-01f, sum.data[0]);
-    sum.data[1] = fmaf(fval, 1.111111119390e-01f, sum.data[1]);
-    sum.data[2] = fmaf(fval, 1.111111119390e-01f, sum.data[2]);
-    fval = hip_unpack2(pix.y);
-    sum.data[1] = fmaf(fval, 1.111111119390e-01f, sum.data[1]);
-    sum.data[2] = fmaf(fval, 1.111111119390e-01f, sum.data[2]);
-    sum.data[3] = fmaf(fval, 1.111111119390e-01f, sum.data[3]);
-    fval = hip_unpack3(pix.y);
-    sum.data[2] = fmaf(fval, 1.111111119390e-01f, sum.data[2]);
-    sum.data[3] = fmaf(fval, 1.111111119390e-01f, sum.data[3]);
-    sum.data[4] = fmaf(fval, 1.111111119390e-01f, sum.data[4]);
-    pix = lbufptr[18];
-    fval = hip_unpack0(pix.x);
-    sum.data[3] = fmaf(fval, 1.111111119390e-01f, sum.data[3]);
-    sum.data[4] = fmaf(fval, 1.111111119390e-01f, sum.data[4]);
-    sum.data[5] = fmaf(fval, 1.111111119390e-01f, sum.data[5]);
-    fval = hip_unpack1(pix.x);
-    sum.data[4] = fmaf(fval, 1.111111119390e-01f, sum.data[4]);
-    sum.data[5] = fmaf(fval, 1.111111119390e-01f, sum.data[5]);
-    sum.data[6] = fmaf(fval, 1.111111119390e-01f, sum.data[6]);
-    fval = hip_unpack2(pix.x);
-    sum.data[5] = fmaf(fval, 1.111111119390e-01f, sum.data[5]);
-    sum.data[6] = fmaf(fval, 1.111111119390e-01f, sum.data[6]);
-    sum.data[7] = fmaf(fval, 1.111111119390e-01f, sum.data[7]);
-    fval = hip_unpack3(pix.x);
-    sum.data[6] = fmaf(fval, 1.111111119390e-01f, sum.data[6]);
-    sum.data[7] = fmaf(fval, 1.111111119390e-01f, sum.data[7]);
-    fval = hip_unpack0(pix.y);
-    sum.data[7] = fmaf(fval, 1.111111119390e-01f, sum.data[7]);
-    // filterRow = 2
-    pix = lbufptr[34];
-    fval = hip_unpack3(pix.x);
-    sum.data[0] = fmaf(fval, 1.111111119390e-01f, sum.data[0]);
-    fval = hip_unpack0(pix.y);
-    sum.data[0] = fmaf(fval, 1.111111119390e-01f, sum.data[0]);
-    sum.data[1] = fmaf(fval, 1.111111119390e-01f, sum.data[1]);
-    fval = hip_unpack1(pix.y);
-    sum.data[0] = fmaf(fval, 1.111111119390e-01f, sum.data[0]);
-    sum.data[1] = fmaf(fval, 1.111111119390e-01f, sum.data[1]);
-    sum.data[2] = fmaf(fval, 1.111111119390e-01f, sum.data[2]);
-    fval = hip_unpack2(pix.y);
-    sum.data[1] = fmaf(fval, 1.111111119390e-01f, sum.data[1]);
-    sum.data[2] = fmaf(fval, 1.111111119390e-01f, sum.data[2]);
-    sum.data[3] = fmaf(fval, 1.111111119390e-01f, sum.data[3]);
-    fval = hip_unpack3(pix.y);
-    sum.data[2] = fmaf(fval, 1.111111119390e-01f, sum.data[2]);
-    sum.data[3] = fmaf(fval, 1.111111119390e-01f, sum.data[3]);
-    sum.data[4] = fmaf(fval, 1.111111119390e-01f, sum.data[4]);
-    pix = lbufptr[35];
-    fval = hip_unpack0(pix.x);
-    sum.data[3] = fmaf(fval, 1.111111119390e-01f, sum.data[3]);
-    sum.data[4] = fmaf(fval, 1.111111119390e-01f, sum.data[4]);
-    sum.data[5] = fmaf(fval, 1.111111119390e-01f, sum.data[5]);
-    fval = hip_unpack1(pix.x);
-    sum.data[4] = fmaf(fval, 1.111111119390e-01f, sum.data[4]);
-    sum.data[5] = fmaf(fval, 1.111111119390e-01f, sum.data[5]);
-    sum.data[6] = fmaf(fval, 1.111111119390e-01f, sum.data[6]);
-    fval = hip_unpack2(pix.x);
-    sum.data[5] = fmaf(fval, 1.111111119390e-01f, sum.data[5]);
-    sum.data[6] = fmaf(fval, 1.111111119390e-01f, sum.data[6]);
-    sum.data[7] = fmaf(fval, 1.111111119390e-01f, sum.data[7]);
-    fval = hip_unpack3(pix.x);
-    sum.data[6] = fmaf(fval, 1.111111119390e-01f, sum.data[6]);
-    sum.data[7] = fmaf(fval, 1.111111119390e-01f, sum.data[7]);
-    fval = hip_unpack0(pix.y);
-    sum.data[7] = fmaf(fval, 1.111111119390e-01f, sum.data[7]);
+    
+    uint colSum[10] = {0};
+    uint2 *lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
+    for (int row = 0; row < 3; row++) {
+        uint2 pixL = lbufptr[row * 17];       
+        uint2 pixR = lbufptr[row * 17 + 1];  
+        colSum[0] += pixL.x >> 24;           
+        colSum[1] += pixL.y & 0xFF;          
+        colSum[2] += (pixL.y >> 8) & 0xFF;
+        colSum[3] += (pixL.y >> 16) & 0xFF;
+        colSum[4] += pixL.y >> 24;
+        colSum[5] += pixR.x & 0xFF;           
+        colSum[6] += (pixR.x >> 8) & 0xFF;
+        colSum[7] += (pixR.x >> 16) & 0xFF;
+        colSum[8] += pixR.x >> 24;
+        colSum[9] += pixR.y & 0xFF;          
+    }
 
-    sum.data[0] += -4.999899864197e-01f;
-    sum.data[1] += -4.999899864197e-01f;
-    sum.data[2] += -4.999899864197e-01f;
-    sum.data[3] += -4.999899864197e-01f;
-    sum.data[4] += -4.999899864197e-01f;
-    sum.data[5] += -4.999899864197e-01f;
-    sum.data[6] += -4.999899864197e-01f;
-    sum.data[7] += -4.999899864197e-01f;
-
-    uint2 dst;
-    dst.x = hip_pack(make_float4(sum.data[0], sum.data[1], sum.data[2], sum.data[3]));
-    dst.y = hip_pack(make_float4(sum.data[4], sum.data[5], sum.data[6], sum.data[7]));
+    uint2 dst = {0, 0};
+    for (int i = 0; i < 4; i++) {
+        dst.x |= (((colSum[i] + colSum[i + 1] + colSum[i + 2]) * 7282) >> 16) << (i * 8);
+        dst.y |= (((colSum[i + 4] + colSum[i + 5] + colSum[i + 6]) * 7282) >> 16) << (i * 8);
+    }
 
     uint dstIdx =  y * dstImageStrideInBytes + x;
 

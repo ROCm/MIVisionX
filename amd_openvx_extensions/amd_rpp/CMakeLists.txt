@@ -178,10 +178,7 @@ if(EXISTS ${rpp_INCLUDE_DIR}/rpp/rpp_audio_augmentations_support.h)
 endif()
 
 # Audio features for VX_RPP
-# Compare the version as a whole. Testing MAJOR/MINOR/PATCH one at a time made
-# "MINOR >= 1 AND PATCH >= 1" reject every 3.x.0 release, so RPP 3.2.0 and 3.3.0
-# were treated as older than the 3.1.1 minimum and the audio kernels were
-# compiled out even when RPP reported audio support.
+# Compare the version as a whole, not MAJOR/MINOR/PATCH one at a time.
 if(rpp_VERSION VERSION_GREATER_EQUAL 3.1.1 AND RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND)
     target_compile_definitions(vx_rpp PRIVATE AUDIO_SUPPORT=1)
     message("-- ${White}vx_rpp Audio Features Included${ColourReset}")

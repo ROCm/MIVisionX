@@ -75,6 +75,39 @@ def run_runvx(runvx_exe, gdf_path, backend, profile=False):
                           stderr=subprocess.STDOUT, text=True, timeout=120)
 
 
+def profiled_kernels(stdout):
+    """{bare kernel name: {devices it ran on}} from -dump-profile rows.
+
+    A row is COUNT,tmp,avg,min,max,DEV,KERNEL (ago_interface.cpp:2912) and is
+    emitted only for nodes with perf.num > 0, so a name present here proves the
+    optimizer selected that kernel and DEV proves which device ran it. The two
+    non-data lines are skipped by the field count and the numeric COUNT: the
+    column header has 7 fields but "COUNT" is not a digit, and the csv header
+    has 11.
+    """
+    ran = {}
+    for line in stdout.splitlines():
+        fields = [f.strip() for f in line.split(",")]
+        if len(fields) != 7 or not fields[0].isdigit():
+            continue
+        ran.setdefault(fields[6].split(".")[-1], set()).add(fields[5])
+    return ran
+
+
+def check_profile(ran, expected, backend, tag):
+    """Failures for kernels that did not run, or ran on the wrong device."""
+    dev = "GPU" if backend == "GPU" else "CPU"
+    for kernel in expected:
+        if kernel not in ran:
+            return [(tag, f"{kernel} did not run -- the graph was not built as "
+                          f"expected, so that kernel was not exercised")]
+        if ran[kernel] != {dev}:
+            return [(tag, f"{kernel} ran on {'/'.join(sorted(ran[kernel]))}, not "
+                          f"{dev} -- the {backend} pass did not exercise the "
+                          f"{dev} kernel")]
+    return []
+
+
 def check_u1_logic(work_dir, runvx_exe, backend):
     """threshold -> and/or/xor through virtual images; exact, with per-lane detail."""
     count = WIDTH * HEIGHT
@@ -117,18 +150,26 @@ def check_u1_logic(work_dir, runvx_exe, backend):
                  f"runvx exited {result.returncode}:\n{result.stdout[-1000:]}")]
 
     # The U1 kernels are reachable only through the optimizer lowering this
-    # graph. Assert the lowering really happened: if a future drama change, a
-    # different virtual-image decision or an added target restriction stopped
+    # graph. Assert the lowering really happened: if a future ago_drama_* change,
+    # a different virtual-image decision or an added target restriction stopped
     # it, this graph would quietly run Threshold_U8_U8_* instead, produce
     # correct pixels and pass while covering nothing -- the same silent absence
     # of coverage that let #1768 survive. Likewise check the two non-virtual
     # thresholds were *not* lowered, or the U8 pair would go untested instead.
-    for kernel in ("Threshold_U1_U8_Binary", "Threshold_U1_U8_Range",
-                   "Threshold_U8_U8_Binary", "Threshold_U8_U8_Range"):
-        if kernel not in result.stdout:
-            return [(f"u1-logic {backend}",
-                     f"graph was not lowered as expected: {kernel} did not run, "
-                     f"so those kernels were not exercised:\n{result.stdout[-1500:]}")]
+    #
+    # Assert the device too, not just the kernel. Both passes run the same
+    # graph and differ only in AGO_DEFAULT_TARGET, so a GPU pass that fell back
+    # to the CPU would still show every expected kernel name and still produce
+    # correct pixels -- it would simply be a second CPU pass, covering none of
+    # the HIP kernels this file exists to guard. agoThresholdRestrictTargetSupport
+    # (ago_kernel_api.cpp:3510) clears AGO_KERNEL_FLAG_DEVICE_GPU for a threshold
+    # whose output needs the true/false remap, which is exactly that fallback.
+    prof = check_profile(profiled_kernels(result.stdout),
+                         ("Threshold_U1_U8_Binary", "Threshold_U1_U8_Range",
+                          "Threshold_U8_U8_Binary", "Threshold_U8_U8_Range"),
+                         backend, f"u1-logic {backend}")
+    if prof:
+        return prof
 
     ta = [x > 95 for x in a]
     tb = [40 <= x <= 200 for x in b]
@@ -195,7 +236,7 @@ def check_s16(work_dir, runvx_exe, backend):
             f"data out = image:{WIDTH},{HEIGHT},U008:write,{out}\n"
             "node org.khronos.openvx.threshold in thr out\n")
 
-        result = run_runvx(runvx_exe, gdf, backend)
+        result = run_runvx(runvx_exe, gdf, backend, profile=True)
         if result.returncode != 0:
             failures.append((tag, f"runvx exited {result.returncode}:\n"
                                   f"{result.stdout[-1000:]}"))
@@ -207,6 +248,19 @@ def check_s16(work_dir, runvx_exe, backend):
         data = out.read_bytes()
         if len(data) != count:
             failures.append((tag, f"size mismatch: expected {count}, got {len(data)}"))
+            continue
+
+        # These nine cases are the whole regression for the S16 truncation fix,
+        # and only the HIP kernels were ever wrong: a GPU pass that silently ran
+        # HafCpu_Threshold_U8_S16_* would pass all nine against kernels that
+        # still truncate. Nothing is lowered here -- real input, real output --
+        # so this is a device assertion rather than a lowering one.
+        prof = check_profile(profiled_kernels(result.stdout),
+                             (f"Threshold_U8_S16_{kind.capitalize()}",),
+                             backend, tag)
+        if prof:
+            failures += prof
+            print(f"FAIL [{tag}]: {prof[0][1]}")
             continue
 
         if kind == "BINARY":

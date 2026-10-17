@@ -171,8 +171,7 @@ static vx_status VX_CALLBACK initializeMedianFilter(vx_node node, const vx_refer
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcDesc->numDims));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_dtype, sizeof(input_tensor_dtype)));
     data->pSrcDesc->dataType = getRpptDataType(input_tensor_dtype);
-    // For filter ops, use offset to handle border reads
-    data->pSrcDesc->offsetInBytes = (12 * (data->kernelSize / 2));
+    data->pSrcDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pSrcDesc, data->inputLayout, data->inputTensorDims);
 
     // Querying for output tensor

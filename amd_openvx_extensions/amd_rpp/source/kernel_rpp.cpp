@@ -1930,6 +1930,45 @@ vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx
     return node;
 }
 
+vx_status vxRppStageRoi(Rpp32u deviceType, const void *roiTensorPtr, size_t count, size_t capacity, RpptROI **scratch) {
+    if (!roiTensorPtr || !scratch || count == 0) return VX_ERROR_INVALID_PARAMETERS;
+    if (capacity < count) capacity = count;
+    if (deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        if (!*scratch) {
+            // pinned host memory is addressable by RPP's HIP kernels, and is what
+            // the other per-node ROI buffers in this extension already use
+            if (hipHostMalloc((void **)scratch, capacity * sizeof(RpptROI), hipHostMallocDefault) != hipSuccess || !*scratch)
+                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "vxRppStageRoi: hipHostMalloc of %zu ROI entries failed\n", capacity);
+        }
+        if (hipMemcpy(*scratch, roiTensorPtr, count * sizeof(RpptROI), hipMemcpyDeviceToHost) != hipSuccess)
+            return ERRMSG(VX_FAILURE, "vxRppStageRoi: hipMemcpy of %zu ROI entries failed\n", count);
+#else
+        return VX_ERROR_NOT_IMPLEMENTED;
+#endif
+    } else {
+        if (!*scratch) {
+            *scratch = new RpptROI[capacity];
+            if (!*scratch) return VX_ERROR_NOT_ALLOCATED;
+        }
+        memcpy(*scratch, roiTensorPtr, count * sizeof(RpptROI));
+    }
+    return VX_SUCCESS;
+}
+
+vx_status vxRppFreeRoiScratch(Rpp32u deviceType, RpptROI **scratch) {
+    if (!scratch || !*scratch) return VX_SUCCESS;
+    if (deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostFree(*scratch));
+#endif
+    } else {
+        delete[] *scratch;
+    }
+    *scratch = nullptr;
+    return VX_SUCCESS;
+}
+
 vx_status createRPPHandle(vx_node node, vxRppHandle **pHandle, Rpp32u batchSize, Rpp32u deviceType) {
     vxRppHandle *handle = NULL;
     STATUS_ERROR_CHECK(vxGetModuleHandle(node, OPENVX_KHR_RPP, (void **)&handle));

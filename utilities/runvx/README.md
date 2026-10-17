@@ -2,7 +2,7 @@
 
 RunVX is a command-line tool to execute OpenVX graphs, with a simple, easy-to-use interface. It encapsulates most of the routine OpenVX calls, thus speeding up development and enabling rapid prototyping. As input, RunVX takes a GDF (Graph Description Format) file, a simple and intuitive syntax to describe the various data, nodes, and their dependencies. The tool has other useful features, such as, file read/write, data compares, image and keypoint data visualization, etc.
 
-If available, this project uses OpenCV for camera capture and image display.
+RunVX is built as a lean core executable. Optional features that depend on OpenCV (camera capture, compressed image read/write, display, video writer) and OpenSSL (MD5 checksums for `compare`) are implemented as separate runtime-loaded plugins. At build time CMake checks for these dependencies and builds the corresponding plugin shared libraries when present. If a dependency is missing, the plugin is skipped, but the core `runvx` binary still builds and runs. The plugins are installed to `${CMAKE_INSTALL_PREFIX}/share/mivisionx/runvx_plugins/` so they can also be built separately on the target machine if the dependencies were not available at build time.
 
 ## Prerequisites
 
@@ -10,9 +10,23 @@ If available, this project uses OpenCV for camera capture and image display.
 * **GPU**: AMD Radeon&trade; Graphics [optional]
   + Windows: install the latest AMD [drivers](https://www.amd.com/en/support) and the [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
   + Linux: install the [ROCm Core SDK](https://rocm.docs.amd.com/en/7.13.0-preview/install/rocm.html) (ROCm `7.13` or later)
-* OpenCV `3.4+` [optional] — enables camera capture and image/video display
+* OpenCV `3.4+` [optional] — enables the `runvx_image_opencv` plugin for camera capture, compressed image read/write, image/video display, and video writer
+  + If OpenCV is not found, the plugin is not built; `runvx` still runs, but image I/O/display features report a runtime error
   + Windows: set the `OpenCV_DIR` environment variable to the `OpenCV/build` folder
-* OpenSSL / `libssl-dev` [optional, Linux only] — enables MD5 checksum verification in the `compare` GDF command; a built-in fallback is used when not present (Windows uses `wincrypt.h` automatically)
+* OpenSSL / `libssl-dev` [optional, Linux only] — enables the `runvx_hash_openssl` plugin for MD5 checksum verification in the `compare` GDF command
+  + If OpenSSL is not found, the plugin is not built; a built-in MD5 fallback is used instead
+  + Windows uses `wincrypt.h` automatically; no plugin is needed on Windows
+
+## Runtime plugin discovery
+
+`runvx` searches for plugin shared libraries in this order:
+
+1. The `share/mivisionx/runvx_plugins/` directory next to the `runvx` executable
+2. Build-tree fallback for developer builds
+
+If a plugin is missing, the core `runvx` binary continues to run; the affected GDF commands (`read` from image files, `view`, compressed `write`, `compare checksum`) report a runtime error.
+
+Each plugin's source files, interface header, and `CMakeLists.txt` are installed under per-plugin subdirectories (e.g., `share/mivisionx/runvx_plugins/image_opencv/`) so the plugin can be rebuilt on the target machine if the dependency was not available at core build time.
 
 ## RunVX Usage and GDF Syntax
     runvx.exe [options] <file.gdf> [argument(s)]

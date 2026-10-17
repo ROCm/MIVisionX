@@ -39,15 +39,15 @@ endif()
 
 project(runvx)
 
-if(NOT MIN_DEPS_MODE)
-    find_package(OpenCV QUIET)
-endif()
-
 include_directories(../../amd_openvx/openvx/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+# Include plugin interface headers from each self-contained plugin directory.
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/plugins/image_opencv)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/plugins/hash_openssl)
 
 list(APPEND SOURCES
     src/runvx.cpp
+    src/runvx_plugin_loader.cpp
     src/vxArray.cpp
     src/vxConvolution.cpp
     src/vxDistribution.cpp
@@ -102,44 +102,20 @@ endif()
 target_compile_definitions(runvx PUBLIC ENABLE_OPENCL=${ENABLE_OPENCL})
 target_compile_definitions(runvx PUBLIC ENABLE_HIP=${ENABLE_HIP})
 
-if(OpenCV_FOUND)
-    if(${OpenCV_VERSION_MAJOR} EQUAL 3 OR ${OpenCV_VERSION_MAJOR} EQUAL 4)
-        target_compile_definitions(runvx PUBLIC ENABLE_OPENCV=1)
-        include_directories(${OpenCV_INCLUDE_DIRS})
-        target_link_libraries(runvx ${OpenCV_LIBRARIES})
-        if(${OpenCV_VERSION_MAJOR} EQUAL 4)
-            target_compile_definitions(runvx PUBLIC USE_OPENCV_4=1)
-        else()
-            target_compile_definitions(runvx PUBLIC USE_OPENCV_4=0)
-        endif()
-    else()
-        target_compile_definitions(runvx PUBLIC ENABLE_OPENCV=0)
-        message("-- ${Yellow}NOTE: RunVX -- OpenCV Version-${OpenCV_VERSION_MAJOR}.${OpenCV_VERSION_MINOR}.X Not Supported${ColourReset}")
-    endif()
-else(OpenCV_FOUND)
-    target_compile_definitions(runvx PUBLIC ENABLE_OPENCV=0)
-    message("-- ${Yellow}NOTE: OpenCV Not Found -- runVX built without display support${ColourReset}")
-endif(OpenCV_FOUND)
-
 if(WIN32)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
-    target_link_libraries(runvx pthread)
-    if(NOT MIN_DEPS_MODE)
-        find_path(SSL_INCLUDE
-            NAMES openssl/hmac.h openssl/md5.h
-            HINTS /usr/local/opt/openssl/include /usr/include /usr/local/include /opt/local/include
-        )
-        if(NOT "${SSL_INCLUDE}" STREQUAL "SSL_INCLUDE-NOTFOUND")
-            include_directories(${SSL_INCLUDE})
-            target_compile_definitions(runvx PRIVATE HAVE_OpenSSL=1)
-            target_link_libraries(runvx crypto)
-        endif()
-    endif()
+    target_link_libraries(runvx pthread ${CMAKE_DL_LIBS})
     # -Wno-deprecated-declarations -- Do not warn about uses of functions, variables, and types marked as deprecated by using the deprecated attribute.
     target_compile_options(runvx PRIVATE -Wno-deprecated-declarations)
 endif()
+
+# Build optional runtime plugins. If OpenCV/OpenSSL are not found, the plugin
+# is skipped but the core runvx executable still builds and runs. Plugin sources
+# are always installed so they can be built on the target machine if the
+# dependency becomes available later.
+add_subdirectory(plugins)
 
 # install MIVisionX executables -- {ROCM_PATH}/bin
 install(TARGETS runvx DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime)

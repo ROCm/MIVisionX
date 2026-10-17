@@ -1,0 +1,260 @@
+# Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+# ---------------------------------------------------------------------------
+# Runner / GPU mapping probe.
+#
+# Purpose: the shark39 group was observed handing a gfx1030 runner the
+# gfx1100 label (and vice versa). This workflow does NOT build anything —
+# each job just lands on a specific runner target, then dumps `rocminfo`
+# and `amd-smi` so the ACTUAL GPU on that runner can be compared against the
+# target it was selected by.
+#
+# Findings from the first run:
+#   * Only the GROUP-targeted jobs scheduled (shark39 / shark42 / strix-halo
+#     group). The arch-LABEL form `[self-hosted, linux-<host>-gfx<arch>...]`
+#     did not match any runner — these are ARC (Actions Runner Controller)
+#     scalesets, which are targeted by their SCALESET NAME as runs-on, not by
+#     arbitrary label combinations.
+#
+# So this revision targets two ways:
+#   * GROUP  (runs-on: { group: linux-<host>-runner-group }) — the 3 that
+#     worked; kept as-is so we keep a known-good baseline.
+#   * SCALESET NAME (runs-on: prolense-<host>-gfx<arch>-scaleset) — the
+#     per-GPU method to replace the broken label form. This pins one specific
+#     arch scaleset so rocminfo reveals the real GPU behind that name.
+#
+# Read each job's "Probe GPU" step: the `Expected (from target)` line vs the
+# rocminfo `Name:` / `gfx` ISA line is the swap test.
+#
+# Image: mivisionx/ubuntu-24.04:rocm-7.13 ships device support for all GPU
+# archs, so it runs on whichever runner the job lands on (1030/1100/1201/1151).
+# This probe only calls rocminfo/amd-smi (no kernels), so the reported GPU is
+# always the real one regardless of the image's build target.
+# ---------------------------------------------------------------------------
+
+name: Runner GPU Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [runner-gpu-probe]
+  pull_request:
+    branches: [master, main, develop]
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  ROCM_PATH: /opt/rocm
+
+jobs:
+  # =========================================================================
+  # GROUP targeting — the 3 that scheduled successfully on the first run.
+  # =========================================================================
+
+  shark39-group:
+    name: shark39 / group (scheduler pick)
+    runs-on:
+      group: linux-shark39-runner-group
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
+    steps:
+      - name: Probe GPU
+        env:
+          EXPECTED: "shark39 group — scheduler picks any (1030 or 1100)"
+        run: |
+          echo "================ Runner / GPU Probe ================"
+          echo "Runner name : ${RUNNER_NAME:-unknown}"
+          echo "Expected (from target): ${EXPECTED}"
+          echo "==================================================="
+          echo "----- rocminfo (Name / Marketing Name / gfx ISA) -----"
+          rocminfo | grep -E 'Name:|Marketing Name:|gfx[0-9]+' || rocminfo
+          echo "----- amd-smi -----"
+          amd-smi static --asic || amd-smi || true
+
+  shark42-group:
+    name: shark42 / group (scheduler pick)
+    runs-on:
+      group: linux-shark42-runner-group
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
+    steps:
+      - name: Probe GPU
+        env:
+          EXPECTED: "shark42 group — scheduler picks any (1100 or 1201)"
+        run: |
+          echo "================ Runner / GPU Probe ================"
+          echo "Runner name : ${RUNNER_NAME:-unknown}"
+          echo "Expected (from target): ${EXPECTED}"
+          echo "==================================================="
+          echo "----- rocminfo (Name / Marketing Name / gfx ISA) -----"
+          rocminfo | grep -E 'Name:|Marketing Name:|gfx[0-9]+' || rocminfo
+          echo "----- amd-smi -----"
+          amd-smi static --asic || amd-smi || true
+
+  strix-halo-group:
+    name: strix-halo / group (scheduler pick)
+    runs-on:
+      group: linux-strix-halo-runner-group
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
+    steps:
+      - name: Probe GPU
+        env:
+          EXPECTED: "strix-halo group — gfx1151"
+        run: |
+          echo "================ Runner / GPU Probe ================"
+          echo "Runner name : ${RUNNER_NAME:-unknown}"
+          echo "Expected (from target): ${EXPECTED}"
+          echo "==================================================="
+          echo "----- rocminfo (Name / Marketing Name / gfx ISA) -----"
+          rocminfo | grep -E 'Name:|Marketing Name:|gfx[0-9]+' || rocminfo
+          echo "----- amd-smi -----"
+          amd-smi static --asic || amd-smi || true
+
+  # =========================================================================
+  # SCALESET-NAME targeting — the per-GPU method replacing the broken label
+  # form. runs-on is the ARC scaleset installation name directly.
+  # =========================================================================
+
+  shark39-scaleset-gfx1100:
+    name: shark39 / scaleset gfx1100
+    runs-on: prolense-shark39-gfx1100-scaleset
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
+    steps:
+      - name: Probe GPU
+        env:
+          EXPECTED: "shark39 gfx1100 (scaleset prolense-shark39-gfx1100-scaleset)"
+        run: |
+          echo "================ Runner / GPU Probe ================"
+          echo "Runner name : ${RUNNER_NAME:-unknown}"
+          echo "Expected (from target): ${EXPECTED}"
+          echo "==================================================="
+          echo "----- rocminfo (Name / Marketing Name / gfx ISA) -----"
+          rocminfo | grep -E 'Name:|Marketing Name:|gfx[0-9]+' || rocminfo
+          echo "----- amd-smi -----"
+          amd-smi static --asic || amd-smi || true
+
+  shark39-scaleset-gfx1030:
+    name: shark39 / scaleset gfx1030
+    runs-on: prolense-shark39-gfx1030-scaleset
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
+    steps:
+      - name: Probe GPU
+        env:
+          EXPECTED: "shark39 gfx1030 (scaleset prolense-shark39-gfx1030-scaleset)"
+        run: |
+          echo "================ Runner / GPU Probe ================"
+          echo "Runner name : ${RUNNER_NAME:-unknown}"
+          echo "Expected (from target): ${EXPECTED}"
+          echo "==================================================="
+          echo "----- rocminfo (Name / Marketing Name / gfx ISA) -----"
+          rocminfo | grep -E 'Name:|Marketing Name:|gfx[0-9]+' || rocminfo
+          echo "----- amd-smi -----"
+          amd-smi static --asic || amd-smi || true
+
+  shark42-scaleset-gfx1100:
+    name: shark42 / scaleset gfx1100
+    runs-on: prolense-shark42-gfx1100-scaleset
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
+    steps:
+      - name: Probe GPU
+        env:
+          EXPECTED: "shark42 gfx1100 (scaleset prolense-shark42-gfx1100-scaleset)"
+        run: |
+          echo "================ Runner / GPU Probe ================"
+          echo "Runner name : ${RUNNER_NAME:-unknown}"
+          echo "Expected (from target): ${EXPECTED}"
+          echo "==================================================="
+          echo "----- rocminfo (Name / Marketing Name / gfx ISA) -----"
+          rocminfo | grep -E 'Name:|Marketing Name:|gfx[0-9]+' || rocminfo
+          echo "----- amd-smi -----"
+          amd-smi static --asic || amd-smi || true
+
+  shark42-scaleset-gfx1201:
+    name: shark42 / scaleset gfx1201
+    runs-on: prolense-shark42-gfx1201-scaleset
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
+    steps:
+      - name: Probe GPU
+        env:
+          EXPECTED: "shark42 gfx1201 (scaleset prolense-shark42-gfx1201-scaleset)"
+        run: |
+          echo "================ Runner / GPU Probe ================"
+          echo "Runner name : ${RUNNER_NAME:-unknown}"
+          echo "Expected (from target): ${EXPECTED}"
+          echo "==================================================="
+          echo "----- rocminfo (Name / Marketing Name / gfx ISA) -----"
+          rocminfo | grep -E 'Name:|Marketing Name:|gfx[0-9]+' || rocminfo
+          echo "----- amd-smi -----"
+          amd-smi static --asic || amd-smi || true
+
+  shark25-scaleset-gfx1030:
+    name: shark25 / scaleset gfx1030
+    runs-on: prolense-shark25-gfx1030-scaleset
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
+    steps:
+      - name: Probe GPU
+        env:
+          EXPECTED: "shark25 gfx1030 (scaleset prolense-shark25-gfx1030-scaleset)"
+        run: |
+          echo "================ Runner / GPU Probe ================"
+          echo "Runner name : ${RUNNER_NAME:-unknown}"
+          echo "Expected (from target): ${EXPECTED}"
+          echo "==================================================="
+          echo "----- rocminfo (Name / Marketing Name / gfx ISA) -----"
+          rocminfo | grep -E 'Name:|Marketing Name:|gfx[0-9]+' || rocminfo
+          echo "----- amd-smi -----"
+          amd-smi static --asic || amd-smi || true
+
+  shark25-scaleset-gfx1201:
+    name: shark25 / scaleset gfx1201
+    runs-on: prolense-shark25-gfx1201-scaleset
+    container:
+      image: mivisionx/ubuntu-24.04:rocm-7.13
+      options: --device /dev/kfd --device /dev/dri
+    steps:
+      - name: Probe GPU
+        env:
+          EXPECTED: "shark25 gfx1201 (scaleset prolense-shark25-gfx1201-scaleset)"
+        run: |
+          echo "================ Runner / GPU Probe ================"
+          echo "Runner name : ${RUNNER_NAME:-unknown}"
+          echo "Expected (from target): ${EXPECTED}"
+          echo "==================================================="
+          echo "----- rocminfo (Name / Marketing Name / gfx ISA) -----"
+          rocminfo | grep -E 'Name:|Marketing Name:|gfx[0-9]+' || rocminfo
+          echo "----- amd-smi -----"
+          amd-smi static --asic || amd-smi || true

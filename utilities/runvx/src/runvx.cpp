@@ -24,6 +24,7 @@ THE SOFTWARE.
 #include "vxParamHelper.h"
 #include "vxEngineUtil.h"
 #include "vxEngine.h"
+#include "runvx_plugin_loader.h"
 #include <iostream>
 
 char buf[4096];
@@ -89,6 +90,11 @@ void show_usage(const char * program, bool detail)
 int main(int argc, char * argv[])
 {	
 	printf("%s %s\n", RUNVX_PROGRAM, RUNVX_VERSION);
+
+	// Load runtime image plugins early so that OpenCV-dependent features can be
+	// routed through the plugin interface rather than compiled-in code.
+	RunVxLoadPlugins();
+
 	// process command-line options
 	const char * program = RUNVX_PROGRAM;
 	bool verbose = false;

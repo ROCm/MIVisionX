@@ -44,25 +44,26 @@ if(NOT MIN_DEPS_MODE)
 endif()
 
 include_directories(../../amd_openvx/openvx/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 list(APPEND SOURCES
-    runvx.cpp
-    vxArray.cpp
-    vxConvolution.cpp
-    vxDistribution.cpp
-    vxEngine.cpp
-    vxEngineUtil.cpp
-    vxImage.cpp
-    vxLUT.cpp
-    vxMatrix.cpp
-    vxParameter.cpp
-    vxParamHelper.cpp
-    vxPyramid.cpp
-    vxRemap.cpp
-    vxScalar.cpp
-    vxThreshold.cpp
-    vxTensor.cpp
-    vxUtils.cpp
+    src/runvx.cpp
+    src/vxArray.cpp
+    src/vxConvolution.cpp
+    src/vxDistribution.cpp
+    src/vxEngine.cpp
+    src/vxEngineUtil.cpp
+    src/vxImage.cpp
+    src/vxLUT.cpp
+    src/vxMatrix.cpp
+    src/vxParameter.cpp
+    src/vxParamHelper.cpp
+    src/vxPyramid.cpp
+    src/vxRemap.cpp
+    src/vxScalar.cpp
+    src/vxThreshold.cpp
+    src/vxTensor.cpp
+    src/vxUtils.cpp
     )
 
 add_executable(runvx ${SOURCES})

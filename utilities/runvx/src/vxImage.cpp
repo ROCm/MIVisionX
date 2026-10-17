@@ -22,6 +22,9 @@ THE SOFTWARE.
 
 #define _CRT_SECURE_NO_WARNINGS
 #include "vxImage.h"
+#include "runvx_plugin_loader.h"
+#include "runvx_plugin_image.h"
+#include <cfloat>
 
 // The filename from the GDF is used as an snprintf format string. Allow only integer
 // conversions (%d, %03d, ...) and %%; reject everything else so %n and %s can't get in.
@@ -75,14 +78,13 @@ CVxParamImage::CVxParamImage()
 	memset(m_memory_handle, 0, sizeof(m_memory_handle));
 	m_swap_handles = false;
 
-#if ENABLE_OPENCV
 	m_cvCapDev = NULL;
-	m_cvCapMat = NULL;
-	m_cvDispMat = NULL;
-	m_cvImage = NULL;
 	m_cvWriter = NULL;
+	m_cvWindowHandle = NULL;
+	m_cvCapWidth = 0;
+	m_cvCapHeight = 0;
+	m_cvCapType = 0;
 	m_cvReadEofOccured = false;
-#endif
 	m_cameraName[0] = 0;
 	m_comparePixelErrorMin = 0;
 	m_comparePixelErrorMax = 0;
@@ -164,43 +166,44 @@ int CVxParamImage::Shutdown(void)
 
 	m_memory_type = VX_MEMORY_TYPE_NONE;
 
-#if ENABLE_OPENCV
+	IRunVxImagePlugin * plugin = RunVxGetImagePlugin();
 	bool changed_numCvUse = false;
-	if (m_cvDispMat) {
+	if (m_cvWindowHandle) {
 		if (m_usingDisplay) {
 			g_numCvUse--;
 			changed_numCvUse = true;
 		}
-		delete (Mat *)m_cvDispMat;
-		m_cvDispMat = NULL;
+		if (plugin) plugin->DestroyWindow(m_cvWindowHandle);
+		m_cvWindowHandle = NULL;
 	}
-	if (m_cvCapMat) {
+	if (!m_cvCapBuffer.empty()) {
 		g_numCvUse--;
 		changed_numCvUse = true;
-		delete (Mat *)m_cvCapMat;
-		m_cvCapMat = NULL;
 	}
 	if (m_cvCapDev) {
-		delete (VideoCapture *)m_cvCapDev;
+		if (plugin) plugin->CloseCapture(m_cvCapDev);
 		m_cvCapDev = NULL;
 	}
-	if (m_cvImage) {
+	if (!m_cvImageBuffer.empty()) {
 		g_numCvUse--;
 		changed_numCvUse = true;
-		delete (Mat *)m_cvImage;
-		m_cvImage = NULL;
 	}
 	if (m_cvWriter) {
-		delete (VideoWriter *)m_cvWriter;
+		if (plugin) plugin->CloseVideoWriter(m_cvWriter);
 		m_cvWriter = NULL;
 	}
+	m_cvDispBuffer.clear();
+	m_cvCapBuffer.clear();
+	m_cvImageBuffer.clear();
+	m_cvCapWidth = 0;
+	m_cvCapHeight = 0;
+	m_cvCapType = 0;
 	if (changed_numCvUse && g_numCvUse == 0) {
 		if (!m_disableWaitForKeyPress) {
 			printf("Abort: Press any key to exit...\n"); fflush(stdout);
-			waitKey(0);
+			if (plugin) plugin->WaitKey(0);
 		}
 	}
-#endif
 
 	return 0;
 }
@@ -293,13 +296,13 @@ int CVxParamImage::Initialize(vx_context context, vx_graph graph, const char * d
 	else if (!_stricmp(objType, "image-from-handle")) {
 		// syntax: image-from-handle:<image-format>,{<dim-x>;<dim-y>;<stride-x>;<stride-y>}[+...],<memory-type>[:<io-params>]
 		ioParams = ScanParameters(ioParams, "<format>,{<dim-x>;<dim-y>;<stride-x>;<stride-y>}", "c,{d;d;d;d}", &m_format, 
-											&m_addr[0].dim_x, &m_addr[0].dim_y, &m_addr[0].stride_x, &m_addr[0].stride_y);
+										&m_addr[0].dim_x, &m_addr[0].dim_y, &m_addr[0].stride_x, &m_addr[0].stride_y);
 		m_width = m_addr[0].dim_x;
 		m_height = m_addr[0].dim_y;
 		m_planes = 1;
 		while (ioParams[0] == ';' && ioParams[1] == '{' && m_planes < 4) {
 			ioParams = ScanParameters(ioParams, ",{<dim-x>;<dim-y>;<stride-x>;<stride-y>}", "+{d;d;d;d}", &m_format, 
-												&m_addr[m_planes].dim_x, &m_addr[m_planes].dim_y, &m_addr[m_planes].stride_x, &m_addr[m_planes].stride_y);
+											&m_addr[m_planes].dim_x, &m_addr[m_planes].dim_y, &m_addr[m_planes].stride_x, &m_addr[m_planes].stride_y);
 			m_planes++;
 		}
 		char type_str[64];
@@ -444,7 +447,7 @@ int CVxParamImage::InitializeIO(vx_context context, vx_graph graph, vx_reference
 				}
 				else ReportError("ERROR: invalid image read/camera option: %s\n", option);
 			}
-			// check if openCV video capture need to be used
+			// check if plugin video/image capture need to be used
 			if (!_stricmp(&fileName[extpos], ".mp4") || !_stricmp(&fileName[extpos], ".avi") ||
 				!_stricmp(&fileName[extpos], ".jpg") || !_stricmp(&fileName[extpos], ".jpeg") ||
 				!_stricmp(&fileName[extpos], ".jpe") || !_stricmp(&fileName[extpos], ".png") ||
@@ -453,45 +456,45 @@ int CVxParamImage::InitializeIO(vx_context context, vx_graph graph, vx_reference
 				!_stricmp(&fileName[extpos], ".pgm") || !_stricmp(&fileName[extpos], ".pbm") ||
 				!_strnicmp(fileName, "file://", 7) || !_strnicmp(fileName, "http://", 7) || !_strnicmp(fileName, "https://", 8) ||
 				cameraDevice >= 0)
-			{ // need OpenCV to process these read I/O requests ////////////////////
-#if ENABLE_OPENCV
+			{ // need image plugin to process these read I/O requests ////////////////////
+				IRunVxImagePlugin * plugin = RunVxGetImagePlugin();
+				if (!plugin) {
+					printf("ERROR: This build doesn't have an image plugin for CAMERA/video/image read\n");
+					throw - 1;
+				}
 				if (m_format == VX_DF_IMAGE_RGB || m_format == VX_DF_IMAGE_U8) {
-					// pen video capture device and mark multi-frame capture
-                    m_usingMultiFrameCapture = false;
-					VideoCapture * pCap = nullptr;
+					m_usingMultiFrameCapture = false;
+					void * cap = nullptr;
 					if (cameraDevice >= 0) {
-						pCap = new VideoCapture(cameraDevice);
+						cap = plugin->OpenCapture(cameraDevice);
 					}
 					else {
-						pCap = new VideoCapture(fileName);
+						cap = plugin->OpenCapture(fileName);
 						// if single .jpg are is specified, mark as single-frame capture
 						if (strstr(fileName, "%") == NULL && (!_stricmp(&fileName[strlen(fileName) - 4], ".avi") || !_stricmp(&fileName[extpos], ".mp4"))) {
-                            m_usingMultiFrameCapture = true;
+							m_usingMultiFrameCapture = true;
 						}
 					}
-					m_cvCapDev = pCap;
-					if (!pCap->isOpened()) {
-						printf("ERROR: OpenCV device capture(%s) failed\n", fileName);
+					m_cvCapDev = cap;
+					if (!cap) {
+						printf("ERROR: image plugin capture(%s) failed\n", fileName);
 						throw - 1;
 					}
-#if 0 // TBD: disabled the check to avoid errors with video files
-					if (pCap->get(CV_CAP_PROP_FRAME_WIDTH) != m_width || pCap->get(CV_CAP_PROP_FRAME_HEIGHT) != m_height) {
-						printf("ERROR: OpenCV capture(%s) device is %dx%d whereas requested image is %dx%d\n", fileName, pCap->get(CV_CAP_PROP_FRAME_WIDTH), pCap->get(CV_CAP_PROP_FRAME_HEIGHT), m_width, m_height);
-						throw - 1;
-					}
-#endif
 					m_cvReadEofOccured = false;
-					int cvMatType = (m_format == VX_DF_IMAGE_RGB) ? CV_8UC3 : CV_8U;
-					m_cvCapMat = new Mat(m_height, m_width, cvMatType); //Mat(row, column, type)
+					m_cvCapType = m_format;
+					m_cvCapWidth = (int)m_width;
+					m_cvCapHeight = (int)m_height;
+					m_cvCapBuffer.resize((size_t)m_cvCapWidth * m_cvCapHeight * (m_cvCapType == VX_DF_IMAGE_RGB ? 3 : 1));
 					strcpy(m_cameraName, fileName);
 					g_numCvUse++;
 					// skip frames if requested
 					if (m_captureFrameStart > 0) {
 						printf("OK: skipping %d frames from %s\n", m_captureFrameStart, fileName); fflush(stdout);
+						std::vector<uint8_t> tmp;
+						int capW = 0, capH = 0, capT = 0;
 						for (vx_uint32 i = 0; i < m_captureFrameStart; i++) {
 							if (!m_cvReadEofOccured) {
-								*(VideoCapture *)m_cvCapDev >> *(Mat *)m_cvCapMat;
-								if (!((Mat *)m_cvCapMat)->data) {
+								if (!plugin->CaptureFrame(m_cvCapDev, capW, capH, capT, tmp)) {
 									m_cvReadEofOccured = true;
 									break;
 								}
@@ -499,10 +502,10 @@ int CVxParamImage::InitializeIO(vx_context context, vx_graph graph, vx_reference
 						}
 					}
 				}
-#else
-				printf("ERROR: This build doesn't support CAMERA option\n");
-				throw - 1;
-#endif
+				else {
+					printf("ERROR: plugin capture formats other than U8/RGB not supported\n");
+					throw - 1;
+				}
 			}
 			else
 			{ // raw frames reading /////////////////////////
@@ -578,12 +581,16 @@ int CVxParamImage::InitializeIO(vx_context context, vx_graph graph, vx_reference
 				}
 			}
 			if (!_stricmp(ioType, "view") || !_stricmp(&fileName[extpos], ".mp4") || !_stricmp(&fileName[extpos], ".avi"))
-			{ // need OpenCV to process these write I/O requests ////////////////////
-#if ENABLE_OPENCV
+			{ // need image plugin to process these write/view I/O requests ////////////////////
+				IRunVxImagePlugin * plugin = RunVxGetImagePlugin();
+				if (!plugin) {
+					printf("ERROR: this feature requires the runvx image plugin\n");
+					throw - 1;
+				}
 				if (!_stricmp(ioType, "view")) {
 					m_usingDisplay = true;
 					m_displayName.assign(fileName);
-					namedWindow(m_displayName, WINDOW_AUTOSIZE);
+					m_cvWindowHandle = plugin->CreateWindow(m_displayName.c_str());
 					g_numCvUse++;
 				}
 				else {
@@ -592,27 +599,25 @@ int CVxParamImage::InitializeIO(vx_context context, vx_graph graph, vx_reference
 						m_fpWrite = nullptr;
 					}
 					m_fileNameWrite.assign(RootDirUpdated(fileName));
-					VideoWriter * writer = new VideoWriter(m_fileNameWrite.c_str(), -1, 30, Size(m_width, m_height));
-					m_cvWriter = (void *)writer;
+					void * writer = plugin->OpenVideoWriter(m_fileNameWrite.c_str(), (int)m_width, (int)m_height, (int)m_format, -1, 30.0);
+					if (!writer) {
+						printf("ERROR: image plugin video writer(%s) failed\n", fileName);
+						throw - 1;
+					}
+					m_cvWriter = writer;
 					m_usingWriter = true;
 				}
-				// create Mat object
-				int cvMatType = CV_8UC1;
-				if (m_format == VX_DF_IMAGE_U8 || m_format == VX_DF_IMAGE_U1_AMD) cvMatType = CV_8UC1;
-				else if (m_format == VX_DF_IMAGE_S16) cvMatType = CV_16UC1; // CV_16SC1 is not supported
-				else if (m_format == VX_DF_IMAGE_U16) cvMatType = CV_16UC1;
-				else if (m_format == VX_DF_IMAGE_RGB) cvMatType = CV_8UC3;
-				else if (m_format == VX_DF_IMAGE_RGBX) cvMatType = CV_8UC4;
-				else if (m_format == VX_DF_IMAGE_F32_AMD) cvMatType = CV_32FC1;
+				// allocate display buffer for view (and as intermediate for video writer)
+				size_t dispBytesPerPixel = 1;
+				if (m_format == VX_DF_IMAGE_U8 || m_format == VX_DF_IMAGE_U1_AMD) dispBytesPerPixel = 1;
+				else if (m_format == VX_DF_IMAGE_S16 || m_format == VX_DF_IMAGE_U16) dispBytesPerPixel = 2;
+				else if (m_format == VX_DF_IMAGE_RGB) dispBytesPerPixel = 3;
+				else if (m_format == VX_DF_IMAGE_RGBX || m_format == VX_DF_IMAGE_F32_AMD) dispBytesPerPixel = 4;
 				else {
 					printf("ERROR: display of image type (%4.4s) is not support. Exiting.\n", (const char *)&m_format);
 					throw - 1;
 				}
-				m_cvDispMat = new Mat(m_height, m_width, cvMatType);
-#else
-				printf("ERROR: this feature requires OpenCV missing in this build\n");
-				throw - 1;
-#endif
+				m_cvDispBuffer.resize((size_t)m_width * m_height * dispBytesPerPixel);
 			}
 			else {
 				m_fileNameWrite.assign(RootDirUpdated(fileName));
@@ -726,98 +731,90 @@ int CVxParamImage::SyncFrame(int frameNumber)
 
 int CVxParamImage::ReadFrame(int frameNumber)
 {
-#if ENABLE_OPENCV
-	if (m_cvCapMat && m_cvCapDev) {
-		// read image from camera
+	IRunVxImagePlugin * plugin = RunVxGetImagePlugin();
+	if (!m_cvCapBuffer.empty() && m_cvCapDev) {
+		// read image from camera or video file
 		if (m_cvReadEofOccured) {
 			// no data available, report that no more frames available
 			return 1;
 		}
-		VideoCapture * pCap = (VideoCapture *)m_cvCapDev;
-		Mat * pMat = (Mat *)m_cvCapMat;
-        //Get Mat type, bevor get a new frame from VideoCapture.
-        int type = pMat->type();
-		int timeout = 0;
-		*pCap >> *pMat;
-        //change Mat type.
-        if(type == CV_8U){ /*CV_8U convert to gray*/
-            cvtColor( *pMat, *pMat, CV_BGR2GRAY );
-        }
-		if (!pMat->data) {
-			// no data available, report that no more frames available
+		if (!plugin) {
+			printf("ERROR: image plugin is no longer available for capture\n");
+			return -1;
+		}
+		std::vector<uint8_t> frame;
+		int capW = 0, capH = 0, capT = 0;
+		if (!plugin->CaptureFrame(m_cvCapDev, capW, capH, capT, frame)) {
 			m_cvReadEofOccured = true;
 			return 1;
 		}
-		else if (!m_gotCaptureVideoSize) {
-			m_captureWidth = pMat->cols;
-			m_captureHeight = pMat->rows;
+		if (!m_gotCaptureVideoSize) {
+			m_captureWidth = (vx_uint32)capW;
+			m_captureHeight = (vx_uint32)capH;
 			m_gotCaptureVideoSize = true;
-			bool doResize = !m_doNotResizeCapturedImages && (pMat->cols != m_width || pMat->rows != m_height);
-			printf("OK: capturing %dx%d image(s) into %dx%d RGB image buffer%s\n", m_captureWidth, m_captureHeight, m_width, m_height, doResize ? " with resize" : "");
+			bool doResize = !m_doNotResizeCapturedImages && (capW != (int)m_width || capH != (int)m_height);
+			printf("OK: capturing %dx%d image(s) into %dx%d RGB image buffer%s\n", capW, capH, m_width, m_height, doResize ? " with resize" : "");
 		}
 
-		// resize image using bicubic interpolation, if needed
-		bool doResize = !m_doNotResizeCapturedImages && (pMat->cols != m_width || pMat->rows != m_height);
+		// resize image using plugin, if needed
+		bool doResize = !m_doNotResizeCapturedImages && (capW != (int)m_width || capH != (int)m_height);
+		std::vector<uint8_t> resized;
+		const uint8_t * srcData = frame.data();
+		int srcW = capW, srcH = capH;
+		size_t srcStride = (size_t)capW * ((capT == VX_DF_IMAGE_RGB) ? 3 : 1);
 		if (doResize) {
-			// resize the captured video to specifed buffer size
-			resize(*pMat, *pMat, Size(m_width, m_height), 0, 0, INTER_CUBIC);
+			size_t dstStride = (size_t)m_width * ((m_cvCapType == VX_DF_IMAGE_RGB) ? 3 : 1);
+			resized.resize((size_t)m_height * dstStride);
+			if (!plugin->Resize(frame.data(), capW, capH, capT, srcStride,
+				resized.data(), (int)m_width, (int)m_height, m_cvCapType, dstStride)) {
+				printf("ERROR: image plugin resize failed\n");
+				return -1;
+			}
+			srcData = resized.data();
+			srcW = (int)m_width;
+			srcH = (int)m_height;
+			srcStride = dstStride;
 		}
 
-		// copy Mat into image
+		// copy buffer into vx_image
 		// NOTE: currently only supports U8, S16, RGB, RGBX image formats
 		if (m_format == VX_DF_IMAGE_U8 || m_format == VX_DF_IMAGE_S16 || m_format == VX_DF_IMAGE_RGB || m_format == VX_DF_IMAGE_RGBX) {
-			vx_rectangle_t rect = { 0, 0, min(m_width, (vx_uint32)pMat->cols), min(m_height, (vx_uint32)pMat->rows) };
+			vx_rectangle_t rect = { 0, 0, min(m_width, (vx_uint32)srcW), min(m_height, (vx_uint32)srcH) };
 			vx_imagepatch_addressing_t addr = { 0 };
 			vx_uint8 * dst = NULL;
 			ERROR_CHECK(vxAccessImagePatch(m_image, &rect, 0, &addr, (void **)&dst, VX_WRITE_ONLY));
-			vx_int32 rowSize = ((vx_int32)pMat->step < addr.stride_y) ? (vx_int32)pMat->step : addr.stride_y;
+			vx_int32 rowSize = ((vx_int32)srcStride < addr.stride_y) ? (vx_int32)srcStride : addr.stride_y;
 			for (vx_uint32 y = 0; y < rect.end_y; y++) {
-				if (m_format == VX_DF_IMAGE_RGB) {
-					// convert BGR to RGB
-					vx_uint8 * pDst = (vx_uint8 *)dst + y * addr.stride_y;
-					vx_uint8 * pSrc = (vx_uint8 *)pMat->data + y * pMat->step;
-					for (vx_uint32 x = 0; x < m_width; x++) {
-						pDst[0] = pSrc[2];
-						pDst[1] = pSrc[1];
-						pDst[2] = pSrc[0];
-						pDst += 3;
-						pSrc += 3;
-					}
-				}
-				else {
-					memcpy(dst + y * addr.stride_y, pMat->data + y * pMat->step, rowSize);
-				}
+				memcpy(dst + y * addr.stride_y, srcData + y * srcStride, rowSize);
 			}
 			ERROR_CHECK(vxCommitImagePatch(m_image, &rect, 0, &addr, dst));
 		}
 	}
-	else if (m_cvImage) {
-		// read image from camera
-		VideoCapture * pCap = (VideoCapture *)m_cvCapDev;
-		Mat * pMat = (Mat *)m_cvImage;
-		int timeout = 0;
-		*pCap >> *pMat;
-		if (!pMat->data) {
+	else if (!m_cvImageBuffer.empty()) {
+		// read image from camera (legacy alternate path -- not used by current InitializeIO)
+		if (!plugin) {
+			printf("ERROR: image plugin is no longer available for capture\n");
+			return -1;
+		}
+		int capW = 0, capH = 0, capT = 0;
+		if (!plugin->CaptureFrame(m_cvCapDev, capW, capH, capT, m_cvImageBuffer)) {
 			printf("ERROR: Can't read camera input. Camera is not supported.\n");
 			return -1;
 		}
-
+		size_t srcStride = (size_t)capW * ((capT == VX_DF_IMAGE_RGB) ? 3 : 1);
 		vx_imagepatch_addressing_t addr = { 0 };
 		vx_uint8 * dst = NULL;
 		ERROR_CHECK(vxAccessImagePatch(m_image, &m_rectFull, 0, &addr, (void **)&dst, VX_WRITE_ONLY));
-		vx_int32 rowSize = ((vx_int32)pMat->step < addr.stride_y) ? (vx_int32)pMat->step : addr.stride_y;
+		vx_int32 rowSize = ((vx_int32)srcStride < addr.stride_y) ? (vx_int32)srcStride : addr.stride_y;
 		for (vx_uint32 y = 0; y < m_height; y++) {
-			memcpy(dst + y * addr.stride_y, pMat->data + y * pMat->step, rowSize);
+			memcpy(dst + y * addr.stride_y, m_cvImageBuffer.data() + y * srcStride, rowSize);
 		}
 		ERROR_CHECK(vxCommitImagePatch(m_image, &m_rectFull, 0, &addr, dst));
 	}
-#endif
 
-	// make sure that input file is open when OpenCV camera is not active and input filename is specified
-#if ENABLE_OPENCV
-	if (!m_cvImage)
-#endif
-	if (!m_fpRead) {
+	// make sure that input file is open when plugin camera is not active and input filename is specified
+	if (!m_cvImageBuffer.empty()) { /* nothing */ }
+	else if (!m_fpRead) {
 		if (m_fileNameRead.length() > 0) {
 			char fileName[MAX_FILE_NAME_LENGTH];
 			if (!IsSafeFilenameTemplate(m_fileNameRead.c_str(), 3)) ReportError("ERROR: unsafe filename template: %s\n", m_fileNameRead.c_str());
@@ -866,337 +863,453 @@ int CVxParamImage::ReadFrame(int frameNumber)
 	return 0;
 }
 
-#if ENABLE_OPENCV
 int CVxParamImage::ViewFrame(int frameNumber)
 {
-	if (m_cvDispMat) {
-		// NOTE: supports only U8, S16, RGB, RGBX, F32 formats
-		if (m_format == VX_DF_IMAGE_U8 || m_format == VX_DF_IMAGE_S16 || m_format == VX_DF_IMAGE_RGB || m_format == VX_DF_IMAGE_RGBX || m_format == VX_DF_IMAGE_F32_AMD || m_format == VX_DF_IMAGE_U1_AMD) {
-			// copy image into Mat
-			Mat * pMat = (Mat *)m_cvDispMat;
-			vx_imagepatch_addressing_t addr = { 0 };
-			vx_uint8 * src = NULL;
-			ERROR_CHECK(vxAccessImagePatch(m_image, &m_rectFull, 0, &addr, (void **)&src, VX_READ_ONLY));
-			if (m_format == VX_DF_IMAGE_U1_AMD) {
-				for (vx_uint32 y = 0; y < m_height; y++) {
-					vx_uint8 * pDst = (vx_uint8 *)pMat->data + y * pMat->step;
-					vx_uint8 * pSrc = (vx_uint8 *)src + y * addr.stride_y;
-					for (vx_uint32 x = 0; x < m_width; x++) {
-						pDst[x] = (pSrc[x >> 3] & (1 << (x & 3))) ? 255u : 0;
-					}
+	if (m_cvDispBuffer.empty()) return 0;
+
+	IRunVxImagePlugin * plugin = RunVxGetImagePlugin();
+	if (!plugin) return 0;
+
+	// NOTE: supports only U8, S16, RGB, RGBX, F32 formats
+	if (m_format == VX_DF_IMAGE_U8 || m_format == VX_DF_IMAGE_S16 || m_format == VX_DF_IMAGE_RGB || m_format == VX_DF_IMAGE_RGBX || m_format == VX_DF_IMAGE_F32_AMD || m_format == VX_DF_IMAGE_U1_AMD) {
+		// copy image into display buffer
+		vx_imagepatch_addressing_t addr = { 0 };
+		vx_uint8 * src = NULL;
+		ERROR_CHECK(vxAccessImagePatch(m_image, &m_rectFull, 0, &addr, (void **)&src, VX_READ_ONLY));
+		size_t stride = (size_t)m_width * ((m_format == VX_DF_IMAGE_RGB) ? 3 : (m_format == VX_DF_IMAGE_RGBX || m_format == VX_DF_IMAGE_F32_AMD) ? 4 : (m_format == VX_DF_IMAGE_S16) ? 2 : 1);
+		if (m_format == VX_DF_IMAGE_U1_AMD) {
+			stride = (size_t)m_width;
+			for (vx_uint32 y = 0; y < m_height; y++) {
+				vx_uint8 * pDst = (vx_uint8 *)m_cvDispBuffer.data() + y * stride;
+				vx_uint8 * pSrc = (vx_uint8 *)src + y * addr.stride_y;
+				for (vx_uint32 x = 0; x < m_width; x++) {
+					pDst[x] = (pSrc[x >> 3] & (1 << (x & 3))) ? 255u : 0;
 				}
 			}
-			else if (m_format == VX_DF_IMAGE_RGB) {
-				for (vx_uint32 y = 0; y < m_height; y++) {
-					vx_uint8 * pDst = (vx_uint8 *)pMat->data + y * pMat->step;
-					vx_uint8 * pSrc = (vx_uint8 *)src + y * addr.stride_y;
-					for (vx_uint32 x = 0; x < m_width; x++) {
-						pDst[0] = pSrc[2];
-						pDst[1] = pSrc[1];
-						pDst[2] = pSrc[0];
-						pDst += 3;
-						pSrc += 3;
-					}
+		}
+		else if (m_format == VX_DF_IMAGE_RGB) {
+			stride = (size_t)m_width * 3;
+			for (vx_uint32 y = 0; y < m_height; y++) {
+				memcpy(m_cvDispBuffer.data() + y * stride, src + y * addr.stride_y, stride);
+			}
+		}
+		else {
+			for (vx_uint32 y = 0; y < m_height; y++) {
+				memcpy(m_cvDispBuffer.data() + y * stride, src + y * addr.stride_y, stride);
+			}
+		}
+		ERROR_CHECK(vxCommitImagePatch(m_image, &m_rectFull, 0, &addr, src));
+
+		// color table for key-points (0xRRGGBB)
+		static const uint32_t colorTable[] = { 0x00FF00, 0x0000FF, 0xFFFF00, 0x3333FF, 0x000066, 0xFFFFFF };
+		const size_t colorTableCount = sizeof(colorTable) / sizeof(colorTable[0]);
+		int colorIndex = m_colorIndexDefault;
+
+		// global list of overlay items to draw
+		std::vector<RunVxOverlayItem> overlays;
+		// local tracking list for keypoint radius calculation
+		std::vector<ArrayItemForView> kpList;
+		// process objects with same window name as the image
+		int overlayOffsetX = 10, overlayOffsetY = 10;
+		for (auto it = m_paramList.begin(); it != m_paramList.end(); it++)
+		{
+			if (*it != this && !m_displayName.compare((*it)->getDisplayName()))
+			{ // name of the window matched
+				vx_delay delay = nullptr;
+				vx_enum delayObjType = VX_TYPE_INVALID;
+				if ((*it)->GetVxObjectType() == VX_TYPE_DELAY)
+				{ // display the slot[0] of delay object
+					delay = (vx_delay)(*it)->GetVxObject();
+					ERROR_CHECK(vxQueryDelay(delay, VX_DELAY_ATTRIBUTE_TYPE, &delayObjType, sizeof(delayObjType)));
 				}
-			}
-			else {
-				vx_int32 rowSize = ((vx_int32)pMat->step < addr.stride_y) ? (vx_int32)pMat->step : addr.stride_y;
-				for (vx_uint32 y = 0; y < m_height; y++) {
-					memcpy(pMat->data + y * pMat->step, src + y * addr.stride_y, rowSize);
-				}
-			}
-			ERROR_CHECK(vxCommitImagePatch(m_image, &m_rectFull, 0, &addr, src));
-			// convert grayscale Mat pMat to RGB Mat convertedToRGB:
-			//   this is done in order to be able to plot keypoints with different colors
-			Mat convertedToRGB(pMat->rows, pMat->cols, CV_8UC3, Scalar(0, 0, 255));
-			Mat *pOutputImage = pMat;
-			if (pMat->type() == CV_8UC1) { // TBD: need to support S16 images here
-				cvtColor(*pMat, convertedToRGB, CV_GRAY2RGB);
-				pOutputImage = &convertedToRGB;
-			}
 
-			// color table for key-points
-			static int colorTable[][3] = { { 0, 255, 0 }, { 255, 0, 0 }, { 0, 255, 255 }, { 51, 51, 255 }, { 0, 0, 102 }, { 255, 255, 255 } };
-			int colorIndex = m_colorIndexDefault;
-
-			// list of golbal list
-			std::vector<ArrayItemForView> kpList;
-			// process objects with same window name as the image
-			int overlayOffsetX = 10, overlayOffsetY = 10;
-			for (auto it = m_paramList.begin(); it != m_paramList.end(); it++)
-			{
-				if (*it != this && !m_displayName.compare((*it)->getDisplayName()))
-				{ // name of the window matched
-					vx_delay delay = nullptr;
-					vx_enum delayObjType = VX_TYPE_INVALID;
-					if ((*it)->GetVxObjectType() == VX_TYPE_DELAY)
-					{ // display the slot[0] of delay object
-						delay = (vx_delay)(*it)->GetVxObject();
-						ERROR_CHECK(vxQueryDelay(delay, VX_DELAY_ATTRIBUTE_TYPE, &delayObjType, sizeof(delayObjType)));
+				if ((*it)->GetVxObjectType() == VX_TYPE_ARRAY || (delay && delayObjType == VX_TYPE_ARRAY))
+				{ // view the array data (processed in two steps) //////////////////////////// 
+					// get array and itemtype and numitems
+					CVxParameter * paramArray = nullptr;
+					vx_array arr = nullptr;
+					if (delay && delayObjType == VX_TYPE_ARRAY) {
+						// view the array from slot[0]
+						arr = (vx_array)vxGetReferenceFromDelay(delay, 0);
 					}
-
-					if ((*it)->GetVxObjectType() == VX_TYPE_ARRAY || (delay && delayObjType == VX_TYPE_ARRAY))
-					{ // view the array data (processed in two steps) //////////////////////////// 
-						// get array and itemtype and numitems
-						CVxParameter * paramArray = nullptr;
-						vx_array arr = nullptr;
-						if (delay && delayObjType == VX_TYPE_ARRAY) {
-							// view the array from slot[0]
-							arr = (vx_array)vxGetReferenceFromDelay(delay, 0);
+					else {
+						paramArray = *it;
+						arr = (vx_array)paramArray->GetVxObject();
+					}
+					vx_enum itemtype = VX_TYPE_INVALID;
+					vx_size arrayNumItems = 0;
+					ERROR_CHECK(vxQueryArray(arr, VX_ARRAY_ATTRIBUTE_ITEMTYPE, &itemtype, sizeof(itemtype)));
+					ERROR_CHECK(vxQueryArray(arr, VX_ARRAY_ATTRIBUTE_NUMITEMS, &arrayNumItems, sizeof(arrayNumItems)));
+					if (itemtype != VX_TYPE_KEYPOINT && itemtype != VX_TYPE_RECTANGLE && itemtype != VX_TYPE_COORDINATES2D)
+						ReportError("ERROR: doesn't support viewing of specified array type\n");
+					// add data items to the global kpList
+					if (paramArray && paramArray->GetArrayListForViewCount() > 0)
+					{ // use data items from the shared list for view, if available
+						size_t count = paramArray->GetArrayListForViewCount();
+						int colorIndexMax = colorIndex;
+						for (auto index = 0; index < count; index++) {
+							ArrayItemForView kpItem = *paramArray->GetArrayListForViewItemAt(index);
+							// update kpItem.colorIndex and colorIndexMax
+							int id = colorIndex + kpItem.colorIndex;
+							if (id >= int(colorTableCount))
+								id = int(colorTableCount - 1);
+							colorIndexMax = max(id, colorIndexMax);
+							kpItem.colorIndex = id;
+							// add the item to global list
+							kpList.push_back(kpItem);
 						}
-						else {
-							paramArray = *it;
-							arr = (vx_array)paramArray->GetVxObject();
-						}
-						vx_enum itemtype = VX_TYPE_INVALID;
-						vx_size arrayNumItems = 0;
-						ERROR_CHECK(vxQueryArray(arr, VX_ARRAY_ATTRIBUTE_ITEMTYPE, &itemtype, sizeof(itemtype)));
-						ERROR_CHECK(vxQueryArray(arr, VX_ARRAY_ATTRIBUTE_NUMITEMS, &arrayNumItems, sizeof(arrayNumItems)));
-						if (itemtype != VX_TYPE_KEYPOINT && itemtype != VX_TYPE_RECTANGLE && itemtype != VX_TYPE_COORDINATES2D)
-							ReportError("ERROR: doesn't support viewing of specified array type\n");
-						// add data items to the global kpList
-						if (paramArray && paramArray->GetArrayListForViewCount() > 0)
-						{ // use data items from the shared list for view, if available
-							size_t count = paramArray->GetArrayListForViewCount();
-							int colorIndexMax = colorIndex;
-							for (auto index = 0; index < count; index++) {
-								ArrayItemForView kpItem = *paramArray->GetArrayListForViewItemAt(index);
-								// update kpItem.colorIndex and colorIndexMax
-								int id = colorIndex + kpItem.colorIndex;
-								if (id >= int(sizeof(colorTable) / sizeof(colorTable[0])))
-									id = int(sizeof(colorTable) / sizeof(colorTable[0]) - 1);
-								colorIndexMax = max(id, colorIndexMax);
-								kpItem.colorIndex = id;
-								// add the item to global list
-								kpList.push_back(kpItem);
-							}
-							// update colorIndex for next item
-							colorIndex = colorIndexMax;
-							if (colorIndex < int(sizeof(colorTable) / sizeof(colorTable[0]) - 1))
-								colorIndex++;
-							// reset the list
-							paramArray->ResetArrayListForView();
-						}
-						else if (arrayNumItems > 0)
-						{ // use the data items from the vx_array object
-							// initialize keypoint with colorIndex and update colorIndex for next keypoint set
-							ArrayItemForView kpItem = { itemtype, colorIndex, 0, 0, 0.0f, 0, 0 };
-							if (colorIndex < int(sizeof(colorTable) / sizeof(colorTable[0]) - 1))
-								colorIndex++;
-							// compute strength bounds and binSize for plotted point radius
-							vx_size stride = 0;
-							void *base = NULL;
-							ERROR_CHECK(vxAccessArrayRange(arr, 0, arrayNumItems, &stride, &base, VX_READ_ONLY));
-							if (itemtype == VX_TYPE_KEYPOINT) {
-								size_t arrayNumTracked = 0;
-								for (size_t i = 0; i < arrayNumItems; i++) {
-									vx_keypoint_t * kp = &vxArrayItem(vx_keypoint_t, base, i, stride);
-									if (kp->tracking_status) {
-										kpItem.strength = kp->strength;
-										kpItem.x = kp->x;
-										kpItem.y = kp->y;
-										kpList.push_back(kpItem);
-										arrayNumTracked++;
-									}
-								}
-								char message[128]; snprintf(message, sizeof(message), "%s [tracked %d/%d]", (*it)->GetVxObjectName(), (int)arrayNumTracked, (int)arrayNumItems);
-								int H = 20;
-								cv::putText(*pOutputImage, message, Point(overlayOffsetX + 0, overlayOffsetY + H - 6), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255, 0), 2, 8, false);
-								cv::putText(*pOutputImage, message, Point(overlayOffsetX + 2, overlayOffsetY + H - 8), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255, 0), 1, 8, false);
-								overlayOffsetY += H;
-							}
-							else if (itemtype == VX_TYPE_RECTANGLE) {
-								for (size_t i = 0; i < arrayNumItems; i++) {
-									vx_rectangle_t * kp = &vxArrayItem(vx_rectangle_t, base, i, stride);
-									kpItem.x = kp->start_x;
-									kpItem.y = kp->start_y;
-									kpItem.w = kp->end_x - kp->start_x;
-									kpItem.h = kp->end_y - kp->start_y;
-									kpList.push_back(kpItem);
-								}
-							}
-							else if (itemtype == VX_TYPE_COORDINATES2D) {
-								for (size_t i = 0; i < arrayNumItems; i++) {
-									vx_coordinates2d_t * kp = &vxArrayItem(vx_coordinates2d_t, base, i, stride);
+						// update colorIndex for next item
+						colorIndex = colorIndexMax;
+						if (colorIndex < int(colorTableCount - 1))
+							colorIndex++;
+						// reset the list
+						paramArray->ResetArrayListForView();
+					}
+					else if (arrayNumItems > 0)
+					{ // use the data items from the vx_array object
+						// initialize keypoint with colorIndex and update colorIndex for next keypoint set
+						ArrayItemForView kpItem = { itemtype, colorIndex, 0, 0, 0.0f, 0, 0 };
+						if (colorIndex < int(colorTableCount - 1))
+							colorIndex++;
+						// compute strength bounds and binSize for plotted point radius
+						vx_size stride = 0;
+						void *base = NULL;
+						ERROR_CHECK(vxAccessArrayRange(arr, 0, arrayNumItems, &stride, &base, VX_READ_ONLY));
+						if (itemtype == VX_TYPE_KEYPOINT) {
+							size_t arrayNumTracked = 0;
+							for (size_t i = 0; i < arrayNumItems; i++) {
+								vx_keypoint_t * kp = &vxArrayItem(vx_keypoint_t, base, i, stride);
+								if (kp->tracking_status) {
+									kpItem.strength = kp->strength;
 									kpItem.x = kp->x;
 									kpItem.y = kp->y;
 									kpList.push_back(kpItem);
+									arrayNumTracked++;
 								}
 							}
-							ERROR_CHECK(vxCommitArrayRange(arr, 0, arrayNumItems, base));
+							char message[128]; snprintf(message, sizeof(message), "%s [tracked %d/%d]", (*it)->GetVxObjectName(), (int)arrayNumTracked, (int)arrayNumItems);
+							RunVxOverlayItem textRed = {};
+							textRed.kind = RUNVX_OVERLAY_TEXT;
+							textRed.x = overlayOffsetX + 0;
+							textRed.y = overlayOffsetY + 20 - 6;
+							textRed.color = 0xFF0000;
+							textRed.text = strdup(message);
+							overlays.push_back(textRed);
+							RunVxOverlayItem textYellow = {};
+							textYellow.kind = RUNVX_OVERLAY_TEXT;
+							textYellow.x = overlayOffsetX + 2;
+							textYellow.y = overlayOffsetY + 20 - 8;
+							textYellow.color = 0xFFFF00;
+							textYellow.text = strdup(message);
+							overlays.push_back(textYellow);
+							overlayOffsetY += 20;
 						}
-					}
-					else if ((*it)->GetVxObjectType() == VX_TYPE_DISTRIBUTION)
-					{ // view the distribution data ////////////////////////////
-						vx_distribution dist = (vx_distribution)(*it)->GetVxObject();
-						vx_size numBins = 0;
-						vx_uint32 * hist = nullptr;
-						ERROR_CHECK(vxQueryDistribution(dist, VX_DISTRIBUTION_ATTRIBUTE_BINS, &numBins, sizeof(numBins)));
-						ERROR_CHECK(vxAccessDistribution(dist, (void **)&hist, VX_READ_ONLY));
-						vx_uint32 maxValue = 0;
-						for (size_t bin = 0; bin < numBins; bin++) {
-							maxValue = max(maxValue, hist[bin]);
-						}
-						Rect box(overlayOffsetX, overlayOffsetY, 256, 100); overlayOffsetY += (box.height + 8);
-						rectangle(*pOutputImage, Rect(box.x - 2, box.y - 2, box.width + 4, box.height + 4), Scalar(0, 0, 255), 1, 8);
-						rectangle(*pOutputImage, Rect(box.x - 1, box.y - 1, box.width + 2, box.height + 2), Scalar(255, 0, 0), 1, 8);
-						if (maxValue > 0) {
-							int barWidth = box.width / (int)numBins;
-							for (int bin = 0; bin < (int)numBins; bin++) {
-								int barHeight = box.height * hist[bin] / maxValue;
-								Rect bar(box.x + bin*barWidth, box.y + box.height - barHeight, barWidth, barHeight);
-								rectangle(*pOutputImage, bar, Scalar(0, 255, 255), CV_FILLED, 8);
+						else if (itemtype == VX_TYPE_RECTANGLE) {
+							for (size_t i = 0; i < arrayNumItems; i++) {
+								vx_rectangle_t * kp = &vxArrayItem(vx_rectangle_t, base, i, stride);
+								kpItem.x = kp->start_x;
+								kpItem.y = kp->start_y;
+								kpItem.w = kp->end_x - kp->start_x;
+								kpItem.h = kp->end_y - kp->start_y;
+								kpList.push_back(kpItem);
 							}
 						}
-						ERROR_CHECK(vxCommitDistribution(dist, hist));
-						// show the name of the object to the right
-						char message[128]; snprintf(message, sizeof(message), "%s (distribution)", (*it)->GetVxObjectName());
-						int H = 20;
-						cv::putText(*pOutputImage, message, Point(box.x + box.width + 10, box.y + H - 6), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 255, 0), 2, 8, false);
-						cv::putText(*pOutputImage, message, Point(box.x + box.width + 12, box.y + H - 8), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255, 0), 1, 8, false);
+						else if (itemtype == VX_TYPE_COORDINATES2D) {
+							for (size_t i = 0; i < arrayNumItems; i++) {
+								vx_coordinates2d_t * kp = &vxArrayItem(vx_coordinates2d_t, base, i, stride);
+								kpItem.x = kp->x;
+								kpItem.y = kp->y;
+								kpList.push_back(kpItem);
+							}
+						}
+						ERROR_CHECK(vxCommitArrayRange(arr, 0, arrayNumItems, base));
 					}
-					else if ((*it)->GetVxObjectType() == VX_TYPE_LUT)
-					{ // view the lut data ////////////////////////////
-						vx_lut lut = (vx_lut)(*it)->GetVxObject();
-						vx_enum data_type;
-						ERROR_CHECK(vxQueryLUT(lut, VX_LUT_ATTRIBUTE_TYPE, &data_type, sizeof(data_type)));
-						if (data_type == VX_TYPE_UINT8)
-						{ // only supports 8-bit look-up tables
-							vx_size count;
-							vx_uint8 * data = nullptr;
-							ERROR_CHECK(vxQueryLUT(lut, VX_LUT_ATTRIBUTE_COUNT, &count, sizeof(count)));
-							ERROR_CHECK(vxAccessLUT(lut, (void **)&data, VX_READ_ONLY));
-							vx_uint32 maxValue = 255;
-							Rect box(overlayOffsetX, overlayOffsetY, 256, 256); overlayOffsetY += (box.height + 8);
-							rectangle(*pOutputImage, Rect(box.x - 2, box.y - 2, box.width + 4, box.height + 4), Scalar(255, 0, 255), 1, 8);
-							rectangle(*pOutputImage, Rect(box.x - 1, box.y - 1, box.width + 2, box.height + 2), Scalar(255, 255, 0), 1, 8);
-							int barWidth = box.width / (int)count;
+				}
+				else if ((*it)->GetVxObjectType() == VX_TYPE_DISTRIBUTION)
+				{ // view the distribution data ////////////////////////////
+					vx_distribution dist = (vx_distribution)(*it)->GetVxObject();
+					vx_size numBins = 0;
+					vx_uint32 * hist = nullptr;
+					ERROR_CHECK(vxQueryDistribution(dist, VX_DISTRIBUTION_ATTRIBUTE_BINS, &numBins, sizeof(numBins)));
+					ERROR_CHECK(vxAccessDistribution(dist, (void **)&hist, VX_READ_ONLY));
+					vx_uint32 maxValue = 0;
+					for (size_t bin = 0; bin < numBins; bin++) {
+						maxValue = max(maxValue, hist[bin]);
+					}
+					int boxX = overlayOffsetX, boxY = overlayOffsetY, boxW = 256, boxH = 100;
+					overlayOffsetY += (boxH + 8);
+					RunVxOverlayItem outer = {};
+					outer.kind = RUNVX_OVERLAY_FILLED_RECT;
+					outer.x = boxX - 2; outer.y = boxY - 2; outer.w = boxW + 4; outer.h = boxH + 4;
+					outer.color = 0x0000FF;
+					overlays.push_back(outer);
+					RunVxOverlayItem inner = {};
+					inner.kind = RUNVX_OVERLAY_FILLED_RECT;
+					inner.x = boxX - 1; inner.y = boxY - 1; inner.w = boxW + 2; inner.h = boxH + 2;
+					inner.color = 0xFF0000;
+					overlays.push_back(inner);
+					if (maxValue > 0 && numBins > 0) {
+						int barWidth = boxW / (int)numBins;
+						uint32_t * values = (uint32_t *)malloc(numBins * sizeof(uint32_t));
+						for (size_t bin = 0; bin < numBins; bin++) values[bin] = hist[bin];
+						for (int bin = 0; bin < (int)numBins; bin++) {
+							int barHeight = boxH * hist[bin] / maxValue;
+							RunVxOverlayItem bar = {};
+							bar.kind = RUNVX_OVERLAY_FILLED_RECT;
+							bar.x = boxX + bin * barWidth;
+							bar.y = boxY + boxH - barHeight;
+							bar.w = barWidth;
+							bar.h = barHeight;
+							bar.color = 0xFFFF00;
+							overlays.push_back(bar);
+						}
+						RunVxOverlayItem histItem = {};
+						histItem.kind = RUNVX_OVERLAY_HISTOGRAM;
+						histItem.x = boxX; histItem.y = boxY; histItem.w = boxW; histItem.h = boxH;
+						histItem.color = 0xFFFF00;
+						histItem.histValues = values;
+						histItem.histNumBins = (int)numBins;
+						histItem.histMaxValue = maxValue;
+						overlays.push_back(histItem);
+					}
+					ERROR_CHECK(vxCommitDistribution(dist, hist));
+					// show the name of the object to the right
+					char message[128]; snprintf(message, sizeof(message), "%s (distribution)", (*it)->GetVxObjectName());
+					RunVxOverlayItem textRed = {};
+					textRed.kind = RUNVX_OVERLAY_TEXT;
+					textRed.x = boxX + boxW + 10;
+					textRed.y = boxY + 20 - 6;
+					textRed.color = 0x0000FF;
+					textRed.text = strdup(message);
+					overlays.push_back(textRed);
+					RunVxOverlayItem textYellow = {};
+					textYellow.kind = RUNVX_OVERLAY_TEXT;
+					textYellow.x = boxX + boxW + 12;
+					textYellow.y = boxY + 20 - 8;
+					textYellow.color = 0xFFFF00;
+					textYellow.text = strdup(message);
+					overlays.push_back(textYellow);
+				}
+				else if ((*it)->GetVxObjectType() == VX_TYPE_LUT)
+				{ // view the lut data ////////////////////////////
+					vx_lut lut = (vx_lut)(*it)->GetVxObject();
+					vx_enum data_type;
+					ERROR_CHECK(vxQueryLUT(lut, VX_LUT_ATTRIBUTE_TYPE, &data_type, sizeof(data_type)));
+					if (data_type == VX_TYPE_UINT8)
+					{ // only supports 8-bit look-up tables
+						vx_size count;
+						vx_uint8 * data = nullptr;
+						ERROR_CHECK(vxQueryLUT(lut, VX_LUT_ATTRIBUTE_COUNT, &count, sizeof(count)));
+						ERROR_CHECK(vxAccessLUT(lut, (void **)&data, VX_READ_ONLY));
+						vx_uint32 maxValue = 255;
+						int boxX = overlayOffsetX, boxY = overlayOffsetY, boxW = 256, boxH = 256;
+						overlayOffsetY += (boxH + 8);
+						RunVxOverlayItem outer = {};
+						outer.kind = RUNVX_OVERLAY_FILLED_RECT;
+						outer.x = boxX - 2; outer.y = boxY - 2; outer.w = boxW + 4; outer.h = boxH + 4;
+						outer.color = 0xFF00FF;
+						overlays.push_back(outer);
+						RunVxOverlayItem inner = {};
+						inner.kind = RUNVX_OVERLAY_FILLED_RECT;
+						inner.x = boxX - 1; inner.y = boxY - 1; inner.w = boxW + 2; inner.h = boxH + 2;
+						inner.color = 0xFFFF00;
+						overlays.push_back(inner);
+						if (count > 0) {
+							int barWidth = boxW / (int)count;
+							uint32_t * values = (uint32_t *)malloc(count * sizeof(uint32_t));
+							for (size_t bin = 0; bin < count; bin++) values[bin] = data[bin];
 							for (int bin = 0; bin < (int)count; bin++) {
-								int barHeight = box.height * data[bin] / maxValue;
-								Rect bar(box.x + bin*barWidth, box.y + box.height - barHeight, barWidth, barHeight);
-								rectangle(*pOutputImage, bar, Scalar(0, 255, 255), CV_FILLED, 8);
+								int barHeight = boxH * data[bin] / maxValue;
+								RunVxOverlayItem bar = {};
+								bar.kind = RUNVX_OVERLAY_FILLED_RECT;
+								bar.x = boxX + bin * barWidth;
+								bar.y = boxY + boxH - barHeight;
+								bar.w = barWidth;
+								bar.h = barHeight;
+								bar.color = 0xFFFF00;
+								overlays.push_back(bar);
 							}
-							ERROR_CHECK(vxCommitLUT(lut, data));
-							// show the name of the object to the right
-							char message[128]; snprintf(message, sizeof(message), "%s (lut)", (*it)->GetVxObjectName());
-							int H = 20;
-							cv::putText(*pOutputImage, message, Point(box.x + box.width + 10, box.y + H - 6), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 0, 0, 0), 2, 8, false);
-							cv::putText(*pOutputImage, message, Point(box.x + box.width + 12, box.y + H - 8), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255, 0), 1, 8, false);
+							RunVxOverlayItem histItem = {};
+							histItem.kind = RUNVX_OVERLAY_HISTOGRAM;
+							histItem.x = boxX; histItem.y = boxY; histItem.w = boxW; histItem.h = boxH;
+							histItem.color = 0xFFFF00;
+							histItem.histValues = values;
+							histItem.histNumBins = (int)count;
+							histItem.histMaxValue = maxValue;
+							overlays.push_back(histItem);
 						}
-					}
-					else if ((*it)->GetVxObjectType() == VX_TYPE_SCALAR)
-					{ // view the scalar data ////////////////////////////
-						char value[MAX_SCALAR_TO_STRING_SIZE];
-						vx_scalar scalar = (vx_scalar)(*it)->GetVxObject();
-						ReadScalarToString(scalar, value);
-						char message[2*MAX_SCALAR_TO_STRING_SIZE]; snprintf(message, sizeof(message), "%s = %s", (*it)->GetVxObjectName(), value);
-						int H = 20;
-						cv::putText(*pOutputImage, message, Point(overlayOffsetX+0, overlayOffsetY+H-6), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,   0, 255, 0), 2, 8, false);
-						cv::putText(*pOutputImage, message, Point(overlayOffsetX+2, overlayOffsetY+H-8), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255, 0), 1, 8, false);
-						overlayOffsetY += H;
-					}
-				}
-			}
-			// add keypoints from user specified file(s)
-			for (auto it = m_viewKeypointFilenameList.begin(); it != m_viewKeypointFilenameList.end(); it++)
-			{
-				// initialize keypoint with colorIndex and update colorIndex for next keypoint set
-				ArrayItemForView kpItem = { VX_TYPE_KEYPOINT, colorIndex, 0, 0, 0.0f, 0, 0 };
-				if (colorIndex < int(sizeof(colorTable) / sizeof(colorTable[0]) - 1))
-					colorIndex++;
-				// get list of keypoints from the user specified file
-				char fileName[512];
-				if (!IsSafeFilenameTemplate(it->c_str(), 1)) ReportError("ERROR: unsafe filename template: %s\n", it->c_str());
-				snprintf(fileName, sizeof(fileName), it->c_str(), frameNumber);
-				FILE * fp = fopen(fileName, "r");
-				if (!fp) ReportError("ERROR: unable to open '%s'\n", fileName);
-				char line[256];
-				while (fgets(line, sizeof(line), fp) != NULL) {
-					if (sscanf(line, "%d%d%f", &kpItem.x, &kpItem.y, &kpItem.strength) == 3) {
-						kpList.push_back(kpItem);
+						ERROR_CHECK(vxCommitLUT(lut, data));
+						// show the name of the object to the right
+						char message[128]; snprintf(message, sizeof(message), "%s (lut)", (*it)->GetVxObjectName());
+						RunVxOverlayItem textRed = {};
+						textRed.kind = RUNVX_OVERLAY_TEXT;
+						textRed.x = boxX + boxW + 10;
+						textRed.y = boxY + 20 - 6;
+						textRed.color = 0x0000FF;
+						textRed.text = strdup(message);
+						overlays.push_back(textRed);
+						RunVxOverlayItem textYellow = {};
+						textYellow.kind = RUNVX_OVERLAY_TEXT;
+						textYellow.x = boxX + boxW + 12;
+						textYellow.y = boxY + 20 - 8;
+						textYellow.color = 0xFFFF00;
+						textYellow.text = strdup(message);
+						overlays.push_back(textYellow);
 					}
 				}
-				fclose(fp);
-			}
-			// compute strength bounds and binSize for computing keypoint radius
-			float minStrength = FLT_MAX, maxStrength = FLT_MIN;
-			for (auto it = kpList.begin(); it != kpList.end(); it++) {
-				if (it->itemtype == VX_TYPE_KEYPOINT) {
-					float strength = it->strength;
-					minStrength = min(strength, minStrength);
-					maxStrength = max(strength, maxStrength);
+				else if ((*it)->GetVxObjectType() == VX_TYPE_SCALAR)
+				{ // view the scalar data ////////////////////////////
+					char value[MAX_SCALAR_TO_STRING_SIZE];
+					vx_scalar scalar = (vx_scalar)(*it)->GetVxObject();
+					ReadScalarToString(scalar, value);
+					char message[2*MAX_SCALAR_TO_STRING_SIZE]; snprintf(message, sizeof(message), "%s = %s", (*it)->GetVxObjectName(), value);
+					RunVxOverlayItem textRed = {};
+					textRed.kind = RUNVX_OVERLAY_TEXT;
+					textRed.x = overlayOffsetX + 0;
+					textRed.y = overlayOffsetY + 20 - 6;
+					textRed.color = 0x0000FF;
+					textRed.text = strdup(message);
+					overlays.push_back(textRed);
+					RunVxOverlayItem textYellow = {};
+					textYellow.kind = RUNVX_OVERLAY_TEXT;
+					textYellow.x = overlayOffsetX + 2;
+					textYellow.y = overlayOffsetY + 20 - 8;
+					textYellow.color = 0xFFFF00;
+					textYellow.text = strdup(message);
+					overlays.push_back(textYellow);
+					overlayOffsetY += 20;
 				}
 			}
-			float binSize = (maxStrength - minStrength) / 5;
-			// plot the points
-			for (auto it = kpList.begin(); it != kpList.end(); it++) {
-				Scalar color(colorTable[it->colorIndex][0], colorTable[it->colorIndex][1], colorTable[it->colorIndex][2]);
-				if (it->itemtype == VX_TYPE_KEYPOINT) {
-					// compute the radius of point using strength and binSize
-					float strength = it->strength;
-					double radius = m_radiusDefault;
-					if (strength > minStrength) {
-						radius += 2.0 * floor((strength - minStrength) / binSize);
-					}
-					// plot the points with key-point location as center of circle
-					Point center(it->x, it->y);
-					circle(*pOutputImage, center, (int)radius, Scalar(0, 0, 0), 1, 8);
-					circle(*pOutputImage, center, (int)radius + 1, color, 1, 8);
-				}
-				else if (it->itemtype == VX_TYPE_RECTANGLE) {
-					// plot the rectangle
-					Rect rec(it->x, it->y, it->w, it->h);
-					rectangle(*pOutputImage, rec, color, 1, 8);
-				}
-				else if (it->itemtype == VX_TYPE_COORDINATES2D) {
-					// plot the points with small circle
-					float radius = m_radiusDefault;
-					Point center(it->x, it->y);
-					circle(*pOutputImage, center, (int)radius, Scalar(0, 0, 0), 1, 8);
-					circle(*pOutputImage, center, (int)radius + 1, color, 1, 8);
+		}
+		// add keypoints from user specified file(s)
+		for (auto it = m_viewKeypointFilenameList.begin(); it != m_viewKeypointFilenameList.end(); it++)
+		{
+			// initialize keypoint with colorIndex and update colorIndex for next keypoint set
+			ArrayItemForView kpItem = { VX_TYPE_KEYPOINT, colorIndex, 0, 0, 0.0f, 0, 0 };
+			if (colorIndex < int(colorTableCount - 1))
+				colorIndex++;
+			// get list of keypoints from the user specified file
+			char fileName[512];
+			if (!IsSafeFilenameTemplate(it->c_str(), 1)) ReportError("ERROR: unsafe filename template: %s\n", it->c_str());
+			snprintf(fileName, sizeof(fileName), it->c_str(), frameNumber);
+			FILE * fp = fopen(fileName, "r");
+			if (!fp) ReportError("ERROR: unable to open '%s'\n", fileName);
+			char line[256];
+			while (fgets(line, sizeof(line), fp) != NULL) {
+				if (sscanf(line, "%d%d%f", &kpItem.x, &kpItem.y, &kpItem.strength) == 3) {
+					kpList.push_back(kpItem);
 				}
 			}
-			// show the image and points (if requested)
-			if (m_usingDisplay) {
-				imshow(m_displayName, *pOutputImage);
+			fclose(fp);
+		}
+		// compute strength bounds and binSize for computing keypoint radius
+		float minStrength = FLT_MAX, maxStrength = FLT_MIN;
+		for (auto it = kpList.begin(); it != kpList.end(); it++) {
+			if (it->itemtype == VX_TYPE_KEYPOINT) {
+				float strength = it->strength;
+				minStrength = min(strength, minStrength);
+				maxStrength = max(strength, maxStrength);
 			}
-			if (m_usingWriter) {
-				((VideoWriter *)m_cvWriter)->write(*pOutputImage);
+		}
+		float binSize = (maxStrength - minStrength) / 5;
+		// plot the points
+		for (auto it = kpList.begin(); it != kpList.end(); it++) {
+			uint32_t color = colorTable[it->colorIndex];
+			if (it->itemtype == VX_TYPE_KEYPOINT) {
+				// compute the radius of point using strength and binSize
+				float strength = it->strength;
+				double radius = m_radiusDefault;
+				if (strength > minStrength) {
+					radius += 2.0 * floor((strength - minStrength) / binSize);
+				}
+				RunVxOverlayItem outline = {};
+				outline.kind = RUNVX_OVERLAY_CIRCLE;
+				outline.x = it->x; outline.y = it->y;
+				outline.w = (int)radius;
+				outline.h = 0;
+				outline.color = 0x000000;
+				overlays.push_back(outline);
+				RunVxOverlayItem fill = {};
+				fill.kind = RUNVX_OVERLAY_CIRCLE;
+				fill.x = it->x; fill.y = it->y;
+				fill.w = (int)radius + 1;
+				fill.h = 0;
+				fill.color = color;
+				overlays.push_back(fill);
+			}
+			else if (it->itemtype == VX_TYPE_RECTANGLE) {
+				// plot the rectangle
+				RunVxOverlayItem rec = {};
+				rec.kind = RUNVX_OVERLAY_RECT;
+				rec.x = it->x; rec.y = it->y;
+				rec.w = it->w; rec.h = it->h;
+				rec.color = color;
+				overlays.push_back(rec);
+			}
+			else if (it->itemtype == VX_TYPE_COORDINATES2D) {
+				// plot the points with small circle
+				float radius = m_radiusDefault;
+				RunVxOverlayItem outline = {};
+				outline.kind = RUNVX_OVERLAY_CIRCLE;
+				outline.x = it->x; outline.y = it->y;
+				outline.w = (int)radius;
+				outline.h = 0;
+				outline.color = 0x000000;
+				overlays.push_back(outline);
+				RunVxOverlayItem fill = {};
+				fill.kind = RUNVX_OVERLAY_CIRCLE;
+				fill.x = it->x; fill.y = it->y;
+				fill.w = (int)radius + 1;
+				fill.h = 0;
+				fill.color = color;
+				overlays.push_back(fill);
+			}
+		}
+		// show the image and overlays (if requested)
+		if (m_usingDisplay) {
+			plugin->ShowView(m_cvWindowHandle, m_displayName.c_str(), (int)m_width, (int)m_height, (int)m_format,
+				m_cvDispBuffer.data(), stride, overlays.data(), overlays.size());
+		}
+		if (m_usingWriter) {
+			plugin->WriteVideoFrame(m_cvWriter, (int)m_width, (int)m_height, (int)m_format,
+				m_cvDispBuffer.data(), stride);
+		}
+		// free overlay strings
+		for (auto & o : overlays) {
+			if (o.kind == RUNVX_OVERLAY_TEXT || o.kind == RUNVX_OVERLAY_HISTOGRAM) {
+				free((void *)o.text);
 			}
 		}
 	}
 	return 0;
 }
-#endif
 
 int CVxParamImage::WriteFrame(int frameNumber)
 {
-#if ENABLE_OPENCV
-	if (ViewFrame(frameNumber) < 0)
-		return -1;
-#endif
+	if (m_usingDisplay || m_usingWriter) {
+		if (ViewFrame(frameNumber) < 0)
+			return -1;
+	}
 
 	if (!m_fpWrite) {
 		if (m_fileNameWrite.length() > 0 && !m_usingWriter) {
 			char fileName[MAX_FILE_NAME_LENGTH];
 			if (!IsSafeFilenameTemplate(m_fileNameWrite.c_str(), 3)) ReportError("ERROR: unsafe filename template: %s\n", m_fileNameWrite.c_str());
 			snprintf(fileName, sizeof(fileName), m_fileNameWrite.c_str(), frameNumber, m_width, m_height);
-#if ENABLE_OPENCV
-            // check if openCV imwrite need to be used
-            int extpos = (int)strlen(fileName) - 1;
-            while (extpos > 0 && fileName[extpos] != '.')
-                extpos--;
+			// check if plugin compressed write need to be used
+			int extpos = (int)strlen(fileName) - 1;
+			while (extpos > 0 && fileName[extpos] != '.')
+				extpos--;
  
-            if (!_stricmp(&fileName[extpos], ".jpg") || !_stricmp(&fileName[extpos], ".jpeg") ||
-                !_stricmp(&fileName[extpos], ".jpe") || !_stricmp(&fileName[extpos], ".png") ||
-                !_stricmp(&fileName[extpos], ".bmp") || !_stricmp(&fileName[extpos], ".tif") ||
-                !_stricmp(&fileName[extpos], ".ppm") || !_stricmp(&fileName[extpos], ".tiff") ||
-                !_stricmp(&fileName[extpos], ".pgm") || !_stricmp(&fileName[extpos], ".pbm"))
-            {
-                WriteImageCompressed(m_image, &m_rectFull,fileName);
-                return 0;
-            }
-#endif
+			if (!_stricmp(&fileName[extpos], ".jpg") || !_stricmp(&fileName[extpos], ".jpeg") ||
+				!_stricmp(&fileName[extpos], ".jpe") || !_stricmp(&fileName[extpos], ".png") ||
+				!_stricmp(&fileName[extpos], ".bmp") || !_stricmp(&fileName[extpos], ".tif") ||
+				!_stricmp(&fileName[extpos], ".ppm") || !_stricmp(&fileName[extpos], ".tiff") ||
+				!_stricmp(&fileName[extpos], ".pgm") || !_stricmp(&fileName[extpos], ".pbm"))
+			{
+				WriteImageCompressed(m_image, &m_rectFull, fileName);
+				return 0;
+			}
 			m_fpWrite = fopen(fileName, "wb+");
 			if (!m_fpWrite) ReportError("ERROR: unable to create: %s\n", fileName);
 		}

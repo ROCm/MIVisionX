@@ -41,5 +41,5 @@ set_target_properties(runvx_hash_openssl PROPERTIES
 )
 
 install(TARGETS runvx_hash_openssl
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/runvx_plugins
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
     COMPONENT runtime)

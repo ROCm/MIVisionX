@@ -77,5 +77,5 @@ set_target_properties(runvx_image_opencv PROPERTIES
 )
 
 install(TARGETS runvx_image_opencv
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/runvx_plugins
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
     COMPONENT runtime)

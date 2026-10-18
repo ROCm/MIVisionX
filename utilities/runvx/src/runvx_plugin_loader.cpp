@@ -69,6 +69,37 @@ static void * RunVxDlSym(void * handle, const char * name) { return dlsym(handle
 static void RunVxLogError() { const char * err = dlerror(); if (err) printf("runvx plugin loader: %s\n", err); }
 #endif
 
+char * RunVxGetPluginLibDirectory()
+{
+#if _WIN32
+    HMODULE hModule = nullptr;
+    if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                            (LPCSTR)&RunVxGetPluginLibDirectory, &hModule)) {
+        return nullptr;
+    }
+    char exePath[MAX_PATH];
+    DWORD len = GetModuleFileNameA(hModule, exePath, MAX_PATH);
+    if (len == 0 || len >= MAX_PATH) return nullptr;
+    char * lastSlash = strrchr(exePath, '\\');
+    if (lastSlash) *lastSlash = '\0';
+    size_t pathLen = strlen(exePath) + 1 + strlen("..\\lib") + 1;
+    char * dir = (char *)malloc(pathLen);
+    if (dir) snprintf(dir, pathLen, "%s\\..\\lib", exePath);
+    return dir;
+#else
+    char exePath[PATH_MAX];
+    ssize_t len = readlink("/proc/self/exe", exePath, PATH_MAX - 1);
+    if (len <= 0 || len >= PATH_MAX) return nullptr;
+    exePath[len] = '\0';
+    char * lastSlash = strrchr(exePath, '/');
+    if (lastSlash) *lastSlash = '\0';
+    size_t pathLen = strlen(exePath) + 1 + strlen("../lib") + 1;
+    char * dir = (char *)malloc(pathLen);
+    if (dir) snprintf(dir, pathLen, "%s/../lib", exePath);
+    return dir;
+#endif
+}
+
 char * RunVxGetPluginDirectory()
 {
 #if _WIN32
@@ -140,17 +171,51 @@ static bool RunVxSearchPlugin(const char * pluginName, const char * factoryName,
     *outHandle = nullptr;
     *outFactory = nullptr;
 
-    // 1. Directory next to the runvx executable: ../share/mivisionx/runvx_plugins
-    char * pluginDir = RunVxGetPluginDirectory();
-    if (pluginDir) {
-        if (RunVxTryLoadPlugin(pluginDir, pluginName, factoryName, outHandle, outFactory)) {
-            free(pluginDir);
+    // 1. Library directory next to the runvx executable: ../lib
+    //    This is where the install step places the plugin .so files when
+    //    the MIVisionX runtime package is installed.
+    char * libDir = RunVxGetPluginLibDirectory();
+    if (libDir) {
+        if (RunVxTryLoadPlugin(libDir, pluginName, factoryName, outHandle, outFactory)) {
+            free(libDir);
             return true;
         }
-        free(pluginDir);
+        free(libDir);
     }
 
-    // 2. Build-tree / developer fallback: the runvx_plugins directory next to
+    // 2. Standard library search: dlopen by filename alone. This picks up
+    //    LD_LIBRARY_PATH, /etc/ld.so.conf, and the runvx RPATH automatically.
+    {
+        void * handle = RunVxDlOpen(pluginName);
+        if (handle) {
+            void * factory = RunVxDlSym(handle, factoryName);
+            if (factory) {
+                *outHandle = handle;
+                *outFactory = factory;
+                return true;
+            }
+            RunVxDlClose(handle);
+        }
+    }
+
+    // 3. Known install prefixes (in case the executable is moved or run from
+    //    a build tree that does not match the install layout).
+#if !_WIN32
+    static const char * const s_knownLibDirs[] = {
+        "/opt/rocm/lib",
+        "/usr/local/lib",
+        "/usr/lib",
+        "/usr/lib64",
+        nullptr
+    };
+    for (const char * const * dir = s_knownLibDirs; *dir; ++dir) {
+        if (RunVxTryLoadPlugin(*dir, pluginName, factoryName, outHandle, outFactory)) {
+            return true;
+        }
+    }
+#endif
+
+    // 4. Build-tree / developer fallback: the runvx_plugins directory next to
     //    the directory containing the runvx executable (common in build trees).
 #if !_WIN32
     char exePath[PATH_MAX];

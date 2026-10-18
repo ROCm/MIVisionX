@@ -40,7 +40,11 @@ IRunVxImagePlugin * RunVxGetImagePlugin();
 // Get the loaded hash plugin, or nullptr if not available.
 IRunVxHashPlugin * RunVxGetHashPlugin();
 
-// Formatted plugin directory path next to the runvx executable.
+// Formatted library directory path next to the runvx executable.
+// The returned buffer must be freed by the caller.
+char * RunVxGetPluginLibDirectory();
+
+// Formatted plugin source directory path next to the runvx executable.
 // The returned buffer must be freed by the caller.
 char * RunVxGetPluginDirectory();
 

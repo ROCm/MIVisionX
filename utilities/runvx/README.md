@@ -2,9 +2,9 @@
 
 RunVX is a command-line tool to execute OpenVX graphs, with a simple, easy-to-use interface. It encapsulates most of the routine OpenVX calls, thus speeding up development and enabling rapid prototyping. As input, RunVX takes a GDF (Graph Description Format) file, a simple and intuitive syntax to describe the various data, nodes, and their dependencies. The tool has other useful features, such as, file read/write, data compares, image and keypoint data visualization, etc.
 
-RunVX is built as a lean core executable. Optional features that depend on OpenCV (camera capture, compressed image read/write, display, video writer) and OpenSSL (MD5 checksums for `compare`) are implemented as separate runtime-loaded plugins. At build time CMake checks for these dependencies and builds the corresponding plugin shared libraries when present. If a dependency is missing, the plugin is skipped, but the core `runvx` binary still builds and runs. The plugins are installed to `${CMAKE_INSTALL_PREFIX}/share/mivisionx/runvx_plugins/` so they can also be built separately on the target machine if the dependencies were not available at build time.
+RunVX is built as a lean core executable. Optional features that depend on OpenCV (camera capture, compressed image read/write, display, video writer) and OpenSSL (MD5 checksums for `compare`) are implemented as separate runtime-loaded plugins. At build time CMake checks for these dependencies and builds the corresponding plugin shared libraries when present. If a dependency is missing, the plugin is skipped, but the core `runvx` binary still builds and runs. The built plugins are installed to `${CMAKE_INSTALL_PREFIX}/lib/` alongside the other MIVisionX libraries; plugin source files are installed to `${CMAKE_INSTALL_PREFIX}/share/mivisionx/runvx_plugins/<plugin>/` so they can also be built separately on the target machine if the dependencies were not available at build time.
 
-> Note: Plugin discovery currently uses only the fixed install-tree path (`../share/mivisionx/runvx_plugins/` relative to the `runvx` executable) and build-tree fallbacks. An environment-variable override is not supported.
+> Note: Plugin discovery uses only standard library paths (`../lib/` relative to the `runvx` executable, `LD_LIBRARY_PATH` / `ldconfig`, and a few known prefixes such as `/opt/rocm/lib`) plus build-tree fallbacks. An environment-variable override is not supported.
 
 ## Prerequisites
 
@@ -23,8 +23,10 @@ RunVX is built as a lean core executable. Optional features that depend on OpenC
 
 `runvx` searches for plugin shared libraries in this order:
 
-1. The `share/mivisionx/runvx_plugins/` directory next to the `runvx` executable
-2. Build-tree fallback for developer builds
+1. The `lib/` directory next to the `runvx` executable (i.e., `../lib/`)
+2. Standard dynamic linker search paths (picks up `LD_LIBRARY_PATH`, `/etc/ld.so.conf`, and the `runvx` RPATH)
+3. Known install prefixes: `/opt/rocm/lib`, `/usr/local/lib`, `/usr/lib`
+4. Build-tree fallback for developer builds
 
 If a plugin is missing, the core `runvx` binary continues to run; the affected GDF commands (`read` from image files, `view`, compressed `write`, `compare checksum`) report a runtime error.
 

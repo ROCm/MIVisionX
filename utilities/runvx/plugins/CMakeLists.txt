@@ -28,20 +28,22 @@ option(RUNVX_BUILD_HASH_OPENSSL_PLUGIN "Build runvx OpenSSL hash plugin" ON)
 
 # Always install plugin sources and interface headers so they can be built on the
 # target machine if the dependency becomes available after the core install.
+# These sources are shipped in the dev package because they are only needed by
+# users who compile the plugin themselves on the target machine.
 install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/image_opencv/runvx_plugin_image.h
     ${CMAKE_CURRENT_SOURCE_DIR}/image_opencv/plugin_image_opencv.h
     ${CMAKE_CURRENT_SOURCE_DIR}/image_opencv/plugin_image_opencv.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/image_opencv/CMakeLists.txt
     DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/runvx_plugins/image_opencv
-    COMPONENT runtime)
+    COMPONENT dev)
 
 install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/hash_openssl/runvx_plugin_hash.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hash_openssl/plugin_hash_openssl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hash_openssl/CMakeLists.txt
     DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/runvx_plugins/hash_openssl
-    COMPONENT runtime)
+    COMPONENT dev)
 
 if(RUNVX_BUILD_IMAGE_OPENCV_PLUGIN AND NOT MIN_DEPS_MODE)
     find_package(OpenCV QUIET)

@@ -4,6 +4,8 @@ RunVX is a command-line tool to execute OpenVX graphs, with a simple, easy-to-us
 
 RunVX is built as a lean core executable. Optional features that depend on OpenCV (camera capture, compressed image read/write, display, video writer) and OpenSSL (MD5 checksums for `compare`) are implemented as separate runtime-loaded plugins. At build time CMake checks for these dependencies and builds the corresponding plugin shared libraries when present. If a dependency is missing, the plugin is skipped, but the core `runvx` binary still builds and runs. The plugins are installed to `${CMAKE_INSTALL_PREFIX}/share/mivisionx/runvx_plugins/` so they can also be built separately on the target machine if the dependencies were not available at build time.
 
+> Note: Plugin discovery currently uses only the fixed install-tree path (`../share/mivisionx/runvx_plugins/` relative to the `runvx` executable) and build-tree fallbacks. An environment-variable override is not supported.
+
 ## Prerequisites
 
 * **CPU**: AMD64

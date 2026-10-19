@@ -22,6 +22,110 @@ THE SOFTWARE.
 
 #define _CRT_SECURE_NO_WARNINGS
 #include "vxUtils.h"
+#include "runvx_plugin_image.h"
+#include "runvx_plugin_loader.h"
+#include "runvx_plugin_hash.h"
+
+///////////////////////////////////////////////////////////////////////////
+// Minimal built-in MD5 fallback (public domain, RFC 1321 based)
+///////////////////////////////////////////////////////////////////////////
+#if !_WIN32
+namespace {
+
+struct RunVxMD5Ctx {
+    uint32_t state[4];
+    uint32_t count[2];
+    uint8_t  buffer[64];
+};
+
+static inline uint32_t rol(uint32_t v, uint32_t n) { return (v << n) | (v >> (32 - n)); }
+
+static void RunVxMD5Transform(uint32_t state[4], const uint8_t block[64]) {
+    uint32_t a = state[0], b = state[1], c = state[2], d = state[3];
+    uint32_t x[16];
+    for (int i = 0; i < 16; i++) {
+        x[i] = block[i*4] | (block[i*4+1] << 8) | (block[i*4+2] << 16) | (block[i*4+3] << 24);
+    }
+#define FF(a,b,c,d,k,s,t) { a += ((b & c) | (~b & d)) + x[k] + t; a = rol(a,s); a += b; }
+#define GG(a,b,c,d,k,s,t) { a += ((b & d) | (c & ~d)) + x[k] + t; a = rol(a,s); a += b; }
+#define HH(a,b,c,d,k,s,t) { a += (b ^ c ^ d) + x[k] + t; a = rol(a,s); a += b; }
+#define II(a,b,c,d,k,s,t) { a += (c ^ (b | ~d)) + x[k] + t; a = rol(a,s); a += b; }
+    // Round 1
+    FF(a,b,c,d, 0, 7, 0xd76aa478); FF(d,a,b,c, 1,12, 0xe8c7b756); FF(c,d,a,b, 2,17, 0x242070db); FF(b,c,d,a, 3,22, 0xc1bdceee);
+    FF(a,b,c,d, 4, 7, 0xf57c0faf); FF(d,a,b,c, 5,12, 0x4787c62a); FF(c,d,a,b, 6,17, 0xa8304613); FF(b,c,d,a, 7,22, 0xfd469501);
+    FF(a,b,c,d, 8, 7, 0x698098d8); FF(d,a,b,c, 9,12, 0x8b44f7af); FF(c,d,a,b,10,17, 0xffff5bb1); FF(b,c,d,a,11,22, 0x895cd7be);
+    FF(a,b,c,d,12, 7, 0x6b901122); FF(d,a,b,c,13,12, 0xfd987193); FF(c,d,a,b,14,17, 0xa679438e); FF(b,c,d,a,15,22, 0x49b40821);
+    // Round 2
+    GG(a,b,c,d, 1, 5, 0xf61e2562); GG(d,a,b,c, 6, 9, 0xc040b340); GG(c,d,a,b,11,14, 0x265e5a51); GG(b,c,d,a, 0,20, 0xe9b6c7aa);
+    GG(a,b,c,d, 5, 5, 0xd62f105d); GG(d,a,b,c,10, 9, 0x02441453); GG(c,d,a,b,15,14, 0xd8a1e681); GG(b,c,d,a, 4,20, 0xe7d3fbc8);
+    GG(a,b,c,d, 9, 5, 0x21e1cde6); GG(d,a,b,c,14, 9, 0xc33707d6); GG(c,d,a,b, 3,14, 0xf4d50d87); GG(b,c,d,a, 8,20, 0x455a14ed);
+    GG(a,b,c,d,13, 5, 0xa9e3e905); GG(d,a,b,c, 2, 9, 0xfcefa3f8); GG(c,d,a,b, 7,14, 0x676f02d9); GG(b,c,d,a,12,20, 0x8d2a4c8a);
+    // Round 3
+    HH(a,b,c,d, 5, 4, 0xfffa3942); HH(d,a,b,c, 8,11, 0x8771f681); HH(c,d,a,b,11,16, 0x6d9d6122); HH(b,c,d,a,14,23, 0xfde5380c);
+    HH(a,b,c,d, 1, 4, 0xa4beea44); HH(d,a,b,c, 4,11, 0x4bdecfa9); HH(c,d,a,b, 7,16, 0xf6bb4b60); HH(b,c,d,a,10,23, 0xbebfbc70);
+    HH(a,b,c,d,13, 4, 0x289b7ec6); HH(d,a,b,c, 0,11, 0xeaa127fa); HH(c,d,a,b, 3,16, 0xd4ef3085); HH(b,c,d,a, 6,23, 0x04881d05);
+    HH(a,b,c,d, 9, 4, 0xd9d4d039); HH(d,a,b,c,12,11, 0xe6db99e5); HH(c,d,a,b,15,16, 0x1fa27cf8); HH(b,c,d,a, 2,23, 0xc4ac5665);
+    // Round 4
+    II(a,b,c,d, 0, 6, 0xf4292244); II(d,a,b,c, 7,10, 0x432aff97); II(c,d,a,b,14,15, 0xab9423a7); II(b,c,d,a, 5,21, 0xfc93a039);
+    II(a,b,c,d,12, 6, 0x655b59c3); II(d,a,b,c, 3,10, 0x8f0ccc92); II(c,d,a,b,10,15, 0xffeff47d); II(b,c,d,a, 1,21, 0x85845dd1);
+    II(a,b,c,d, 8, 6, 0x6fa87e4f); II(d,a,b,c,15,10, 0xfe2ce6e0); II(c,d,a,b, 6,15, 0xa3014314); II(b,c,d,a,13,21, 0x4e0811a1);
+    II(a,b,c,d, 4, 6, 0xf7537e82); II(d,a,b,c,11,10, 0xbd3af235); II(c,d,a,b, 2,15, 0x2ad7d2bb); II(b,c,d,a, 9,21, 0xeb86d391);
+#undef FF
+#undef GG
+#undef HH
+#undef II
+    state[0] += a; state[1] += b; state[2] += c; state[3] += d;
+}
+
+static void RunVxMD5Init(RunVxMD5Ctx * ctx) {
+    ctx->count[0] = ctx->count[1] = 0;
+    ctx->state[0] = 0x67452301;
+    ctx->state[1] = 0xEFCDAB89;
+    ctx->state[2] = 0x98BADCFE;
+    ctx->state[3] = 0x10325476;
+}
+
+static void RunVxMD5Update(RunVxMD5Ctx * ctx, const uint8_t * data, size_t len) {
+    size_t i, index, partLen;
+    index = (size_t)((ctx->count[0] >> 3) & 0x3F);
+    partLen = 64 - index;
+    ctx->count[0] += (uint32_t)(len << 3);
+    if (ctx->count[0] < (len << 3)) ctx->count[1]++;
+    ctx->count[1] += (uint32_t)(len >> 29);
+    if (len >= partLen) {
+        memcpy(&ctx->buffer[index], data, partLen);
+        RunVxMD5Transform(ctx->state, ctx->buffer);
+        for (i = partLen; i + 64 <= len; i += 64) {
+            RunVxMD5Transform(ctx->state, &data[i]);
+        }
+        index = 0;
+    } else {
+        i = 0;
+    }
+    memcpy(&ctx->buffer[index], &data[i], len - i);
+}
+
+static void RunVxMD5Final(uint8_t digest[16], RunVxMD5Ctx * ctx) {
+    uint8_t bits[8];
+    size_t index, padLen;
+    for (int i = 0; i < 8; i++) {
+        bits[i] = (uint8_t)((ctx->count[i/4] >> ((i%4)*8)) & 0xFF);
+    }
+    index = (size_t)((ctx->count[0] >> 3) & 0x3F);
+    padLen = (index < 56) ? (56 - index) : (120 - index);
+    static const uint8_t PADDING[64] = { 0x80 };
+    RunVxMD5Update(ctx, PADDING, padLen);
+    RunVxMD5Update(ctx, bits, 8);
+    for (int i = 0; i < 4; i++) {
+        digest[i*4]   = (uint8_t)(ctx->state[i] & 0xFF);
+        digest[i*4+1] = (uint8_t)((ctx->state[i] >> 8) & 0xFF);
+        digest[i*4+2] = (uint8_t)((ctx->state[i] >> 16) & 0xFF);
+        digest[i*4+3] = (uint8_t)((ctx->state[i] >> 24) & 0xFF);
+    }
+}
+
+} // anonymous namespace
+#endif
 
 #define IS_ALPHA(c) (((c) >= 'A' && (c) <= 'Z') || ((c) >= 'a' && (c) <= 'z'))
 #define TO_UPPER(c) ((c) & 0xDF)
@@ -296,6 +400,8 @@ CHasher::CHasher(){
 	for (int i = 0; i < 32; i++)
 		m_checkSum[i] = '0';
 	m_checkSum[32] = '\0';
+	m_handle = NULL;
+	m_useBuiltInMD5 = false;
 }
 
 CHasher::~CHasher(){
@@ -319,9 +425,18 @@ void CHasher::Initialize(){
 		CryptReleaseContext(m_cryptProv, 0);
 		throw - 1;
 	}
-#elif HAVE_OpenSSL
-	if (!MD5_Init(&m_handle)) {
-		printf("ERROR: MD5_Init() failed\n");
+#else
+	IRunVxHashPlugin * plugin = RunVxGetHashPlugin();
+	if (plugin) {
+		m_handle = plugin->Create();
+		if (!m_handle) {
+			printf("WARNING: hash plugin Create() failed; falling back to built-in MD5\n");
+		}
+	}
+	if (!m_handle) {
+		m_handle = new RunVxMD5Ctx;
+		RunVxMD5Init((RunVxMD5Ctx *)m_handle);
+		m_useBuiltInMD5 = true;
 	}
 #endif
 }
@@ -337,9 +452,17 @@ void CHasher::Process(vx_uint8 * data_ptr, vx_size count){
 		CryptDestroyHash(m_cryptHash);
 		throw - 1;
 	}
-#elif HAVE_OpenSSL
-	if (!MD5_Update(&m_handle, (unsigned char*)data_ptr, count)) {
-		printf("ERROR: MD5_Update(*,*,%d) failed\n", (int)count);
+#else
+	if (m_useBuiltInMD5) {
+		RunVxMD5Update((RunVxMD5Ctx *)m_handle, data_ptr, count);
+	}
+	else {
+		IRunVxHashPlugin * plugin = RunVxGetHashPlugin();
+		if (plugin) {
+			if (!plugin->Update(m_handle, data_ptr, count)) {
+				printf("ERROR: hash plugin Update(*,*,%zu) failed\n", count);
+			}
+		}
 	}
 #endif
 }
@@ -356,9 +479,17 @@ const char * CHasher::GetCheckSum(){
 		CryptDestroyHash(m_cryptHash);
 		throw - 1;
 	}
-#elif HAVE_OpenSSL
-	if (!MD5_Final(m_hash, &m_handle)) {
-		printf("ERROR: MD5_Final() failed\n");
+#else
+	if (m_useBuiltInMD5) {
+		RunVxMD5Final(m_hash, (RunVxMD5Ctx *)m_handle);
+	}
+	else {
+		IRunVxHashPlugin * plugin = RunVxGetHashPlugin();
+		if (plugin) {
+			if (!plugin->Final(m_handle, m_hash)) {
+				printf("ERROR: hash plugin Final() failed\n");
+			}
+		}
 	}
 #endif
 	char hex[] = "0123456789abcdef";
@@ -373,6 +504,16 @@ void CHasher::Shutdown(){
 #if _WIN32
 	CryptReleaseContext(m_cryptProv, 0);
 	CryptDestroyHash(m_cryptHash);
+#else
+	if (m_handle) {
+		if (m_useBuiltInMD5) {
+			delete (RunVxMD5Ctx *)m_handle;
+		} else {
+			IRunVxHashPlugin * plugin = RunVxGetHashPlugin();
+			if (plugin) plugin->Destroy(m_handle);
+		}
+		m_handle = NULL;
+	}
 #endif
 }
 
@@ -576,19 +717,18 @@ int WriteImage(vx_image image, vx_rectangle_t * rectFull, FILE * fp)
 	return 0;
 }
 
-#if ENABLE_OPENCV
 // write image compressed
 int WriteImageCompressed(vx_image image, vx_rectangle_t * rectFull, const char * fileName) 
 {
-    // get number of planes, image width in bytes for single plane
     vx_size num_planes = 0;
-    int im_type = CV_8UC1;
-    vx_uint32 im_width = 0, im_height = 0;
-    vx_df_image im_format;
+    int im_width = 0, im_height = 0, im_format = 0;
+    vx_df_image df_image;
     ERROR_CHECK(vxQueryImage(image, VX_IMAGE_WIDTH, &im_width, sizeof(im_width)));
     ERROR_CHECK(vxQueryImage(image, VX_IMAGE_HEIGHT, &im_height, sizeof(im_height)));
-    ERROR_CHECK(vxQueryImage(image, VX_IMAGE_FORMAT, &im_format, sizeof(im_format)));
+    ERROR_CHECK(vxQueryImage(image, VX_IMAGE_FORMAT, &df_image, sizeof(df_image)));
     ERROR_CHECK(vxQueryImage(image, VX_IMAGE_ATTRIBUTE_PLANES, &num_planes, sizeof(num_planes)));
+
+    im_format = (int)df_image;
 
     // write all image planes from vx_image
     for (vx_uint32 plane = 0; plane < (vx_uint32)num_planes; plane++) {
@@ -596,26 +736,20 @@ int WriteImageCompressed(vx_image image, vx_rectangle_t * rectFull, const char *
         vx_uint8 * src = NULL;
         ERROR_CHECK(vxAccessImagePatch(image, rectFull, plane, &addr, (void **)&src, VX_READ_ONLY));
 
-        // set image format type
-        if (im_format == VX_DF_IMAGE_U8 || im_format == VX_DF_IMAGE_U1_AMD) im_type = CV_8U;
-        else if (im_format == VX_DF_IMAGE_S16) im_type = CV_16UC1; // CV_16SC1 is not supported
-        else if (im_format == VX_DF_IMAGE_U16) im_type = CV_16UC1;
-        else if (im_format == VX_DF_IMAGE_RGB) im_type = CV_8UC3; //RGB24
-        else if (im_format == VX_DF_IMAGE_RGBX) im_type = CV_8UC4;
-        else if (im_format == VX_DF_IMAGE_F32_AMD) im_type = CV_32FC1;
-        else {
-            printf("ERROR: display of image type (%4.4s) is not support. Exiting.\n", (const char *)&im_format);
+        IRunVxImagePlugin * plugin = RunVxGetImagePlugin();
+        if (!plugin) {
+            printf("ERROR: this feature requires the runvx image plugin\n");
             throw - 1;
         }
-
-        auto img = cv::Mat(im_height, im_width, im_type, src, addr.stride_y);
-        imwrite(fileName, img);
+        if (!plugin->WriteCompressed(fileName, im_width, im_height, im_format, src, addr.stride_y)) {
+            printf("ERROR: WriteCompressed(%s) failed\n", fileName);
+            throw - 1;
+        }
 
         ERROR_CHECK(vxCommitImagePatch(image, rectFull, plane, &addr, src));
     }
     return 0;
 }
-#endif
 
 // read scalar value into a string
 int ReadScalarToString(vx_scalar scalar, char str[])

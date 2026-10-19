@@ -338,8 +338,8 @@ typedef struct
     vx_size components;
     vx_size planes;
     vx_size pixelSizeInBitsNum;
-    vx_color_space_e colorSpace;
-    vx_channel_range_e channelRange;
+    enum vx_color_space_e colorSpace;
+    enum vx_channel_range_e channelRange;
     vx_size pixelSizeInBitsDenom;
 } AgoImageFormatDescription;
 

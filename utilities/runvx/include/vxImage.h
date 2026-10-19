@@ -44,9 +44,7 @@ public:
 	virtual void DisableWaitForKeyPress();
 
 protected:
-#if ENABLE_OPENCV
 	int ViewFrame(int frameNumber);
-#endif
 
 private:
 	// vx configuration
@@ -63,14 +61,14 @@ private:
 	vx_imagepatch_addressing_t m_addr[4];
 	void * m_memory_handle[2][4];
 	bool m_swap_handles;
-#if ENABLE_OPENCV
 	void * m_cvCapDev;
-	void * m_cvCapMat;
+	std::vector<uint8_t> m_cvCapBuffer;
+	int m_cvCapWidth, m_cvCapHeight, m_cvCapType;
 	void * m_cvWriter;
-	cv::Mat * m_cvDispMat;
-	cv::Mat * m_cvImage;
+	std::vector<uint8_t> m_cvDispBuffer;
+	std::vector<uint8_t> m_cvImageBuffer;
 	bool m_cvReadEofOccured;
-#endif
+	void * m_cvWindowHandle;
 	// vx object
 	vx_image m_image;
 	char m_roiMasterName[64];      // name of ROI image master

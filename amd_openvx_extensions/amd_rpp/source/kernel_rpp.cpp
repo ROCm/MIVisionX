@@ -1930,42 +1930,42 @@ vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx
     return node;
 }
 
-vx_status vxRppStageRoi(Rpp32u deviceType, const void *roiTensorPtr, size_t count, size_t capacity, RpptROI **scratch) {
-    if (!roiTensorPtr || !scratch || count == 0) return VX_ERROR_INVALID_PARAMETERS;
+vx_status vxRppCopyRoiToHost(Rpp32u deviceType, const void *roiTensorPtr, size_t count, size_t capacity, RpptROI **hostCopy) {
+    if (!roiTensorPtr || !hostCopy || count == 0) return VX_ERROR_INVALID_PARAMETERS;
     if (capacity < count) capacity = count;
     if (deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        if (!*scratch) {
+        if (!*hostCopy) {
             // pinned host memory, matching the other per-node ROI buffers in
             // this extension
-            if (hipHostMalloc((void **)scratch, capacity * sizeof(RpptROI), hipHostMallocDefault) != hipSuccess || !*scratch)
-                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "vxRppStageRoi: hipHostMalloc of %zu ROI entries failed\n", capacity);
+            if (hipHostMalloc((void **)hostCopy, capacity * sizeof(RpptROI), hipHostMallocDefault) != hipSuccess || !*hostCopy)
+                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "vxRppCopyRoiToHost: hipHostMalloc of %zu ROI entries failed\n", capacity);
         }
-        if (hipMemcpy(*scratch, roiTensorPtr, count * sizeof(RpptROI), hipMemcpyDeviceToHost) != hipSuccess)
-            return ERRMSG(VX_FAILURE, "vxRppStageRoi: hipMemcpy of %zu ROI entries failed\n", count);
+        if (hipMemcpy(*hostCopy, roiTensorPtr, count * sizeof(RpptROI), hipMemcpyDeviceToHost) != hipSuccess)
+            return ERRMSG(VX_FAILURE, "vxRppCopyRoiToHost: hipMemcpy of %zu ROI entries failed\n", count);
 #else
         return VX_ERROR_NOT_IMPLEMENTED;
 #endif
     } else {
-        if (!*scratch) {
-            *scratch = new RpptROI[capacity];
-            if (!*scratch) return VX_ERROR_NOT_ALLOCATED;
+        if (!*hostCopy) {
+            *hostCopy = new RpptROI[capacity];
+            if (!*hostCopy) return VX_ERROR_NOT_ALLOCATED;
         }
-        memcpy(*scratch, roiTensorPtr, count * sizeof(RpptROI));
+        memcpy(*hostCopy, roiTensorPtr, count * sizeof(RpptROI));
     }
     return VX_SUCCESS;
 }
 
-vx_status vxRppFreeRoiScratch(Rpp32u deviceType, RpptROI **scratch) {
-    if (!scratch || !*scratch) return VX_SUCCESS;
+vx_status vxRppFreeRoiHostCopy(Rpp32u deviceType, RpptROI **hostCopy) {
+    if (!hostCopy || !*hostCopy) return VX_SUCCESS;
     if (deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        CHECK_HIP_RETURN_STATUS(hipHostFree(*scratch));
+        CHECK_HIP_RETURN_STATUS(hipHostFree(*hostCopy));
 #endif
     } else {
-        delete[] *scratch;
+        delete[] *hostCopy;
     }
-    *scratch = nullptr;
+    *hostCopy = nullptr;
     return VX_SUCCESS;
 }
 

@@ -105,11 +105,11 @@ vx_status releaseRPPHandle(vx_node node, vxRppHandle * handle, Rpp32u deviceType
 // ND kernels want, say - cannot dereference it and must copy it first.
 //
 // \p count is the number of RpptROI entries to read from the tensor and
-// \p capacity the number the scratch must hold; they differ for NFHWC/NFCHW.
-// \p scratch is allocated on first use (pinned host memory for the GPU backend)
-// and must be released with vxRppFreeRoiScratch.
-vx_status vxRppStageRoi(Rpp32u deviceType, const void * roiTensorPtr, size_t count, size_t capacity, RpptROI ** scratch);
-vx_status vxRppFreeRoiScratch(Rpp32u deviceType, RpptROI ** scratch);
+// \p capacity the number the buffer must hold; they differ for NFHWC/NFCHW.
+// \p hostCopy is allocated on first use (pinned host memory for the GPU backend)
+// and must be released with vxRppFreeRoiHostCopy.
+vx_status vxRppCopyRoiToHost(Rpp32u deviceType, const void * roiTensorPtr, size_t count, size_t capacity, RpptROI ** hostCopy);
+vx_status vxRppFreeRoiHostCopy(Rpp32u deviceType, RpptROI ** hostCopy);
 void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, size_t *tensorDims);
 void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTensorLayout layout, size_t *maxTensorDims);
 void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims, vxTensorLayout layout = vxTensorLayout::VX_NHW);

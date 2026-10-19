@@ -30,7 +30,7 @@ struct LogLocalData {
     RpptGenericDescPtr pSrcGenericDesc;
     RpptGenericDescPtr pDstGenericDesc;
     Rpp32u *pSrcRoi;
-    RpptROI *pSrcRoiStaged;   // host-readable copy of an XYWH "image" ROI tensor
+    RpptROI *pSrcRoiHost;     // host-readable copy of the XYWH ROI tensor, read to build pSrcDims
     Rpp32u *pSrcDims;         // the per-dimension (begin, length) ROI rppt_log expects
     vxTensorLayout inputLayout;
     size_t inputTensorDims[RPP_MAX_TENSOR_DIMS];
@@ -61,8 +61,9 @@ static vx_status VX_CALLBACK refreshLog(vx_node node, const vx_reference *parame
     if (numDims == 4 && (data->inputLayout == vxTensorLayout::VX_NHWC || data->inputLayout == vxTensorLayout::VX_NCHW)) {
         const size_t batchSize = data->inputTensorDims[0];
         const size_t roiDims = numDims - 1;
-        // the ROI tensor lives in device memory on the GPU backend, so stage it
-        STATUS_ERROR_CHECK(vxRppStageRoi(data->deviceType, roi_tensor_ptr, batchSize, batchSize, &data->pSrcRoiStaged));
+        // the ROI tensor is device memory on the GPU backend, so copy it to the host
+        // to read the extents; what RPP receives is pSrcDims, built below
+        STATUS_ERROR_CHECK(vxRppCopyRoiToHost(data->deviceType, roi_tensor_ptr, batchSize, batchSize, &data->pSrcRoiHost));
         if (!data->pSrcDims) {
             if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
@@ -75,7 +76,7 @@ static vx_status VX_CALLBACK refreshLog(vx_node node, const vx_reference *parame
         }
         for (size_t i = 0; i < batchSize; i++) {
             size_t index = i * roiDims * 2;
-            const RpptRoiXywh &roi = data->pSrcRoiStaged[i].xywhROI;
+            const RpptRoiXywh &roi = data->pSrcRoiHost[i].xywhROI;
             if (data->inputLayout == vxTensorLayout::VX_NHWC) {
                 data->pSrcDims[index + 0] = roi.xy.y;                             // StartH
                 data->pSrcDims[index + 1] = roi.xy.x;                             // StartW
@@ -215,7 +216,7 @@ static vx_status VX_CALLBACK uninitializeLog(vx_node node, const vx_reference *p
         if (data->pSrcGenericDesc) delete data->pSrcGenericDesc;
         if (data->pDstGenericDesc) delete data->pDstGenericDesc;
     }
-    STATUS_ERROR_CHECK(vxRppFreeRoiScratch(data->deviceType, &data->pSrcRoiStaged));
+    STATUS_ERROR_CHECK(vxRppFreeRoiHostCopy(data->deviceType, &data->pSrcRoiHost));
     if (data->pSrcDims) {
         if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP

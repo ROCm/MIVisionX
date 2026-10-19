@@ -98,20 +98,16 @@ const std::map<vxTensorLayout, RpptLayout> tensorLayoutMapping = {
 vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx_uint32 num);
 vx_status createRPPHandle(vx_node node, vxRppHandle ** pHandle, Rpp32u batchSize, Rpp32u deviceType);
 vx_status releaseRPPHandle(vx_node node, vxRppHandle * handle, Rpp32u deviceType);
-//! \brief Stage the ROI tensor into a node-owned buffer that RPP may rewrite.
+//! \brief Copy the ROI tensor into a node-owned buffer the host can read.
 //
-// RPP converts the ROI argument from XYWH to LTRB in place, so a node that hands
-// it the ROI tensor's own buffer corrupts a graph input: MIVisionX never
-// re-uploads a node input, so the next execution converts the already-converted
-// values again and the ROI loses a pixel per vxProcessGraph. The NFHWC/NFCHW
-// layouts additionally replicate the per-sample ROI across frames in place,
-// which is the same problem.
+// On the GPU backend the ROI tensor is device memory, so a node that needs the
+// ROI extents on the host - to build the per-dimension (begin, length) array the
+// ND kernels want, say - cannot dereference it and must copy it first.
 //
 // \p count is the number of RpptROI entries to read from the tensor and
 // \p capacity the number the scratch must hold; they differ for NFHWC/NFCHW.
-// \p scratch is allocated on first use (pinned host memory for the GPU backend,
-// so RPP's HIP kernels can address it) and must be released with
-// vxRppFreeRoiScratch.
+// \p scratch is allocated on first use (pinned host memory for the GPU backend)
+// and must be released with vxRppFreeRoiScratch.
 vx_status vxRppStageRoi(Rpp32u deviceType, const void * roiTensorPtr, size_t count, size_t capacity, RpptROI ** scratch);
 vx_status vxRppFreeRoiScratch(Rpp32u deviceType, RpptROI ** scratch);
 void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, size_t *tensorDims);

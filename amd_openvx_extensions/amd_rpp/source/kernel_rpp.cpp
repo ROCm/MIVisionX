@@ -1936,8 +1936,8 @@ vx_status vxRppStageRoi(Rpp32u deviceType, const void *roiTensorPtr, size_t coun
     if (deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
         if (!*scratch) {
-            // pinned host memory is addressable by RPP's HIP kernels, and is what
-            // the other per-node ROI buffers in this extension already use
+            // pinned host memory, matching the other per-node ROI buffers in
+            // this extension
             if (hipHostMalloc((void **)scratch, capacity * sizeof(RpptROI), hipHostMallocDefault) != hipSuccess || !*scratch)
                 return ERRMSG(VX_ERROR_NOT_ALLOCATED, "vxRppStageRoi: hipHostMalloc of %zu ROI entries failed\n", capacity);
         }

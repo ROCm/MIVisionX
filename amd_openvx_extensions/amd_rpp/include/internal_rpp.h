@@ -98,16 +98,12 @@ const std::map<vxTensorLayout, RpptLayout> tensorLayoutMapping = {
 vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx_uint32 num);
 vx_status createRPPHandle(vx_node node, vxRppHandle ** pHandle, Rpp32u batchSize, Rpp32u deviceType);
 vx_status releaseRPPHandle(vx_node node, vxRppHandle * handle, Rpp32u deviceType);
-//! \brief Copy the ROI tensor into a node-owned buffer the host can read.
+//! \brief Copy the ROI tensor into a node-owned host buffer.
 //
-// On the GPU backend the ROI tensor is device memory, so a node that needs the
-// ROI extents on the host - to build the per-dimension (begin, length) array the
-// ND kernels want, say - cannot dereference it and must copy it first.
-//
-// \p count is the number of RpptROI entries to read from the tensor and
-// \p capacity the number the buffer must hold; they differ for NFHWC/NFCHW.
-// \p hostCopy is allocated on first use (pinned host memory for the GPU backend)
-// and must be released with vxRppFreeRoiHostCopy.
+// The ROI tensor is device memory on the GPU backend, so reading the extents
+// needs a copy. \p count entries are read into a buffer of \p capacity, which
+// differ for NFHWC/NFCHW; allocated on first use, released with
+// vxRppFreeRoiHostCopy.
 vx_status vxRppCopyRoiToHost(Rpp32u deviceType, const void * roiTensorPtr, size_t count, size_t capacity, RpptROI ** hostCopy);
 vx_status vxRppFreeRoiHostCopy(Rpp32u deviceType, RpptROI ** hostCopy);
 void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, size_t *tensorDims);

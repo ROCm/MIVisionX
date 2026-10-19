@@ -51,18 +51,14 @@ static vx_status VX_CALLBACK refreshLog1p(vx_node node, const vx_reference *para
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_HOST, &roi_tensor_ptr, sizeof(roi_tensor_ptr)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HOST, &data->pDst, sizeof(data->pDst)));
     }
-    // rppt_log1p is a generic ND kernel: it expects a begin and a length for every
-    // non-batch dimension - 6 values per sample for a 4-D tensor - but the ROI
-    // tensor of an NHWC/NCHW "image" holds only the 4 XYWH values rocAL writes
-    // for every image layout. Handing those straight over made RPP read nonsense
-    // extents and leave the output untouched. Convert first, as Transpose and
-    // Normalize already do for the same kernels.
+    // rppt_log1p wants begin+length per non-batch dimension - 6 values for a 4-D
+    // tensor - but an NHWC/NCHW ROI tensor holds 4 (XYWH). Build the 6, as
+    // Transpose and Normalize do for the same kernels.
     size_t numDims = data->pSrcGenericDesc->numDims;
     if (numDims == 4 && (data->inputLayout == vxTensorLayout::VX_NHWC || data->inputLayout == vxTensorLayout::VX_NCHW)) {
         const size_t batchSize = data->inputTensorDims[0];
         const size_t roiDims = numDims - 1;
-        // the ROI tensor is device memory on the GPU backend, so copy it to the host
-        // to read the extents; what RPP receives is pSrcDims, built below
+        // RPP receives pSrcDims below, not the ROI tensor
         STATUS_ERROR_CHECK(vxRppCopyRoiToHost(data->deviceType, roi_tensor_ptr, batchSize, batchSize, &data->pSrcRoiHost));
         if (!data->pSrcDims) {
             if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {

@@ -98,14 +98,6 @@ const std::map<vxTensorLayout, RpptLayout> tensorLayoutMapping = {
 vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx_uint32 num);
 vx_status createRPPHandle(vx_node node, vxRppHandle ** pHandle, Rpp32u batchSize, Rpp32u deviceType);
 vx_status releaseRPPHandle(vx_node node, vxRppHandle * handle, Rpp32u deviceType);
-//! \brief Copy the ROI tensor into a node-owned host buffer.
-//
-// The ROI tensor is device memory on the GPU backend, so reading the extents
-// needs a copy. \p count entries are read into a buffer of \p capacity, which
-// differ for NFHWC/NFCHW; allocated on first use, released with
-// vxRppFreeRoiHostCopy.
-vx_status vxRppCopyRoiToHost(Rpp32u deviceType, const void * roiTensorPtr, size_t count, size_t capacity, RpptROI ** hostCopy);
-vx_status vxRppFreeRoiHostCopy(Rpp32u deviceType, RpptROI ** hostCopy);
 void fillDescriptionPtrfromDims(RpptDescPtr &descPtr, vxTensorLayout layout, size_t *tensorDims);
 void fillGenericDescriptionPtrfromDims(RpptGenericDescPtr &genericDescPtr, vxTensorLayout layout, size_t *maxTensorDims);
 void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims, vxTensorLayout layout = vxTensorLayout::VX_NHW);

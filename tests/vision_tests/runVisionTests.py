@@ -465,16 +465,9 @@ else:
 nodeList = []
 case_num_list = []
 
-# Cases that are known to fail at a given image size and must not fail the run.
-# A case listed here that unexpectedly passes is only reported, not an error, so
-# these lists stay valid on an SDK where fewer cases fail. Anything failing that
-# is NOT listed here fails the run - that is the point of the exit code.
-#
-#   1920x1080: the case table's invalid 'RGBA' entries, tracked by #1792.
-#   10x10 and 5x3: sizes the spec allows but these kernels reject or crash on,
-#   tracked by #1799 and #1792. Box_U8_U8_3x3 at these sizes was #1772.
-#
-# Measured on gfx1100 / ROCm 7.2.2 with MIVisionX at the commit that added this.
+# Cases known to fail at a given image size. A listed case that fails is
+# tolerated, one that passes is only noted, and anything else that fails fails
+# the run. Delete an entry when the issue it cites is fixed.
 EXPECTED_FAILURES = {
     # 1920x1080: the case table's invalid 'RGBA' entries (#1792)
     (1920, 1080): (

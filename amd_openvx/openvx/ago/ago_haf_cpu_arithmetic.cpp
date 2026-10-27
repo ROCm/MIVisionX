@@ -4554,82 +4554,17 @@ int HafCpu_Threshold_U8_S16_Binary
 		vx_int16      threshold
 	)
 {
-	// C code 
 	for (int height = 0; height < (int) dstHeight; height++)
 	{
+		// rows are padded (ALIGN16), so step by the strides rather than the width
+		vx_int16 *pLocalSrc = (vx_int16 *)((vx_uint8 *)pSrcImage + (size_t)height * srcImageStrideInBytes);
+		vx_uint8 *pLocalDst = pDstImage + (size_t)height * dstImageStrideInBytes;
 		for (int width = 0; width < (int) dstWidth; width++)
 		{
-			vx_int16 pix = *pSrcImage++;
-			*pDstImage++ = (pix > threshold) ? (vx_uint8)255 : 0;
+			vx_int16 pix = *pLocalSrc++;
+			*pLocalDst++ = (pix > threshold) ? (vx_uint8)255 : 0;
 		}
 	}
-	
-	/*Fix SSE Code
-	bool useAligned = ((((intptr_t)pSrcImage | (intptr_t)pDstImage) & 0xF) == 0) ? true : false;
-
-	__m128i *pLocalSrc_xmm, *pLocalDst_xmm;
-	vx_int16 *pLocalSrc;
-	vx_uint8 *pLocalDst;
-	__m128i pixels, pixels_16;
-	__m128i thresh = _mm_set1_epi16((short) threshold);
-
-	int alignedWidth = dstWidth & ~7;
-	int postfixWidth = dstWidth - alignedWidth;
-	if (useAligned)
-	{
-		for (int height = 0; height < (int) dstHeight; height++)
-		{
-			pLocalSrc_xmm = (__m128i *) pSrcImage;
-			pLocalDst_xmm = (__m128i *) pDstImage;
-
-			for (int width = 0; width < alignedWidth; width += 8)
-			{
-				pixels = _mm_load_si128(pLocalSrc_xmm++);
-				pixels = _mm_cmpgt_epi16(pixels, thresh);
-				pixels_16 = _mm_packus_epi16 (pixels, _mm_setzero_si128());
-				_mm_store_si128(pLocalDst_xmm++, pixels_16);
-			}
-
-			pLocalSrc = (vx_int16 *)pLocalSrc_xmm;
-			pLocalDst = (vx_uint8 *)pLocalDst_xmm;
-			
-			for (int width = 0; width < postfixWidth; width++)
-			{
-				vx_int16 pix = *pLocalSrc++;
-				*pLocalDst++ = (pix > threshold) ? (vx_uint8)255 : 0;
-			}
-
-			pSrcImage += srcImageStrideInBytes;
-			pDstImage += dstImageStrideInBytes;
-		}
-	}
-	else
-	{
-		for (int height = 0; height < (int) dstHeight; height++)
-		{
-			pLocalSrc_xmm = (__m128i *) pSrcImage;
-			pLocalDst_xmm = (__m128i *) pDstImage;
-
-			for (int width = 0; width < alignedWidth; width += 8)
-			{
-				pixels = _mm_loadu_si128(pLocalSrc_xmm++);
-				pixels = _mm_cmpgt_epi16(pixels, thresh);
-				_mm_storeu_si128(pLocalDst_xmm++, pixels);
-			}
-
-			pLocalSrc = (vx_int16 *)pLocalSrc_xmm;
-			pLocalDst = (vx_uint8 *)pLocalDst_xmm;
-
-			for (int width = 0; width < postfixWidth; width++)
-			{
-				vx_int16 pix = *pLocalSrc++;
-				*pLocalDst++ = (pix > threshold) ? (vx_uint8)255 : 0;
-			}
-
-			pSrcImage += srcImageStrideInBytes;
-			pDstImage += dstImageStrideInBytes;
-		}
-	}*/
 	return AGO_SUCCESS;
 }
 

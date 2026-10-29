@@ -489,12 +489,10 @@ EXPECTED_FAILURES = {
         'ColorConvert_NV12_RGBX',
         'ColorConvert_YUV4_RGBX',
     ),
-    # 10x10: the same invalid 'RGBA' entries (#1792), plus Box3x3 (#1772),
-    # WarpAffine nearest (#1843) and GPU FastCorners (#1799)
+    # 10x10: the same invalid 'RGBA' entries (#1792), plus Box3x3 (#1772)
+    # and GPU FastCorners (#1799)
     (10, 10): (
         'Box_U8_U8_3x3',
-        'WarpAffine_U8_U8_Nearest',
-        'WarpAffine_U8_U8_Nearest_Constant',
         'FastCorners_XY_U8_NoSupression',
         'FastCorners_XY_U8_Supression',
         'ChannelExtract_U8_U32_Pos0_RGBX',
@@ -516,11 +514,9 @@ EXPECTED_FAILURES = {
         'ColorConvert_YUV4_RGBX',
     ),
     # 5x3: invalid 'RGBA' entries (#1792), sizes these kernels reject and GPU
-    # FastCorners (#1799), Box3x3 (#1772) and WarpAffine nearest (#1843)
+    # FastCorners (#1799) and Box3x3 (#1772)
     (5, 3): (
         'Box_U8_U8_3x3',
-        'WarpAffine_U8_U8_Nearest',
-        'WarpAffine_U8_U8_Nearest_Constant',
         'FastCorners_XY_U8_NoSupression',
         'FastCorners_XY_U8_Supression',
         'ChannelExtract_U8_U16_Pos0',

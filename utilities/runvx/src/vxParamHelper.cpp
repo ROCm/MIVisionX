@@ -22,6 +22,8 @@ THE SOFTWARE.
 
 #define _CRT_SECURE_NO_WARNINGS
 #include "vxParamHelper.h"
+#include "runvx_plugin_image.h"
+#include "runvx_plugin_loader.h"
 
 int g_numCvUse = 0;
 
@@ -153,14 +155,14 @@ int GuiTrackBarProcessKey(int key)
 // global OpenCV image count and specified read inputs count
 int ProcessCvWindowKeyRefresh(int waitKeyDelayInMilliSeconds)
 {
-#if ENABLE_OPENCV
 	if (g_numCvUse > 0) {
+		IRunVxImagePlugin * plugin = RunVxGetImagePlugin();
 		// process keyboard
-		int key = waitKey(waitKeyDelayInMilliSeconds);
+		int key = plugin ? plugin->WaitKey(waitKeyDelayInMilliSeconds) : 0;
 		if (key == 'q' || key == 27 || key == ' ') {
 			if (key == ' ' && waitKeyDelayInMilliSeconds != 0) {
 				printf("Paused: Press spacebar to continue...\n"); fflush(stdout);
-				while ((key = waitKey(0)) != ' ' && key != 'q' && key != 27)
+				while ((key = plugin ? plugin->WaitKey(0) : 0) != ' ' && key != 'q' && key != 27)
 					;
 			}
 			if (key == 'q' || key == 27) {
@@ -171,6 +173,5 @@ int ProcessCvWindowKeyRefresh(int waitKeyDelayInMilliSeconds)
 			GuiTrackBarProcessKey(key);
 		}
 	}
-#endif
 	return 0;
 }

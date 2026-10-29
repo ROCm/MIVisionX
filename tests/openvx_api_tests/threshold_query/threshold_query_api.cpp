@@ -234,11 +234,18 @@ static int test_vxSetThresholdAttribute(vx_context context) {
         printf("  PASS: Set VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE = 128\n");
     }
 
-    // Set VX_THRESHOLD_TYPE attribute
+    // VX_THRESHOLD_TYPE is read-only (REQ-1378): setting it must fail and leave the type unchanged
     {
-        vx_enum new_type = VX_THRESHOLD_TYPE_BINARY;
-        CHECK_STATUS(vxSetThresholdAttribute(thr_binary, VX_THRESHOLD_TYPE, &new_type, sizeof(vx_enum)));
-        printf("  PASS: Set VX_THRESHOLD_TYPE\n");
+        vx_enum new_type = VX_THRESHOLD_TYPE_RANGE;
+        vx_status s = vxSetThresholdAttribute(thr_binary, VX_THRESHOLD_TYPE, &new_type, sizeof(vx_enum));
+        vx_enum cur_type = 0;
+        vxQueryThreshold(thr_binary, VX_THRESHOLD_TYPE, &cur_type, sizeof(cur_type));
+        if (s == VX_SUCCESS || cur_type != VX_THRESHOLD_TYPE_BINARY) {
+            printf("  FAIL: VX_THRESHOLD_TYPE must be read-only (status %d, type 0x%x)\n", s, cur_type);
+            errors++;
+        } else {
+            printf("  PASS: VX_THRESHOLD_TYPE is read-only\n");
+        }
     }
 
     // Set VX_THRESHOLD_INPUT_FORMAT attribute

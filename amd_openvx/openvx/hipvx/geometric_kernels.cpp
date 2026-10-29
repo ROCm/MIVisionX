@@ -466,6 +466,7 @@ Hip_ScaleImage_U8_U8_Area(uint dstWidth, uint dstHeight,
     }
 
     uint dstIdx =  y * dstImageStrideInBytes + x;
+    int valid = (int)min(dstWidth - (uint)x, 8u);
 
     uint offset = srcImageStrideInBytes * (y * Ny) + (x * Nx);
     pSrcImage += offset;
@@ -497,7 +498,7 @@ Hip_ScaleImage_U8_U8_Area(uint dstWidth, uint dstHeight,
     dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
     dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, valid);
 }
 
 __global__ void __attribute__((visibility("default")))
@@ -513,6 +514,7 @@ Hip_ScaleImage_U8_U8_Area_Sad(uint dstWidth, uint dstHeight,
     }
 
     uint dstIdx =  y * dstImageStrideInBytes + x;
+    int valid = (int)min(dstWidth - (uint)x, 8u);
 
     uint offset = srcImageStrideInBytes * (y * Ny) + (x * Nx);
     pSrcImage += offset;
@@ -547,7 +549,61 @@ Hip_ScaleImage_U8_U8_Area_Sad(uint dstWidth, uint dstHeight,
     dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
     dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, valid);
+}
+
+// General exact-integer-ratio area average.
+//
+// Hip_ScaleImage_U8_U8_Area and Hip_ScaleImage_U8_U8_Area_Sad above are
+// hand-unrolled for 2x2 and 4x4 source blocks: they read a fixed number of rows
+// and consecutive bytes per output pixel, so for any other block shape they both
+// sum the wrong pixels and divide by the true 1/(Sx*Sy). This kernel walks the
+// whole Nx x Ny block instead and is used for every other exact integer ratio.
+//
+// The source reads need no bounds check: with an exact ratio the last output
+// pixel of a row covers source column (dstWidth - 1) * Nx + Nx - 1 = srcWidth - 1,
+// and likewise for rows.
+__global__ void __attribute__((visibility("default")))
+Hip_ScaleImage_U8_U8_Area_Int(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    int Nx, int Ny, float iSxSy) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    uint dstIdx = y * dstImageStrideInBytes + x;
+    const uchar *pSrcRow0 = pSrcImage + (uint)y * (uint)Ny * srcImageStrideInBytes;
+
+    // Number of destination pixels this thread may touch. It also bounds the
+    // source reads, since a block past dstWidth has no source block behind it,
+    // and it is what the bounded store below needs.
+    int valid = (int)min(dstWidth - (uint)x, 8u);
+
+    d_float8 f = {0.0f};
+    for (int i = 0; i < valid; i++) {
+        // A 32-bit accumulator is not enough: a legal downscale to 1x1 sums the
+        // whole image, and 255 * 4105 * 4105 already exceeds UINT_MAX.
+        unsigned long long sum = 0;
+        const uchar *pSrcRow = pSrcRow0 + ((uint)x + (uint)i) * (uint)Nx;
+        for (int iy = 0; iy < Ny; iy++) {
+            for (int ix = 0; ix < Nx; ix++) {
+                sum += pSrcRow[ix];
+            }
+            pSrcRow += srcImageStrideInBytes;
+        }
+        f.data[i] = (float)sum;
+    }
+
+    uint2 dst;
+    dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
+    dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
+
+    hip_store_U8x8(pDstImage, dstIdx, dst, valid);
 }
 
 __global__ void __attribute__((visibility("default")))
@@ -731,33 +787,61 @@ int HipExec_ScaleImage_U8_U8_Area(hipStream_t stream, vx_uint32 dstWidth, vx_uin
 
     float Sx = (float)srcWidth / (float)dstWidth;
     float Sy = (float)srcHeight / (float)dstHeight;
-    int Nx = (int)ceilf(Sx);
-    int Ny = (int)ceilf(Sy);
 
-    bool need_align = ((Sx * 2.0f) != floorf(Sx * 2.0f)) ? true : false;
-    bool use_sad = (Nx % 4) ? false : true;
-    float iSxSy = 1.0 / (double)(Sx * Sy);
-    float factorc = Sx - (Nx - 1);
+    // An exact integer ratio means every destination pixel covers a whole
+    // Nx x Ny source block. Hip_ScaleImage_U8_U8_Area is hand-unrolled for 2x2
+    // and Hip_ScaleImage_U8_U8_Area_Sad for 4x4; dispatching any other block
+    // shape to them returns garbage (3:1 of a constant 90 image gave 40, 5:1
+    // gave 14, 6:1 gave 10 and 8:1 gave 22), so select on the block shape
+    // explicitly and send everything else to the general kernel. A ratio that
+    // is not an exact integer has fractional edge weights and goes to the
+    // bytealign path - the old `need_align` test let ratios such as 1.5 through
+    // to the 2x2 kernel as well.
+    //
+    // NOTE: Hip_ScaleImage_U8_U8_Area_Bytealign is itself hand-unrolled - two
+    // source rows and three x-taps per output pixel - so it is only correct for
+    // roughly Sx < 3 and Sy <= 2. Larger fractional ratios such as 3.5:1 are
+    // still wrong there. That is pre-existing rather than introduced here (the
+    // old selector sent them to the 2x2 kernel, equally wrong) and is tracked
+    // separately. Giving Hip_ScaleImage_U8_U8_Area_Int fractional edge weights
+    // would let it absorb those cases and retire this kernel.
+    bool exact_int = ((srcWidth % dstWidth) == 0) && ((srcHeight % dstHeight) == 0);
 
-    if ((srcWidth % dstWidth) > 0 || (srcHeight % dstHeight) > 0) {
-        use_sad = false;
-    }
+    if (exact_int) {
+        int Nx = (int)(srcWidth / dstWidth);
+        int Ny = (int)(srcHeight / dstHeight);
+        // Exact whenever Nx * Ny is a power of two, and correctly rounded
+        // otherwise - unlike 1.0 / (Sx * Sy), which goes through two floats.
+        // Multiplied as floats: (int)Nx * (int)Ny overflows for a block of more
+        // than 2^31 pixels, which a downscale of a 46341x46341 image to 1x1
+        // reaches.
+        float iSxSy = 1.0f / ((float)Nx * (float)Ny);
 
-    if (use_sad) {
-        hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Sad, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
-                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                        Nx, Ny, iSxSy);
-    } else if (need_align) {
+        if (Nx == 4 && Ny == 4) {
+            hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Sad, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            Nx, Ny, iSxSy);
+        } else if (Nx == 2 && Ny == 2) {
+            hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            Nx, Ny, iSxSy);
+        } else {
+            hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Int, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            Nx, Ny, iSxSy);
+        }
+    } else {
+        int Nx = (int)ceilf(Sx);
+        float factorc = Sx - (Nx - 1);
+        float iSxSy = 1.0 / (double)(Sx * Sy);
+
         hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Bytealign, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         Sx, Sy, factorc, iSxSy);
-    } else {
-        hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
-                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                        Nx, Ny, iSxSy);
     }
     HIP_CHECK(hipGetLastError()); // Check for launch error
 
@@ -1967,23 +2051,31 @@ Hip_Remap_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     int map;
 
     map = remap[0];
-    f.x = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder0 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.x = useBorder0 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[1];
-    f.y = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder1 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.y = useBorder1 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[2];
-    f.z = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder2 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.z = useBorder2 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[3];
-    f.w = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder3 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.w = useBorder3 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     dst.x = hip_pack_half_up(f);
 
     map = remap[4];
-    f.x = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder4 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.x = useBorder4 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[5];
-    f.y = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder5 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.y = useBorder5 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[6];
-    f.z = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder6 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.z = useBorder6 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[7];
-    f.w = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    bool useBorder7 = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
+    f.w = useBorder7 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     dst.y = hip_pack_half_up(f);
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
@@ -2067,6 +2159,16 @@ __device__ __forceinline__ float hip_bilinear_sample_RGBX_constant(uchar *pSrc, 
     return fmaf(v1, (1.0f - fy0), v0 * fy0);
 }
 
+__device__ __forceinline__ void hip_remap_load_sxy_constant(int map, float *sx, float *sy, int *x0, int *y0, float *fx0, float *fy0)
+{
+    *sx = ((float)(map & 0xffff)) * 0.125f;
+    *sy = ((float)(map >> 16)) * 0.125f;
+    *x0 = (int)floorf(*sx);
+    *y0 = (int)floorf(*sy);
+    float fx1 = *sx - (float)(*x0); *fx0 = 1.0f - fx1;
+    float fy1 = *sy - (float)(*y0); *fy0 = 1.0f - fy1;
+}
+
 __device__ __forceinline__ void hip_remap_load_sxy(int map, float *sx, float *sy, int *x0, int *y0, float *fx0, float *fy0, int srcWidth, int srcHeight)
 {
     *sx = ((float)(map & 0xffff)) * 0.125f;
@@ -2079,52 +2181,14 @@ __device__ __forceinline__ void hip_remap_load_sxy(int map, float *sx, float *sy
     *y0 = max(0, min(*y0, srcHeight - 2));
 }
 
-__device__ __forceinline__ void hip_remap_load_sxy_nearest(int map, int *sx, int *sy, int srcW1, int srcH1)
+__device__ __forceinline__ void hip_remap_load_sxy_nearest(int map, int *sx, int *sy)
 {
     *sx = ((map & 0xffff) + 4) >> 3;
     *sy = (map + 0x00040000) >> 19;
-    *sx = max(0, min(*sx, srcW1));
-    *sy = max(0, min(*sy, srcH1));
 }
 
-// Each thread produces up to 8 pixels. A full block is written with the wide
-// vector store, but when dstWidth is not a multiple of 8 the last block in a row
-// holds fewer than 8 valid pixels, and writing the whole block would run past
-// the row end and overflow the row stride. The tail is written pixel-wise so
-// only the valid bytes are touched.
-__device__ __forceinline__ void hip_remap_store_RGB(uchar *pDstImage, uint dstIdx, const uint3 *out, int valid)
-{
-    if (valid >= 8) {
-        uint *dst = (uint *)(pDstImage + dstIdx);
-        dst[0] = out[0].x; dst[1] = out[0].y; dst[2] = out[0].z;
-        dst[3] = out[1].x; dst[4] = out[1].y; dst[5] = out[1].z;
-    } else {
-        uchar *dst = pDstImage + dstIdx;
-        for (int i = 0; i < valid; i++) {
-            const uchar *src = (const uchar *)&out[i >> 2] + (i & 3) * 3;
-            dst[i * 3 + 0] = src[0];
-            dst[i * 3 + 1] = src[1];
-            dst[i * 3 + 2] = src[2];
-        }
-    }
-}
-
-__device__ __forceinline__ void hip_remap_store_RGBX(uchar *pDstImage, uint dstIdx, uint4 out0, uint4 out1, int valid)
-{
-    if (valid >= 8) {
-        *((uint4 *)(pDstImage + dstIdx)) = out0;
-        *((uint4 *)(pDstImage + dstIdx + 16)) = out1;
-    } else {
-        uchar *dst = pDstImage + dstIdx;
-        for (int i = 0; i < valid; i++) {
-            const uchar *src = ((i < 4) ? (const uchar *)&out0 : (const uchar *)&out1) + (i & 3) * 4;
-            dst[i * 4 + 0] = src[0];
-            dst[i * 4 + 1] = src[1];
-            dst[i * 4 + 2] = src[2];
-            dst[i * 4 + 3] = src[3];
-        }
-    }
-}
+// hip_remap_store_RGB / hip_remap_store_RGBX, and the d_uint6 / d_uint8 forms
+// used by the colour kernels, live in hip_common_funcs.h.
 
 __global__ void __attribute__((visibility("default")))
 Hip_Remap_RGB_RGB_Bilinear(uint dstWidth, uint dstHeight,
@@ -2220,12 +2284,10 @@ Hip_Remap_RGB_RGB_Nearest(uint dstWidth, uint dstHeight,
     out[0] = (uint3)0;
     out[1] = (uint3)0;
 
-    int srcW1 = (int)srcWidth - 1;
-    int srcH1 = (int)srcHeight - 1;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
         int sx, sy;
-        hip_remap_load_sxy_nearest(remap[i], &sx, &sy, srcW1, srcH1);
+        hip_remap_load_sxy_nearest(remap[i], &sx, &sy);
         uint srcIdx = (uint)(sy * srcImageStrideInBytes + sx * 3);
         int slot = i >> 2;
         int sub = i & 3;
@@ -2276,16 +2338,22 @@ Hip_Remap_RGB_RGB_Bilinear_Constant(uint dstWidth, uint dstHeight,
     out[0] = (uint3)0;
     out[1] = (uint3)0;
 
-    int sw = (int)srcWidth, sh = (int)srcHeight;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
+        int map = remap[i];
+        bool useBorder = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
         float sx, sy, fx0, fy0;
         int x0, y0;
-        hip_remap_load_sxy(remap[i], &sx, &sy, &x0, &y0, &fx0, &fy0, sw, sh);
+        if (useBorder) {
+            sx = sy = 0.0f; x0 = y0 = 0; fx0 = fy0 = 0.0f;
+        } else {
+            hip_remap_load_sxy_constant(map, &sx, &sy, &x0, &y0, &fx0, &fy0);
+        }
 
         float4 f;
         for (int c = 0; c < 3; c++) {
-            ((float *)&f)[c] = hip_bilinear_sample_RGB_constant((uchar *)pSrcImage, x0, y0, fx0, fy0, c, srcImageStrideInBytes, srcWidth, srcHeight, borderValue);
+            ((float *)&f)[c] = useBorder ? hip_unpack0(borderValue)
+                : hip_bilinear_sample_RGB_constant((uchar *)pSrcImage, x0, y0, fx0, fy0, c, srcImageStrideInBytes, srcWidth, srcHeight, borderValue);
         }
 
         int slot = i >> 2;
@@ -2337,12 +2405,10 @@ Hip_Remap_RGB_RGB_Nearest_Constant(uint dstWidth, uint dstHeight,
     out[0] = (uint3)0;
     out[1] = (uint3)0;
 
-    int srcW1 = (int)srcWidth - 1;
-    int srcH1 = (int)srcHeight - 1;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
         int sx, sy;
-        hip_remap_load_sxy_nearest(remap[i], &sx, &sy, srcW1, srcH1);
+        hip_remap_load_sxy_nearest(remap[i], &sx, &sy);
         int slot = i >> 2;
         int sub = i & 3;
         for (int c = 0; c < 3; c++) {
@@ -2459,12 +2525,10 @@ Hip_Remap_RGBX_RGBX_Nearest(uint dstWidth, uint dstHeight,
     uint4 out0 = (uint4)0;
     uint4 out1 = (uint4)0;
 
-    int srcW1 = (int)srcWidth - 1;
-    int srcH1 = (int)srcHeight - 1;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
         int sx, sy;
-        hip_remap_load_sxy_nearest(remap[i], &sx, &sy, srcW1, srcH1);
+        hip_remap_load_sxy_nearest(remap[i], &sx, &sy);
         uint srcIdx = (uint)(sy * srcImageStrideInBytes + sx * 4);
         uint4 *out = (i < 4) ? &out0 : &out1;
         for (int c = 0; c < 4; c++) {
@@ -2513,16 +2577,22 @@ Hip_Remap_RGBX_RGBX_Bilinear_Constant(uint dstWidth, uint dstHeight,
     uint4 out0 = (uint4)0;
     uint4 out1 = (uint4)0;
 
-    int sw = (int)srcWidth, sh = (int)srcHeight;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
+        int map = remap[i];
+        bool useBorder = ((map & 0xFFFF) == 0xFFFF) || (((map >> 16) & 0xFFFF) == 0xFFFF);
         float sx, sy, fx0, fy0;
         int x0, y0;
-        hip_remap_load_sxy(remap[i], &sx, &sy, &x0, &y0, &fx0, &fy0, sw, sh);
+        if (useBorder) {
+            sx = sy = 0.0f; x0 = y0 = 0; fx0 = fy0 = 0.0f;
+        } else {
+            hip_remap_load_sxy_constant(map, &sx, &sy, &x0, &y0, &fx0, &fy0);
+        }
 
         float4 f;
         for (int c = 0; c < 4; c++) {
-            ((float *)&f)[c] = hip_bilinear_sample_RGBX_constant((uchar *)pSrcImage, x0, y0, fx0, fy0, c, srcImageStrideInBytes, srcWidth, srcHeight, borderValue);
+            ((float *)&f)[c] = useBorder ? hip_unpack0(borderValue)
+                : hip_bilinear_sample_RGBX_constant((uchar *)pSrcImage, x0, y0, fx0, fy0, c, srcImageStrideInBytes, srcWidth, srcHeight, borderValue);
         }
 
         uint4 *out = (i < 4) ? &out0 : &out1;
@@ -2573,12 +2643,10 @@ Hip_Remap_RGBX_RGBX_Nearest_Constant(uint dstWidth, uint dstHeight,
     uint4 out0 = (uint4)0;
     uint4 out1 = (uint4)0;
 
-    int srcW1 = (int)srcWidth - 1;
-    int srcH1 = (int)srcHeight - 1;
     for (int i = 0; i < 8; i++) {
         if (x + i >= dstWidth) break;
         int sx, sy;
-        hip_remap_load_sxy_nearest(remap[i], &sx, &sy, srcW1, srcH1);
+        hip_remap_load_sxy_nearest(remap[i], &sx, &sy);
         uint4 *out = (i < 4) ? &out0 : &out1;
         for (int c = 0; c < 4; c++) {
             uint v = borderValue;

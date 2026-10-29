@@ -239,6 +239,19 @@ add_test(
 )
 set_property(TEST openvx_threshold_query_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
 
+# 11_g_a - reqtags - OpenVX 1.3.2 requirement tag coverage test
+add_test(
+  NAME
+    openvx_reqtags_api
+  COMMAND
+    "${CMAKE_CTEST_COMMAND}"
+            --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/reqtags"
+                              "${CMAKE_CURRENT_BINARY_DIR}/reqtags"
+            --build-generator "${CMAKE_GENERATOR}"
+            --test-command "openvx_reqtags_api"
+)
+set_property(TEST openvx_reqtags_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+
 # 11_h - graph_import - graph import API test
 add_test(
   NAME
@@ -358,6 +371,33 @@ if(Python3_FOUND)
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
   set_property(TEST openvx_gdf_tests_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+
+  # 16_b - Per-Remap GDF regression tests on CPU
+  if(RUNVX_EXECUTABLE)
+    set(REMAP_GDFS
+      Remap_U8_U8_Nearest
+      Remap_U8_U8_Nearest_Constant
+      Remap_U8_U8_Bilinear
+      Remap_U8_U8_Bilinear_Constant
+      Remap_U8_U8_Bilinear_4K
+      Remap_RGB_RGB_Nearest
+      Remap_RGB_RGB_Nearest_Constant
+      Remap_RGB_RGB_Bilinear
+      Remap_RGB_RGB_Bilinear_Constant
+      Remap_RGBX_RGBX_Nearest
+      Remap_RGBX_RGBX_Nearest_Constant
+      Remap_RGBX_RGBX_Bilinear
+      Remap_RGBX_RGBX_Bilinear_Constant
+    )
+    foreach(gdf_base ${REMAP_GDFS})
+      add_test(NAME openvx_remap_${gdf_base}_CPU
+            COMMAND ${RUNVX_EXECUTABLE} -frames:10
+              ${CMAKE_CURRENT_SOURCE_DIR}/amd_openvx_gdfs/geometric/${gdf_base}.gdf
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
+      set_property(TEST openvx_remap_${gdf_base}_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+    endforeach()
+  endif()
 endif(Python3_FOUND)
 
 # HIP Tests
@@ -410,6 +450,88 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       )
       set_property(TEST openvx_hip_cu_mask_remap_4K PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+    endif()
+
+    # 23 - Per-Remap GDF regression tests on GPU
+    if(RUNVX_EXECUTABLE)
+      set(REMAP_GDFS
+        Remap_U8_U8_Nearest
+        Remap_U8_U8_Nearest_Constant
+        Remap_U8_U8_Bilinear
+        Remap_U8_U8_Bilinear_Constant
+        Remap_U8_U8_Bilinear_4K
+        Remap_RGB_RGB_Nearest
+        Remap_RGB_RGB_Nearest_Constant
+        Remap_RGB_RGB_Bilinear
+        Remap_RGB_RGB_Bilinear_Constant
+        Remap_RGBX_RGBX_Nearest
+        Remap_RGBX_RGBX_Nearest_Constant
+        Remap_RGBX_RGBX_Bilinear
+        Remap_RGBX_RGBX_Bilinear_Constant
+      )
+      foreach(gdf_base ${REMAP_GDFS})
+        add_test(NAME openvx_remap_${gdf_base}_GPU
+              COMMAND ${RUNVX_EXECUTABLE} -frames:10
+                ${CMAKE_CURRENT_SOURCE_DIR}/amd_openvx_gdfs/geometric/${gdf_base}.gdf
+              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
+        set_property(TEST openvx_remap_${gdf_base}_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+      endforeach()
+
+    # Both of the tests below target the HIP kernels specifically, so they are
+    # registered only for a HIP build rather than for the whole GPU block.
+    #
+    # The two backends differ for each, in opposite directions. The AREA defect
+    # does not exist on OpenCL at all: agoKernel_ScaleImage_U8_U8_Area generates
+    # a kernel per node with the real Nx x Ny window baked in, so it never sends
+    # one ratio to a kernel shaped for another. The RGB/RGBX overrun does exist
+    # there - ago_haf_gpu_conversion.cpp emits an unconditional vstore4 + vstore2
+    # at gx * 24 - but this change does not fix it; that half is #1829. Widen
+    # the colour test to OpenCL once it is.
+    if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
+      # 23_b - Exact-value correctness test for the HIP AREA scale paths. The
+      # shipped AREA GDFs assert only that runvx exits 0 and use a uniform
+      # image, so a wrong kernel selection is invisible to them.
+      add_test(NAME openvx_scale_area_gpu
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scale_area_gpu_tests/test_scale_area_gpu.py
+            --runvx ${RUNVX_EXECUTABLE}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
+
+      # 23_c - RGB/RGBX stores must stay inside the destination row. Needs a
+      # width that is not a multiple of 8, which no other colour test uses, and
+      # repeated runs, because the overrun is a race between adjacent rows.
+      add_test(NAME openvx_color_convert_partial_store
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/color_convert_partial_tests/test_color_convert_partial.py
+            --runvx ${RUNVX_EXECUTABLE}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
+    endif()
+
+      # 24 - Constant-border correctness test for RGB/RGBX Remap
+      add_test(NAME openvx_remap_rgb_rgbx_constant_border
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/remap_constant_border_tests/test_remap_constant_border.py
+            --runvx ${RUNVX_EXECUTABLE}
+            --gdf-dir ${CMAKE_CURRENT_SOURCE_DIR}/amd_openvx_gdfs/geometric
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
+
+      # 25 - Exact-value correctness test for the threshold kernels. Covers the
+      # U1 lowering (threshold -> and/or/xor through virtual images) across all
+      # four float4 lanes, and S16 thresholds outside 0..255. The script runs
+      # both the CPU and the GPU backend itself.
+      #
+      # HIP only for now. The OpenCL threshold codegen still narrows the
+      # threshold with amd_unpack0 (agoCodeGenOpenCL_Threshold_S16_S16_Binary
+      # and _Range), so the S16 cases outside 0..255 fail there. Drop this
+      # guard once that path is fixed.
+      if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
+        add_test(NAME openvx_threshold_kernels
+              COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/threshold_tests/test_threshold_kernels.py
+              --runvx ${RUNVX_EXECUTABLE}
+              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
+      endif()
     endif()
   endif(Python3_FOUND)
 endif(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "OPENCL"))

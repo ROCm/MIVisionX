@@ -1038,6 +1038,28 @@ VX_API_ENTRY vx_status VX_API_CALL vxuWeightedAverage(vx_context context, vx_ima
     return status;
 }
 
+VX_API_ENTRY vx_status VX_API_CALL vxuCopy(vx_context context, vx_reference input, vx_reference output)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+		vxuSetGraphAffinityDefault(graph);
+		vx_node node = vxCopyNode(graph, input, output);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+            {
+                status = vxProcessGraph(graph);
+            }
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}
+
 VX_API_ENTRY vx_status VX_API_CALL vxuNonLinearFilter(vx_context context, vx_enum function, vx_image input, vx_matrix mask, vx_image output)
 {
     vx_status status = VX_FAILURE;

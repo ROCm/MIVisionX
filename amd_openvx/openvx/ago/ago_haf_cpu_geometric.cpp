@@ -1475,7 +1475,7 @@ vx_uint8			* pLocalData
 	unsigned int x, y;
 	float *r00_x, *r10_x;
 	r00_x = (float*)pLocalData;
-	r10_x = r00_x + dstWidth;
+	r10_x = (float *)ALIGN16(r00_x + dstWidth);
 	for (x = 0; x<dstWidth; x++){
 		r00_x[x] = r00 * x;
 		r10_x[x] = r10 * x;
@@ -1634,7 +1634,7 @@ int HafCpu_WarpAffine_U8_U8_Nearest_Constant
 	XMM128 mask;
 	unsigned int x, y;
 	float *r00_x = (float*)pLocalData;
-	float *r10_x = r00_x + dstWidth;
+	float *r10_x = (float *)ALIGN16(r00_x + dstWidth);
 	for (x = 0; x<dstWidth; x++){
 		r00_x[x] = r00 * x;
 		r10_x[x] = r10 * x;

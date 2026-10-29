@@ -237,7 +237,7 @@ vx_status Noise_Register(vx_context context) {
     vx_kernel kernel = vxAddUserKernel(context, "org.rpp.Noise",
                                        VX_KERNEL_RPP_NOISE,
                                        processNoise,
-                                       9,
+                                       12,
                                        validateNoise,
                                        initializeNoise,
                                        uninitializeNoise);

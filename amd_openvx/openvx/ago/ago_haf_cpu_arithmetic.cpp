@@ -3897,6 +3897,102 @@ int HafCpu_ColorDepth_U8_S16_Sat
 	return AGO_SUCCESS;
 }
 
+/* Conversions between U1 and the other formats take neither the convert policy nor
+the shift into account. REQ-0130 fixes down-conversion as output = input != 0 ? 1 : 0,
+REQ-0131 up-conversion to U8 as input != 0 ? 255 : 0, and REQ-0132 up-conversion to
+S16 as input != 0 ? -1 : 0. A U1 row is packed little-endian within each byte, so
+pixel x lives at bit (x & 7) of byte (x >> 3). */
+
+int HafCpu_ColorDepth_U1_U8
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes
+	)
+{
+	for (vx_uint32 y = 0; y < dstHeight; y++)
+	{
+		for (vx_uint32 x = 0; x < dstWidth; x++)
+		{
+			vx_uint8 * pByte = pDstImage + (x >> 3);
+			vx_uint8 mask = (vx_uint8)(1 << (x & 7));
+			if (pSrcImage[x]) *pByte |= mask;
+			else              *pByte = (vx_uint8)(*pByte & ~mask);
+		}
+		pDstImage += dstImageStrideInBytes;
+		pSrcImage += srcImageStrideInBytes;
+	}
+	return AGO_SUCCESS;
+}
+
+int HafCpu_ColorDepth_U1_S16
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_int16    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes
+	)
+{
+	for (vx_uint32 y = 0; y < dstHeight; y++)
+	{
+		for (vx_uint32 x = 0; x < dstWidth; x++)
+		{
+			vx_uint8 * pByte = pDstImage + (x >> 3);
+			vx_uint8 mask = (vx_uint8)(1 << (x & 7));
+			if (pSrcImage[x]) *pByte |= mask;
+			else              *pByte = (vx_uint8)(*pByte & ~mask);
+		}
+		pDstImage += dstImageStrideInBytes;
+		pSrcImage += (srcImageStrideInBytes >> 1);
+	}
+	return AGO_SUCCESS;
+}
+
+int HafCpu_ColorDepth_U8_U1
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes
+	)
+{
+	for (vx_uint32 y = 0; y < dstHeight; y++)
+	{
+		for (vx_uint32 x = 0; x < dstWidth; x++)
+			pDstImage[x] = ((pSrcImage[x >> 3] >> (x & 7)) & 1) ? (vx_uint8)255 : (vx_uint8)0;
+		pDstImage += dstImageStrideInBytes;
+		pSrcImage += srcImageStrideInBytes;
+	}
+	return AGO_SUCCESS;
+}
+
+int HafCpu_ColorDepth_S16_U1
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_int16    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes
+	)
+{
+	for (vx_uint32 y = 0; y < dstHeight; y++)
+	{
+		for (vx_uint32 x = 0; x < dstWidth; x++)
+			pDstImage[x] = ((pSrcImage[x >> 3] >> (x & 7)) & 1) ? (vx_int16)-1 : (vx_int16)0;
+		pDstImage += (dstImageStrideInBytes >> 1);
+		pSrcImage += srcImageStrideInBytes;
+	}
+	return AGO_SUCCESS;
+}
+
 int HafCpu_ColorDepth_S16_U8
 	(
 		vx_uint32     dstWidth,
@@ -3986,6 +4082,26 @@ int HafCpu_ColorDepth_S16_U8
 		pDstImage += (dstImageStrideInBytes >> 1);
 	}
 #endif
+	return AGO_SUCCESS;
+}
+
+int HafCpu_ThresholdRemapOutput_U8
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8      trueValue,
+		vx_uint8      falseValue
+	)
+{
+	for (vx_uint32 y = 0; y < dstHeight; y++)
+	{
+		vx_uint8 * pLocalDst = pDstImage;
+		for (vx_uint32 x = 0; x < dstWidth; x++, pLocalDst++)
+			*pLocalDst = *pLocalDst ? trueValue : falseValue;
+		pDstImage += dstImageStrideInBytes;
+	}
 	return AGO_SUCCESS;
 }
 
@@ -5494,10 +5610,14 @@ int HafCpu_Magnitude_S16_S16S16
 
 		for (; x < dstWidth; x++)
 		{
-			int gx = pLocalGx[x];
-			int gy = pLocalGy[x];
-			int v = (int)lrintf(sqrtf((float)(gx * gx + gy * gy)));
-			pLocalDst[x] = (vx_int16)(v > 32767 ? 32767 : v);
+			// REQ-0270 accumulates in uint32 on purpose: at gx = gy = -32768 the
+			// sum is 2^31, which a signed int cannot hold, and sqrt would then be
+			// handed a negative value
+			vx_int32 gx = pLocalGx[x];
+			vx_int32 gy = pLocalGy[x];
+			vx_uint32 sum = (vx_uint32)(gx * gx) + (vx_uint32)(gy * gy);
+			vx_uint32 z = (vx_uint32)(sqrt((double)sum) + 0.5);
+			pLocalDst[x] = (vx_int16)(z > 32767 ? 32767 : z);
 		}
 
 		pGxImage += (gxImageStrideInBytes >> 1);
@@ -5525,9 +5645,12 @@ int HafCpu_Magnitude_S16_S16S16
 
 		for (int x = 0; x < prefixWidth; x++, pLocalGx++, pLocalGy++)
 		{
-			float temp = (float)(*pLocalGx * *pLocalGx) + (float)(*pLocalGy * *pLocalGy);
-			temp = sqrtf(temp);
-			*pLocalDst++ = (vx_int16)temp;
+			// REQ-0270: accumulate in uint32 and clamp at 32767, which the
+			// magnitude can exceed once either gradient reaches -32768
+			vx_int32 gx = *pLocalGx, gy = *pLocalGy;
+			vx_uint32 sum = (vx_uint32)(gx * gx) + (vx_uint32)(gy * gy);
+			vx_uint32 z = (vx_uint32)(sqrt((double)sum) + 0.5);
+			*pLocalDst++ = (vx_int16)(z > 32767 ? 32767 : z);
 		}
 
 		for (int width = 0; width < (alignedWidth >> 3); width++)
@@ -5593,9 +5716,12 @@ int HafCpu_Magnitude_S16_S16S16
 
 		for (int x = 0; x < postfixWidth; x++, pLocalGx++, pLocalGy++)
 		{
-			float temp = (float)(*pLocalGx * *pLocalGx) + (float)(*pLocalGy * *pLocalGy);
-			temp = sqrtf(temp);
-			*pLocalDst++ = (vx_int16)(round(temp));
+			// REQ-0270: accumulate in uint32 and clamp at 32767, which the
+			// magnitude can exceed once either gradient reaches -32768
+			vx_int32 gx = *pLocalGx, gy = *pLocalGy;
+			vx_uint32 sum = (vx_uint32)(gx * gx) + (vx_uint32)(gy * gy);
+			vx_uint32 z = (vx_uint32)(sqrt((double)sum) + 0.5);
+			*pLocalDst++ = (vx_int16)(z > 32767 ? 32767 : z);
 		}
 
 		pGxImage += (gxImageStrideInBytes >> 1);

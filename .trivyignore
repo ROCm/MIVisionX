@@ -1,0 +1,10 @@
+# Trivy vulnerability suppressions
+# Format: one advisory ID per line; see https://trivy.dev/latest/docs/configuration/filtering/
+
+# CVE-2026-41066 — lxml information disclosure via untrusted XML, fixed in lxml 6.1.0.
+# lxml is a documentation-build-only dependency (docs/sphinx/requirements.txt, pulled
+# in by doxysphinx via rocm-docs-core) and is NOT shipped in the MIVisionX product.
+# doxysphinx 3.3.14 pins lxml<=5.2.1, so lxml cannot be upgraded to 6.1.0 without
+# upgrading rocm-docs-core/doxysphinx; doing so currently breaks the Read the Docs
+# build (ResolutionImpossible). Suppressing until that docs-toolchain upgrade lands.
+CVE-2026-41066

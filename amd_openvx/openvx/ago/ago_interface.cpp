@@ -72,6 +72,9 @@ AgoContext * agoCreateContextFromPlatform(struct _vx_platform * platform)
         acontext->ref.platform = platform;
         agoResetReference(&acontext->ref, VX_TYPE_CONTEXT, acontext, NULL);
         acontext->ref.external_count++;
+        // the context is itself a reference held by the application, and
+        // agoReleaseContext drops it again
+        acontext->num_active_references++;
         // initialize image formats
         if (agoInitializeImageComponentsAndPlanes(acontext)) {
             delete acontext;
@@ -1269,12 +1272,14 @@ int agoUnloadModule(AgoContext * context, const char * module)
                 if (!unpublish_kernels_f && context->modules[index].hmodule) {
                     unpublish_kernels_f = (vx_unpublish_kernels_f)agoGetFunctionAddress(context->modules[index].hmodule, "vxUnpublishKernels");
                 }
-                if (!unpublish_kernels_f) {
+                if (!unpublish_kernels_f && context->modules[index].hmodule) {
+                    // a shared library is required to export vxUnpublishKernels
                     status = VX_ERROR_NOT_SUPPORTED;
                     agoAddLogEntry(&context->ref, status, "ERROR: vxUnpublishKernels symbol missing in %s\n", filePath);
                 }
                 else {
-                    status = unpublish_kernels_f(context);
+                    // a module registered without an unpublish callback has nothing to call
+                    status = unpublish_kernels_f ? unpublish_kernels_f(context) : VX_SUCCESS;
                     if (status == VX_SUCCESS) {
                         if (context->modules[index].hmodule) {
                             agoCloseModule(context->modules[index].hmodule);

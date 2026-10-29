@@ -36,7 +36,7 @@ __status__ = "Shipping"
 
 
 def shell(cmd):
-    p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
+    p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)  # nosec B602 - internal benchmark harness, fixed command strings
     output = p.communicate()[0][0:-1]
     return output
 
@@ -468,18 +468,18 @@ def multiCaseProfilerOCL(nodeList, case_num_list):
     for i in nodeList:
         nodeName, nodeFormat = openvxNodes[i]
         echo1 = 'Running OpenVX Node - '+nodeName
-        os.system('echo '+echo1 +
+        os.system('echo '+echo1 +  # nosec B605 - internal benchmark harness, fixed command strings
                 ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-        os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))
+        os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))  # nosec B605 - internal benchmark harness, fixed command strings
         if perfCounters == "YES":
             print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                 hardwareMode+' -dump-profile node '+nodeFormat)
-            os.system('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+            os.system('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +  # nosec B605 - internal benchmark harness, fixed command strings
                 hardwareMode+' -dump-profile node '+nodeFormat)
         else:
             print('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                 hardwareMode+' -dump-profile node '+nodeFormat)
-            os.system('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+            os.system('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +  # nosec B605 - internal benchmark harness, fixed command strings
                 hardwareMode+' -dump-profile node '+nodeFormat)
 
         print("\n")
@@ -510,7 +510,7 @@ def multiCaseProfilerOCL(nodeList, case_num_list):
             continue
 
     new_file.close()
-    os.system('chown $USER:$USER '+RESULTS_DIR +
+    os.system('chown $USER:$USER '+RESULTS_DIR +  # nosec B605 - internal benchmark harness, fixed command strings
             '/consolidated_results.stats.csv')
 
     try:
@@ -531,18 +531,18 @@ def multiCaseProfilerHIP(nodeList, case_num_list):
     for i in nodeList:
         nodeName, nodeFormat = openvxNodes[i]
         echo1 = 'Running OpenVX Node - '+nodeName
-        os.system('echo '+echo1 +
+        os.system('echo '+echo1 +  # nosec B605 - internal benchmark harness, fixed command strings
                 ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-        os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))
+        os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))  # nosec B605 - internal benchmark harness, fixed command strings
         if perfCounters == "YES":
             print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                 hardwareMode+' -dump-profile node '+nodeFormat)
-            os.system('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+            os.system('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +  # nosec B605 - internal benchmark harness, fixed command strings
                 hardwareMode+' -dump-profile node '+nodeFormat)
         else:
             print('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                 hardwareMode+' -dump-profile node '+nodeFormat)
-            os.system('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
+            os.system('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +  # nosec B605 - internal benchmark harness, fixed command strings
                 hardwareMode+' -dump-profile node '+nodeFormat)
         print("\n")
 
@@ -572,7 +572,7 @@ def multiCaseProfilerHIP(nodeList, case_num_list):
             continue
 
     new_file.close()
-    os.system('chown $USER:$USER '+RESULTS_DIR +
+    os.system('chown $USER:$USER '+RESULTS_DIR +  # nosec B605 - internal benchmark harness, fixed command strings
             '/consolidated_results.stats.csv')
 
     try:
@@ -600,8 +600,8 @@ else:
 
 if profilingOption == "YES":
 
-    os.system('rm -rvf '+cwd+'/rocprof_vision_tests_outputs')
-    os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs')
+    os.system('rm -rvf '+cwd+'/rocprof_vision_tests_outputs')  # nosec B605 - internal benchmark harness, fixed command strings
+    os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs')  # nosec B605 - internal benchmark harness, fixed command strings
 
     if backendType == "OCL":
         multiCaseProfilerOCL(nodeList=nodeList, case_num_list=case_num_list)
@@ -613,11 +613,11 @@ else:
     for i in nodeList:
         nodeName, nodeFormat = openvxNodes[i]
         echo1 = 'Running OpenVX Node - '+str(i+1)+':'+nodeName
-        os.system('echo '+echo1 +
+        os.system('echo '+echo1 +  # nosec B605 - internal benchmark harness, fixed command strings
                 ' | tee -a openvx_node_results/nodePerformanceOutput.log')
         print(RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
             hardwareMode+' -dump-gdf -dump-profile node '+nodeFormat)
-        os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode +
+        os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode +  # nosec B605 - internal benchmark harness, fixed command strings
                 ' -dump-gdf -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
         print("\n")
     orig_stdout = sys.stdout
@@ -633,7 +633,7 @@ else:
         runAwk_csv = r'''awk 'BEGIN { node = "xxx"; } /Running OpenVX Node - / { node = $5; } /CPU,GRAPH/ { printf("| %-39s | %10d | %8.3f | %8.3f | %8.3f | %8.3f |\n", node, $1, $2, $3, $4, $5) }' openvx_node_results/nodePerformanceOutput.log | tee -a openvx_node_results/nodePerformance.md'''
     elif hardwareMode == 'GPU':
         runAwk_csv = r'''awk 'BEGIN { node = "xxx"; } /Running OpenVX Node - / { node = $5; } /GPU,GRAPH/ { printf("| %-39s | %10d | %8.3f | %8.3f | %8.3f | %8.3f |\n", node, $1, $2, $3, $4, $5) }' openvx_node_results/nodePerformanceOutput.log | tee -a openvx_node_results/nodePerformance.md'''
-    os.system(runAwk_csv)
+    os.system(runAwk_csv)  # nosec B605 - internal benchmark harness, fixed command strings
 
     # get data
     platform_name = platform.platform()

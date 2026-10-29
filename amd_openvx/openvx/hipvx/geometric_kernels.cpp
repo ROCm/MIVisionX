@@ -466,6 +466,7 @@ Hip_ScaleImage_U8_U8_Area(uint dstWidth, uint dstHeight,
     }
 
     uint dstIdx =  y * dstImageStrideInBytes + x;
+    int valid = (int)min(dstWidth - (uint)x, 8u);
 
     uint offset = srcImageStrideInBytes * (y * Ny) + (x * Nx);
     pSrcImage += offset;
@@ -497,7 +498,7 @@ Hip_ScaleImage_U8_U8_Area(uint dstWidth, uint dstHeight,
     dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
     dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, valid);
 }
 
 __global__ void __attribute__((visibility("default")))
@@ -513,6 +514,7 @@ Hip_ScaleImage_U8_U8_Area_Sad(uint dstWidth, uint dstHeight,
     }
 
     uint dstIdx =  y * dstImageStrideInBytes + x;
+    int valid = (int)min(dstWidth - (uint)x, 8u);
 
     uint offset = srcImageStrideInBytes * (y * Ny) + (x * Nx);
     pSrcImage += offset;
@@ -547,7 +549,61 @@ Hip_ScaleImage_U8_U8_Area_Sad(uint dstWidth, uint dstHeight,
     dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
     dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, valid);
+}
+
+// General exact-integer-ratio area average.
+//
+// Hip_ScaleImage_U8_U8_Area and Hip_ScaleImage_U8_U8_Area_Sad above are
+// hand-unrolled for 2x2 and 4x4 source blocks: they read a fixed number of rows
+// and consecutive bytes per output pixel, so for any other block shape they both
+// sum the wrong pixels and divide by the true 1/(Sx*Sy). This kernel walks the
+// whole Nx x Ny block instead and is used for every other exact integer ratio.
+//
+// The source reads need no bounds check: with an exact ratio the last output
+// pixel of a row covers source column (dstWidth - 1) * Nx + Nx - 1 = srcWidth - 1,
+// and likewise for rows.
+__global__ void __attribute__((visibility("default")))
+Hip_ScaleImage_U8_U8_Area_Int(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    int Nx, int Ny, float iSxSy) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    uint dstIdx = y * dstImageStrideInBytes + x;
+    const uchar *pSrcRow0 = pSrcImage + (uint)y * (uint)Ny * srcImageStrideInBytes;
+
+    // Number of destination pixels this thread may touch. It also bounds the
+    // source reads, since a block past dstWidth has no source block behind it,
+    // and it is what the bounded store below needs.
+    int valid = (int)min(dstWidth - (uint)x, 8u);
+
+    d_float8 f = {0.0f};
+    for (int i = 0; i < valid; i++) {
+        // A 32-bit accumulator is not enough: a legal downscale to 1x1 sums the
+        // whole image, and 255 * 4105 * 4105 already exceeds UINT_MAX.
+        unsigned long long sum = 0;
+        const uchar *pSrcRow = pSrcRow0 + ((uint)x + (uint)i) * (uint)Nx;
+        for (int iy = 0; iy < Ny; iy++) {
+            for (int ix = 0; ix < Nx; ix++) {
+                sum += pSrcRow[ix];
+            }
+            pSrcRow += srcImageStrideInBytes;
+        }
+        f.data[i] = (float)sum;
+    }
+
+    uint2 dst;
+    dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
+    dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
+
+    hip_store_U8x8(pDstImage, dstIdx, dst, valid);
 }
 
 __global__ void __attribute__((visibility("default")))
@@ -731,33 +787,61 @@ int HipExec_ScaleImage_U8_U8_Area(hipStream_t stream, vx_uint32 dstWidth, vx_uin
 
     float Sx = (float)srcWidth / (float)dstWidth;
     float Sy = (float)srcHeight / (float)dstHeight;
-    int Nx = (int)ceilf(Sx);
-    int Ny = (int)ceilf(Sy);
 
-    bool need_align = ((Sx * 2.0f) != floorf(Sx * 2.0f)) ? true : false;
-    bool use_sad = (Nx % 4) ? false : true;
-    float iSxSy = 1.0 / (double)(Sx * Sy);
-    float factorc = Sx - (Nx - 1);
+    // An exact integer ratio means every destination pixel covers a whole
+    // Nx x Ny source block. Hip_ScaleImage_U8_U8_Area is hand-unrolled for 2x2
+    // and Hip_ScaleImage_U8_U8_Area_Sad for 4x4; dispatching any other block
+    // shape to them returns garbage (3:1 of a constant 90 image gave 40, 5:1
+    // gave 14, 6:1 gave 10 and 8:1 gave 22), so select on the block shape
+    // explicitly and send everything else to the general kernel. A ratio that
+    // is not an exact integer has fractional edge weights and goes to the
+    // bytealign path - the old `need_align` test let ratios such as 1.5 through
+    // to the 2x2 kernel as well.
+    //
+    // NOTE: Hip_ScaleImage_U8_U8_Area_Bytealign is itself hand-unrolled - two
+    // source rows and three x-taps per output pixel - so it is only correct for
+    // roughly Sx < 3 and Sy <= 2. Larger fractional ratios such as 3.5:1 are
+    // still wrong there. That is pre-existing rather than introduced here (the
+    // old selector sent them to the 2x2 kernel, equally wrong) and is tracked
+    // separately. Giving Hip_ScaleImage_U8_U8_Area_Int fractional edge weights
+    // would let it absorb those cases and retire this kernel.
+    bool exact_int = ((srcWidth % dstWidth) == 0) && ((srcHeight % dstHeight) == 0);
 
-    if ((srcWidth % dstWidth) > 0 || (srcHeight % dstHeight) > 0) {
-        use_sad = false;
-    }
+    if (exact_int) {
+        int Nx = (int)(srcWidth / dstWidth);
+        int Ny = (int)(srcHeight / dstHeight);
+        // Exact whenever Nx * Ny is a power of two, and correctly rounded
+        // otherwise - unlike 1.0 / (Sx * Sy), which goes through two floats.
+        // Multiplied as floats: (int)Nx * (int)Ny overflows for a block of more
+        // than 2^31 pixels, which a downscale of a 46341x46341 image to 1x1
+        // reaches.
+        float iSxSy = 1.0f / ((float)Nx * (float)Ny);
 
-    if (use_sad) {
-        hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Sad, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
-                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                        Nx, Ny, iSxSy);
-    } else if (need_align) {
+        if (Nx == 4 && Ny == 4) {
+            hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Sad, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            Nx, Ny, iSxSy);
+        } else if (Nx == 2 && Ny == 2) {
+            hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            Nx, Ny, iSxSy);
+        } else {
+            hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Int, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                            dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            Nx, Ny, iSxSy);
+        }
+    } else {
+        int Nx = (int)ceilf(Sx);
+        float factorc = Sx - (Nx - 1);
+        float iSxSy = 1.0 / (double)(Sx * Sy);
+
         hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Bytealign, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         Sx, Sy, factorc, iSxSy);
-    } else {
-        hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
-                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                        Nx, Ny, iSxSy);
     }
     HIP_CHECK(hipGetLastError()); // Check for launch error
 
@@ -2103,44 +2187,8 @@ __device__ __forceinline__ void hip_remap_load_sxy_nearest(int map, int *sx, int
     *sy = (map + 0x00040000) >> 19;
 }
 
-// Each thread produces up to 8 pixels. A full block is written with the wide
-// vector store, but when dstWidth is not a multiple of 8 the last block in a row
-// holds fewer than 8 valid pixels, and writing the whole block would run past
-// the row end and overflow the row stride. The tail is written pixel-wise so
-// only the valid bytes are touched.
-__device__ __forceinline__ void hip_remap_store_RGB(uchar *pDstImage, uint dstIdx, const uint3 *out, int valid)
-{
-    if (valid >= 8) {
-        uint *dst = (uint *)(pDstImage + dstIdx);
-        dst[0] = out[0].x; dst[1] = out[0].y; dst[2] = out[0].z;
-        dst[3] = out[1].x; dst[4] = out[1].y; dst[5] = out[1].z;
-    } else {
-        uchar *dst = pDstImage + dstIdx;
-        for (int i = 0; i < valid; i++) {
-            const uchar *src = (const uchar *)&out[i >> 2] + (i & 3) * 3;
-            dst[i * 3 + 0] = src[0];
-            dst[i * 3 + 1] = src[1];
-            dst[i * 3 + 2] = src[2];
-        }
-    }
-}
-
-__device__ __forceinline__ void hip_remap_store_RGBX(uchar *pDstImage, uint dstIdx, uint4 out0, uint4 out1, int valid)
-{
-    if (valid >= 8) {
-        *((uint4 *)(pDstImage + dstIdx)) = out0;
-        *((uint4 *)(pDstImage + dstIdx + 16)) = out1;
-    } else {
-        uchar *dst = pDstImage + dstIdx;
-        for (int i = 0; i < valid; i++) {
-            const uchar *src = ((i < 4) ? (const uchar *)&out0 : (const uchar *)&out1) + (i & 3) * 4;
-            dst[i * 4 + 0] = src[0];
-            dst[i * 4 + 1] = src[1];
-            dst[i * 4 + 2] = src[2];
-            dst[i * 4 + 3] = src[3];
-        }
-    }
-}
+// hip_remap_store_RGB / hip_remap_store_RGBX, and the d_uint6 / d_uint8 forms
+// used by the colour kernels, live in hip_common_funcs.h.
 
 __global__ void __attribute__((visibility("default")))
 Hip_Remap_RGB_RGB_Bilinear(uint dstWidth, uint dstHeight,

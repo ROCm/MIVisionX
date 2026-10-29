@@ -478,6 +478,36 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
         set_property(TEST openvx_remap_${gdf_base}_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
       endforeach()
 
+    # Both of the tests below target the HIP kernels specifically, so they are
+    # registered only for a HIP build rather than for the whole GPU block.
+    #
+    # The two backends differ for each, in opposite directions. The AREA defect
+    # does not exist on OpenCL at all: agoKernel_ScaleImage_U8_U8_Area generates
+    # a kernel per node with the real Nx x Ny window baked in, so it never sends
+    # one ratio to a kernel shaped for another. The RGB/RGBX overrun does exist
+    # there - ago_haf_gpu_conversion.cpp emits an unconditional vstore4 + vstore2
+    # at gx * 24 - but this change does not fix it; that half is #1829. Widen
+    # the colour test to OpenCL once it is.
+    if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
+      # 23_b - Exact-value correctness test for the HIP AREA scale paths. The
+      # shipped AREA GDFs assert only that runvx exits 0 and use a uniform
+      # image, so a wrong kernel selection is invisible to them.
+      add_test(NAME openvx_scale_area_gpu
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scale_area_gpu_tests/test_scale_area_gpu.py
+            --runvx ${RUNVX_EXECUTABLE}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
+
+      # 23_c - RGB/RGBX stores must stay inside the destination row. Needs a
+      # width that is not a multiple of 8, which no other colour test uses, and
+      # repeated runs, because the overrun is a race between adjacent rows.
+      add_test(NAME openvx_color_convert_partial_store
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/color_convert_partial_tests/test_color_convert_partial.py
+            --runvx ${RUNVX_EXECUTABLE}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
+    endif()
+
       # 24 - Constant-border correctness test for RGB/RGBX Remap
       add_test(NAME openvx_remap_rgb_rgbx_constant_border
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/remap_constant_border_tests/test_remap_constant_border.py

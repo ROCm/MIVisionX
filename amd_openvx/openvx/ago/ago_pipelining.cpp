@@ -357,6 +357,9 @@ static void agoSwapDataRefInGraph(AgoGraph * graph, AgoData * dataFind, AgoData 
     for (AgoData * adata = graph->dataList.head; adata; adata = adata->next) {
         if (adata->ref.type == VX_TYPE_IMAGE && adata->u.img.isROI && adata->u.img.roiMasterImage == dataFind) {
             adata->u.img.roiMasterImage = dataReplace;
+            // the ROI's master reference moves to the replacement
+            if (dataFind->ref.internal_count > 0) dataFind->ref.internal_count--;
+            dataReplace->ref.internal_count++;
         }
     }
 }

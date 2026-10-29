@@ -529,6 +529,9 @@ void agoReplaceDataInGraph(AgoGraph * agraph, AgoData * dataFind, AgoData * data
             adata->u.img.roiMasterImage = dataReplace;
             adata->import_type = dataReplace->import_type;
             dataReplace->roiDepList.push_back(adata);
+            // the ROI's master reference moves to the replacement
+            if (dataFind->ref.internal_count > 0) dataFind->ref.internal_count--;
+            dataReplace->ref.internal_count++;
         }
     }
 
@@ -1271,6 +1274,8 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->u.img.roiMasterImage = dataMaster;
         data->import_type = dataMaster->import_type;
         dataMaster->roiDepList.push_back(data);
+        // the ROI holds its master until agoReleaseData drops this reference
+        dataMaster->ref.internal_count++;
         data->u.img.isROI = vx_true_e;
         data->u.img.rect_roi = rect;
         data->u.img.width = data->u.img.rect_roi.end_x - data->u.img.rect_roi.start_x;
@@ -1290,6 +1295,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
                 data->children[child]->u.img.roiMasterImage = dataMaster->children[child];
                 data->children[child]->import_type = dataMaster->children[child]->import_type;
                 dataMaster->children[child]->roiDepList.push_back(data->children[child]);
+                dataMaster->children[child]->ref.internal_count++;
                 data->children[child]->u.img.isROI = vx_true_e;
                 data->children[child]->u.img.rect_roi = rect;
                 data->children[child]->parent = data;
@@ -2921,14 +2927,21 @@ int agoReleaseData(AgoData * data, bool isForExternalUse)
             // if this is an image ROI (incl. an image aliasing a tensor via
             // vxCreateImageObjectArrayFromTensor), unlink it from its master's roiDepList so a
             // later handle swap on the master does not dereference this freed entry.
+            // the master reference is dropped after agoRemoveData, once `data` is gone
+            AgoData * roiMaster = nullptr;
             if (data->ref.type == VX_TYPE_IMAGE && data->u.img.roiMasterImage) {
-                data->u.img.roiMasterImage->roiDepList.remove(data);
+                roiMaster = data->u.img.roiMasterImage;
+                roiMaster->roiDepList.remove(data);
+                data->u.img.roiMasterImage = nullptr;
             }
 
             // remove the data from graph
             if (agoRemoveData(&graph->dataList, data, nullptr)) {
                 agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoReleaseData: agoRemoveData(context,%s) failed\n", data->name.c_str());
                 return -1;
+            }
+            if (roiMaster) {
+                agoReleaseData(roiMaster, false);
             }
         }
     }
@@ -2977,14 +2990,21 @@ int agoReleaseData(AgoData * data, bool isForExternalUse)
             // if this is an image ROI (incl. an image aliasing a tensor via
             // vxCreateImageObjectArrayFromTensor), unlink it from its master's roiDepList so a
             // later handle swap on the master does not dereference this freed entry.
+            // the master reference is dropped after agoRemoveData, once `data` is gone
+            AgoData * roiMaster = nullptr;
             if (data->ref.type == VX_TYPE_IMAGE && data->u.img.roiMasterImage) {
-                data->u.img.roiMasterImage->roiDepList.remove(data);
+                roiMaster = data->u.img.roiMasterImage;
+                roiMaster->roiDepList.remove(data);
+                data->u.img.roiMasterImage = nullptr;
             }
 
             // remove the data from context
             if (agoRemoveData(&context->dataList, data, nullptr)) {
                 agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoReleaseData: agoRemoveData(context,%s) failed\n", data->name.c_str());
                 return -1;
+            }
+            if (roiMaster) {
+                agoReleaseData(roiMaster, false);
             }
         }
     }

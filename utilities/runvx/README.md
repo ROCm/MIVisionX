@@ -25,12 +25,27 @@ RunVX is built as a lean core executable. Optional features that depend on OpenC
 
 1. The `lib/` directory next to the `runvx` executable (i.e., `../lib/`)
 2. Standard dynamic linker search paths (picks up `LD_LIBRARY_PATH`, `/etc/ld.so.conf`, and the `runvx` RPATH)
-3. Known install prefixes: `/opt/rocm/lib`, `/usr/local/lib`, `/usr/lib`
-4. Build-tree fallback for developer builds
+3. Known install prefixes: `/opt/rocm/lib`, `/usr/local/lib`, `/usr/lib` *(Linux/macOS only)*
+4. Build-tree fallback for developer builds *(sibling `runvx_plugins/` directory and the binary directory itself)*
+
+> **Windows note:** Step 3 (known install prefixes) is Linux/macOS only. Step 4 (build-tree fallback) is cross-platform — on Windows it uses `GetModuleFileNameA` to locate the binary directory. Steps 1 and 2 are the primary paths for installed builds on all platforms.
 
 If a plugin is missing, the core `runvx` binary continues to run; the affected GDF commands (`read` from image files, `view`, compressed `write`, `compare checksum`) report a runtime error.
 
 Each plugin's source files, interface header, and `CMakeLists.txt` are installed under per-plugin subdirectories (e.g., `share/mivisionx/runvx_plugins/image_opencv/`) so the plugin can be rebuilt on the target machine if the dependency was not available at core build time.
+
+### Building plugins on the target machine (MIN_DEPS_MODE installs)
+
+When MIVisionX is built with `MIN_DEPS_MODE=ON`, plugin shared libraries are not compiled. Plugin sources are always installed to `${CMAKE_INSTALL_PREFIX}/share/mivisionx/runvx_plugins/`. To build a plugin after the fact on the target machine:
+
+```bash
+# Example: build the OpenCV image plugin against an existing MIVisionX install
+cmake /opt/rocm/share/mivisionx/runvx_plugins/image_opencv \
+      -DCMAKE_INSTALL_PREFIX=/opt/rocm
+cmake --build . --target install
+```
+
+Place the resulting `.so` / `.dll` in a location that `runvx` searches (step 1 or 2 above), or next to the `runvx` binary for the build-tree fallback (step 4).
 
 ## RunVX Usage and GDF Syntax
     runvx.exe [options] <file.gdf> [argument(s)]

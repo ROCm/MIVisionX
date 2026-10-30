@@ -11174,6 +11174,8 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateImageObjectArrayFromTensor(vx_t
             img->gpu_buffer_offset = (vx_uint32)img_offset;
             img->u.img.roiMasterImage = tensor_data;
             tensor_data->roiDepList.push_back(img);
+            // the image holds the tensor until agoReleaseData drops this reference
+            tensor_data->ref.internal_count++;
 #if (ENABLE_OPENCL || ENABLE_HIP)
             img->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
             img->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;

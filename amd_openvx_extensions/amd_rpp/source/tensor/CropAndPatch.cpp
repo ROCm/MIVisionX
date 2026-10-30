@@ -33,6 +33,9 @@ struct CropAndPatchLocalData {
     RpptROI *pDstRoi;
     RpptROI *pCropRoi;
     RpptROI *pPatchRoi;
+    RpptROI *pDstRoiFrames;
+    RpptROI *pCropRoiFrames;
+    RpptROI *pPatchRoiFrames;
     RpptRoiType roiType;
     vxTensorLayout inputLayout;
     vxTensorLayout outputLayout;
@@ -72,14 +75,21 @@ static vx_status VX_CALLBACK refreshCropAndPatch(vx_node node, const vx_referenc
     // If input is NFHWC/NFCHW, expand per-sample ROIs over frames
     if (data->inputLayout == vxTensorLayout::VX_NFHWC || data->inputLayout == vxTensorLayout::VX_NFCHW) {
         unsigned num_of_frames = data->inputTensorDims[1]; // Num of frames 'F'
+        size_t count = data->inputTensorDims[0] * num_of_frames;
+        STATUS_ERROR_CHECK(allocRoiFrames(data->deviceType, &data->pDstRoiFrames, count));
+        STATUS_ERROR_CHECK(allocRoiFrames(data->deviceType, &data->pCropRoiFrames, count));
+        STATUS_ERROR_CHECK(allocRoiFrames(data->deviceType, &data->pPatchRoiFrames, count));
         for (int n = static_cast<int>(data->inputTensorDims[0]) - 1; n >= 0; n--) {
             unsigned index = n * num_of_frames;
             for (unsigned f = 0; f < num_of_frames; f++) {
-                data->pDstRoi[index + f].xywhROI = data->pDstRoi[n].xywhROI;
-                data->pCropRoi[index + f].xywhROI = data->pCropRoi[n].xywhROI;
-                data->pPatchRoi[index + f].xywhROI = data->pPatchRoi[n].xywhROI;
+                data->pDstRoiFrames[index + f].xywhROI = data->pDstRoi[n].xywhROI;
+                data->pCropRoiFrames[index + f].xywhROI = data->pCropRoi[n].xywhROI;
+                data->pPatchRoiFrames[index + f].xywhROI = data->pPatchRoi[n].xywhROI;
             }
         }
+        data->pDstRoi = data->pDstRoiFrames;
+        data->pCropRoi = data->pCropRoiFrames;
+        data->pPatchRoi = data->pPatchRoiFrames;
     }
 
     return status;
@@ -200,6 +210,9 @@ static vx_status VX_CALLBACK uninitializeCropAndPatch(vx_node node, const vx_ref
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
+    freeRoiFrames(data->deviceType, data->pDstRoiFrames);
+    freeRoiFrames(data->deviceType, data->pCropRoiFrames);
+    freeRoiFrames(data->deviceType, data->pPatchRoiFrames);
     delete data;
     return VX_SUCCESS;
 }

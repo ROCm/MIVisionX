@@ -36,6 +36,7 @@ struct GaussianNoiseLocalData {
     RpptGenericDescPtr pSrcGenericDesc;
     RpptGenericDescPtr pDstGenericDesc;
     RpptROI *pSrcRoi;
+    RpptROI *pSrcRoiFrames;
     RpptROI3D *pSrcRoi3D;
     RpptRoiType roiType;
     vxTensorLayout inputLayout;
@@ -96,17 +97,19 @@ static vx_status VX_CALLBACK refreshGaussianNoise(vx_node node, const vx_referen
         data->pSrcRoi = reinterpret_cast<RpptROI *>(roi_tensor_ptr);
         if (data->inputLayout == vxTensorLayout::VX_NFHWC || data->inputLayout == vxTensorLayout::VX_NFCHW) {
             unsigned num_of_frames = data->inputTensorDims[1]; // Num of frames 'F'
+            STATUS_ERROR_CHECK(allocRoiFrames(data->deviceType, &data->pSrcRoiFrames, data->inputTensorDims[0] * num_of_frames));
             for (int n = data->inputTensorDims[0] - 1; n >= 0; n--) {
                 unsigned index = n * num_of_frames;
                 for (unsigned f = 0; f < num_of_frames; f++) {
                     data->pMean[index + f] = data->pMean[n];
                     data->pStdDev[index + f] = data->pStdDev[n];
-                    data->pSrcRoi[index + f].xywhROI.xy.x = data->pSrcRoi[n].xywhROI.xy.x;
-                    data->pSrcRoi[index + f].xywhROI.xy.y = data->pSrcRoi[n].xywhROI.xy.y;
-                    data->pSrcRoi[index + f].xywhROI.roiWidth = data->pSrcRoi[n].xywhROI.roiWidth;
-                    data->pSrcRoi[index + f].xywhROI.roiHeight = data->pSrcRoi[n].xywhROI.roiHeight;
+                    data->pSrcRoiFrames[index + f].xywhROI.xy.x = data->pSrcRoi[n].xywhROI.xy.x;
+                    data->pSrcRoiFrames[index + f].xywhROI.xy.y = data->pSrcRoi[n].xywhROI.xy.y;
+                    data->pSrcRoiFrames[index + f].xywhROI.roiWidth = data->pSrcRoi[n].xywhROI.roiWidth;
+                    data->pSrcRoiFrames[index + f].xywhROI.roiHeight = data->pSrcRoi[n].xywhROI.roiHeight;
                 }
             }
+            data->pSrcRoi = data->pSrcRoiFrames;
         }
     }
     return status;
@@ -290,6 +293,7 @@ static vx_status VX_CALLBACK uninitializeGaussianNoise(vx_node node, const vx_re
         if (data->pSrcRoi3D) delete[] data->pSrcRoi3D;
     }
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
+    freeRoiFrames(data->deviceType, data->pSrcRoiFrames);
     delete data;
     return VX_SUCCESS;
 }

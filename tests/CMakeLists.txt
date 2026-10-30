@@ -88,6 +88,21 @@ if(VX_RPP_LIBRARY)
             -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/vx_rpp_tests/gdf/test_vx_rpp.gdf
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
+  # 2_b - vx_rpp video layouts: the ROI tensors must come back unchanged and repeated
+  # executions must agree. GPU only; the program drives the HIP buffers directly.
+  if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
+    add_test(
+      NAME
+        vx_rpp_roi_frames
+      COMMAND
+        "${CMAKE_CTEST_COMMAND}"
+                --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/vx_rpp_roi_frames"
+                                  "${CMAKE_CURRENT_BINARY_DIR}/vx_rpp_roi_frames"
+                --build-generator "${CMAKE_GENERATOR}"
+                --test-command "vx_rpp_roi_frames"
+    )
+    set_property(TEST vx_rpp_roi_frames PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+  endif()
 endif(VX_RPP_LIBRARY)
 
 # 7 - runvx Tests

@@ -1,0 +1,501 @@
+# Copyright (c) 2015 - 2026 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+# Nightly check of the MIVisionX that ships in the latest vision-pack nightly bundle.
+#
+# Starts from a bare Ubuntu 24.04 container on the shark39 GPU runners, installs the latest TheRock
+# ROCm nightly (the -tests variant for the runner's GPU) and the latest vision-pack nightly tarball
+# on top of it, then runs the smoke tests and the shipped ctests on the CPU and GPU backends. The
+# tests come from the installed bundle (share/mivisionx/test), so nothing from this repository is
+# checked out or built.
+#
+# KNOWN_FAILING (job env below) is a regular expression for tests that fail with the current bundle
+# because of known bugs. They still run and are reported, but do not fail the job. Keep it short
+# and remove entries once the bundle is fixed.
+# The expression goes to ctest -E, whose dialect has no \d, (?:...) or {n}; anchor whole test names
+# with ^ and $.
+# openvx_canny, openvx_channel_extract and openvx_color_convert build the executables that their
+# _CPU and _GPU tests run, so list each group together, for example '^openvx_canny(_CPU|_GPU)?$'.
+#
+# The pull_request trigger only lets this file run in its own pull request before it is merged.
+# Remove it once the first runs look right.
+
+name: MIVisionX vision-pack nightly
+
+on:
+  schedule:
+    - cron: '30 10 * * *'
+  workflow_dispatch:
+    inputs:
+      vision_pack_tag:
+        description: 'vision-pack release tag, for example nightly-20261005 (empty: the latest nightly)'
+        required: false
+        default: ''
+      rocm_date:
+        description: 'TheRock nightly date as YYYYMMDD (empty: the latest nightly)'
+        required: false
+        default: ''
+  pull_request:
+    branches: [master, main, develop]
+    paths:
+      - '.github/workflows/vision-pack-nightly.yml'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+# Runs of the same kind (schedule, manual, pull request) queue behind each other, so a manual run
+# never cancels the nightly; a new push to a pull request supersedes that pull request's earlier run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  nightly:
+    name: MIVisionX on the latest ROCm and vision-pack nightlies
+    runs-on:
+      group: linux-shark39-runner-group
+    container:
+      image: ubuntu:24.04
+      options: --device /dev/kfd --device /dev/dri --ulimit core=0
+    timeout-minutes: 120
+    env:
+      # The runner sets HIP_VISIBLE_DEVICES to the same host index as ROCR_VISIBLE_DEVICES. HIP applies
+      # it to the device list that ROCr has already filtered, so the two filters stack and HIP finds no
+      # device when the assigned GPU has a host index above 0. Index 0 of the filtered list is the
+      # assigned GPU (the MIVisionX and rocAL HIP workflows use the same workaround).
+      HIP_VISIBLE_DEVICES: 0
+      DEBIAN_FRONTEND: noninteractive
+      KNOWN_FAILING: ''
+      VISION_PACK_REPO: kiritigowda/vision-pack
+      ROCM_NIGHTLY_URL: https://nightly.repo.amd.com/rocm/core/tarball
+    steps:
+      - name: Install system packages
+        timeout-minutes: 20
+        run: |
+          apt-get -o Acquire::Retries=5 update -qq
+          apt-get -o Acquire::Retries=5 install -y -qq --no-install-recommends \
+            build-essential ca-certificates cmake curl jq \
+            ninja-build pigz python3
+
+      - name: Find the GPU and the TheRock family
+        id: gpu
+        run: |
+          # ROCr numbers the GPU agents in KFD node order; the runner assigns one of them.
+          idx="${ROCR_VISIBLE_DEVICES:-0}"
+          idx="${idx%%,*}"
+          if [[ ! "${idx}" =~ ^[0-9]+$ ]]; then
+            echo "::warning::ROCR_VISIBLE_DEVICES='${ROCR_VISIBLE_DEVICES}' is not a numeric index; assuming 0"
+            idx=0
+          fi
+          idx=$((10#${idx}))
+          n=0
+          gfx=""
+          while IFS= read -r node; do
+            v="$(awk '$1 == "gfx_target_version" {print $2}' "${node}/properties")"
+            [[ "${v:-0}" -gt 0 ]] || continue
+            if [[ "${n}" -eq "${idx}" ]]; then
+              gfx="$(printf 'gfx%d%d%x' $((v / 10000)) $(((v / 100) % 100)) $((v % 100)))"
+              break
+            fi
+            n=$((n + 1))
+          done < <(find /sys/class/kfd/kfd/topology/nodes -mindepth 1 -maxdepth 1 | sort -V)
+          if [[ -z "${gfx}" ]]; then
+            echo "::error::no GPU at index ${idx} under /sys/class/kfd/kfd/topology/nodes (is /dev/kfd passed into the container?)"
+            exit 1
+          fi
+          # The -tests variants carry rpp, rocDecode, rocJPEG and the rocDecode utils the vision libraries need.
+          case "${gfx}" in
+            gfx1100|gfx1101|gfx1102|gfx1103) family=gfx110X-all-tests ;;
+            gfx1200|gfx1201) family=gfx120X-all-tests ;;
+            *) family=multiarch-tests ;;
+          esac
+          echo "GPU ${gfx} (ROCr index ${idx}), TheRock family ${family}"
+          {
+            echo "gfx=${gfx}"
+            echo "family=${family}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Resolve the latest TheRock nightly
+        id: rocm_resolve
+        timeout-minutes: 10
+        env:
+          FAMILY: ${{ steps.gpu.outputs.family }}
+          ROCM_DATE: ${{ inputs.rocm_date }}
+        run: |
+          if [[ -n "${ROCM_DATE}" && ! "${ROCM_DATE}" =~ ^[0-9]{8}$ ]]; then
+            echo "::error::the rocm_date input must be empty or YYYYMMDD"
+            exit 1
+          fi
+          index="$(curl -fsSL --proto '=https' --proto-redir '=https' --retry 5 --retry-delay 5 --retry-all-errors \
+            --connect-timeout 30 --max-time 120 "${ROCM_NIGHTLY_URL}/")"
+          # Names look like therock-dist-linux-gfx120X-all-tests-10.2.0a20261006.tar.gz; newest date first.
+          candidates="$(grep -oE "therock-dist-linux-${FAMILY}-[0-9][A-Za-z0-9.+~_-]*[A-Za-z.+~_-][0-9]{8}\.tar\.gz" <<<"${index}" \
+            | sort -u | sed -E 's/^.*[^0-9]([0-9]{8})\.tar\.gz$/\1 &/' | sort -r || true)"
+          if [[ -n "${ROCM_DATE}" ]]; then
+            candidates="$(awk -v d="${ROCM_DATE}" '$1 == d' <<<"${candidates}")"
+          fi
+          if [[ -z "${candidates}" ]]; then
+            echo "::error::no TheRock nightly for ${FAMILY}${ROCM_DATE:+ dated ${ROCM_DATE}}"
+            exit 1
+          fi
+          # The newest three: a nightly that is still being published can be incomplete.
+          names="$(awk 'NR <= 3 {print $2}' <<<"${candidates}")"
+          echo "TheRock candidates, newest first:"
+          echo "${names}"
+          {
+            echo "names<<EOF"
+            echo "${names}"
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Install the TheRock nightly
+        id: rocm
+        timeout-minutes: 60
+        env:
+          GFX: ${{ steps.gpu.outputs.gfx }}
+          NAMES: ${{ steps.rocm_resolve.outputs.names }}
+        run: |
+          prefix="${RUNNER_TEMP}/rocm"
+          tarball="${RUNNER_TEMP}/therock.tar.gz"
+          sdk=""
+          sdk_sha=""
+          while IFS= read -r name; do
+            echo "::group::${name}"
+            rm -rf "${prefix}"
+            mkdir -p "${prefix}"
+            if curl -fL --proto '=https' --proto-redir '=https' --retry 5 --retry-delay 10 --retry-all-errors \
+              --connect-timeout 30 --no-progress-meter -o "${tarball}" -- "${ROCM_NIGHTLY_URL}/${name}" \
+              && tar -I pigz -xf "${tarball}" -C "${prefix}" --strip-components=1 --no-same-owner; then
+              sdk="${name}"
+              # The index publishes no checksums; the hash in the job summary identifies exactly what was installed.
+              sdk_sha="$(sha256sum "${tarball}" | cut -d' ' -f1)"
+            fi
+            echo "::endgroup::"
+            [[ -z "${sdk}" ]] || break
+            echo "::warning::${name} could not be downloaded or unpacked; trying the next newest nightly"
+          done <<<"${NAMES}"
+          rm -f "${tarball}"
+          if [[ -z "${sdk}" ]]; then
+            echo "::error::no TheRock nightly could be installed"
+            exit 1
+          fi
+          info="${prefix}/share/therock/dist_info.json"
+          if [[ ! -f "${info}" ]]; then
+            echo "::error::${sdk} has no share/therock/dist_info.json"
+            exit 1
+          fi
+          targets="$(jq -r '.dist_amdgpu_targets // ""' "${info}")"
+          if [[ ";${targets};" != *";${GFX};"* ]]; then
+            echo "::error::${sdk} was not built for ${GFX} (dist_amdgpu_targets: ${targets})"
+            exit 1
+          fi
+          for f in include/rpp/rpp.h include/rocjpeg/rocjpeg.h share/rocdecode/utils; do
+            if [[ ! -e "${prefix}/${f}" ]]; then
+              echo "::error::${sdk} lacks ${f}; it is not a -tests SDK"
+              exit 1
+            fi
+          done
+          {
+            echo "ROCM_PATH=${prefix}"
+            echo "HIP_PLATFORM=amd"
+            echo "PYTHONPATH=${prefix}/lib"
+            echo "PYTHONDONTWRITEBYTECODE=1"
+            echo "HIP_VISIBLE_DEVICES=0"
+          } >> "${GITHUB_ENV}"
+          {
+            echo "${prefix}/bin"
+            echo "${prefix}/lib/llvm/bin"
+          } >> "${GITHUB_PATH}"
+          {
+            echo "sdk=${sdk}"
+            echo "sdk_sha256=${sdk_sha}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Resolve the latest vision-pack nightly
+        id: vp_resolve
+        timeout-minutes: 10
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VP_TAG: ${{ inputs.vision_pack_tag }}
+        run: |
+          if [[ -n "${VP_TAG}" && ! "${VP_TAG}" =~ ^(nightly-)?[0-9]{8}$ ]]; then
+            echo "::error::the vision_pack_tag input must be empty, YYYYMMDD or nightly-YYYYMMDD"
+            exit 1
+          fi
+          pin="${VP_TAG}"
+          [[ -z "${pin}" || "${pin}" == nightly-* ]] || pin="nightly-${pin}"
+          api="https://api.github.com/repos/${VISION_PACK_REPO}/releases?per_page=30"
+          # The repository is public: the token only raises the rate limit, and a rejected token must
+          # not fail the step, so fall back to an anonymous request.
+          auth=()
+          [[ -z "${GH_TOKEN}" ]] || auth=(-H "Authorization: Bearer ${GH_TOKEN}")
+          releases="$(curl -fsSL --retry 5 --retry-delay 5 --max-time 120 -H "Accept: application/vnd.github+json" "${auth[@]}" "${api}" \
+            || curl -fsSL --retry 5 --retry-delay 5 --max-time 120 -H "Accept: application/vnd.github+json" "${api}")"
+          # The nightlies are prereleases, so /releases/latest does not list them. Tags are nightly-YYYYMMDD.
+          asset="$(jq -c --arg pin "${pin}" '
+            [ .[]
+              | select(.draft | not)
+              | select(.tag_name | test("^nightly-[0-9]{8}$"))
+              | select($pin == "" or .tag_name == $pin)
+              | . as $r
+              | first($r.assets[] | select(.name | test("^vision-pack-dist-linux-multiarch-.*[.]tar[.]gz$")))
+              | {tag: $r.tag_name, published: $r.published_at, name: .name, url: .browser_download_url, digest: (.digest // "")} ]
+            | sort_by(.tag) | last // empty' <<<"${releases}")"
+          if [[ -z "${asset}" ]]; then
+            echo "::error::no vision-pack nightly release${pin:+ named ${pin}} with a dist tarball"
+            exit 1
+          fi
+          jq . <<<"${asset}"
+          tag="$(jq -r .tag <<<"${asset}")"
+          name="$(jq -r .name <<<"${asset}")"
+          url="$(jq -r .url <<<"${asset}")"
+          digest="$(jq -r .digest <<<"${asset}")"
+          # These values come from the GitHub API and end up in a file name, a URL and step outputs.
+          if [[ ! "${tag}" =~ ^nightly-[0-9]{8}$ \
+            || ! "${name}" =~ ^vision-pack-dist-linux-multiarch-[A-Za-z0-9._+-]+\.tar\.gz$ \
+            || ! "${url}" =~ ^https://github\.com/${VISION_PACK_REPO}/releases/download/${tag}/[A-Za-z0-9._%+-]+$ ]]; then
+            echo "::error::the release metadata has an unexpected shape (tag, asset name or download URL)"
+            exit 1
+          fi
+          if [[ ! "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error::the release asset has no sha256 digest; refusing to install an unverified download"
+            exit 1
+          fi
+          {
+            echo "tag=${tag}"
+            echo "name=${name}"
+            echo "url=${url}"
+            echo "digest=${digest}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Install the vision-pack nightly
+        id: vp
+        timeout-minutes: 30
+        env:
+          NAME: ${{ steps.vp_resolve.outputs.name }}
+          URL: ${{ steps.vp_resolve.outputs.url }}
+          DIGEST: ${{ steps.vp_resolve.outputs.digest }}
+        run: |
+          tarball="${RUNNER_TEMP}/${NAME}"
+          curl -fL --proto '=https' --proto-redir '=https' --retry 5 --retry-delay 10 --retry-all-errors \
+            --connect-timeout 30 --no-progress-meter -o "${tarball}" -- "${URL}"
+          echo "${DIGEST#sha256:}  ${tarball}" | sha256sum -c -
+          tar -xzf "${tarball}" -C "${ROCM_PATH}" --no-same-owner
+          rm -f "${tarball}"
+          if [[ ! -x "${ROCM_PATH}/bin/runvx" ]]; then
+            echo "::error::bin/runvx is missing after the overlay"
+            exit 1
+          fi
+          manifest="${ROCM_PATH}/share/vision-pack/vision-pack-manifest.json"
+          if [[ ! -f "${manifest}" ]]; then
+            echo "::error::the bundle has no ${manifest}"
+            exit 1
+          fi
+          {
+            echo "version=$(jq -r .version "${manifest}")"
+            echo "sha=$(jq -r '(.sha // "")[0:12]' "${manifest}")"
+            echo "built_on=$(jq -r '.rocm_sdk // ""' "${manifest}")"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Validate the installation
+        id: prefix
+        env:
+          GFX: ${{ steps.gpu.outputs.gfx }}
+          FAMILY: ${{ steps.gpu.outputs.family }}
+          SDK: ${{ steps.rocm.outputs.sdk }}
+          SDK_SHA: ${{ steps.rocm.outputs.sdk_sha256 }}
+          TAG: ${{ steps.vp_resolve.outputs.tag }}
+          VERSION: ${{ steps.vp.outputs.version }}
+          SHA: ${{ steps.vp.outputs.sha }}
+          BUILT_ON: ${{ steps.vp.outputs.built_on }}
+        run: |
+          mkdir -p "${GITHUB_WORKSPACE}/logs"
+          rocminfo > "${GITHUB_WORKSPACE}/logs/rocminfo.txt"
+          grep -E 'Marketing Name|Name: +gfx' "${GITHUB_WORKSPACE}/logs/rocminfo.txt" || true
+          if ! grep -Eq "Name: +${GFX}" "${GITHUB_WORKSPACE}/logs/rocminfo.txt"; then
+            echo "::error::rocminfo does not list ${GFX}"
+            exit 1
+          fi
+          amdclang++ --version
+          # The bundle was built on an older TheRock nightly than the one just installed. A soname change
+          # in between shows up here, by name, instead of as an import error in a later step.
+          unresolved=0
+          for pattern in bin/runvx lib/libopenvx.so lib/libvxu.so lib/libvx_rpp.so; do
+            # shellcheck disable=SC2086
+            for f in "${ROCM_PATH}"/${pattern}; do
+              if [[ ! -e "${f}" ]]; then
+                echo "::error::${pattern} is missing from the bundle"
+                unresolved=1
+              elif missing="$(ldd "${f}" 2>&1 | grep 'not found')"; then
+                echo "::error::unresolved libraries for ${f#"${ROCM_PATH}"/}:"
+                echo "${missing}"
+                unresolved=1
+              fi
+            done
+          done
+          [[ "${unresolved}" -eq 0 ]] || exit 1
+          {
+            echo "### MIVisionX vision-pack nightly"
+            echo "- GPU: \`${GFX}\`, TheRock family \`${FAMILY}\`"
+            echo "- ROCm: \`${SDK}\` (tarball sha256 \`${SDK_SHA}\`)"
+            echo "- vision-pack: \`${TAG}\` (\`${VERSION}\`, manifest sha \`${SHA}\`, built on \`${BUILT_ON}\`)"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Write the test helpers
+        run: |
+          cat > "${RUNNER_TEMP}/vp-helpers.sh" <<'VPHELPERS'
+          # Helpers for the test steps; every step sources this file.
+          mkdir -p "${GITHUB_WORKSPACE}/logs"
+
+          # vp_ctest_excerpt <ctest log>: one line per test plus the summaries, for the job summary.
+          vp_ctest_excerpt() {
+            { grep -E '^ *[0-9]+/[0-9]+ Test +#|tests passed|^### rerunning|^[[:space:]]+[0-9]+ - |No tests were found' "$1" || true; } | tail -n 100
+          }
+
+          # vp_ctest <build dir> <name> <per-test timeout in seconds> [minimum number of registered tests]
+          # Runs the tests that are not listed in KNOWN_FAILING, then reruns the failures once. A test project
+          # drops tests silently when an optional dependency is missing at configure time, so the number of
+          # registered tests must reach the minimum.
+          vp_ctest() {
+            local build="$1" name="$2" limit="$3" min="${4:-1}"
+            local log="${GITHUB_WORKSPACE}/logs/${name}.log" rc count sel=()
+            [[ -z "${KNOWN_FAILING}" ]] || sel=(-E "${KNOWN_FAILING}")
+            cd "${build}" || return 2
+            count="$(ctest -N | awk '/^Total Tests:/ {print $NF}')"
+            count="${count:-0}"
+            echo "${name}: ${count} tests registered, at least ${min} expected" | tee "${log}"
+            if [[ "${count}" -lt "${min}" ]]; then
+              echo "::error::${name}: only ${count} tests are registered, expected at least ${min}"
+              echo "- ${name}: only ${count} tests registered, expected at least ${min}" >> "${GITHUB_STEP_SUMMARY}"
+              return 1
+            fi
+            set +e
+            ctest --output-on-failure --timeout "${limit}" --no-tests=error "${sel[@]}" 2>&1 | tee -a "${log}"
+            rc="${PIPESTATUS[0]}"
+            cp -f Testing/Temporary/LastTest.log "${GITHUB_WORKSPACE}/logs/${name}-LastTest.log" 2>/dev/null
+            if [[ "${rc}" -ne 0 ]]; then
+              echo "### rerunning the failed tests once" | tee -a "${log}"
+              # The filter has to be repeated: ctest numbers the failures against the filtered list, and
+              # --rerun-failed would otherwise apply those numbers to the full list and rerun other tests.
+              ctest --output-on-failure --timeout "${limit}" --no-tests=error "${sel[@]}" --rerun-failed 2>&1 | tee -a "${log}"
+              rc="${PIPESTATUS[0]}"
+              cp -f Testing/Temporary/LastTest.log "${GITHUB_WORKSPACE}/logs/${name}-LastTest-rerun.log" 2>/dev/null
+              [[ "${rc}" -ne 0 ]] || echo "::warning::${name}: tests failed on the first run and passed on the rerun"
+            fi
+            set -e
+            {
+              echo "#### ctest: ${name} (${count} tests registered)"
+              echo '```'
+              vp_ctest_excerpt "${log}"
+              echo '```'
+            } >> "${GITHUB_STEP_SUMMARY}"
+            return "${rc}"
+          }
+
+          # vp_ctest_known <build dir> <name> <per-test timeout in seconds>
+          # Informational run of the tests listed in KNOWN_FAILING.
+          vp_ctest_known() {
+            local build="$1" name="$2" limit="$3"
+            local log="${GITHUB_WORKSPACE}/logs/${name}-known.log" rc matched
+            cd "${build}" || return 2
+            matched="$(ctest -N -R "${KNOWN_FAILING}" | awk '/^Total Tests:/ {print $NF}')"
+            if [[ "${matched:-0}" -eq 0 ]]; then
+              echo "::notice::${name}: no test matches KNOWN_FAILING"
+              return 0
+            fi
+            set +e
+            ctest --output-on-failure --timeout "${limit}" --no-tests=error -R "${KNOWN_FAILING}" 2>&1 | tee "${log}"
+            rc="${PIPESTATUS[0]}"
+            set -e
+            {
+              echo "#### known-failing tests: ${name}"
+              echo '```'
+              vp_ctest_excerpt "${log}"
+              echo '```'
+            } >> "${GITHUB_STEP_SUMMARY}"
+            [[ "${rc}" -ne 0 ]] || echo "::notice::the KNOWN_FAILING tests of ${name} pass now; remove them from KNOWN_FAILING"
+            return "${rc}"
+          }
+          VPHELPERS
+
+      - name: Smoke tests - runvx on the CPU and GPU targets
+        if: ${{ !cancelled() && steps.prefix.outcome == 'success' }}
+        timeout-minutes: 10
+        run: |
+          root="${ROCM_PATH}/share/mivisionx/test/amd_openvx_gdfs"
+          mkdir -p "${GITHUB_WORKSPACE}/logs"
+          failed=0
+          for target in CPU GPU; do
+            for gdf in vision_profile/43_feature_tracker.gdf logical/And_alt.gdf; do
+              echo "::group::runvx ${target} ${gdf}"
+              log="${GITHUB_WORKSPACE}/logs/runvx-${target}-$(basename "${gdf}" .gdf).log"
+              rc=0
+              timeout -k 10 120 "${ROCM_PATH}/bin/runvx" -dump-gdf -frames:10 "-affinity:${target}" -dump-profile file "${root}/${gdf}" >"${log}" 2>&1 || rc=$?
+              cat "${log}"
+              # The GRAPH line only names the affinity the graph was built for; the kernel lines show that nodes ran on the target.
+              if [[ "${rc}" -ne 0 ]] || ! grep -q 'total elapsed time' "${log}" || ! grep -Eq ",${target},GRAPH" "${log}" \
+                || ! grep -Eq ",${target},com[.]amd[.]openvx[.]" "${log}"; then
+                echo "::error::runvx ${target} ${gdf} failed (exit ${rc})"
+                failed=1
+              fi
+              echo "::endgroup::"
+            done
+          done
+          result=passed
+          [[ "${failed}" -eq 0 ]] || result=FAILED
+          echo "- runvx smoke on the CPU and GPU targets: ${result}" >> "${GITHUB_STEP_SUMMARY}"
+          exit "${failed}"
+
+      - name: ctest - MIVisionX test project
+        if: ${{ !cancelled() && steps.prefix.outcome == 'success' }}
+        timeout-minutes: 30
+        run: |
+          source "${RUNNER_TEMP}/vp-helpers.sh"
+          cmake -S "${ROCM_PATH}/share/mivisionx/test" -B "${RUNNER_TEMP}/build/mivisionx" -G Ninja \
+            -DROCM_PATH="${ROCM_PATH}" -DPython3_EXECUTABLE="$(command -v python3)"
+          vp_ctest "${RUNNER_TEMP}/build/mivisionx" mivisionx-ctest 600 32
+
+      - name: ctest - tests listed in KNOWN_FAILING (informational)
+        if: ${{ !cancelled() && steps.prefix.outcome == 'success' && env.KNOWN_FAILING != '' }}
+        continue-on-error: true
+        timeout-minutes: 15
+        run: |
+          source "${RUNNER_TEMP}/vp-helpers.sh"
+          vp_ctest_known "${RUNNER_TEMP}/build/mivisionx" mivisionx-ctest 600
+
+      - name: Upload the logs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: mivisionx-nightly-logs-${{ github.run_attempt }}
+          path: logs
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Remove the ROCm prefix and the build trees
+        if: ${{ always() }}
+        run: |
+          rm -rf "${RUNNER_TEMP}/rocm" "${RUNNER_TEMP}/build" "${RUNNER_TEMP}/cases" \
+            "${RUNNER_TEMP}/therock.tar.gz" "${RUNNER_TEMP}"/vision-pack-dist-*.tar.gz \
+            "${RUNNER_TEMP}/cases.tsv" "${RUNNER_TEMP}/vp-helpers.sh" "${GITHUB_WORKSPACE}/logs"

@@ -104,6 +104,32 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims
 RpptDataType getRpptDataType(vx_enum dataType);
 size_t getDataTypeSize(vx_enum dataType);
 
+//! Brief Node-owned buffer holding per-frame copies of the per-sample ROIs, so the ROI tensor itself is never modified
+static vx_status allocRoiFrames(Rpp32u deviceType, RpptROI **ppRoi, size_t count) {
+    if (*ppRoi)
+        return VX_SUCCESS;
+    if (deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(ppRoi, count * sizeof(RpptROI)));
+#endif
+    } else {
+        *ppRoi = new RpptROI[count];
+    }
+    return VX_SUCCESS;
+}
+
+static void freeRoiFrames(Rpp32u deviceType, RpptROI *pRoi) {
+    if (!pRoi)
+        return;
+    if (deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        hipHostFree(pRoi);
+#endif
+    } else {
+        delete[] pRoi;
+    }
+}
+
 static vx_status computeTensorLength(vx_tensor tensor, Rpp32u *tensorLength) {
     if (!tensorLength)
         return VX_FAILURE;

@@ -452,11 +452,14 @@ cwd = os.getcwd()
 # OpenVX Performance Tests
 print("\nrunVisionTests - OpenVX Node Performance\n")
 outputDirectory = 'openvx_node_results'
-if not os.path.exists(outputDirectory):
-    os.makedirs(outputDirectory)
-else:
-    shutil.rmtree(outputDirectory)
-    os.makedirs(outputDirectory)
+os.makedirs(outputDirectory, exist_ok=True)
+# Only remove the two files this script itself ever writes here, so a pre-existing
+# directory (e.g. a user's own files, or just last run's results) is never wiped
+# wholesale (#1802). A fresh log/report still starts each run.
+for ownedFile in ('nodePerformanceOutput.log', 'nodePerformance.md'):
+    ownedPath = os.path.join(outputDirectory, ownedFile)
+    if os.path.exists(ownedPath):
+        os.remove(ownedPath)
 
 # Option A - All cases / single case with GPU profiling
 
@@ -470,7 +473,7 @@ def multiCaseProfilerOCL(nodeList, case_num_list):
         echo1 = 'Running OpenVX Node - '+nodeName
         os.system('echo '+echo1 +  # nosec B605 - internal benchmark harness, fixed command strings
                 ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-        os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))  # nosec B605 - internal benchmark harness, fixed command strings
+        os.makedirs(os.path.join(cwd, 'rocprof_vision_tests_outputs', 'case_'+str(i+1)), exist_ok=True)
         if perfCounters == "YES":
             print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                 hardwareMode+' -dump-profile node '+nodeFormat)
@@ -510,8 +513,10 @@ def multiCaseProfilerOCL(nodeList, case_num_list):
             continue
 
     new_file.close()
-    os.system('chown $USER:$USER '+RESULTS_DIR +  # nosec B605 - internal benchmark harness, fixed command strings
-            '/consolidated_results.stats.csv')
+    try:
+        os.chown(os.path.join(RESULTS_DIR, 'consolidated_results.stats.csv'), os.getuid(), os.getgid())
+    except OSError:
+        pass
 
     try:
         import pandas as pd
@@ -533,7 +538,7 @@ def multiCaseProfilerHIP(nodeList, case_num_list):
         echo1 = 'Running OpenVX Node - '+nodeName
         os.system('echo '+echo1 +  # nosec B605 - internal benchmark harness, fixed command strings
                 ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-        os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))  # nosec B605 - internal benchmark harness, fixed command strings
+        os.makedirs(os.path.join(cwd, 'rocprof_vision_tests_outputs', 'case_'+str(i+1)), exist_ok=True)
         if perfCounters == "YES":
             print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                 hardwareMode+' -dump-profile node '+nodeFormat)
@@ -572,8 +577,10 @@ def multiCaseProfilerHIP(nodeList, case_num_list):
             continue
 
     new_file.close()
-    os.system('chown $USER:$USER '+RESULTS_DIR +  # nosec B605 - internal benchmark harness, fixed command strings
-            '/consolidated_results.stats.csv')
+    try:
+        os.chown(os.path.join(RESULTS_DIR, 'consolidated_results.stats.csv'), os.getuid(), os.getgid())
+    except OSError:
+        pass
 
     try:
         import pandas as pd
@@ -600,8 +607,8 @@ else:
 
 if profilingOption == "YES":
 
-    os.system('rm -rvf '+cwd+'/rocprof_vision_tests_outputs')  # nosec B605 - internal benchmark harness, fixed command strings
-    os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs')  # nosec B605 - internal benchmark harness, fixed command strings
+    shutil.rmtree(os.path.join(cwd, 'rocprof_vision_tests_outputs'), ignore_errors=True)
+    os.makedirs(os.path.join(cwd, 'rocprof_vision_tests_outputs'), exist_ok=True)
 
     if backendType == "OCL":
         multiCaseProfilerOCL(nodeList=nodeList, case_num_list=case_num_list)

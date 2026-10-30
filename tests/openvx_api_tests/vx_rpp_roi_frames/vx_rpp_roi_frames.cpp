@@ -23,7 +23,7 @@ THE SOFTWARE.
 // vx_rpp video layouts (NFHWC): every node expands the N per-sample ROIs to N*F per-frame ROIs.
 // The ROI tensors are graph inputs, so they must come back from vxProcessGraph unchanged and
 // repeated executions of the same graph must give the same output.
-// GPU only: the CPU path of these nodes is not covered here.
+// Each case runs on the GPU and on the CPU (one thread, so RPP's host kernels are deterministic).
 
 #include <hip/hip_runtime_api.h>
 #include <VX/vx.h>
@@ -34,15 +34,23 @@ THE SOFTWARE.
 #include <functional>
 #include <vector>
 
-static const size_t N = 2, F = 3, H = 8, W = 16, C = 3;
+static const size_t N = 2, F = 3, H = 8, W = 32, C = 3;
 static const vx_int32 NFHWC = 2, XYWH = 1;
 static const int RUNS = 3;
 
-// the tensor's own device buffer, which is what vx_rpp reads
-static void *deviceBuffer(vx_tensor t) {
+static bool gGpu = false;
+
+// the tensor's own buffer on the backend under test, which is what vx_rpp reads
+static void *tensorBuffer(vx_tensor t) {
     void *p = nullptr;
-    vxQueryTensor(t, VX_TENSOR_BUFFER_HIP, &p, sizeof(p));
+    vxQueryTensor(t, gGpu ? VX_TENSOR_BUFFER_HIP : VX_TENSOR_BUFFER_HOST, &p, sizeof(p));
     return p;
+}
+static void toTensor(vx_tensor t, const void *src, size_t bytes) {
+    if (gGpu) (void)hipMemcpy(tensorBuffer(t), src, bytes, hipMemcpyHostToDevice); else memcpy(tensorBuffer(t), src, bytes);
+}
+static void fromTensor(vx_tensor t, void *dst, size_t bytes) {
+    if (gGpu) (void)hipMemcpy(dst, tensorBuffer(t), bytes, hipMemcpyDeviceToHost); else memcpy(dst, tensorBuffer(t), bytes);
 }
 
 struct RoiTensor {
@@ -79,13 +87,15 @@ static vx_array u32Array(vx_context c, vx_uint32 v) {
 
 // returns 0 pass, 1 fail, 2 skipped (this RPP build cannot run the node)
 static int runCase(const Case &c) {
+    char label[64];
+    snprintf(label, sizeof(label), "%s (%s)", c.name, gGpu ? "GPU" : "CPU");
     vx_context ctx = vxCreateContext();
     AgoTargetAffinityInfo aff;
     memset(&aff, 0, sizeof(aff));
-    aff.device_type = AGO_TARGET_AFFINITY_GPU;
+    aff.device_type = gGpu ? AGO_TARGET_AFFINITY_GPU : AGO_TARGET_AFFINITY_CPU;
     vxSetContextAttribute(ctx, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &aff, sizeof(aff));
     if (vxLoadKernels(ctx, "vx_rpp") != VX_SUCCESS) {
-        printf("%s: vxLoadKernels(vx_rpp) failed\n", c.name);
+        printf("%s: vxLoadKernels(vx_rpp) failed\n", label);
         vxReleaseContext(&ctx);
         return 2;
     }
@@ -93,51 +103,53 @@ static int runCase(const Case &c) {
     vx_tensor src = vxCreateTensor(ctx, 5, dims, VX_TYPE_UINT8, 0);
     vx_tensor dst = vxCreateTensor(ctx, 5, dims, VX_TYPE_UINT8, 0);
     vx_graph graph = vxCreateGraph(ctx);
+    vx_uint32 threads = 1;
+    vxSetGraphAttribute(graph, VX_GRAPH_ATTRIBUTE_AMD_CPU_NUM_THREADS, &threads, sizeof(threads));
     std::vector<RoiTensor> rois;
     vx_node node = c.build(ctx, graph, src, dst, rois);
     if (vxGetStatus((vx_reference)node) != VX_SUCCESS || vxVerifyGraph(graph) != VX_SUCCESS) {
-        printf("%s: graph setup failed - SKIPPED\n", c.name);
+        printf("%s: graph setup failed - SKIPPED\n", label);
         vxReleaseContext(&ctx);
         return 2;
     }
     // device buffers exist once the graph is verified
     std::vector<vx_uint8> in(N * F * H * W * C), out(in.size()), first;
     for (size_t i = 0; i < in.size(); i++) in[i] = (vx_uint8)((i / C) % W);
-    (void)hipMemcpy(deviceBuffer(src), in.data(), in.size(), hipMemcpyHostToDevice);
-    for (auto &r : rois) (void)hipMemcpy(deviceBuffer(r.tensor), r.initial.data(), r.initial.size() * 4, hipMemcpyHostToDevice);
+    toTensor(src, in.data(), in.size());
+    for (auto &r : rois) toTensor(r.tensor, r.initial.data(), r.initial.size() * 4);
 
     int bad = 0;
     for (int run = 1; run <= RUNS; run++) {
         if (vxProcessGraph(graph) != VX_SUCCESS) {
-            printf("%s: vxProcessGraph failed - SKIPPED\n", c.name);
+            printf("%s: vxProcessGraph failed - SKIPPED\n", label);
             vxReleaseContext(&ctx);
             return 2;
         }
-        (void)hipMemcpy(out.data(), deviceBuffer(dst), out.size(), hipMemcpyDeviceToHost);
+        fromTensor(dst, out.data(), out.size());
         for (size_t k = 0; k < rois.size(); k++) {
             std::vector<vx_uint32> now(rois[k].initial.size());
-            (void)hipMemcpy(now.data(), deviceBuffer(rois[k].tensor), now.size() * 4, hipMemcpyDeviceToHost);
+            fromTensor(rois[k].tensor, now.data(), now.size() * 4);
             if (now != rois[k].initial) {
                 printf("%s: run %d: ROI tensor %zu was modified: slot 0 {%u,%u,%u,%u} slot 1 {%u,%u,%u,%u} slot 3 {%u,%u,%u,%u}\n",
-                       c.name, run, k, now[0], now[1], now[2], now[3], now[4], now[5], now[6], now[7], now[12], now[13], now[14], now[15]);
+                       label, run, k, now[0], now[1], now[2], now[3], now[4], now[5], now[6], now[7], now[12], now[13], now[14], now[15]);
                 bad++;
             }
         }
         if (run == 1) {
             first = out;
         } else if (out != first) {
-            printf("%s: run %d: output differs from run 1\n", c.name, run);
+            printf("%s: run %d: output differs from run 1\n", label, run);
             bad++;
         }
     }
-    printf("%s: %s\n", c.name, bad ? "FAIL" : "PASS");
+    printf("%s: %s\n", label, bad ? "FAIL" : "PASS");
     vxReleaseContext(&ctx);
     return bad ? 1 : 0;
 }
 
 int main() {
     vx_uint32 A[4] = {0, 0, (vx_uint32)W, (vx_uint32)H}, B[4] = {0, 0, (vx_uint32)(W / 2), (vx_uint32)H};
-    vx_uint32 CA[4] = {0, 0, 8, 4}, CB[4] = {4, 2, 8, 4};
+    vx_uint32 CROP[4] = {0, 0, 8, 4}, PATCH[4] = {4, 2, 8, 4};
 
     std::vector<Case> cases;
     cases.push_back({"Flip", [&](vx_context ctx, vx_graph g, vx_tensor src, vx_tensor dst, std::vector<RoiTensor> &rois) {
@@ -153,23 +165,37 @@ int main() {
     cases.push_back({"CropAndPatch", [&](vx_context ctx, vx_graph g, vx_tensor src, vx_tensor dst, std::vector<RoiTensor> &rois) {
         size_t dims[5] = {N, F, H, W, C};
         vx_tensor src2 = vxCreateTensor(ctx, 5, dims, VX_TYPE_UINT8, 0);
-        rois.push_back(makeRoiTensor(ctx, CA, CB));
-        rois.push_back(makeRoiTensor(ctx, CA, CB));
-        rois.push_back(makeRoiTensor(ctx, CA, CB));
+        rois.push_back(makeRoiTensor(ctx, A, A));            // destination ROI: the whole image
+        rois.push_back(makeRoiTensor(ctx, CROP, CROP));      // region cut from the first image
+        rois.push_back(makeRoiTensor(ctx, PATCH, PATCH));    // where it is pasted
         return vxExtRppCropAndPatch(g, src, src2, dst, rois[0].tensor, rois[1].tensor, rois[2].tensor,
                                     i32(ctx, NFHWC), i32(ctx, NFHWC), i32(ctx, XYWH));
     }});
 
+    cases.push_back({"Brightness", [&](vx_context ctx, vx_graph g, vx_tensor src, vx_tensor dst, std::vector<RoiTensor> &rois) {
+        rois.push_back(makeRoiTensor(ctx, A, B));
+        vx_array alpha = vxCreateArray(ctx, VX_TYPE_FLOAT32, N), beta = vxCreateArray(ctx, VX_TYPE_FLOAT32, N), cond = vxCreateArray(ctx, VX_TYPE_INT32, N);
+        vx_float32 a[N] = {1.2f, 0.8f}, b[N] = {5.f, 10.f};
+        vx_int32 e[N] = {1, 1};
+        vxAddArrayItems(alpha, N, a, sizeof(vx_float32));
+        vxAddArrayItems(beta, N, b, sizeof(vx_float32));
+        vxAddArrayItems(cond, N, e, sizeof(vx_int32));
+        return vxExtRppBrightness(g, src, rois[0].tensor, dst, alpha, beta, cond, i32(ctx, NFHWC), i32(ctx, NFHWC), i32(ctx, XYWH));
+    }});
+
     int failed = 0, ran = 0;
-    for (const Case &c : cases) {
-        int r = runCase(c);
-        if (r != 2) ran++;
-        if (r == 1) failed++;
+    for (int gpu = 1; gpu >= 0; gpu--) {
+        gGpu = gpu;
+        for (const Case &c : cases) {
+            int r = runCase(c);
+            if (r != 2) ran++;
+            if (r == 1) failed++;
+        }
     }
-    if (ran == 0) {
-        printf("no case could run\n");
+    if (ran != (int)cases.size() * 2) {
+        printf("some runs could not be set up\n");
         return 1;
     }
-    printf("vx_rpp ROI frames test: %d of %d cases ran, %d failed\n", ran, (int)cases.size(), failed);
+    printf("vx_rpp ROI frames test: %d of %d runs completed, %d failed\n", ran, (int)cases.size() * 2, failed);
     return failed ? 1 : 0;
 }

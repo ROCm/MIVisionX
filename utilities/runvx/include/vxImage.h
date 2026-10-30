@@ -66,7 +66,6 @@ private:
 	int m_cvCapWidth, m_cvCapHeight, m_cvCapType;
 	void * m_cvWriter;
 	std::vector<uint8_t> m_cvDispBuffer;
-	std::vector<uint8_t> m_cvImageBuffer;
 	bool m_cvReadEofOccured;
 	void * m_cvWindowHandle;
 	// vx object

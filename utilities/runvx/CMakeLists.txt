@@ -122,7 +122,7 @@ install(TARGETS runvx DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime)
 
 if(BUILD_TESTING)
     add_test(NAME runvx_help COMMAND runvx -h)
-    set_tests_properties(runvx_help PROPERTIES PASS_REGULAR_EXPRESSION "RunVX|usage|runvx")
+    set_tests_properties(runvx_help PROPERTIES PASS_REGULAR_EXPRESSION "RunVX|Usage|runvx")
 endif()
 
 # install MIVisionX apps & samples -- {ROCM_PATH}/share/mivisionx/

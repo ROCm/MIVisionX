@@ -28,7 +28,7 @@ RunVX is built as a lean core executable. Optional features that depend on OpenC
 3. Known install prefixes: `/opt/rocm/lib`, `/usr/local/lib`, `/usr/lib` *(Linux/macOS only)*
 4. Build-tree fallback for developer builds *(sibling `runvx_plugins/` directory and the binary directory itself)*
 
-> **Windows note:** Steps 3 and 4 are available on all platforms. On Windows the build-tree fallback (step 4) uses `GetModuleFileNameA` to locate the binary directory. Steps 1 and 2 are the primary paths for installed builds on all platforms.
+> **Windows note:** Step 3 (known install prefixes) is Linux/macOS only. Step 4 (build-tree fallback) is cross-platform — on Windows it uses `GetModuleFileNameA` to locate the binary directory. Steps 1 and 2 are the primary paths for installed builds on all platforms.
 
 If a plugin is missing, the core `runvx` binary continues to run; the affected GDF commands (`read` from image files, `view`, compressed `write`, `compare checksum`) report a runtime error.
 

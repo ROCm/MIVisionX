@@ -1342,15 +1342,15 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         if (!strncmp(scale, "HALF", 4)) data->u.pyr.scale = VX_SCALE_PYRAMID_HALF;
         else if (!strncmp(scale, "ORB", 3)) data->u.pyr.scale = VX_SCALE_PYRAMID_ORB;
         else data->u.pyr.scale = (vx_float32)atof(scale);
+        // reject level counts that don't fit vx_uint32: truncation under-allocates children[] vs the 64-bit fill loop (heap OOB write). validate before the deferred-config early return so virtual pyramids are rejected at creation too
+        if (data->u.pyr.levels < 1 || data->u.pyr.levels != (vx_size)(vx_uint32)data->u.pyr.levels) {
+            agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: invalid pyramid levels " VX_FMT_SIZE "\n", data->u.pyr.levels);
+            return -1;
+        }
         if (data->isVirtual && !data->isNotFullyConfigured && (data->u.pyr.format == VX_DF_IMAGE_VIRT || data->u.pyr.width == 0 || data->u.pyr.height == 0)) {
             // incomplete information needs to process this again later
             data->isNotFullyConfigured = vx_true_e;
             return 0;
-        }
-        // reject level counts that don't fit vx_uint32: truncation under-allocates children[] vs the 64-bit fill loop (heap OOB write)
-        if (data->u.pyr.levels < 1 || data->u.pyr.levels != (vx_size)(vx_uint32)data->u.pyr.levels) {
-            agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: invalid pyramid levels " VX_FMT_SIZE "\n", data->u.pyr.levels);
-            return -1;
         }
         if (data->children)
             delete [] data->children;

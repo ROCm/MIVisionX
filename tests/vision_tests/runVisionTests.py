@@ -88,8 +88,12 @@ backendType = args.backend_type.upper()
 profilingOption = args.profiling.upper()
 width = args.width
 height = args.height
-widthDiv2 = int(width / 2)
-heightDiv2 = int(height / 2)
+# 1799: match the OpenVX spec's ceiling division for half-scale output size
+# ((W+1)/2, (H+1)/2), as used by agoKernel_ScaleGaussianHalf_U8_U8_5x5's own
+# meta-format computation -- floor division declared the wrong output size
+# for odd width/height (e.g. 5x3 -> 2x1 instead of the spec's 3x2).
+widthDiv2 = int((width + 1) / 2)
+heightDiv2 = int((height + 1) / 2)
 perfCounters = args.perf_counters.upper()
 if backendType == "OPENCL":
     backendType = 'OCL'

@@ -121,7 +121,7 @@ def run_runvx(runvx_exe, gdf_path):
 
 
 def check_case(work_dir, runvx_exe, tag, fourcc, nch, src_w, src_h,
-               src_bytes, sx, sy, expected):
+               src_bytes, sx, sy, expected, border="CONSTANT"):
     gdf_path = work_dir / f"{tag}.gdf"
     out_path = work_dir / f"{tag}_out.raw"
     remap_path = work_dir / f"{tag}_remap.txt"
@@ -129,12 +129,18 @@ def check_case(work_dir, runvx_exe, tag, fourcc, nch, src_w, src_h,
     src_path.write_bytes(src_bytes)
     remap_path.write_text(f"{sx} {sy}\n")
     interp = "BILINEAR" if "bilinear" in tag else "NEAREST_NEIGHBOR"
+    # BORDER_MODE:CONSTANT routes the AGO graph-divide step to the
+    # HafCpu_Remap_*_Constant kernel variants; omitting the attr (plain
+    # UNDEFINED border, the GDF default) routes to the plain HafCpu_Remap_*
+    # kernels instead. Both sets of kernels were independently patched for
+    # #1806 and need independent runtime coverage.
+    border_attr = f" attr:BORDER_MODE:CONSTANT,40\n" if border == "CONSTANT" else "\n"
     content = (
         f"data input_1 = image:{src_w},{src_h},{fourcc}:read,{src_path}\n"
         f"data output_1 = image:1,1,{fourcc}:write,{out_path}\n"
         f"data remap_table = remap:{src_w},{src_h},1,1:read,{remap_path}\n"
-        f"node org.khronos.openvx.remap input_1 remap_table !{interp} output_1 "
-        f"attr:BORDER_MODE:CONSTANT,40\n"
+        f"node org.khronos.openvx.remap input_1 remap_table !{interp} output_1"
+        f"{border_attr}"
     )
     gdf_path.write_text(content)
 
@@ -215,6 +221,64 @@ def main():
                                       src_w, src_h, src_bytes2,
                                       target_col + 0.5, 0.0, expected)
                 tagname = f"Bilinear(frac) fracBits={frac_bits} w={src_w} {label}"
+                print(f"{'PASS' if ok else 'FAIL'} [{tagname}]" + ("" if ok else f": {msg}"))
+                if not ok:
+                    failures.append((tagname, msg))
+
+        # Plain-kernel (UNDEFINED border, i.e. no BORDER_MODE attr) coverage:
+        # the AGO graph-divide step routes a node with no BORDER_MODE:CONSTANT
+        # attribute to the *plain* HafCpu_Remap_* kernels (as opposed to the
+        # *_Constant variants exercised above), which is a structurally
+        # different set of patched functions (notably the AVX2 fast paths in
+        # HafCpu_Remap_U24_U24_Bilinear / HafCpu_Remap_U32_U32_Bilinear).
+        # Sample strictly interior points so the undefined border never
+        # comes into play and the expected value is unambiguous.
+        for frac_bits, src_w, target_col in WIDTH_CASES:
+            src_h = 2
+            for label, fourcc, nch in FORMATS:
+                target_val = tuple((50 + c * 17) % 256 for c in range(nch))
+                src_bytes = build_image(src_w, src_h, nch, target_col, 0, target_val)
+
+                tag = f"plain_nearest_{frac_bits}b_{label}"
+                ok, msg = check_case(work_dir, runvx_exe, tag, fourcc, nch,
+                                      src_w, src_h, src_bytes,
+                                      float(target_col), 0.0, target_val,
+                                      border="UNDEFINED")
+                tagname = f"Plain-Nearest fracBits={frac_bits} w={src_w} {label}"
+                print(f"{'PASS' if ok else 'FAIL'} [{tagname}]" + ("" if ok else f": {msg}"))
+                if not ok:
+                    failures.append((tagname, msg))
+
+                tag = f"plain_bilinear_int_{frac_bits}b_{label}"
+                ok, msg = check_case(work_dir, runvx_exe, tag, fourcc, nch,
+                                      src_w, src_h, src_bytes,
+                                      float(target_col), 0.0, target_val,
+                                      border="UNDEFINED")
+                tagname = f"Plain-Bilinear(int) fracBits={frac_bits} w={src_w} {label}"
+                print(f"{'PASS' if ok else 'FAIL'} [{tagname}]" + ("" if ok else f": {msg}"))
+                if not ok:
+                    failures.append((tagname, msg))
+
+                # Half-pixel offset, interior: checks the plain kernels'
+                # weight/normalization scale is also fractionalBits-derived,
+                # not hardcoded -- this is the AVX2 path for U24/U32 Bilinear.
+                fill_val = tuple((220 + c * 3) % 256 for c in range(nch))
+                buf = bytearray(src_bytes)
+                for c in range(nch):
+                    buf[((0 * src_w + (target_col + 1)) * nch) + c] = fill_val[c % nch]
+                src_bytes2 = bytes(buf)
+
+                def get_pixel(x, y, c, _buf=buf, _w=src_w, _nch=nch):
+                    return _buf[(y * _w + x) * _nch + c]
+
+                expected = bilinear_ref(target_col + 0.5, 0.0, src_w, src_h,
+                                         frac_bits, get_pixel, nch)
+                tag = f"plain_bilinear_frac_{frac_bits}b_{label}"
+                ok, msg = check_case(work_dir, runvx_exe, tag, fourcc, nch,
+                                      src_w, src_h, src_bytes2,
+                                      target_col + 0.5, 0.0, expected,
+                                      border="UNDEFINED")
+                tagname = f"Plain-Bilinear(frac) fracBits={frac_bits} w={src_w} {label}"
                 print(f"{'PASS' if ok else 'FAIL'} [{tagname}]" + ("" if ok else f": {msg}"))
                 if not ok:
                     failures.append((tagname, msg))

@@ -397,6 +397,18 @@ if(Python3_FOUND)
       )
       set_property(TEST openvx_remap_${gdf_base}_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
     endforeach()
+
+    # 16_c - Large-source-image Remap regression test (issue #1806): the
+    # remap table's fractional-bit count is adaptive (reduced as source
+    # width/height crosses 8192/16384/32768px) and the CPU kernels must not
+    # assume it is always 3, nor reinterpret the unsigned fixed-point table
+    # as signed. See tests/large_image_remap_tests/test_large_image_remap.py.
+    add_test(NAME openvx_remap_large_image_CPU
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/large_image_remap_tests/test_large_image_remap.py
+          --runvx ${RUNVX_EXECUTABLE}
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+    set_property(TEST openvx_remap_large_image_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
   endif()
 endif(Python3_FOUND)
 

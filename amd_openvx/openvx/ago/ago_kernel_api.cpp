@@ -18420,7 +18420,7 @@ int agoKernel_Remap_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iMap = node->paramList[2];
         if (HafCpu_Remap_U8_U8_Nearest(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
                                        iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes,
-                                       (ago_coord2d_ushort_t *)iMap->buffer, iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t)))
+                                       (ago_coord2d_ushort_t *)iMap->buffer, iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), iMap->u.remap.remap_fractional_bits))
         {
             status = VX_FAILURE;
         }
@@ -18510,7 +18510,7 @@ int agoKernel_Remap_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iMap = node->paramList[2];
         if (HafCpu_Remap_U8_U8_Nearest_Constant(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes,
-            (ago_coord2d_ushort_t *)iMap->buffer, iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), node->paramList[3]->u.scalar.u.u))
+            (ago_coord2d_ushort_t *)iMap->buffer, iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), node->paramList[3]->u.scalar.u.u, iMap->u.remap.remap_fractional_bits))
         {
             status = VX_FAILURE;
         }
@@ -18604,7 +18604,7 @@ int agoKernel_Remap_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iMap = node->paramList[2];
         if (HafCpu_Remap_U8_U8_Bilinear(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes,
-            (ago_coord2d_ushort_t *)iMap->buffer, iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t)))
+            (ago_coord2d_ushort_t *)iMap->buffer, iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), iMap->u.remap.remap_fractional_bits))
         {
             status = VX_FAILURE;
         }
@@ -18696,7 +18696,7 @@ int agoKernel_Remap_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelCommand cmd
         AgoData * iMap = node->paramList[2];
         if (HafCpu_Remap_U8_U8_Bilinear_Constant(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes,
-            (ago_coord2d_ushort_t *)iMap->buffer, iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), node->paramList[3]->u.scalar.u.u))
+            (ago_coord2d_ushort_t *)iMap->buffer, iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), node->paramList[3]->u.scalar.u.u, iMap->u.remap.remap_fractional_bits))
         {
             status = VX_FAILURE;
         }
@@ -18792,7 +18792,7 @@ int agoKernel_Remap_U24_U24_Bilinear(AgoNode * node, AgoKernelCommand cmd)
         if (HafCpu_Remap_U24_U24_Bilinear(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes,
             (ago_coord2d_ushort_t *)iMap->buffer,
-            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), iMap->u.remap.remap_fractional_bits)) {
             status = VX_FAILURE;
         }
     }
@@ -18952,7 +18952,7 @@ int agoKernel_Remap_U32_U32_Nearest_Constant(AgoNode * node, AgoKernelCommand cm
         if (HafCpu_Remap_U32_U32_Nearest_Constant(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes,
             (ago_coord2d_ushort_t *)iMap->buffer,
-            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), borderValue)) {
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), borderValue, iMap->u.remap.remap_fractional_bits)) {
             status = VX_FAILURE;
         }
     }
@@ -19014,7 +19014,7 @@ int agoKernel_Remap_U24_U24_Bilinear_Constant(AgoNode * node, AgoKernelCommand c
         if (HafCpu_Remap_U24_U24_Bilinear_Constant(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes,
             (ago_coord2d_ushort_t *)iMap->buffer,
-            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), borderValue)) {
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), borderValue, iMap->u.remap.remap_fractional_bits)) {
             status = VX_FAILURE;
         }
     }
@@ -19076,7 +19076,7 @@ int agoKernel_Remap_U24_U24_Nearest(AgoNode * node, AgoKernelCommand cmd)
         if (HafCpu_Remap_U24_U24_Nearest(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes,
             (ago_coord2d_ushort_t *)iMap->buffer,
-            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), iMap->u.remap.remap_fractional_bits)) {
             status = VX_FAILURE;
         }
     }
@@ -19267,7 +19267,7 @@ int agoKernel_Remap_U24_U24_Nearest_Constant(AgoNode * node, AgoKernelCommand cm
         if (HafCpu_Remap_U24_U24_Nearest_Constant(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes,
             (ago_coord2d_ushort_t *)iMap->buffer,
-            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), borderValue)) {
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), borderValue, iMap->u.remap.remap_fractional_bits)) {
             status = VX_FAILURE;
         }
     }
@@ -19329,7 +19329,7 @@ int agoKernel_Remap_U32_U32_Bilinear(AgoNode * node, AgoKernelCommand cmd)
         if (HafCpu_Remap_U32_U32_Bilinear(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes,
             (ago_coord2d_ushort_t *)iMap->buffer,
-            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), iMap->u.remap.remap_fractional_bits)) {
             status = VX_FAILURE;
         }
     }
@@ -19487,7 +19487,7 @@ int agoKernel_Remap_U32_U32_Bilinear_Constant(AgoNode * node, AgoKernelCommand c
         if (HafCpu_Remap_U32_U32_Bilinear_Constant(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes,
             (ago_coord2d_ushort_t *)iMap->buffer,
-            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), borderValue)) {
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), borderValue, iMap->u.remap.remap_fractional_bits)) {
             status = VX_FAILURE;
         }
     }
@@ -19549,7 +19549,7 @@ int agoKernel_Remap_U32_U32_Nearest(AgoNode * node, AgoKernelCommand cmd)
         if (HafCpu_Remap_U32_U32_Nearest(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes,
             (ago_coord2d_ushort_t *)iMap->buffer,
-            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t), iMap->u.remap.remap_fractional_bits)) {
             status = VX_FAILURE;
         }
     }

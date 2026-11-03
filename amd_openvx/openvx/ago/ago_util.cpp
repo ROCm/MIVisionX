@@ -1347,6 +1347,11 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
             data->isNotFullyConfigured = vx_true_e;
             return 0;
         }
+        // reject level counts that don't fit vx_uint32: truncation under-allocates children[] vs the 64-bit fill loop (heap OOB write)
+        if (data->u.pyr.levels < 1 || data->u.pyr.levels != (vx_size)(vx_uint32)data->u.pyr.levels) {
+            agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: invalid pyramid levels " VX_FMT_SIZE "\n", data->u.pyr.levels);
+            return -1;
+        }
         if (data->children)
             delete [] data->children;
         data->numChildren = (vx_uint32)data->u.pyr.levels;

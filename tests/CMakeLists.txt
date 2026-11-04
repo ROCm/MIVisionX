@@ -110,6 +110,9 @@ add_test(
             --build-generator "${CMAKE_GENERATOR}"
             --test-command "openvx_canny"
 )
+# #1800: canny_CPU/_GPU reuse the binary --build-and-test places in canny/; a
+# fixture guarantees ctest -j always runs this test first, regardless of scheduling.
+set_property(TEST openvx_canny PROPERTY FIXTURES_SETUP canny_fixture)
 
 # 9 - channel extract - vision graph
 add_test(
@@ -122,6 +125,8 @@ add_test(
             --build-generator "${CMAKE_GENERATOR}"
             --test-command "openvx_channel_extract"
 )
+# #1800: see openvx_canny's fixture comment above; same race, same fix.
+set_property(TEST openvx_channel_extract PROPERTY FIXTURES_SETUP channel_extract_fixture)
 
 # 10 - color convert - vision graph
 add_test(
@@ -134,6 +139,8 @@ add_test(
             --build-generator "${CMAKE_GENERATOR}"
             --test-command "openvx_color_convert"
 )
+# #1800: see openvx_canny's fixture comment above; same race, same fix.
+set_property(TEST openvx_color_convert PROPERTY FIXTURES_SETUP color_convert_fixture)
 
 # 11 - accumulate - vision graph
 add_test(
@@ -323,6 +330,7 @@ add_test(NAME openvx_canny_CPU
               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/canny
 )
 set_property(TEST openvx_canny_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+set_property(TEST openvx_canny_CPU PROPERTY FIXTURES_REQUIRED canny_fixture)
 
 # 13 - channel extract - vision graph force to CPU
 add_test(NAME openvx_channel_extract_CPU 
@@ -330,6 +338,7 @@ add_test(NAME openvx_channel_extract_CPU
               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/channel_extract
 )
 set_property(TEST openvx_channel_extract_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+set_property(TEST openvx_channel_extract_CPU PROPERTY FIXTURES_REQUIRED channel_extract_fixture)
 
 # 14 - color convert - vision graph force to CPU
 add_test(NAME openvx_color_convert_CPU 
@@ -337,6 +346,7 @@ add_test(NAME openvx_color_convert_CPU
               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/color_convert
 )
 set_property(TEST openvx_color_convert_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+set_property(TEST openvx_color_convert_CPU PROPERTY FIXTURES_REQUIRED color_convert_fixture)
 
 # OpenVX Tests
 if(Python3_FOUND)
@@ -408,6 +418,7 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/canny
   )
   set_property(TEST openvx_canny_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+  set_property(TEST openvx_canny_GPU PROPERTY FIXTURES_REQUIRED canny_fixture)
 
   # 18 - channel extract - vision graph force to GPU
   add_test(NAME openvx_channel_extract_GPU 
@@ -415,6 +426,7 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/channel_extract
   )
   set_property(TEST openvx_channel_extract_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+  set_property(TEST openvx_channel_extract_GPU PROPERTY FIXTURES_REQUIRED channel_extract_fixture)
 
   # 19 - color convert - vision graph force to GPU
   add_test(NAME openvx_color_convert_GPU 
@@ -422,6 +434,7 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/color_convert
   )
   set_property(TEST openvx_color_convert_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+  set_property(TEST openvx_color_convert_GPU PROPERTY FIXTURES_REQUIRED color_convert_fixture)
 
   # OpenVX Tests
   if(Python3_FOUND)

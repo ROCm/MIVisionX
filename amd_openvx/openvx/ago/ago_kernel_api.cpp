@@ -22934,13 +22934,120 @@ int agoKernel_MinMaxLocMerge_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)
     return status;
 }
 
+// #1791: generic copy for agoKernel_Copy_DATA_DATA. Every AgoData shares the
+// same top-level size/buffer fields regardless of its specific reference type
+// (image, array, scalar, LUT, distribution, matrix, convolution, threshold,
+// remap, tensor), so a flat memcpy handles all of those; composite objects
+// (pyramid levels, object array elements, delay slots) expose their payload
+// via numChildren/children instead, so recurse into each child in that case.
+// validate() (below) already forces the output's full u config to match the
+// input's exactly, so dst->size == src->size is guaranteed for any node that
+// passed verification.
+static vx_status agoCopyDataRecursive(AgoData * dst, AgoData * src)
+{
+    if (src->numChildren > 0) {
+        for (vx_uint32 i = 0; i < src->numChildren; i++) {
+            vx_status status = agoCopyDataRecursive(dst->children[i], src->children[i]);
+            if (status != VX_SUCCESS)
+                return status;
+        }
+        // object array's numitems is a mutable "used count" separate from
+        // its children, mirroring the vx_array case below.
+        if (src->ref.type == VX_TYPE_OBJECT_ARRAY)
+            dst->u.objarr.numitems = src->u.objarr.numitems;
+        return VX_SUCCESS;
+    }
+    if (dst->size != src->size)
+        return VX_FAILURE; // should not happen -- validate already matched meta-format
+    if (src->buffer && dst->buffer)
+        memcpy(dst->buffer, src->buffer, src->size);
+    // A scalar's value lives inline in the u union, not in a heap buffer, and
+    // an array's numitems is a mutable "used count" separate from its
+    // (capacity-sized) buffer -- validate()'s one-time meta-format copy only
+    // drives output allocation sizing, so these must be synced explicitly on
+    // every copy.
+    switch (src->ref.type) {
+    case VX_TYPE_SCALAR:
+        dst->u.scalar.u = src->u.scalar.u;
+        break;
+    case VX_TYPE_ARRAY:
+        dst->u.arr.numitems = src->u.arr.numitems;
+        break;
+    default:
+        break;
+    }
+    return VX_SUCCESS;
+}
+
+#if ENABLE_HIP
+// #1791: HIP counterpart of agoCopyDataRecursive. agoGpuHipAllocBuffer
+// (ago_util_hip.cpp) explicitly leaves hip_memory null for VX_TYPE_SCALAR and
+// VX_TYPE_THRESHOLD -- their value lives entirely host-side in the u union --
+// so those two types always get a host-side value copy even when this node
+// is placed on GPU; every other buffer-backed type gets a device-to-device
+// hipMemcpy. Blocking hipMemcpy (not the Async form) is used throughout,
+// matching every other host/device sync call in this codebase, and avoiding
+// a stack-lifetime hazard for the small host-sourced write below.
+static vx_status agoCopyDataRecursiveHip(AgoData * dst, AgoData * src)
+{
+    if (src->numChildren > 0) {
+        for (vx_uint32 i = 0; i < src->numChildren; i++) {
+            vx_status status = agoCopyDataRecursiveHip(dst->children[i], src->children[i]);
+            if (status != VX_SUCCESS)
+                return status;
+        }
+        if (src->ref.type == VX_TYPE_OBJECT_ARRAY)
+            dst->u.objarr.numitems = src->u.objarr.numitems;
+        return VX_SUCCESS;
+    }
+    if (src->ref.type == VX_TYPE_SCALAR || src->ref.type == VX_TYPE_THRESHOLD) {
+        if (src->ref.type == VX_TYPE_SCALAR)
+            dst->u.scalar.u = src->u.scalar.u;
+        else
+            dst->u.thr = src->u.thr;
+        return VX_SUCCESS;
+    }
+    if (dst->size != src->size)
+        return VX_FAILURE; // should not happen -- validate already matched meta-format
+    if (src->hip_memory && dst->hip_memory) {
+        hipError_t err = hipMemcpy(dst->hip_memory + dst->gpu_buffer_offset,
+                                    src->hip_memory + src->gpu_buffer_offset,
+                                    src->size, hipMemcpyDeviceToDevice);
+        if (err != hipSuccess)
+            return VX_FAILURE;
+    }
+    if (src->ref.type == VX_TYPE_ARRAY) {
+        dst->u.arr.numitems = src->u.arr.numitems; // host-side bookkeeping, not device-resident
+        if (dst->hip_memory) {
+            // DATA_GPU_ARRAY_OFFSET (gpu_buffer_offset for arrays) reserves
+            // the first bytes of hip_memory for an atomic "numitems" counter
+            // that kernels like FastCorners increment per-item; agoGpuHip-
+            // DataOutputAtomicSync (ago_util_hip.cpp) unconditionally reads
+            // this counter back into u.arr.numitems and resets it to 0 after
+            // every graph execution for any array output. Write the correct
+            // count there too, or that post-execution sync clobbers the
+            // assignment above back to whatever was left from a prior run.
+            vx_uint32 numitems32 = (vx_uint32)src->u.arr.numitems;
+            hipError_t err = hipMemcpy(dst->hip_memory, &numitems32, sizeof(numitems32), hipMemcpyHostToDevice);
+            if (err != hipSuccess)
+                return VX_FAILURE;
+        }
+    }
+    return VX_SUCCESS;
+}
+#endif
+
 int agoKernel_Copy_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)
 {
     vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
     if (cmd == ago_kernel_cmd_execute) {
-        // TBD: not implemented yet
-        status = VX_ERROR_NOT_SUPPORTED;
+        status = agoCopyDataRecursive(node->paramList[0], node->paramList[1]);
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = agoCopyDataRecursiveHip(node->paramList[0], node->paramList[1]);
+    }
+#endif
     else if (cmd == ago_kernel_cmd_validate) {
         // validate parameters
         if (node->paramList[0]->ref.type != node->paramList[1]->ref.type)
@@ -22993,10 +23100,22 @@ int agoKernel_Copy_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)
     }
 #endif
     else if (cmd == ago_kernel_cmd_query_target_support) {
-        node->target_support_flags = 0;
+        // #1791: claim CPU support unconditionally so AGO can place this node
+        // on CPU even inside an otherwise GPU/HIP-targeted graph (standard
+        // AGO behavior for CPU-only kernels in mixed graphs); previously this
+        // was left at 0 for every non-tensor type, which made
+        // ago_drama_alloc.cpp reject the node entirely with "kernel ... not
+        // supported yet" before execution was ever attempted.
+        node->target_support_flags = AGO_KERNEL_FLAG_DEVICE_CPU;
 #if ENABLE_OPENCL
         if (node->paramList[0]->ref.type == VX_TYPE_TENSOR)
             node->target_support_flags |= AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL;
+#elif ENABLE_HIP
+        // #1791: agoCopyDataRecursiveHip handles every reference type on GPU
+        // (device-to-device hipMemcpy for buffer-backed types, a host-side
+        // value copy for scalar/threshold, which have no device buffer at
+        // all), so GPU support can be claimed unconditionally here too.
+        node->target_support_flags |= AGO_KERNEL_FLAG_DEVICE_GPU;
 #endif
         status = VX_SUCCESS;
     }

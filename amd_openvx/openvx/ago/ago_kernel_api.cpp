@@ -339,6 +339,20 @@ int ovxKernel_Invalid(AgoNode * node, AgoKernelCommand cmd)
     return status;
 }
 
+// #1799: per the OpenVX spec (see vxCreateImage, VX/vx_api.h), only a subset
+// of formats require an even width/height -- RGB, RGBX, and YUV4 have no
+// size constraint at all. ovxKernel_ColorConvert and ovxKernel_ChannelExtract
+// previously rejected any odd width/height unconditionally, for every format.
+static bool agoImageFormatRequiresEvenWidth(vx_df_image fmt)
+{
+    return fmt == VX_DF_IMAGE_NV12 || fmt == VX_DF_IMAGE_NV21 || fmt == VX_DF_IMAGE_IYUV ||
+           fmt == VX_DF_IMAGE_UYVY || fmt == VX_DF_IMAGE_YUYV;
+}
+static bool agoImageFormatRequiresEvenHeight(vx_df_image fmt)
+{
+    return fmt == VX_DF_IMAGE_NV12 || fmt == VX_DF_IMAGE_NV21 || fmt == VX_DF_IMAGE_IYUV;
+}
+
 int ovxKernel_ColorConvert(AgoNode * node, AgoKernelCommand cmd)
 {
     // INFO: use VX_KERNEL_AMD_COLOR_CONVERT_* kernels
@@ -354,11 +368,17 @@ int ovxKernel_ColorConvert(AgoNode * node, AgoKernelCommand cmd)
         if (srcfmt != VX_DF_IMAGE_RGB && srcfmt != VX_DF_IMAGE_RGBX && srcfmt != VX_DF_IMAGE_NV12 && srcfmt != VX_DF_IMAGE_NV21 &&
             srcfmt != VX_DF_IMAGE_IYUV && srcfmt != VX_DF_IMAGE_YUYV && srcfmt != VX_DF_IMAGE_UYVY)
             return VX_ERROR_INVALID_FORMAT;
-        if (!width || !height || (width & 1) || (height & 1))
-            return VX_ERROR_INVALID_DIMENSION;
         vx_df_image dstfmt = node->paramList[1]->u.img.format;
         if (dstfmt == VX_DF_IMAGE_VIRT)
             return VX_ERROR_INVALID_FORMAT;
+        // #1799: only formats that actually require it (per the OpenVX spec)
+        // enforce an even width/height; RGB, RGBX, and YUV4 have no size
+        // constraint. ColorConvert is bidirectional, so either side's format
+        // can carry the constraint.
+        if (!width || !height ||
+            ((agoImageFormatRequiresEvenWidth(srcfmt) || agoImageFormatRequiresEvenWidth(dstfmt)) && (width & 1)) ||
+            ((agoImageFormatRequiresEvenHeight(srcfmt) || agoImageFormatRequiresEvenHeight(dstfmt)) && (height & 1)))
+            return VX_ERROR_INVALID_DIMENSION;
         // set output image size is same as input image
         vx_meta_format meta = &node->metaList[1];
         meta->data.u.img.width = width;
@@ -397,7 +417,12 @@ int ovxKernel_ChannelExtract(AgoNode * node, AgoKernelCommand cmd)
         if (srcfmt != VX_DF_IMAGE_RGB && srcfmt != VX_DF_IMAGE_RGBX && srcfmt != VX_DF_IMAGE_NV12 && srcfmt != VX_DF_IMAGE_NV21 &&
             srcfmt != VX_DF_IMAGE_IYUV && srcfmt != VX_DF_IMAGE_YUYV && srcfmt != VX_DF_IMAGE_UYVY && srcfmt != VX_DF_IMAGE_YUV4)
             return VX_ERROR_INVALID_FORMAT;
-        if (!width || !height || (width & 1) || (height & 1))
+        // #1799: only formats that actually require it (per the OpenVX spec)
+        // enforce an even width/height; RGB, RGBX, and YUV4 have no size
+        // constraint.
+        if (!width || !height ||
+            (agoImageFormatRequiresEvenWidth(srcfmt) && (width & 1)) ||
+            (agoImageFormatRequiresEvenHeight(srcfmt) && (height & 1)))
             return VX_ERROR_INVALID_DIMENSION;
         vx_enum channel = node->paramList[1]->u.scalar.u.e;
         int channel_index = agoChannelEnum2Index(channel);
@@ -15286,7 +15311,13 @@ int agoKernel_Box_U8_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
-        if (HafCpu_Box_U8_U8_3x3(oImg->u.img.width, oImg->u.img.height - 2, oImg->buffer + oImg->u.img.stride_in_bytes, oImg->u.img.stride_in_bytes,
+        // #1799: oImg->u.img.height - 2 is unsigned arithmetic and wraps to a
+        // huge value for height < 2 (e.g. a 1-row image); HafCpu_Box_U8_U8_3x3
+        // consumes it via a while(height) {...; height--;} loop that then
+        // runs away and segfaults. Clamp so it never underflows; a height of
+        // 0 makes that loop a safe no-op.
+        vx_uint32 cpuHeight = (oImg->u.img.height >= 2) ? (oImg->u.img.height - 2) : 0;
+        if (HafCpu_Box_U8_U8_3x3(oImg->u.img.width, cpuHeight, oImg->buffer + oImg->u.img.stride_in_bytes, oImg->u.img.stride_in_bytes,
             iImg->buffer + iImg->u.img.stride_in_bytes, iImg->u.img.stride_in_bytes, node->localDataPtr)) {
             status = VX_FAILURE;
         }
@@ -15527,7 +15558,12 @@ int agoKernel_Gaussian_U8_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
-        if (HafCpu_Gaussian_U8_U8_3x3(oImg->u.img.width, oImg->u.img.height - 2, oImg->buffer + oImg->u.img.stride_in_bytes, oImg->u.img.stride_in_bytes,
+        // #1799: see agoKernel_Box_U8_U8_3x3 -- oImg->u.img.height - 2
+        // underflows (unsigned) for height < 2, and HafCpu_Gaussian_U8_U8_3x3
+        // has the same while(height) {...; height--;} loop that runs away on
+        // the wrapped value and segfaults.
+        vx_uint32 cpuHeight = (oImg->u.img.height >= 2) ? (oImg->u.img.height - 2) : 0;
+        if (HafCpu_Gaussian_U8_U8_3x3(oImg->u.img.width, cpuHeight, oImg->buffer + oImg->u.img.stride_in_bytes, oImg->u.img.stride_in_bytes,
             iImg->buffer + iImg->u.img.stride_in_bytes, iImg->u.img.stride_in_bytes, node->localDataPtr)) {
             status = VX_FAILURE;
         }
@@ -15689,7 +15725,13 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
         vx_uint32 height = node->paramList[1]->u.img.height;
         if (node->paramList[1]->u.img.format != VX_DF_IMAGE_U8)
             return VX_ERROR_INVALID_FORMAT;
-        else if (!width || !height)
+        // #1799: the CPU execute path's HafCpu_ScaleGaussianHalf_U8_U8_5x5 is a
+        // row-sequential SIMD sliding-window implementation that requires at
+        // least 5 source rows/columns to prime its window; it already rejects
+        // smaller inputs at execution (VX_ERROR_INVALID_DIMENSION above). Match
+        // that floor here so undersized inputs are rejected cleanly at graph
+        // verification instead of failing confusingly at execution.
+        else if (!width || !height || width < 5 || height < 5)
             return VX_ERROR_INVALID_DIMENSION;
         // set output image sizes and format
         vx_meta_format meta;

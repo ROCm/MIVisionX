@@ -789,3 +789,294 @@ VX_API_ENTRY vx_node VX_API_CALL vxLaplacianReconstructNode(vx_graph graph, vx_p
                                            dimof(params));
     return node;
 }
+
+// #1790: the following functions are declared in the installed headers but
+// have no backing kernel registered in ago_kernel_list.cpp (vxSelectNode is
+// the sole exception -- its kernel exists but is itself still a stub, see
+// #1791/agoKernel_Select_DATA_DATA_DATA). vxCreateNodeByStructure already
+// returns a clean NULL node when vxGetKernelByEnum finds no match, so these
+// thin wrappers compile, link, and fail cleanly at verify/process time
+// without needing any new kernel implementation.
+
+VX_API_ENTRY vx_node VX_API_CALL vxMinNode(vx_graph graph, vx_image in1, vx_image in2, vx_image out)
+{
+    vx_reference params[] = {
+            (vx_reference)in1,
+            (vx_reference)in2,
+            (vx_reference)out,
+    };
+    return vxCreateNodeByStructure(graph, VX_KERNEL_MIN, params, dimof(params));
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxMaxNode(vx_graph graph, vx_image in1, vx_image in2, vx_image out)
+{
+    vx_reference params[] = {
+            (vx_reference)in1,
+            (vx_reference)in2,
+            (vx_reference)out,
+    };
+    return vxCreateNodeByStructure(graph, VX_KERNEL_MAX, params, dimof(params));
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxSelectNode(vx_graph graph, vx_scalar condition, vx_reference true_value, vx_reference false_value, vx_reference output)
+{
+    vx_reference params[] = {
+            (vx_reference)condition,
+            true_value,
+            false_value,
+            output,
+    };
+    return vxCreateNodeByStructure(graph, VX_KERNEL_SELECT, params, dimof(params));
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxScalarOperationNode(vx_graph graph, vx_enum scalar_operation, vx_scalar a, vx_scalar b, vx_scalar output)
+{
+    vx_scalar sop = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_ENUM, &scalar_operation);
+    vx_reference params[] = {
+            (vx_reference)sop,
+            (vx_reference)a,
+            (vx_reference)b,
+            (vx_reference)output,
+    };
+    vx_node node = vxCreateNodeByStructure(graph, VX_KERNEL_SCALAR_OPERATION, params, dimof(params));
+    vxReleaseScalar(&sop);
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxNonMaxSuppressionNode(vx_graph graph, vx_image input, vx_image mask, vx_int32 win_size, vx_image output)
+{
+    vx_scalar winsize = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &win_size);
+    vx_reference params[] = {
+            (vx_reference)input,
+            (vx_reference)mask,
+            (vx_reference)winsize,
+            (vx_reference)output,
+    };
+    vx_node node = vxCreateNodeByStructure(graph, VX_KERNEL_NON_MAX_SUPPRESSION, params, dimof(params));
+    vxReleaseScalar(&winsize);
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxHOGCellsNode(vx_graph graph, vx_image input, vx_int32 cell_width, vx_int32 cell_height, vx_int32 num_bins, vx_tensor magnitudes, vx_tensor bins)
+{
+    vx_scalar cw = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &cell_width);
+    vx_scalar ch = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &cell_height);
+    vx_scalar nb = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &num_bins);
+    vx_reference params[] = {
+            (vx_reference)input,
+            (vx_reference)cw,
+            (vx_reference)ch,
+            (vx_reference)nb,
+            (vx_reference)magnitudes,
+            (vx_reference)bins,
+    };
+    vx_node node = vxCreateNodeByStructure(graph, VX_KERNEL_HOG_CELLS, params, dimof(params));
+    vxReleaseScalar(&cw);
+    vxReleaseScalar(&ch);
+    vxReleaseScalar(&nb);
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxHOGFeaturesNode(vx_graph graph, vx_image input, vx_tensor magnitudes, vx_tensor bins, const vx_hog_t *params_struct, vx_size hog_param_size, vx_tensor features)
+{
+    // no VX_KERNEL_HOG_FEATURES kernel is registered, so this always fails
+    // cleanly regardless of how params_struct would be wrapped; omitted here.
+    (void)params_struct;
+    (void)hog_param_size;
+    vx_reference params[] = {
+            (vx_reference)input,
+            (vx_reference)magnitudes,
+            (vx_reference)bins,
+            (vx_reference)features,
+    };
+    return vxCreateNodeByStructure(graph, VX_KERNEL_HOG_FEATURES, params, dimof(params));
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxHoughLinesPNode(vx_graph graph, vx_image input, const vx_hough_lines_p_t *params_struct, vx_array lines_array, vx_scalar num_lines)
+{
+    // no VX_KERNEL_HOUGH_LINES_P kernel is registered; see vxHOGFeaturesNode.
+    (void)params_struct;
+    vx_reference params[] = {
+            (vx_reference)input,
+            (vx_reference)lines_array,
+            (vx_reference)num_lines,
+    };
+    return vxCreateNodeByStructure(graph, VX_KERNEL_HOUGH_LINES_P, params, dimof(params));
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxLBPNode(vx_graph graph, vx_image in, vx_enum format, vx_int8 kernel_size, vx_image out)
+{
+    vx_scalar fmt = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_ENUM, &format);
+    vx_scalar ksize = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT8, &kernel_size);
+    vx_reference params[] = {
+            (vx_reference)in,
+            (vx_reference)fmt,
+            (vx_reference)ksize,
+            (vx_reference)out,
+    };
+    vx_node node = vxCreateNodeByStructure(graph, VX_KERNEL_LBP, params, dimof(params));
+    vxReleaseScalar(&fmt);
+    vxReleaseScalar(&ksize);
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxMatchTemplateNode(vx_graph graph, vx_image src, vx_image templateImage, vx_enum matchingMethod, vx_image output)
+{
+    vx_scalar method = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_ENUM, &matchingMethod);
+    vx_reference params[] = {
+            (vx_reference)src,
+            (vx_reference)templateImage,
+            (vx_reference)method,
+            (vx_reference)output,
+    };
+    vx_node node = vxCreateNodeByStructure(graph, VX_KERNEL_MATCH_TEMPLATE, params, dimof(params));
+    vxReleaseScalar(&method);
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxBilateralFilterNode(vx_graph graph, vx_tensor src, vx_int32 diameter, vx_float32 sigmaSpace, vx_float32 sigmaValues, vx_tensor dst)
+{
+    vx_scalar d = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &diameter);
+    vx_scalar ss = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_FLOAT32, &sigmaSpace);
+    vx_scalar sv = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_FLOAT32, &sigmaValues);
+    vx_reference params[] = {
+            (vx_reference)src,
+            (vx_reference)d,
+            (vx_reference)ss,
+            (vx_reference)sv,
+            (vx_reference)dst,
+    };
+    vx_node node = vxCreateNodeByStructure(graph, VX_KERNEL_BILATERAL_FILTER, params, dimof(params));
+    vxReleaseScalar(&d);
+    vxReleaseScalar(&ss);
+    vxReleaseScalar(&sv);
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxTensorMultiplyNode(vx_graph graph, vx_tensor input1, vx_tensor input2, vx_scalar scale, vx_enum overflow_policy, vx_enum rounding_policy, vx_tensor output)
+{
+    vx_scalar op = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_ENUM, &overflow_policy);
+    vx_scalar rp = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_ENUM, &rounding_policy);
+    vx_reference params[] = {
+            (vx_reference)input1,
+            (vx_reference)input2,
+            (vx_reference)scale,
+            (vx_reference)op,
+            (vx_reference)rp,
+            (vx_reference)output,
+    };
+    vx_node node = vxCreateNodeByStructure(graph, VX_KERNEL_TENSOR_MULTIPLY, params, dimof(params));
+    vxReleaseScalar(&op);
+    vxReleaseScalar(&rp);
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxTensorAddNode(vx_graph graph, vx_tensor input1, vx_tensor input2, vx_enum policy, vx_tensor output)
+{
+    vx_scalar pol = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_ENUM, &policy);
+    vx_reference params[] = {
+            (vx_reference)input1,
+            (vx_reference)input2,
+            (vx_reference)pol,
+            (vx_reference)output,
+    };
+    vx_node node = vxCreateNodeByStructure(graph, VX_KERNEL_TENSOR_ADD, params, dimof(params));
+    vxReleaseScalar(&pol);
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxTensorSubtractNode(vx_graph graph, vx_tensor input1, vx_tensor input2, vx_enum policy, vx_tensor output)
+{
+    vx_scalar pol = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_ENUM, &policy);
+    vx_reference params[] = {
+            (vx_reference)input1,
+            (vx_reference)input2,
+            (vx_reference)pol,
+            (vx_reference)output,
+    };
+    vx_node node = vxCreateNodeByStructure(graph, VX_KERNEL_TENSOR_SUBTRACT, params, dimof(params));
+    vxReleaseScalar(&pol);
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxTensorTableLookupNode(vx_graph graph, vx_tensor input1, vx_lut lut, vx_tensor output)
+{
+    vx_reference params[] = {
+            (vx_reference)input1,
+            (vx_reference)lut,
+            (vx_reference)output,
+    };
+    return vxCreateNodeByStructure(graph, VX_KERNEL_TENSOR_TABLE_LOOKUP, params, dimof(params));
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxTensorTransposeNode(vx_graph graph, vx_tensor input, vx_tensor output, vx_size dimension1, vx_size dimension2)
+{
+    vx_scalar d1 = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_SIZE, &dimension1);
+    vx_scalar d2 = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_SIZE, &dimension2);
+    vx_reference params[] = {
+            (vx_reference)input,
+            (vx_reference)output,
+            (vx_reference)d1,
+            (vx_reference)d2,
+    };
+    vx_node node = vxCreateNodeByStructure(graph, VX_KERNEL_TENSOR_TRANSPOSE, params, dimof(params));
+    vxReleaseScalar(&d1);
+    vxReleaseScalar(&d2);
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxTensorConvertDepthNode(vx_graph graph, vx_tensor input, vx_enum policy, vx_scalar norm, vx_scalar offset, vx_tensor output)
+{
+    vx_scalar pol = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_ENUM, &policy);
+    vx_reference params[] = {
+            (vx_reference)input,
+            (vx_reference)pol,
+            (vx_reference)norm,
+            (vx_reference)offset,
+            (vx_reference)output,
+    };
+    vx_node node = vxCreateNodeByStructure(graph, VX_KERNEL_TENSOR_CONVERT_DEPTH, params, dimof(params));
+    vxReleaseScalar(&pol);
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxTensorMatrixMultiplyNode(vx_graph graph, vx_tensor input1, vx_tensor input2, vx_tensor input3,
+    const vx_tensor_matrix_multiply_params_t *matrix_multiply_params, vx_tensor output)
+{
+    // no VX_KERNEL_TENSOR_MATRIX_MULTIPLY kernel is registered; see vxHOGFeaturesNode.
+    (void)matrix_multiply_params;
+    vx_reference params[] = {
+            (vx_reference)input1,
+            (vx_reference)input2,
+            (vx_reference)input3,
+            (vx_reference)output,
+    };
+    return vxCreateNodeByStructure(graph, VX_KERNEL_TENSOR_MATRIX_MULTIPLY, params, dimof(params));
+}
+
+// vxNormalizationLayer (VX/vx_compatibility.h) is a legacy-named alias with
+// no dedicated kernel enum of its own; it maps most closely to the NN
+// extension's local response normalization, which also has no registered
+// kernel, so this fails cleanly the same way as the functions above.
+VX_API_ENTRY vx_node VX_API_CALL vxNormalizationLayer(vx_graph graph, vx_tensor inputs, vx_enum type,
+        vx_size normalization_size, vx_float32 alpha, vx_float32 beta, vx_tensor outputs)
+{
+    vx_scalar styp = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_ENUM, &type);
+    vx_scalar snorm = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_SIZE, &normalization_size);
+    vx_scalar salpha = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_FLOAT32, &alpha);
+    vx_scalar sbeta = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_FLOAT32, &beta);
+    vx_reference params[] = {
+            (vx_reference)inputs,
+            (vx_reference)styp,
+            (vx_reference)snorm,
+            (vx_reference)salpha,
+            (vx_reference)sbeta,
+            (vx_reference)outputs,
+    };
+    vx_node node = vxCreateNodeByStructure(graph, VX_KERNEL_LOCAL_RESPONSE_NORMALIZATION_LAYER, params, dimof(params));
+    vxReleaseScalar(&styp);
+    vxReleaseScalar(&snorm);
+    vxReleaseScalar(&salpha);
+    vxReleaseScalar(&sbeta);
+    return node;
+}

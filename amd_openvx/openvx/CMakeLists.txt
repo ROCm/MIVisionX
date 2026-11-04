@@ -79,6 +79,7 @@ list(APPEND SOURCES
     api/vx_api.cpp
     api/vx_nodes.cpp
     api/vx_pipelining_api.cpp
+    api/vx_unsupported_extensions.cpp
 )
 
 add_library(openvx SHARED ${SOURCES})

@@ -1125,3 +1125,332 @@ VX_API_ENTRY vx_status VX_API_CALL vxuLaplacianReconstruct(vx_context context, v
     }
     return status;
 }
+
+// #1790: immediate-mode wrappers for the vx_nodes.h functions added above --
+// same create/verify/process/release pattern as every other vxu* function in
+// this file. The underlying Node has no registered kernel for all of these
+// except vxMin/vxMax/vxSelect-style simple kernels (none of which exist
+// either, see vx_nodes.cpp), so vx*Node() returns NULL and these fall
+// through to a clean VX_FAILURE.
+
+VX_API_ENTRY vx_status VX_API_CALL vxuMin(vx_context context, vx_image in1, vx_image in2, vx_image out)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+        vxuSetGraphAffinityDefault(graph);
+        vx_node node = vxMinNode(graph, in1, in2, out);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+                status = vxProcessGraph(graph);
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}
+
+VX_API_ENTRY vx_status VX_API_CALL vxuMax(vx_context context, vx_image in1, vx_image in2, vx_image out)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+        vxuSetGraphAffinityDefault(graph);
+        vx_node node = vxMaxNode(graph, in1, in2, out);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+                status = vxProcessGraph(graph);
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}
+
+VX_API_ENTRY vx_status VX_API_CALL vxuNonMaxSuppression(vx_context context, vx_image input, vx_image mask, vx_int32 win_size, vx_image output)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+        vxuSetGraphAffinityDefault(graph);
+        vx_node node = vxNonMaxSuppressionNode(graph, input, mask, win_size, output);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+                status = vxProcessGraph(graph);
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}
+
+VX_API_ENTRY vx_status VX_API_CALL vxuHOGCells(vx_context context, vx_image input, vx_int32 cell_width, vx_int32 cell_height, vx_int32 num_bins, vx_tensor magnitudes, vx_tensor bins)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+        vxuSetGraphAffinityDefault(graph);
+        vx_node node = vxHOGCellsNode(graph, input, cell_width, cell_height, num_bins, magnitudes, bins);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+                status = vxProcessGraph(graph);
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}
+
+VX_API_ENTRY vx_status VX_API_CALL vxuHOGFeatures(vx_context context, vx_image input, vx_tensor magnitudes, vx_tensor bins, const vx_hog_t *params, vx_size hog_param_size, vx_tensor features)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+        vxuSetGraphAffinityDefault(graph);
+        vx_node node = vxHOGFeaturesNode(graph, input, magnitudes, bins, params, hog_param_size, features);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+                status = vxProcessGraph(graph);
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}
+
+VX_API_ENTRY vx_status VX_API_CALL vxuHoughLinesP(vx_context context, vx_image input, const vx_hough_lines_p_t *params, vx_array lines_array, vx_scalar num_lines)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+        vxuSetGraphAffinityDefault(graph);
+        vx_node node = vxHoughLinesPNode(graph, input, params, lines_array, num_lines);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+                status = vxProcessGraph(graph);
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}
+
+VX_API_ENTRY vx_status VX_API_CALL vxuLBP(vx_context context, vx_image in, vx_enum format, vx_int8 kernel_size, vx_image out)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+        vxuSetGraphAffinityDefault(graph);
+        vx_node node = vxLBPNode(graph, in, format, kernel_size, out);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+                status = vxProcessGraph(graph);
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}
+
+VX_API_ENTRY vx_status VX_API_CALL vxuMatchTemplate(vx_context context, vx_image src, vx_image templateImage, vx_enum matchingMethod, vx_image output)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+        vxuSetGraphAffinityDefault(graph);
+        vx_node node = vxMatchTemplateNode(graph, src, templateImage, matchingMethod, output);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+                status = vxProcessGraph(graph);
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}
+
+VX_API_ENTRY vx_status VX_API_CALL vxuBilateralFilter(vx_context context, vx_tensor src, vx_int32 diameter, vx_float32 sigmaSpace, vx_float32 sigmaValues, vx_tensor dst)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+        vxuSetGraphAffinityDefault(graph);
+        vx_node node = vxBilateralFilterNode(graph, src, diameter, sigmaSpace, sigmaValues, dst);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+                status = vxProcessGraph(graph);
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}
+
+VX_API_ENTRY vx_status VX_API_CALL vxuTensorMultiply(vx_context context, vx_tensor input1, vx_tensor input2, vx_scalar scale, vx_enum overflow_policy,
+        vx_enum rounding_policy, vx_tensor output)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+        vxuSetGraphAffinityDefault(graph);
+        vx_node node = vxTensorMultiplyNode(graph, input1, input2, scale, overflow_policy, rounding_policy, output);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+                status = vxProcessGraph(graph);
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}
+
+VX_API_ENTRY vx_status VX_API_CALL vxuTensorAdd(vx_context context, vx_tensor input1, vx_tensor input2, vx_enum policy, vx_tensor output)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+        vxuSetGraphAffinityDefault(graph);
+        vx_node node = vxTensorAddNode(graph, input1, input2, policy, output);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+                status = vxProcessGraph(graph);
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}
+
+VX_API_ENTRY vx_status VX_API_CALL vxuTensorSubtract(vx_context context, vx_tensor input1, vx_tensor input2, vx_enum policy, vx_tensor output)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+        vxuSetGraphAffinityDefault(graph);
+        vx_node node = vxTensorSubtractNode(graph, input1, input2, policy, output);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+                status = vxProcessGraph(graph);
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}
+
+VX_API_ENTRY vx_status VX_API_CALL vxuTensorTableLookup(vx_context context, vx_tensor input1, vx_lut lut, vx_tensor output)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+        vxuSetGraphAffinityDefault(graph);
+        vx_node node = vxTensorTableLookupNode(graph, input1, lut, output);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+                status = vxProcessGraph(graph);
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}
+
+VX_API_ENTRY vx_status VX_API_CALL vxuTensorTranspose(vx_context context, vx_tensor input, vx_tensor output, vx_size dimension1, vx_size dimension2)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+        vxuSetGraphAffinityDefault(graph);
+        vx_node node = vxTensorTransposeNode(graph, input, output, dimension1, dimension2);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+                status = vxProcessGraph(graph);
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}
+
+VX_API_ENTRY vx_status VX_API_CALL vxuTensorConvertDepth(vx_context context, vx_tensor input, vx_enum policy, vx_scalar norm, vx_scalar offset, vx_tensor output)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+        vxuSetGraphAffinityDefault(graph);
+        vx_node node = vxTensorConvertDepthNode(graph, input, policy, norm, offset, output);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+                status = vxProcessGraph(graph);
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}
+
+VX_API_ENTRY vx_status VX_API_CALL vxuTensorMatrixMultiply(vx_context context, vx_tensor input1, vx_tensor input2, vx_tensor input3,
+    const vx_tensor_matrix_multiply_params_t *matrix_multiply_params, vx_tensor output)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+        vxuSetGraphAffinityDefault(graph);
+        vx_node node = vxTensorMatrixMultiplyNode(graph, input1, input2, input3, matrix_multiply_params, output);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+                status = vxProcessGraph(graph);
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}

@@ -166,6 +166,18 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetGraphScheduleConfig(
     return status;
 }
 
+// #1790: declared in vx_khr_pipelining.h but never implemented in either
+// build configuration. There is no per-graph-parameter config state tracked
+// anywhere in AgoGraphPipeliningState to report, so this fails cleanly
+// rather than fabricating data.
+VX_API_ENTRY vx_status VX_API_CALL vxGetGraphParameterConfig(
+    vx_graph graph,
+    vx_uint32 num_params,
+    vx_graph_parameter_config_t parameter_config[])
+{
+    return VX_ERROR_NOT_SUPPORTED;
+}
+
 VX_API_ENTRY vx_status VX_API_CALL vxGetGraphParameterRefsList(
     vx_graph graph,
     vx_uint32 param,
@@ -646,6 +658,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetGraphScheduleConfig(
     vx_enum graph_schedule_mode,
     vx_uint32 graph_parameters_list_size,
     const vx_graph_parameter_queue_params_t graph_parameters_queue_params_list[])
+{
+    return VX_ERROR_NOT_SUPPORTED;
+}
+VX_API_ENTRY vx_status VX_API_CALL vxGetGraphParameterConfig(
+    vx_graph graph,
+    vx_uint32 num_params,
+    vx_graph_parameter_config_t parameter_config[])
 {
     return VX_ERROR_NOT_SUPPORTED;
 }

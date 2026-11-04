@@ -2790,6 +2790,31 @@ int HafCpu_ScaleImage_U8_U8_Area
 		vx_uint32            srcImageStrideInBytes,
 		ago_scale_matrix_t * matrix
 	);
+int HafCpu_ScaleImage_U8_U8_Area_Replicate
+	(
+		vx_uint32            dstWidth,
+		vx_uint32            dstHeight,
+		vx_uint8           * pDstImage,
+		vx_uint32            dstImageStrideInBytes,
+		vx_uint32            srcWidth,
+		vx_uint32            srcHeight,
+		vx_uint8           * pSrcImage,
+		vx_uint32            srcImageStrideInBytes,
+		ago_scale_matrix_t * matrix
+	);
+int HafCpu_ScaleImage_U8_U8_Area_Constant
+	(
+		vx_uint32            dstWidth,
+		vx_uint32            dstHeight,
+		vx_uint8           * pDstImage,
+		vx_uint32            dstImageStrideInBytes,
+		vx_uint32            srcWidth,
+		vx_uint32            srcHeight,
+		vx_uint8           * pSrcImage,
+		vx_uint32            srcImageStrideInBytes,
+		ago_scale_matrix_t * matrix,
+		vx_uint8             border
+	);
 int HafCpu_OpticalFlowPyrLK_XY_XY_Generic
 (
 	vx_keypoint_t      newKeyPoint[],

@@ -21265,6 +21265,115 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
     return status;
 }
 
+// #1827: AREA interpolation with VX_BORDER_MODE_REPLICATE/VX_BORDER_MODE_CONSTANT
+// previously routed to the plain agoKernel_ScaleImage_U8_U8_Area above, silently
+// ignoring the requested border mode. HafCpu_ScaleImage_U8_U8_Area_Replicate/
+// _Constant already existed but were never registered as real kernels; wire
+// them in here (CPU-only -- there is no HIP/OpenCL implementation for either,
+// unlike the plain AREA kernel, so query_target_support only claims CPU).
+int agoKernel_ScaleImage_U8_U8_Area_Replicate(AgoNode * node, AgoKernelCommand cmd)
+{
+    vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+    if (cmd == ago_kernel_cmd_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        if (HafCpu_ScaleImage_U8_U8_Area_Replicate(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes, (AgoConfigScaleMatrix *)node->localDataPtr))
+        {
+            status = VX_FAILURE;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_validate) {
+        status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_U8);
+        if (!status) {
+            vx_meta_format meta;
+            meta = &node->metaList[0];
+            meta->data.u.img.width = node->paramList[0]->u.img.width;
+            meta->data.u.img.height = node->paramList[0]->u.img.height;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_initialize) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        int alignedWidth = ((oImg->u.img.width + 15) & ~15) + ((iImg->u.img.width + 15) & ~15);
+        node->localDataSize = sizeof(AgoConfigScaleMatrix) + alignedWidth * 2 + 16;
+        node->localDataPtr = (vx_uint8 *)agoAllocMemory(node->localDataSize);
+        if (!node->localDataPtr) return VX_ERROR_NO_MEMORY;
+        // compute scale matrix from the input and output image sizes
+        AgoConfigScaleMatrix * scalemat = (AgoConfigScaleMatrix *)node->localDataPtr;
+        scalemat->xscale = (vx_float32)((vx_float64)iImg->u.img.width / (vx_float64)oImg->u.img.width);
+        scalemat->yscale = (vx_float32)((vx_float64)iImg->u.img.height / (vx_float64)oImg->u.img.height);
+        scalemat->xoffset = -0.5f;
+        scalemat->yoffset = -0.5f;
+    }
+    else if (cmd == ago_kernel_cmd_shutdown) {
+        status = VX_SUCCESS;
+        if (node->localDataPtr) {
+            agoReleaseMemory(node->localDataPtr);
+            node->localDataPtr = nullptr;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = AGO_KERNEL_FLAG_DEVICE_CPU;
+        status = VX_SUCCESS;
+    }
+    return status;
+}
+
+int agoKernel_ScaleImage_U8_U8_Area_Constant(AgoNode * node, AgoKernelCommand cmd)
+{
+    vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+    if (cmd == ago_kernel_cmd_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        AgoData * iBorder = node->paramList[2];
+        if (HafCpu_ScaleImage_U8_U8_Area_Constant(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
+            iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes, (AgoConfigScaleMatrix *)node->localDataPtr, iBorder->u.scalar.u.u))
+        {
+            status = VX_FAILURE;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_validate) {
+        status = ValidateArguments_Img_1OUT_1IN_S(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_U8, VX_TYPE_UINT8);
+        if (!status) {
+            vx_meta_format meta;
+            meta = &node->metaList[0];
+            meta->data.u.img.width = node->paramList[0]->u.img.width;
+            meta->data.u.img.height = node->paramList[0]->u.img.height;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_initialize) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        int alignedWidth = ((oImg->u.img.width + 15) & ~15) + ((iImg->u.img.width + 15) & ~15);
+        node->localDataSize = sizeof(AgoConfigScaleMatrix) + alignedWidth * 2 + 16;
+        node->localDataPtr = (vx_uint8 *)agoAllocMemory(node->localDataSize);
+        if (!node->localDataPtr) return VX_ERROR_NO_MEMORY;
+        // compute scale matrix from the input and output image sizes
+        AgoConfigScaleMatrix * scalemat = (AgoConfigScaleMatrix *)node->localDataPtr;
+        scalemat->xscale = (vx_float32)((vx_float64)iImg->u.img.width / (vx_float64)oImg->u.img.width);
+        scalemat->yscale = (vx_float32)((vx_float64)iImg->u.img.height / (vx_float64)oImg->u.img.height);
+        scalemat->xoffset = -0.5f;
+        scalemat->yoffset = -0.5f;
+    }
+    else if (cmd == ago_kernel_cmd_shutdown) {
+        status = VX_SUCCESS;
+        if (node->localDataPtr) {
+            agoReleaseMemory(node->localDataPtr);
+            node->localDataPtr = nullptr;
+        }
+    }
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = AGO_KERNEL_FLAG_DEVICE_CPU;
+        status = VX_SUCCESS;
+    }
+    return status;
+}
+
 int agoKernel_OpticalFlowPyrLK_XY_XY(AgoNode * node, AgoKernelCommand cmd)
 {
     vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;

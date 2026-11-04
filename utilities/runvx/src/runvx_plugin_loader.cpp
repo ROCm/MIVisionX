@@ -100,37 +100,6 @@ char * RunVxGetPluginLibDirectory()
 #endif
 }
 
-char * RunVxGetPluginDirectory()
-{
-#if _WIN32
-    HMODULE hModule = nullptr;
-    if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-                            (LPCSTR)&RunVxGetPluginDirectory, &hModule)) {
-        return nullptr;
-    }
-    char exePath[MAX_PATH];
-    DWORD len = GetModuleFileNameA(hModule, exePath, MAX_PATH);
-    if (len == 0 || len >= MAX_PATH) return nullptr;
-    char * lastSlash = strrchr(exePath, '\\');
-    if (lastSlash) *lastSlash = '\0';
-    size_t pathLen = strlen(exePath) + 1 + strlen("..\\share\\mivisionx\\runvx_plugins") + 1;
-    char * dir = (char *)malloc(pathLen);
-    if (dir) snprintf(dir, pathLen, "%s\\..\\share\\mivisionx\\runvx_plugins", exePath);
-    return dir;
-#else
-    char exePath[PATH_MAX];
-    ssize_t len = readlink("/proc/self/exe", exePath, PATH_MAX - 1);
-    if (len <= 0 || len >= PATH_MAX) return nullptr;
-    exePath[len] = '\0';
-    char * lastSlash = strrchr(exePath, '/');
-    if (lastSlash) *lastSlash = '\0';
-    size_t pathLen = strlen(exePath) + 1 + strlen("../share/mivisionx/runvx_plugins") + 1;
-    char * dir = (char *)malloc(pathLen);
-    if (dir) snprintf(dir, pathLen, "%s/../share/mivisionx/runvx_plugins", exePath);
-    return dir;
-#endif
-}
-
 static bool RunVxTryLoadPlugin(const char * dir, const char * name,
                                const char * factoryName,
                                void ** outHandle, void ** outFactory)
@@ -217,27 +186,57 @@ static bool RunVxSearchPlugin(const char * pluginName, const char * factoryName,
 
     // 4. Build-tree / developer fallback: the runvx_plugins directory next to
     //    the directory containing the runvx executable (common in build trees).
-#if !_WIN32
-    char exePath[PATH_MAX];
-    ssize_t len = readlink("/proc/self/exe", exePath, PATH_MAX - 1);
-    if (len > 0 && len < PATH_MAX) {
-        exePath[len] = '\0';
-        char * lastSlash = strrchr(exePath, '/');
-        if (lastSlash) *lastSlash = '\0';
-        // try sibling of the binary directory
-        size_t buildDirLen = strlen(exePath) + 1 + strlen("../runvx_plugins") + 1;
-        char * buildDir = (char *)malloc(buildDirLen);
-        if (buildDir) {
-            snprintf(buildDir, buildDirLen, "%s/../runvx_plugins", exePath);
-            if (RunVxTryLoadPlugin(buildDir, pluginName, factoryName, outHandle, outFactory)) {
+#if _WIN32
+    {
+        HMODULE hModule = nullptr;
+        if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                               (LPCSTR)&RunVxSearchPlugin, &hModule)) {
+            char exePath[MAX_PATH];
+            DWORD len = GetModuleFileNameA(hModule, exePath, MAX_PATH);
+            if (len > 0 && len < MAX_PATH) {
+                char * lastSlash = strrchr(exePath, '\\');
+                if (lastSlash) *lastSlash = '\0';
+                // try sibling of the binary directory: <exe_dir>\..\runvx_plugins
+                size_t buildDirLen = strlen(exePath) + 1 + strlen("..\\runvx_plugins") + 1;
+                char * buildDir = (char *)malloc(buildDirLen);
+                if (buildDir) {
+                    snprintf(buildDir, buildDirLen, "%s\\..\\runvx_plugins", exePath);
+                    if (RunVxTryLoadPlugin(buildDir, pluginName, factoryName, outHandle, outFactory)) {
+                        free(buildDir);
+                        return true;
+                    }
+                    free(buildDir);
+                }
+                // also try the binary directory itself
+                if (RunVxTryLoadPlugin(exePath, pluginName, factoryName, outHandle, outFactory)) {
+                    return true;
+                }
+            }
+        }
+    }
+#else
+    {
+        char exePath[PATH_MAX];
+        ssize_t len = readlink("/proc/self/exe", exePath, PATH_MAX - 1);
+        if (len > 0 && len < PATH_MAX) {
+            exePath[len] = '\0';
+            char * lastSlash = strrchr(exePath, '/');
+            if (lastSlash) *lastSlash = '\0';
+            // try sibling of the binary directory: <exe_dir>/../runvx_plugins
+            size_t buildDirLen = strlen(exePath) + 1 + strlen("../runvx_plugins") + 1;
+            char * buildDir = (char *)malloc(buildDirLen);
+            if (buildDir) {
+                snprintf(buildDir, buildDirLen, "%s/../runvx_plugins", exePath);
+                if (RunVxTryLoadPlugin(buildDir, pluginName, factoryName, outHandle, outFactory)) {
+                    free(buildDir);
+                    return true;
+                }
                 free(buildDir);
+            }
+            // also try the binary directory itself
+            if (RunVxTryLoadPlugin(exePath, pluginName, factoryName, outHandle, outFactory)) {
                 return true;
             }
-            free(buildDir);
-        }
-        // also try the binary directory itself
-        if (RunVxTryLoadPlugin(exePath, pluginName, factoryName, outHandle, outFactory)) {
-            return true;
         }
     }
 #endif

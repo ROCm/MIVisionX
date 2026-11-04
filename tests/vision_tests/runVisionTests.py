@@ -192,7 +192,7 @@ openvxNodes = [
     ('ChannelExtract_U8_U16_Pos0',                'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + \
      ',YUYV !CHANNEL_Y image:' + str(width) + ',' + str(height) + ',U008'),
     ('ChannelExtract_U8_U16_Pos1',                'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + \
-     ',YUYV !CHANNEL_Y image:' + str(width) + ',' + str(height) + ',U008'),
+     ',UYVY !CHANNEL_Y image:' + str(width) + ',' + str(height) + ',U008'),
     ('ChannelExtract_U8_U24_Pos0',                'org.khronos.openvx.channel_extract uniform-image:' + \
      str(width) + ',' + str(height) + ',RGB2,0xaabbcc !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
     ('ChannelExtract_U8_U24_Pos1',                'org.khronos.openvx.channel_extract uniform-image:' + \
@@ -208,24 +208,25 @@ openvxNodes = [
     ('ChannelExtract_U8_U32_Pos3_YUYV',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
      ',' + str(height) + ',YUYV,0xaabbcc !CHANNEL_V image:' + str(widthDiv2) + ',' + str(height) + ',U008'),
     ('ChannelExtract_U8_U32_Pos0_RGBX',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
-     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
+     ',' + str(height) + ',RGBX,0xaabbccdd !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
     ('ChannelExtract_U8_U32_Pos1_RGBX',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
-     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_G image:' + str(width) + ',' + str(height) + ',U008'),
+     ',' + str(height) + ',RGBX,0xaabbccdd !CHANNEL_G image:' + str(width) + ',' + str(height) + ',U008'),
     ('ChannelExtract_U8_U32_Pos2_RGBX',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
-     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_B image:' + str(width) + ',' + str(height) + ',U008'),
+     ',' + str(height) + ',RGBX,0xaabbccdd !CHANNEL_B image:' + str(width) + ',' + str(height) + ',U008'),
     ('ChannelExtract_U8_U32_Pos3_RGBX',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
-     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_A image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8U8U8_U24',                 'org.khronos.openvx.channel_extract uniform-image:' + \
-     str(width) + ',' + str(height) + ',RGB2,0xaabbcc !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8U8U8_U32',                 'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
-     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8U8U8U8_U32',               'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
-     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
+     ',' + str(height) + ',RGBX,0xaabbccdd !CHANNEL_A image:' + str(width) + ',' + str(height) + ',U008'),
+    # ChannelExtract_U8U8U8_U24, ChannelExtract_U8U8U8_U32 and ChannelExtract_U8U8U8U8_U32 are
+    # removed here: they need several channel_extract nodes reading one shared input image,
+    # which a single runvx "node <format>" command cannot express, and as written they
+    # duplicated other single-channel cases above instead of exercising the 3/4-channel
+    # kernels (#1792). Covered by tests/amd_openvx_gdfs/color/ChannelExtract_U8U8U8_U24.gdf,
+    # ChannelExtract_U8U8U8_U32.gdf and ChannelExtract_U8U8U8U8_U32.gdf via
+    # openvx_gdf_tests_CPU/_GPU instead.
     ('ChannelCombine_U32_U8U8U8U8_RGBX',          'org.khronos.openvx.channel_combine uniform-image:' + str(width) + ',' + str(height) + \
      ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb uniform-image:' + str(width) + ',' + str(height) + \
-     ',U008,0xcc uniform-image:' + str(width) + ',' + str(height) + ',U008,0xdd image:' + str(width) + ',' + str(height) + ',RGBA'),
+     ',U008,0xcc uniform-image:' + str(width) + ',' + str(height) + ',U008,0xdd image:' + str(width) + ',' + str(height) + ',RGBX'),
     ('ColorConvert_RGB_RGBX',                     'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',RGBA,0xaabbccdd image:' + str(width) + ',' + str(height) + ',RGB2'),
+     str(width) + ',' + str(height) + ',RGBX,0xaabbccdd image:' + str(width) + ',' + str(height) + ',RGB2'),
     ('ColorConvert_RGB_UYVY',                     'org.khronos.openvx.color_convert uniform-image:' + \
      str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGB2'),
     ('ColorConvert_RGB_YUYV',                     'org.khronos.openvx.color_convert uniform-image:' + \
@@ -237,21 +238,21 @@ openvxNodes = [
     ('ColorConvert_RGB_NV21',                     'org.khronos.openvx.color_convert uniform-image:' + \
      str(width) + ',' + str(height) + ',NV21,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGB2'),
     ('ColorConvert_RGBX_RGB',                     'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+     str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBX'),
     ('ColorConvert_RGBX_UYVY',                    'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+     str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBX'),
     ('ColorConvert_RGBX_YUYV',                    'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',YUYV,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+     str(width) + ',' + str(height) + ',YUYV,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBX'),
     ('ColorConvert_RGBX_IYUV',                    'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',IYUV,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+     str(width) + ',' + str(height) + ',IYUV,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBX'),
     ('ColorConvert_RGBX_NV12',                    'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',NV12,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+     str(width) + ',' + str(height) + ',NV12,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBX'),
     ('ColorConvert_RGBX_NV21',                    'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',NV21,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+     str(width) + ',' + str(height) + ',NV21,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBX'),
     ('ColorConvert_IYUV_RGB',                     'org.khronos.openvx.color_convert uniform-image:' + \
      str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',IYUV'),
     ('ColorConvert_IYUV_RGBX',                    'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',RGBA,0xaabbccdd image:' + str(width) + ',' + str(height) + ',IYUV'),
+     str(width) + ',' + str(height) + ',RGBX,0xaabbccdd image:' + str(width) + ',' + str(height) + ',IYUV'),
     ('FormatConvert_IYUV_UYVY',                   'org.khronos.openvx.color_convert uniform-image:' + \
      str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',IYUV'),
     ('FormatConvert_IYUV_YUYV',                   'org.khronos.openvx.color_convert uniform-image:' + \
@@ -259,7 +260,7 @@ openvxNodes = [
     ('ColorConvert_NV12_RGB',                     'org.khronos.openvx.color_convert uniform-image:' + \
      str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',NV12'),
     ('ColorConvert_NV12_RGBX',                    'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',RGBA,0xaabbccdd image:' + str(width) + ',' + str(height) + ',NV12'),
+     str(width) + ',' + str(height) + ',RGBX,0xaabbccdd image:' + str(width) + ',' + str(height) + ',NV12'),
     ('FormatConvert_NV12_UYVY',                   'org.khronos.openvx.color_convert uniform-image:' + \
      str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',NV12'),
     ('FormatConvert_NV12_YUYV',                   'org.khronos.openvx.color_convert uniform-image:' + \
@@ -267,7 +268,7 @@ openvxNodes = [
     ('ColorConvert_YUV4_RGB',                     'org.khronos.openvx.color_convert uniform-image:' + \
      str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',YUV4'),
     ('ColorConvert_YUV4_RGBX',                    'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',RGBA,0xaabbccdd image:' + str(width) + ',' + str(height) + ',YUV4'),
+     str(width) + ',' + str(height) + ',RGBX,0xaabbccdd image:' + str(width) + ',' + str(height) + ',YUV4'),
     ('FormatConvert_IUV_UV12',                    'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + \
      ',NV12,0xaabbcc image:' + str(width) + ',' + str(height) + ',IYUV'),
     ('FormatConvert_UV12_IUV',                    'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + \
@@ -346,9 +347,9 @@ openvxNodes = [
     # ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !BILINEAR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
     # vision kernels
     ('FastCorners_XY_U8_NoSupression',            'org.khronos.openvx.fast_corners uniform-image:' + str(width) + ',' + str(height) + \
-    ',U008 scalar:FLOAT32,80.0 scalar:BOOL,1 array:KEYPOINT,1000 scalar:SIZE,0'),
-    ('FastCorners_XY_U8_Supression',              'org.khronos.openvx.fast_corners uniform-image:' + str(width) + ',' + str(height) + \
     ',U008 scalar:FLOAT32,80.0 scalar:BOOL,0 array:KEYPOINT,1000 scalar:SIZE,0'),
+    ('FastCorners_XY_U8_Supression',              'org.khronos.openvx.fast_corners uniform-image:' + str(width) + ',' + str(height) + \
+    ',U008 scalar:FLOAT32,80.0 scalar:BOOL,1 array:KEYPOINT,1000 scalar:SIZE,0'),
     ('Canny_3x3_L1Norm',                          'org.khronos.openvx.canny_edge_detector uniform-image:' + str(width) + ',' + str(height) + \
     ',U008,0xab threshold:RANGE,U008,U008:INIT,80,100 scalar:INT32,3 !NORM_L1 image:' + str(width) + ',' + str(height) + ',U008'),
     ('Canny_3x3_L2Norm',                          'org.khronos.openvx.canny_edge_detector uniform-image:' + str(width) + ',' + str(height) + \

@@ -730,20 +730,25 @@ int WriteImageCompressed(vx_image image, vx_rectangle_t * rectFull, const char *
 
     im_format = (int)df_image;
 
-    // write all image planes from vx_image
+    // Compressed image formats (JPEG, PNG, BMP, …) represent the full image as a
+    // single unit. Write plane 0 only — it carries the interleaved/packed pixel data
+    // that the image plugin's encoder expects. Writing additional planes would
+    // overwrite the output file with raw sub-plane data and corrupt the result.
+    IRunVxImagePlugin * plugin = RunVxGetImagePlugin();
+    if (!plugin) {
+        printf("ERROR: this feature requires the runvx image plugin\n");
+        throw - 1;
+    }
     for (vx_uint32 plane = 0; plane < (vx_uint32)num_planes; plane++) {
         vx_imagepatch_addressing_t addr;
         vx_uint8 * src = NULL;
         ERROR_CHECK(vxAccessImagePatch(image, rectFull, plane, &addr, (void **)&src, VX_READ_ONLY));
 
-        IRunVxImagePlugin * plugin = RunVxGetImagePlugin();
-        if (!plugin) {
-            printf("ERROR: this feature requires the runvx image plugin\n");
-            throw - 1;
-        }
-        if (!plugin->WriteCompressed(fileName, im_width, im_height, im_format, src, addr.stride_y)) {
-            printf("ERROR: WriteCompressed(%s) failed\n", fileName);
-            throw - 1;
+        if (plane == 0) {
+            if (!plugin->WriteCompressed(fileName, im_width, im_height, im_format, src, addr.stride_y)) {
+                printf("ERROR: WriteCompressed(%s) failed\n", fileName);
+                throw - 1;
+            }
         }
 
         ERROR_CHECK(vxCommitImagePatch(image, rectFull, plane, &addr, src));

@@ -44,8 +44,4 @@ IRunVxHashPlugin * RunVxGetHashPlugin();
 // The returned buffer must be freed by the caller.
 char * RunVxGetPluginLibDirectory();
 
-// Formatted plugin source directory path next to the runvx executable.
-// The returned buffer must be freed by the caller.
-char * RunVxGetPluginDirectory();
-
 #endif /* __RUNVX_PLUGIN_LOADER_H__ */

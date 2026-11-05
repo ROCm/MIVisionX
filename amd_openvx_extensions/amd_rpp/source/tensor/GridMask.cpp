@@ -30,6 +30,7 @@ struct GridMaskLocalData {
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
     RpptROI *pSrcRoi;
+    RpptROI *pSrcRoiFrames;
     RpptRoiType roiType;
     vxTensorLayout inputLayout;
     vxTensorLayout outputLayout;
@@ -71,12 +72,14 @@ static vx_status VX_CALLBACK refreshGridMask(vx_node node, const vx_reference *p
     if (data->inputLayout == vxTensorLayout::VX_NFHWC || data->inputLayout == vxTensorLayout::VX_NFCHW) {
         const unsigned N = static_cast<unsigned>(data->inputTensorDims[0]);
         const unsigned F = static_cast<unsigned>(data->inputTensorDims[1]); // frames per sample
+        STATUS_ERROR_CHECK(allocRoiFrames(data->deviceType, &data->pSrcRoiFrames, N * F));
         for (int n = N - 1; n >= 0; n--) {
             unsigned base = n * F;
             for (unsigned f = 0; f < F; f++) {
-                data->pSrcRoi[base + f].xywhROI = data->pSrcRoi[n].xywhROI;
+                data->pSrcRoiFrames[base + f].xywhROI = data->pSrcRoi[n].xywhROI;
             }
         }
+        data->pSrcRoi = data->pSrcRoiFrames;
     }
 
     return status;
@@ -218,6 +221,7 @@ static vx_status VX_CALLBACK uninitializeGridMask(vx_node node, const vx_referen
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
+    freeRoiFrames(data->deviceType, data->pSrcRoiFrames);
     delete data;
     return VX_SUCCESS;
 }

@@ -3563,8 +3563,20 @@ int HipExec_FastCorners_XY_U8_NoSupression(hipStream_t stream, vx_uint32 capacit
     vx_float32 strength_threshold) {
     int localThreads_x = 16;
     int localThreads_y = 16;
-    int globalThreads_x = ceil((srcWidth - 4) / 14) * 16;
-    int globalThreads_y = ceil((srcHeight - 4) / 14) * 16;
+    // #1799: (srcWidth - 4) / 14 was integer division, making ceil() a no-op
+    // on an already-truncated value -- for srcWidth/srcHeight <= 17 this
+    // produced 0 global threads and a zero-sized launch grid, which HIP
+    // rejects with "invalid configuration argument". Divide as a double
+    // before ceil, clamp the subtraction so it cannot underflow for very
+    // small images, and clamp the final thread counts to at least one
+    // workgroup so images with srcWidth/srcHeight <= 4 (where diffW/diffH are
+    // legitimately 0) still launch -- Hip_FastCorners_XY_U8_NoSupression
+    // bounds-checks xoffset/yoffset per-thread before any memory access, so
+    // the extra idle threads in that minimum block are safe.
+    int diffW = ((int)srcWidth > 4) ? ((int)srcWidth - 4) : 0;
+    int diffH = ((int)srcHeight > 4) ? ((int)srcHeight - 4) : 0;
+    int globalThreads_x = max((int)ceil(diffW / 14.0) * 16, localThreads_x);
+    int globalThreads_y = max((int)ceil(diffH / 14.0) * 16, localThreads_y);
 
     hipLaunchKernelGGL(Hip_FastCorners_XY_U8_NoSupression, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, capacityOfDstCorner, (char *) pDstCorner, cornerBufferOffset,
@@ -3750,8 +3762,14 @@ int HipExec_FastCorners_XY_U8_Supression(hipStream_t stream, vx_uint32 capacityO
     vx_uint32 srcWidth, vx_uint32 srcHeight, const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes, vx_float32 strength_threshold) {
     int localThreads_x = 16;
     int localThreads_y = 16;
-    int globalThreads_x = ceil((srcWidth - 4) / 14) * 16;
-    int globalThreads_y = ceil((srcHeight - 4) / 14) * 16;
+    // #1799: see HipExec_FastCorners_XY_U8_NoSupression -- integer division
+    // before ceil() produced a zero-sized launch grid for srcWidth/srcHeight
+    // <= 17, and diffW/diffH are legitimately 0 for srcWidth/srcHeight <= 4,
+    // so clamp the final thread counts to at least one workgroup.
+    int diffW = ((int)srcWidth > 4) ? ((int)srcWidth - 4) : 0;
+    int diffH = ((int)srcHeight > 4) ? ((int)srcHeight - 4) : 0;
+    int globalThreads_x = max((int)ceil(diffW / 14.0) * 16, localThreads_x);
+    int globalThreads_y = max((int)ceil(diffH / 14.0) * 16, localThreads_y);
 
     hipLaunchKernelGGL(Hip_FastCorners_XY_U8_Supression, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, capacityOfDstCorner, (char *) pDstCorner, cornerBufferOffset,

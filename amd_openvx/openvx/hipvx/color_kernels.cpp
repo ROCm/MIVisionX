@@ -1347,7 +1347,10 @@ Hip_ColorConvert_RGB_UYVY(uint dstWidth, uint dstHeight,
 
     if ((x < dstWidthComp) && (y < dstHeightComp)) {
         uint L0Idx = y * srcImageStrideInBytesComp + (x << 4);
-        uint L1Idx = L0Idx + srcImageStrideInBytes;
+        // the second source row does not exist when dstHeight is odd (#1828); clamp
+        // rather than read past the end -- the loaded value is unused in that case
+        // since the corresponding store is already guarded (#1778/#1822).
+        uint L1Idx = L0Idx + (((uint)(2 * y + 1) < dstHeight) ? srcImageStrideInBytes : 0);
         uint4 L0 = *((uint4 *)(&pSrcImage[L0Idx]));
         uint4 L1 = *((uint4 *)(&pSrcImage[L1Idx]));
 
@@ -1589,7 +1592,10 @@ Hip_ColorConvert_RGB_YUYV(uint dstWidth, uint dstHeight,
 
     if ((x < dstWidthComp) && (y < dstHeightComp)) {
         uint L0Idx = y * srcImageStrideInBytesComp + (x << 4);
-        uint L1Idx = L0Idx + srcImageStrideInBytes;
+        // the second source row does not exist when dstHeight is odd (#1828); clamp
+        // rather than read past the end -- the loaded value is unused in that case
+        // since the corresponding store is already guarded (#1778/#1822).
+        uint L1Idx = L0Idx + (((uint)(2 * y + 1) < dstHeight) ? srcImageStrideInBytes : 0);
         uint4 L0 = *((uint4 *)(&pSrcImage[L0Idx]));
         uint4 L1 = *((uint4 *)(&pSrcImage[L1Idx]));
 
@@ -1884,7 +1890,10 @@ Hip_ColorConvert_RGBX_UYVY(uint dstWidth, uint dstHeight,
 
     if ((x < dstWidthComp) && (y < dstHeightComp)) {
         uint L0Idx = y * srcImageStrideInBytesComp + (x << 4);
-        uint L1Idx = L0Idx + srcImageStrideInBytes;
+        // the second source row does not exist when dstHeight is odd (#1828); clamp
+        // rather than read past the end -- the loaded value is unused in that case
+        // since the corresponding store is already guarded (#1778/#1822).
+        uint L1Idx = L0Idx + (((uint)(2 * y + 1) < dstHeight) ? srcImageStrideInBytes : 0);
         uint4 L0 = *((uint4 *)(&pSrcImage[L0Idx]));
         uint4 L1 = *((uint4 *)(&pSrcImage[L1Idx]));
 
@@ -2136,7 +2145,10 @@ Hip_ColorConvert_RGBX_YUYV(uint dstWidth, uint dstHeight,
 
     if ((x < dstWidthComp) && (y < dstHeightComp)) {
         uint L0Idx = y * srcImageStrideInBytesComp + (x << 4);
-        uint L1Idx = L0Idx + srcImageStrideInBytes;
+        // the second source row does not exist when dstHeight is odd (#1828); clamp
+        // rather than read past the end -- the loaded value is unused in that case
+        // since the corresponding store is already guarded (#1778/#1822).
+        uint L1Idx = L0Idx + (((uint)(2 * y + 1) < dstHeight) ? srcImageStrideInBytes : 0);
         uint4 L0 = *((uint4 *)(&pSrcImage[L0Idx]));
         uint4 L1 = *((uint4 *)(&pSrcImage[L1Idx]));
 

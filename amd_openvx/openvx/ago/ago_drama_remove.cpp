@@ -1273,13 +1273,16 @@ int agoOptimizeDramaRemoveNodeMerge(AgoGraph * agraph)
 		AgoKernel * kernel = node->akernel;
 		if (kernel->id == VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_NEAREST || kernel->id == VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_BILINEAR ||
 			kernel->id == VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_BILINEAR_REPLICATE || kernel->id == VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_BILINEAR_CONSTANT ||
-			kernel->id == VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA)
+			kernel->id == VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA ||
+			kernel->id == VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA_REPLICATE || kernel->id == VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA_CONSTANT)
 		{
 			AgoNode * childnode = NULL;
 			AgoData * oImg = node->paramList[0];
 			AgoData * iImg = node->paramList[1];
+			bool isAreaKernel = (kernel->id == VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA || kernel->id == VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA_REPLICATE ||
+				kernel->id == VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA_CONSTANT);
 			// 1:1 scale image is same as channel copy
-			vx_float32 offset = (kernel->id == VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA) ? -0.5f : 0.0f;
+			vx_float32 offset = isAreaKernel ? -0.5f : 0.0f;
 			if ((iImg->u.img.width == oImg->u.img.width) && (iImg->u.img.height == oImg->u.img.height)) {
 				// replace the node with VX_KERNEL_AMD_CHANNEL_COPY_U8_U8
 				childnode = agoCreateNode(agraph, VX_KERNEL_AMD_CHANNEL_COPY_U8_U8);
@@ -1287,7 +1290,11 @@ int agoOptimizeDramaRemoveNodeMerge(AgoGraph * agraph)
 				childnode->paramList[1] = iImg;
 			}
 			// approaximate AREA interpolation mode with scale factors not greater than 1.0f with BILINEAR
-			else if (kernel->id == VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA && !((iImg->u.img.width > oImg->u.img.width) && (iImg->u.img.height > oImg->u.img.height))) {
+			// (#1827: this also applies to the AREA_REPLICATE/AREA_CONSTANT kernels -- their generic
+			// averaging math is only valid for true minification, same as the plain AREA kernel; for
+			// magnification approximate with NEAREST, matching this kernel's pre-existing behavior.
+			// Border value has no effect on NEAREST, since it never samples outside the source image.)
+			else if (isAreaKernel && !((iImg->u.img.width > oImg->u.img.width) && (iImg->u.img.height > oImg->u.img.height))) {
 				// replace the node with VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_NEAREST
 				childnode = agoCreateNode(agraph, VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_NEAREST);
 				childnode->paramList[0] = oImg;

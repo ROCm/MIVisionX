@@ -1,0 +1,36 @@
+# Proposed pipelining GDF for the "heavy" C++ sample preset.
+#
+# Intended runvx invocation (once issue #1734 is implemented):
+#   runvx -frames:120 file pipelining_gaussian3x3.gdf
+#
+# Graph:
+#   RGB input -> ColorConvert -> IYUV -> ChannelExtract(Y) -> Gaussian3x3 -> U8 output
+
+set verbose off
+set dump-profile off
+
+data input_0  = image:3840,2160,RGB2
+data input_1  = image:3840,2160,RGB2
+data input_2  = image:3840,2160,RGB2
+data input_3  = image:3840,2160,RGB2
+
+data output_0 = image:3840,2160,U008
+data output_1 = image:3840,2160,U008
+data output_2 = image:3840,2160,U008
+data output_3 = image:3840,2160,U008
+
+data yuv  = virtual-image:3840,2160,IYUV
+data luma = virtual-image:3840,2160,U008
+
+node org.khronos.openvx.color_convert input_0 yuv
+node org.khronos.openvx.channel_extract yuv !VX_CHANNEL_Y luma
+node org.khronos.openvx.gaussian_3x3 luma output_0
+
+graph parameter input_0 node org.khronos.openvx.color_convert param 0
+graph parameter output_0 node org.khronos.openvx.gaussian_3x3 param 1
+
+graph schedule queue-auto depth 4
+graph enqueue input  input_0 input_1 input_2 input_3
+graph enqueue output output_0 output_1 output_2 output_3
+
+graph launch-pipelined frames 120

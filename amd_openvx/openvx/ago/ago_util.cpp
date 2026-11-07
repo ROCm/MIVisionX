@@ -529,6 +529,9 @@ void agoReplaceDataInGraph(AgoGraph * agraph, AgoData * dataFind, AgoData * data
             adata->u.img.roiMasterImage = dataReplace;
             adata->import_type = dataReplace->import_type;
             dataReplace->roiDepList.push_back(adata);
+            // the ROI's master reference moves to the replacement
+            if (dataFind->ref.internal_count > 0) dataFind->ref.internal_count--;
+            dataReplace->ref.internal_count++;
         }
     }
 
@@ -1271,6 +1274,8 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->u.img.roiMasterImage = dataMaster;
         data->import_type = dataMaster->import_type;
         dataMaster->roiDepList.push_back(data);
+        // the ROI holds its master until agoReleaseData drops this reference
+        dataMaster->ref.internal_count++;
         data->u.img.isROI = vx_true_e;
         data->u.img.rect_roi = rect;
         data->u.img.width = data->u.img.rect_roi.end_x - data->u.img.rect_roi.start_x;
@@ -1290,6 +1295,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
                 data->children[child]->u.img.roiMasterImage = dataMaster->children[child];
                 data->children[child]->import_type = dataMaster->children[child]->import_type;
                 dataMaster->children[child]->roiDepList.push_back(data->children[child]);
+                dataMaster->children[child]->ref.internal_count++;
                 data->children[child]->u.img.isROI = vx_true_e;
                 data->children[child]->u.img.rect_roi = rect;
                 data->children[child]->parent = data;
@@ -1342,6 +1348,11 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         if (!strncmp(scale, "HALF", 4)) data->u.pyr.scale = VX_SCALE_PYRAMID_HALF;
         else if (!strncmp(scale, "ORB", 3)) data->u.pyr.scale = VX_SCALE_PYRAMID_ORB;
         else data->u.pyr.scale = (vx_float32)atof(scale);
+        // reject level counts that don't fit vx_uint32: truncation under-allocates children[] vs the 64-bit fill loop (heap OOB write). validate before the deferred-config early return so virtual pyramids are rejected at creation too
+        if (data->u.pyr.levels < 1 || data->u.pyr.levels != (vx_size)(vx_uint32)data->u.pyr.levels) {
+            agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: invalid pyramid levels " VX_FMT_SIZE "\n", data->u.pyr.levels);
+            return -1;
+        }
         if (data->isVirtual && !data->isNotFullyConfigured && (data->u.pyr.format == VX_DF_IMAGE_VIRT || data->u.pyr.width == 0 || data->u.pyr.height == 0)) {
             // incomplete information needs to process this again later
             data->isNotFullyConfigured = vx_true_e;
@@ -2921,14 +2932,21 @@ int agoReleaseData(AgoData * data, bool isForExternalUse)
             // if this is an image ROI (incl. an image aliasing a tensor via
             // vxCreateImageObjectArrayFromTensor), unlink it from its master's roiDepList so a
             // later handle swap on the master does not dereference this freed entry.
+            // the master reference is dropped after agoRemoveData, once `data` is gone
+            AgoData * roiMaster = nullptr;
             if (data->ref.type == VX_TYPE_IMAGE && data->u.img.roiMasterImage) {
-                data->u.img.roiMasterImage->roiDepList.remove(data);
+                roiMaster = data->u.img.roiMasterImage;
+                roiMaster->roiDepList.remove(data);
+                data->u.img.roiMasterImage = nullptr;
             }
 
             // remove the data from graph
             if (agoRemoveData(&graph->dataList, data, nullptr)) {
                 agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoReleaseData: agoRemoveData(context,%s) failed\n", data->name.c_str());
                 return -1;
+            }
+            if (roiMaster) {
+                agoReleaseData(roiMaster, false);
             }
         }
     }
@@ -2977,14 +2995,21 @@ int agoReleaseData(AgoData * data, bool isForExternalUse)
             // if this is an image ROI (incl. an image aliasing a tensor via
             // vxCreateImageObjectArrayFromTensor), unlink it from its master's roiDepList so a
             // later handle swap on the master does not dereference this freed entry.
+            // the master reference is dropped after agoRemoveData, once `data` is gone
+            AgoData * roiMaster = nullptr;
             if (data->ref.type == VX_TYPE_IMAGE && data->u.img.roiMasterImage) {
-                data->u.img.roiMasterImage->roiDepList.remove(data);
+                roiMaster = data->u.img.roiMasterImage;
+                roiMaster->roiDepList.remove(data);
+                data->u.img.roiMasterImage = nullptr;
             }
 
             // remove the data from context
             if (agoRemoveData(&context->dataList, data, nullptr)) {
                 agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoReleaseData: agoRemoveData(context,%s) failed\n", data->name.c_str());
                 return -1;
+            }
+            if (roiMaster) {
+                agoReleaseData(roiMaster, false);
             }
         }
     }

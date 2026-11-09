@@ -89,7 +89,7 @@ camera a distinct view.
 
 `--compare` runs the same frames through every arrangement and prints one
 table. Everything below was measured on a Radeon RX 7900 XT (gfx1100) with a
-Ryzen 9 7900X, ROCm 7.13, HIP backend, at 1920x1080 with 6 cameras and 8 filter
+Ryzen 9 7900X, ROCm 7.11, HIP backend, at 1920x1080 with 6 cameras and 8 filter
 orientations, 300 frames per mode, queue depth 3.
 
 Decoding each frame as it goes, which is what a run against a video file does:
@@ -102,6 +102,14 @@ Decoding each frame as it goes, which is what a run against a video file does:
   queued  300.7    3.33      1.88      20.60   x capture against the graph
   staged  351.6    2.84      1.77      24.08   x capture and all three stages
 ```
+
+Both tables above show the five modes that carry the pipelining argument: the
+unpipelined `cpu`, `gpu` and `split` baselines and the `queued` and `staged`
+overlaps. `--compare` also runs and prints a `batch` row and a `stream` row;
+they are left out of the tables here to keep the comparison on the
+queued-versus-staged story, and `stream` in particular measures the throughput
+of autonomous re-execution over a single held frame rather than a per-frame run,
+so it is not directly comparable to the rows above.
 
 The `capture` column is the time spent inside the frame source per frame, and
 at this resolution it is comparable to the time the graph takes. A run like
@@ -167,10 +175,14 @@ the queues with `vxScheduleGraph` instead of letting the framework do it,
 `--no-display` for timing runs, `--dump <dir>` to write each lane mask as a
 PNG, and `--live <id>` for a camera instead of a file. `--help` lists the rest.
 
-Streaming mode reports more graph completions than frames supplied. That is
-expected: the framework re-runs the graph as fast as the stages allow, whether
-or not the host has managed to supply a new frame, which is what an always-on
-sensor loop wants.
+Streaming mode holds a single frame and lets the framework re-run the graph on
+it as fast as the stages allow, so it reports many graph completions for the one
+frame supplied. Without queued parameters the host and the framework share one
+set of images, so writing a fresh frame mid-stream would race the next execution
+and tear the buffers; the frame is written once before streaming starts and the
+output read once after it stops. This mode therefore measures the throughput of
+autonomous re-execution, which is what an always-on sensor loop does between new
+frames, rather than producing a per-frame result for each completion.
 
 ## Checking that pipelining did not change the answer
 

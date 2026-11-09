@@ -51,10 +51,13 @@ THE SOFTWARE.
 #include "opencv2/opencv.hpp"
 
 #include <algorithm>
+#include <cerrno>
 #include <chrono>
+#include <climits>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <deque>
 #include <string>
@@ -155,6 +158,7 @@ struct Pipeline
     vx_remap undistort = nullptr;
     vx_matrix groundPlane = nullptr;
     vx_threshold hysteresis = nullptr;
+    vx_image unit = nullptr; // all-ones U8, the second operand of the blend's divide-by-N
     std::vector<vx_convolution> bank;
     vx_node trigger = nullptr;
     std::vector<vx_node> nodes;
@@ -321,6 +325,35 @@ static bool parse_placement(char *text, Config &cfg)
     return true;
 }
 
+// Parse a whole token as an unsigned 32-bit value. atoi casts silently: a
+// negative turns into a huge count (--cameras -1 would ask for billions of
+// allocations) and trailing garbage is dropped, so every numeric option is
+// parsed here instead, rejecting negatives, non-numeric text and overflow.
+static bool parse_u32(const char *text, vx_uint32 &out)
+{
+    if (!text)
+        return false;
+    while (*text == ' ' || *text == '\t')
+        text++;
+    if (*text == '-' || *text == '\0')
+        return false;
+    errno = 0;
+    char *end = nullptr;
+    unsigned long value = strtoul(text, &end, 10);
+    if (end == text || *end != '\0' || errno == ERANGE || value > UINT32_MAX)
+        return false;
+    out = (vx_uint32)value;
+    return true;
+}
+
+static bool parse_u32_arg(const char *name, const char *text, vx_uint32 &out)
+{
+    if (parse_u32(text, out))
+        return true;
+    printf("ERROR: %s expects a non-negative integer, got '%s'\n", name, text ? text : "");
+    return false;
+}
+
 static bool parse_args(int argc, char *argv[], Config &cfg)
 {
     for (int i = 1; i < argc; i++)
@@ -328,18 +361,27 @@ static bool parse_args(int argc, char *argv[], Config &cfg)
         std::string arg = argv[i];
         bool hasValue = (i + 1) < argc;
         if (arg == "--video" && hasValue) cfg.videoPath = argv[++i];
-        else if (arg == "--live" && hasValue) cfg.cameraId = atoi(argv[++i]);
+        else if (arg == "--live" && hasValue)
+        {
+            vx_uint32 id = 0;
+            if (!parse_u32_arg("--live", argv[++i], id) || id > (vx_uint32)INT_MAX)
+            {
+                if (id > (vx_uint32)INT_MAX) printf("ERROR: --live camera id out of range\n");
+                return false;
+            }
+            cfg.cameraId = (int)id;
+        }
         else if (arg == "--compare") cfg.compare = true;
         else if (arg == "--verify") cfg.verify = true;
         else if (arg == "--preload") cfg.preload = true;
         else if (arg == "--no-display") cfg.display = false;
         else if (arg == "--dump" && hasValue) cfg.dumpDir = argv[++i];
-        else if (arg == "--cameras" && hasValue) cfg.cameras = (vx_uint32)atoi(argv[++i]);
-        else if (arg == "--filters" && hasValue) cfg.filters = (vx_uint32)atoi(argv[++i]);
-        else if (arg == "--depth" && hasValue) cfg.depth = (vx_uint32)atoi(argv[++i]);
-        else if (arg == "--frames" && hasValue) cfg.frames = (vx_uint32)atoi(argv[++i]);
-        else if (arg == "--batch" && hasValue) cfg.batch = (vx_uint32)atoi(argv[++i]);
-        else if (arg == "--timeout" && hasValue) cfg.timeoutMs = (vx_uint32)atoi(argv[++i]);
+        else if (arg == "--cameras" && hasValue) { if (!parse_u32_arg("--cameras", argv[++i], cfg.cameras)) return false; }
+        else if (arg == "--filters" && hasValue) { if (!parse_u32_arg("--filters", argv[++i], cfg.filters)) return false; }
+        else if (arg == "--depth" && hasValue) { if (!parse_u32_arg("--depth", argv[++i], cfg.depth)) return false; }
+        else if (arg == "--frames" && hasValue) { if (!parse_u32_arg("--frames", argv[++i], cfg.frames)) return false; }
+        else if (arg == "--batch" && hasValue) { if (!parse_u32_arg("--batch", argv[++i], cfg.batch)) return false; }
+        else if (arg == "--timeout" && hasValue) { if (!parse_u32_arg("--timeout", argv[++i], cfg.timeoutMs)) return false; }
         else if (arg == "--place" && hasValue) { if (!parse_placement(argv[++i], cfg)) return false; cfg.placementGiven = true; }
         else if (arg == "--mode" && hasValue)
         {
@@ -367,9 +409,10 @@ static bool parse_args(int argc, char *argv[], Config &cfg)
         else if (arg == "--canny" && hasValue)
         {
             unsigned lower = 0, upper = 0;
-            if (sscanf(argv[++i], "%u,%u", &lower, &upper) != 2)
+            if (sscanf(argv[++i], "%u,%u", &lower, &upper) != 2 ||
+                lower > 255 || upper > 255 || lower > upper)
             {
-                printf("ERROR: --canny expects <lower>,<upper>\n");
+                printf("ERROR: --canny expects <lower>,<upper> with 0 <= lower <= upper <= 255\n");
                 return false;
             }
             cfg.cannyLower = (vx_uint8)lower;
@@ -396,6 +439,17 @@ static bool parse_args(int argc, char *argv[], Config &cfg)
     if (cfg.videoPath.empty() && cfg.cameraId < 0)
     {
         printf("ERROR: one of --video or --live is required\n");
+        return false;
+    }
+    // compare and verify replay the same frames through every mode by rewinding
+    // the source. A live camera cannot be rewound, so its frames must be
+    // captured into memory first; reject the combination otherwise rather than
+    // silently benchmarking and comparing unrelated frames.
+    if ((cfg.compare || cfg.verify) && cfg.videoPath.empty() && !cfg.preload)
+    {
+        printf("ERROR: --compare and --verify replay the same frames through every mode,\n"
+               "       which a live camera cannot do. Add --preload to capture the frames\n"
+               "       once and replay them, or use --video.\n");
         return false;
     }
     if (cfg.depth < 1) cfg.depth = 1;
@@ -913,6 +967,24 @@ static void create_shared_objects(const Config &cfg, Pipeline &pipe, vx_uint32 b
     pipe.groundPlane = create_ground_plane(cfg, pipe.context);
     pipe.bank = create_filter_bank(cfg, pipe.context);
 
+    // The surround blend divides the S16 sum of the camera projections by the
+    // camera count to form their mean. OpenVX has no divide-by-constant, so the
+    // divide is a multiply by 1/N against this all-ones image. Only needed when
+    // there is more than one projection to average.
+    if (cfg.cameras > 1)
+    {
+        pipe.unit = vxCreateImage(pipe.context, cfg.width, cfg.height, VX_DF_IMAGE_U8);
+        ERROR_CHECK_OBJECT(pipe.unit);
+        vx_rectangle_t rect = {0, 0, cfg.width, cfg.height};
+        vx_imagepatch_addressing_t layout;
+        memset(&layout, 0, sizeof(layout));
+        layout.stride_x = 1;
+        layout.stride_y = (vx_int32)cfg.width;
+        std::vector<vx_uint8> ones((size_t)cfg.width * cfg.height, 1);
+        ERROR_CHECK_STATUS(vxCopyImagePatch(pipe.unit, &rect, 0, &layout, ones.data(),
+                                            VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+    }
+
     pipe.hysteresis = vxCreateThresholdForImage(pipe.context, VX_THRESHOLD_TYPE_RANGE,
                                                 VX_DF_IMAGE_U8, VX_DF_IMAGE_U8);
     ERROR_CHECK_OBJECT(pipe.hysteresis);
@@ -950,14 +1022,9 @@ static StageNodes build_surround(const Config &cfg, Pipeline &pipe, vx_graph gra
     // The projections are averaged, not summed. A surround view blends
     // overlapping ground projections; a saturating U8 sum of N of them would
     // blow the road out to white and bury the lane markings. Each projection is
-    // accumulated into an S16 image (N*255 fits, so nothing saturates), then a
-    // single convert back to U8 shifts right by ceil(log2 N) to form the mean.
-    // With one camera there is nothing to average and the projection is written
-    // straight to the output.
-    vx_int32 blendShift = 0;
-    while ((1u << blendShift) < cfg.cameras)
-        blendShift++;
-
+    // accumulated into an S16 image (N*255 fits, so nothing saturates), then the
+    // sum is divided by N to form the true mean. With one camera there is nothing
+    // to average and the projection is written straight to the output.
     vx_image accumulator = nullptr; // S16 running sum, once more than one camera
     vx_image firstProjection = nullptr;
 
@@ -1014,11 +1081,25 @@ static StageNodes build_surround(const Config &cfg, Pipeline &pipe, vx_graph gra
 
     if (accumulator)
     {
-        // Divide the running sum by the next power of two at or above N to make
-        // the blended mean, writing the U8 result to the stage output.
-        vx_scalar shift = vxCreateScalar(pipe.context, VX_TYPE_INT32, &blendShift);
+        // Divide the running sum by the exact camera count to make the blended
+        // mean, so the brightness does not depend on N. OpenVX has no
+        // divide-by-constant and no S16xU8->U8 multiply, so this is a multiply by
+        // 1/N against the all-ones image (S16 sum stays in 0..N*255, the quotient
+        // in 0..255) producing an S16, then a narrowing convert to the U8 output.
+        vx_image meanS16 = vxCreateVirtualImage(graph, cfg.width, cfg.height, VX_DF_IMAGE_S16);
+        ERROR_CHECK_OBJECT(meanS16);
+        temporaries.push_back(meanS16);
+        vx_float32 invCameras = 1.0f / (vx_float32)cfg.cameras;
+        vx_scalar scale = vxCreateScalar(pipe.context, VX_TYPE_FLOAT32, &invCameras);
+        ERROR_CHECK_OBJECT(scale);
+        place(pipe, vxMultiplyNode(graph, accumulator, pipe.unit, scale,
+                                   VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN,
+                                   meanS16), target);
+        ERROR_CHECK_STATUS(vxReleaseScalar(&scale));
+        vx_int32 noShift = 0;
+        vx_scalar shift = vxCreateScalar(pipe.context, VX_TYPE_INT32, &noShift);
         ERROR_CHECK_OBJECT(shift);
-        vx_node mean = vxConvertDepthNode(graph, accumulator, output,
+        vx_node mean = vxConvertDepthNode(graph, meanS16, output,
                                           VX_CONVERT_POLICY_SATURATE, shift);
         place(pipe, mean, target);
         ERROR_CHECK_STATUS(vxReleaseScalar(&shift));
@@ -1290,6 +1371,8 @@ static void release_pipeline(Pipeline &pipe)
     for (size_t i = 0; i < pipe.bank.size(); i++)
         ERROR_CHECK_STATUS(vxReleaseConvolution(&pipe.bank[i]));
     pipe.bank.clear();
+    if (pipe.unit)
+        ERROR_CHECK_STATUS(vxReleaseImage(&pipe.unit));
     if (pipe.hysteresis)
         ERROR_CHECK_STATUS(vxReleaseThreshold(&pipe.hysteresis));
     if (pipe.groundPlane)
@@ -1654,10 +1737,17 @@ static void run_batch(const Config &cfg, Pipeline &pipe, FrameSource &source, St
 }
 
 //
-// Streaming hands the graph to the framework, which re-executes it until asked
-// to stop. Without queued parameters the host and the streaming thread share
-// one set of images, so writing the next frame is paced by the completion
-// event to keep that window as small as the mode allows.
+// Streaming hands the graph to the framework, which re-executes it on its own
+// thread until asked to stop. This mode has no queued parameters, so the host
+// and the streaming thread share one set of images, and a completion event only
+// marks the execution that just finished - the next has already been scheduled.
+// There is therefore no window in which the host can write the input or read the
+// output without racing that next execution: doing so tears the buffers. The
+// frame is written once before streaming starts and the images are left
+// untouched until it stops, so this mode measures the throughput of autonomous
+// re-execution over a held frame. The per-frame display and lane-sink paths the
+// other modes use are not available here, which is why stream is absent from
+// --verify's candidates and from --compare's correctness checks.
 //
 static void run_stream(const Config &cfg, Pipeline &pipe, FrameSource &source, Stats &stats)
 {
@@ -1694,20 +1784,17 @@ static void run_stream(const Config &cfg, Pipeline &pipe, FrameSource &source, S
 
         stats.graphCompleted++;
         stats.frames++;
-        read_u8_image(pipe.lanes[0], lanes);
-        snprintf(label, sizeof(label), "stream  completions %u", stats.graphCompleted);
-        bool stop = show_frame(cfg, luma, lanes, label);
-
-        if (source.next(luma))
-            for (vx_uint32 camera = 0; camera < cfg.cameras; camera++)
-                write_luma(pipe.input[camera][0], luma);
-        if (stop)
-            break;
     }
 
     ERROR_CHECK_STATUS(vxStopGraphStreaming(pipe.graph));
     stats.elapsedMs = std::chrono::duration<double, std::milli>(
                           std::chrono::steady_clock::now() - start).count();
+
+    // The framework has stopped re-executing, so the shared output can now be
+    // read without racing it. Show or dump the single final mask.
+    read_u8_image(pipe.lanes[0], lanes);
+    snprintf(label, sizeof(label), "stream  completions %u", stats.graphCompleted);
+    show_frame(cfg, luma, lanes, label);
     drain_events(pipe.context, stats);
 }
 
@@ -1857,7 +1944,7 @@ static void run_comparison(Config cfg, FrameSource &source)
 // undefined by specification, so they differ run to run even in one mode; a
 // pipelining fault shows up as a difference in the interior, which this counts.
 //
-static void run_verify(Config cfg, FrameSource &source)
+static bool run_verify(Config cfg, FrameSource &source)
 {
     const vx_uint32 border = 6;
     if (cfg.frames > 50)
@@ -1885,7 +1972,17 @@ static void run_verify(Config cfg, FrameSource &source)
         source.rewind();
         run_one(runCfg, source);
 
-        const size_t pairs = std::min(reference.size(), masks.size());
+        // A candidate that drops or adds frames must fail even when every frame
+        // it did produce matches, so the counts have to be equal before the
+        // per-frame comparison; taking the minimum would let a short run pass.
+        if (reference.size() != masks.size())
+        {
+            printf("  %-7s vs split : frame count differs (reference %zu, candidate %zu)  MISMATCH\n",
+                   mode_name(candidates[c]), reference.size(), masks.size());
+            allMatched = false;
+            continue;
+        }
+        const size_t pairs = reference.size();
         vx_uint32 matched = 0;
         for (size_t i = 0; i < pairs; i++)
         {
@@ -1910,6 +2007,7 @@ static void run_verify(Config cfg, FrameSource &source)
             allMatched = false;
     }
     printf("\nverify: %s\n", allMatched ? "PASS" : "FAIL");
+    return allMatched;
 }
 
 int main(int argc, char *argv[])
@@ -1941,10 +2039,7 @@ int main(int argc, char *argv[])
     }
 
     if (cfg.verify)
-    {
-        run_verify(cfg, source);
-        return 0;
-    }
+        return run_verify(cfg, source) ? 0 : 1;
 
     if (cfg.compare)
     {

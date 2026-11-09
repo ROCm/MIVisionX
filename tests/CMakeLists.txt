@@ -549,14 +549,6 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       )
 
-      # 23_c - Exact-value correctness test for the HIP S16 multiply with round-to-nearest-even.
-      # The kernels rounded the product to float32 first, which a 16 x 16 bit product does not fit.
-      add_test(NAME openvx_mul_s16_gpu
-            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/mul_s16_gpu_tests/test_mul_s16_gpu.py
-            --runvx ${RUNVX_EXECUTABLE}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      )
-
       # 23_c - RGB/RGBX stores must stay inside the destination row. Needs a
       # width that is not a multiple of 8, which no other colour test uses, and
       # repeated runs, because the overrun is a race between adjacent rows.

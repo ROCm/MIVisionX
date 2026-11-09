@@ -183,10 +183,30 @@ __device__ __forceinline__ short hip_convert_short_sat_rte(float a) {
 }
 
 // scale * a * b rounded half to even, for the 16-bit operands of the S16 multiply. The product needs up to
-// 30 bits and does not fit a float, so it is formed as an integer and only scaled in double when scale is not 1.
-__device__ __forceinline__ int hip_mul_s16_rte(float scale, int a, int b) {
+// 30 bits and does not fit a float. It is formed as an integer and, unless scale is 1, scaled in double: the
+// double product can land exactly on a tie that the true product is not on, so a tie is resolved with the
+// exact rounding residual of the multiplication.
+__device__ __forceinline__ double hip_mul_s16_rte_value(float scale, int a, int b) {
+#pragma clang fp contract(off)  // the rounded product must not be fused into the tie test below
     int p = a * b;
-    return (scale == 1.0f) ? p : (int)rint((double)scale * (double)p);
+    double prod = (double)scale * (double)p;
+    double err = fma((double)scale, (double)p, -prod);
+    double lo = floor(prod);
+    if (prod - lo == 0.5 && err != 0.0)
+        return err > 0.0 ? lo + 1.0 : lo;
+    return rint(prod);
+}
+
+__device__ __forceinline__ int hip_mul_s16_wrap_rte(float scale, int a, int b) {
+    if (scale == 1.0f)
+        return a * b;  // exact in 32 bits; the caller keeps the low 16
+    return (int)(long long)hip_mul_s16_rte_value(scale, a, b);
+}
+
+__device__ __forceinline__ int hip_mul_s16_sat_rte(float scale, int a, int b) {
+    if (scale == 1.0f)
+        return hip_clamp(a * b, -32768, 32767);
+    return (int)hip_clamp(hip_mul_s16_rte_value(scale, a, b), -32768.0, 32767.0);
 }
 
 __device__ __forceinline__ void hip_convert_U8_U1(uint2 *p0, unsigned char p1) {

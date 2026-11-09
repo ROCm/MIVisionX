@@ -445,6 +445,14 @@ if(Python3_FOUND)
           --runvx ${RUNVX_EXECUTABLE}
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
+
+    # 16_e - Value test for the CPU Phase kernel at widths that are not a multiple of 8: the scalar
+    # tail used to write the last pixels of each row into the first columns.
+    add_test(NAME openvx_phase_cpu
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/phase_cpu_tests/test_phase_cpu.py
+          --runvx ${RUNVX_EXECUTABLE}
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
   endif()
 endif(Python3_FOUND)
 

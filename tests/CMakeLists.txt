@@ -445,6 +445,14 @@ if(Python3_FOUND)
           --runvx ${RUNVX_EXECUTABLE}
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
+
+    # 16_f - Canny with gradient_size 3 and VX_NORM_L2 on the CPU: the gradients were squared in
+    # 16 bits, which wraps at 256.
+    add_test(NAME openvx_canny_l2_cpu
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/canny_cpu_tests/test_canny_l2_cpu.py
+          --runvx ${RUNVX_EXECUTABLE}
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
   endif()
 endif(Python3_FOUND)
 

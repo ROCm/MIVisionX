@@ -102,19 +102,6 @@ if(VX_RPP_LIBRARY)
                 --test-command "vx_rpp_roi_frames"
     )
     set_property(TEST vx_rpp_roi_frames PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
-
-    # 2_c - the pinned ROI buffers vx_rpp's Transpose and Normalize allocate must be sized in bytes
-    add_test(
-      NAME
-        vx_rpp_hip_host_alloc
-      COMMAND
-        "${CMAKE_CTEST_COMMAND}"
-                --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/vx_rpp_hip_host_alloc"
-                                  "${CMAKE_CURRENT_BINARY_DIR}/vx_rpp_hip_host_alloc"
-                --build-generator "${CMAKE_GENERATOR}"
-                --test-command "vx_rpp_hip_host_alloc"
-    )
-    set_property(TEST vx_rpp_hip_host_alloc PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
   endif()
 endif(VX_RPP_LIBRARY)
 

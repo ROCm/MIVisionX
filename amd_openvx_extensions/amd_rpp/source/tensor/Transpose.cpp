@@ -56,9 +56,9 @@ static vx_status VX_CALLBACK refreshTranspose(vx_node node, const vx_reference *
                 return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", roiDims * sizeof(unsigned));
         }
         if (!data->pSrcRoi && (numDims == 4)) {  // For NHWC/NCHW layouts, allocate pSrcRoi pinned memory buffer to store ROI for HWC/CHW dims
-            hipError_t err = hipHostMalloc(&data->pSrcRoi, data->inputTensorDims[0] * roiDims * 2, hipHostMallocDefault);
+            hipError_t err = hipHostMalloc(&data->pSrcRoi, data->inputTensorDims[0] * roiDims * 2 * sizeof(unsigned), hipHostMallocDefault);
             if (err != hipSuccess)
-                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * roiDims * 2);
+                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * roiDims * 2 * sizeof(unsigned));
         }
         STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[3], 0, roiDims, sizeof(unsigned), data->pPerm, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 #endif

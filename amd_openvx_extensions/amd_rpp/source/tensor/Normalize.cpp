@@ -57,9 +57,9 @@ static vx_status VX_CALLBACK refreshNormalize(vx_node node, const vx_reference *
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_HIP, &data->pDst, sizeof(data->pDst)));
         STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_BUFFER_HIP, &roi_tensor_ptr_dst, sizeof(roi_tensor_ptr_dst)));
         if (!data->pSrcDims) {
-            hipError_t err = hipHostMalloc(&data->pSrcDims, data->inputTensorDims[0] * roiDims * 2, hipHostMallocDefault);
+            hipError_t err = hipHostMalloc(&data->pSrcDims, data->inputTensorDims[0] * roiDims * 2 * sizeof(unsigned), hipHostMallocDefault);
             if (err != hipSuccess)
-                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * roiDims * 2);
+                return ERRMSG(VX_ERROR_NOT_ALLOCATED, "refresh: hipHostMalloc of size %ld failed \n", data->inputTensorDims[0] * roiDims * 2 * sizeof(unsigned));
         }
 #endif
     } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {

@@ -652,6 +652,41 @@ int HafGpu_ColorConvert(AgoNode * node)
 
 	// kernel header and reading
 	char item[8192];
+	// #1829: bounded stores for the YUV-source to RGB/RGBX-destination kernels.
+	// The outer work-item guard below only bounds gx/gy to the ceiling of
+	// groups/row-pairs, so an unconditional full-group/full-row-pair store
+	// overruns the row when pRGB_width is not a multiple of 8, or writes a
+	// second row that does not exist when pRGB_height is odd -- the OpenCL
+	// counterpart of #1778, fixed for HIP in #1822 (hip_store_RGB8/RGBX8).
+	const char *boundedStoreHelpers = "";
+	if (isDestinationRGB) {
+		boundedStoreHelpers = OPENCL_FORMAT(
+			"inline void ocl_store_RGB8(__global uchar * buf, uint8 pix, int valid) {\n"
+			"  if (valid >= 8) {\n"
+			"    vstore4(pix.s0123, 0, (__global uint *) buf);\n"
+			"    vstore2(pix.s45, 0, (__global uint *)(buf + 16));\n"
+			"  } else {\n"
+			"    uint tmp[6] = { pix.s0, pix.s1, pix.s2, pix.s3, pix.s4, pix.s5 };\n"
+			"    uchar * src = (uchar *) tmp;\n"
+			"    int bytes = valid * 3;\n"
+			"    for (int i = 0; i < bytes; i++) buf[i] = src[i];\n"
+			"  }\n"
+			"}\n"
+			);
+	}
+	else if (isDestinationRGBX) {
+		boundedStoreHelpers = OPENCL_FORMAT(
+			"inline void ocl_store_RGBX8(__global uchar * buf, uint8 pix, int valid) {\n"
+			"  if (valid >= 8) {\n"
+			"    *(__global uint8 *) buf = pix;\n"
+			"  } else {\n"
+			"    uint tmp[8] = { pix.s0, pix.s1, pix.s2, pix.s3, pix.s4, pix.s5, pix.s6, pix.s7 };\n"
+			"    __global uint * dst = (__global uint *) buf;\n"
+			"    for (int i = 0; i < valid; i++) dst[i] = tmp[i];\n"
+			"  }\n"
+			"}\n"
+			);
+	}
 	snprintf(item, sizeof(item),
 		OPENCL_FORMAT(
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
@@ -659,9 +694,10 @@ int HafGpu_ColorConvert(AgoNode * node)
 		"typedef uint2   U8x8;\n"
 		"typedef uint8  U24x8;\n"
 		"typedef uint8  U32x8;\n"
+		"%s"
 		"__kernel __attribute__((reqd_work_group_size(%d, %d, 1)))\n"
 		"void %s(")
-		, work_group_width, work_group_height, NODE_OPENCL_KERNEL_NAME);
+		, boundedStoreHelpers, work_group_width, work_group_height, NODE_OPENCL_KERNEL_NAME);
 	node->opencl_code = item;
 	int argCount = 0;
 	if (isDestinationRGB) {
@@ -1371,11 +1407,12 @@ int HafGpu_ColorConvert(AgoNode * node)
 					"    yuv.s0 = mad(amd_unpack3(pY1.s1),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack3(pU1.s1),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack3(pV1.s1),r2f.s2,r2f.s3);\n"
 					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB1.s5 = amd_pack(trunc(f));\n"
 					"    pRGB_buf += pRGB_offset + (gy * %d) + (gx * 24);\n" // pRGB_stride * 2
-					"    vstore4(pRGB0.s0123, 0, (__global uint *) pRGB_buf);\n"
-					"    vstore2(pRGB0.s45, 0, (__global uint *)&pRGB_buf[16]);\n"
-					"    vstore4(pRGB1.s0123, 0, (__global uint *)&pRGB_buf[%d]);\n" // pRGB_stride
-					"    vstore2(pRGB1.s45, 0, (__global uint *)&pRGB_buf[%d+16]);\n" // pRGB_stride
-					), pRGB_stride * 2, pRGB_stride, pRGB_stride);
+					"    int validPixels = min((int)pRGB_width - (gx * 8), 8);\n"
+					"    ocl_store_RGB8(pRGB_buf, pRGB0, validPixels);\n"
+					"    if ((2 * gy + 1) < (int)pRGB_height) {\n"
+					"      ocl_store_RGB8(pRGB_buf + %d, pRGB1, validPixels);\n" // pRGB_stride
+					"    }\n"
+					), pRGB_stride * 2, pRGB_stride);
 			}
 			else { // VX_CHANNEL_RANGE_FULL
 				snprintf(item, sizeof(item),
@@ -1414,11 +1451,12 @@ int HafGpu_ColorConvert(AgoNode * node)
 					"    yuv.s0 = amd_unpack3(pY1.s1); yuv.s1 = amd_unpack3(pU1.s1); yuv.s2 = amd_unpack3(pV1.s1); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
 					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB1.s5 = amd_pack(trunc(f));\n"
 					"    pRGB_buf += pRGB_offset + (gy * %d) + (gx * 24);\n" // pRGB_stride * 2
-					"    vstore4(pRGB0.s0123, 0, (__global uint *) pRGB_buf);\n"
-					"    vstore2(pRGB0.s45, 0, (__global uint *)&pRGB_buf[16]);\n"
-					"    vstore4(pRGB1.s0123, 0, (__global uint *)&pRGB_buf[%d]);\n" // pRGB_stride
-					"    vstore2(pRGB1.s45, 0, (__global uint *)&pRGB_buf[%d+16]);\n" // pRGB_stride
-					), pRGB_stride * 2, pRGB_stride, pRGB_stride);
+					"    int validPixels = min((int)pRGB_width - (gx * 8), 8);\n"
+					"    ocl_store_RGB8(pRGB_buf, pRGB0, validPixels);\n"
+					"    if ((2 * gy + 1) < (int)pRGB_height) {\n"
+					"      ocl_store_RGB8(pRGB_buf + %d, pRGB1, validPixels);\n" // pRGB_stride
+					"    }\n"
+					), pRGB_stride * 2, pRGB_stride);
 			}
 			node->opencl_code += item;
 		}
@@ -1460,8 +1498,11 @@ int HafGpu_ColorConvert(AgoNode * node)
 					"    yuv.s0 = mad(amd_unpack3(pY1.s1),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack3(pU1.s1),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack3(pV1.s1),r2f.s2,r2f.s3);\n"
 					"    f.s0 = mad(cR.s1, yuv.s2, yuv.s0); f.s1 = mad(cG.s0, yuv.s1, yuv.s0); f.s1 = mad(cG.s1, yuv.s2, f.s1); f.s2 = mad(cB.s0, yuv.s1, yuv.s0); pRGB1.s7 = amd_pack(f);\n"
 					"    pRGB_buf += pRGB_offset + (gy * %d) + (gx << 5);\n" // pRGB_stride * 2
-					"    *(__global U32x8 *) pRGB_buf = pRGB0;\n"
-					"    *(__global U32x8 *)&pRGB_buf[%d] = pRGB1;\n" // pRGB_stride
+					"    int validPixels = min((int)pRGB_width - (gx * 8), 8);\n"
+					"    ocl_store_RGBX8(pRGB_buf, pRGB0, validPixels);\n"
+					"    if ((2 * gy + 1) < (int)pRGB_height) {\n"
+					"      ocl_store_RGBX8(pRGB_buf + %d, pRGB1, validPixels);\n" // pRGB_stride
+					"    }\n"
 					), pRGB_stride * 2, pRGB_stride);
 				node->opencl_code += item;
 			}
@@ -1502,8 +1543,11 @@ int HafGpu_ColorConvert(AgoNode * node)
 					"    yuv.s0 = amd_unpack3(pY1.s1); yuv.s1 = amd_unpack3(pU1.s1); yuv.s2 = amd_unpack3(pV1.s1); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
 					"    f.s0 = mad(cR.s1, yuv.s2, yuv.s0); f.s1 = mad(cG.s0, yuv.s1, yuv.s0); f.s1 = mad(cG.s1, yuv.s2, f.s1); f.s2 = mad(cB.s0, yuv.s1, yuv.s0); pRGB1.s7 = amd_pack(f);\n"
 					"    pRGB_buf += pRGB_offset + (gy * %d) + (gx << 5);\n" // pRGB_stride * 2
-					"    *(__global U32x8 *) pRGB_buf = pRGB0;\n"
-					"    *(__global U32x8 *)&pRGB_buf[%d] = pRGB1;\n" // pRGB_stride
+					"    int validPixels = min((int)pRGB_width - (gx * 8), 8);\n"
+					"    ocl_store_RGBX8(pRGB_buf, pRGB0, validPixels);\n"
+					"    if ((2 * gy + 1) < (int)pRGB_height) {\n"
+					"      ocl_store_RGBX8(pRGB_buf + %d, pRGB1, validPixels);\n" // pRGB_stride
+					"    }\n"
 					), pRGB_stride * 2, pRGB_stride);
 				node->opencl_code += item;
 			}

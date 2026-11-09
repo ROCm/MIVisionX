@@ -73,12 +73,20 @@ static const __m128i CONST_0000FFFF = _mm_set1_epi32((int) 0x0000FFFF);
 // Map layout per entry: 16-bit x, 16-bit y. 3 LSBs are fraction, rest integer.
 // Source coordinates are clamped to [0, srcW-2] x [0, srcH-2] so the bilinear
 // 2x2 neighborhood always stays in-bounds, matching the HIP path.
-static inline __m128i AgoRemapComputeOffsets_SSE(ago_coord2d_short_t *pMap, const __m128i &sstride, int bpp, int srcW, int srcH, __m128i &mapfrac, __m128i &mapxy)
+// #1806: fracBits is the remap table's actual fractional-bit count
+// (remap_fractional_bits, adaptive by source size, ago_util.cpp), not always
+// 3. The map is genuinely unsigned (ago_coord2d_ushort_t), so pMap must not
+// be reinterpreted as signed -- a coordinate >= 32768 (source dims >= 4096 at
+// 3 fractional bits) would otherwise sign-extend into a negative value.
+static inline __m128i AgoRemapComputeOffsets_SSE(ago_coord2d_ushort_t *pMap, const __m128i &sstride, int bpp, int srcW, int srcH, int fracBits, __m128i &mapfrac, __m128i &mapxy)
 {
+    const int fracMask = (1 << fracBits) - 1;
+    const __m128i vFracMask = _mm_set1_epi16((short)fracMask);
+    const __m128i vFracBits = _mm_cvtsi32_si128(fracBits);
     __m128i map = _mm_loadu_si128((__m128i *)pMap);        // [x0,y0,x1,y1,x2,y2,x3,y3] as 16-bit
 
-    mapfrac = _mm_and_si128(map, CONST_7);
-    mapxy = _mm_srli_epi16(map, 3);                        // [x0_int,y0_int,...]
+    mapfrac = _mm_and_si128(map, vFracMask);
+    mapxy = _mm_srl_epi16(map, vFracBits);                 // [x0_int,y0_int,...] (logical shift)
 
     // Clamp to source bounds so that (x0+1, y0+1) is always valid.
     __m128i maxxy = _mm_set1_epi32(((srcH - 2) << 16) | (srcW - 2));
@@ -96,11 +104,12 @@ static inline __m128i AgoRemapComputeOffsets_SSE(ago_coord2d_short_t *pMap, cons
 // AgoRemapComputeOffsets_SSE exactly for one entry. Used by the two-pixel tail
 // of the bilinear paths so it does not have to load four entries (which would
 // read past the remap allocation when only one or two entries remain in a row).
-static inline int AgoRemapComputeOffset1(const ago_coord2d_short_t *pMap, int srcStride, int bpp, int srcW, int srcH, int &fx, int &fy)
+static inline int AgoRemapComputeOffset1(const ago_coord2d_ushort_t *pMap, int srcStride, int bpp, int srcW, int srcH, int fracBits, int &fx, int &fy)
 {
-    vx_uint16 mx16 = (vx_uint16)pMap->x, my16 = (vx_uint16)pMap->y;
-    fx = mx16 & 7; fy = my16 & 7;
-    int mx = mx16 >> 3, my = my16 >> 3;   // logical shift, always >= 0
+    const int fracMask = (1 << fracBits) - 1;
+    vx_uint32 mx16 = pMap->x, my16 = pMap->y;
+    fx = mx16 & fracMask; fy = my16 & fracMask;
+    int mx = mx16 >> fracBits, my = my16 >> fracBits;   // logical shift, always >= 0
     if (mx > srcW - 2) mx = srcW - 2;
     if (my > srcH - 2) my = srcH - 2;
     return my * srcStride + mx * bpp;
@@ -126,13 +135,24 @@ int HafCpu_Remap_U8_U8_Nearest
 	vx_uint8             * pSrcImage,
 	vx_uint32              srcImageStrideInBytes,
 	ago_coord2d_ushort_t  * pMap,
-	vx_uint32              mapStrideInBytes
+	vx_uint32              mapStrideInBytes,
+	vx_uint32              fractionalBits
 )
 {
 	__m128i zeromask = _mm_setzero_si128();
 	__m128i mapxy, mapfrac;
 
 	const __m128i sstride = _mm_set1_epi32(srcImageStrideInBytes);
+	// #1806: the remap table's integer/fractional split is adaptive
+	// (remap_fractional_bits, ago_util.cpp) so large source images still fit
+	// in a uint16 -- decode with the actual bit count instead of a hardcoded
+	// 3, and use a logical (unsigned) shift so values >= 32768 (source dims
+	// >= 4096 at 3 fractional bits) are not sign-extended into negative
+	// coordinates.
+	const int fracMask = (1 << fractionalBits) - 1;
+	const __m128i vFracMask = _mm_set1_epi16((short)fracMask);
+	const __m128i vHalfMask = _mm_set1_epi16((short)(fracMask >> 1));
+	const __m128i vFracBits = _mm_cvtsi32_si128((int)fractionalBits);
 	unsigned char *pchDst = (unsigned char*)pDstImage;
 	unsigned char *pchDstlast = (unsigned char*)pDstImage + dstHeight*dstImageStrideInBytes;
 	unsigned char *pchMap = (unsigned char *)pMap;
@@ -140,7 +160,7 @@ int HafCpu_Remap_U8_U8_Nearest
 
 	while (pchDst < pchDstlast)
 	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)pchMap;
+		ago_coord2d_ushort_t *pMapY_X = (ago_coord2d_ushort_t *)pchMap;
 		unsigned int *pdst = (unsigned int *)pchDst;
 		unsigned int *pdstLast = pdst + (dstWidth >> 2);
 		while (pdst < pdstLast)
@@ -151,15 +171,15 @@ int HafCpu_Remap_U8_U8_Nearest
 			// check for boundary values: will be substituted by 1.
 			temp0 = _mm_cmpeq_epi16(mapxy, CONST_FFFF);
 			mapxy = _mm_andnot_si128(temp0, mapxy);
-			temp0 = _mm_and_si128(temp0, CONST_7);		// frac= 7 will be rounded to 1
+			temp0 = _mm_and_si128(temp0, vFracMask);		// frac=fracMask will be rounded to 1
 			mapxy = _mm_or_si128(mapxy, temp0);			// combined result
 
 			// get the fractional part for rounding
-			mapfrac = _mm_and_si128(mapxy, CONST_7);
-			mapxy = _mm_srli_epi16(mapxy, 3);			// mapxy is the int part.
+			mapfrac = _mm_and_si128(mapxy, vFracMask);
+			mapxy = _mm_srl_epi16(mapxy, vFracBits);			// mapxy is the int part (logical shift).
 
-			// check if the fractional part if >3, then round to next location
-			mapfrac = _mm_cmpgt_epi16(mapfrac, CONST_3);
+			// check if the fractional part is more than half, then round to next location
+			mapfrac = _mm_cmpgt_epi16(mapfrac, vHalfMask);
 			mapfrac = _mm_and_si128(mapfrac, _mm_set1_epi16((short)1) );
 			// add rounding
 			mapxy = _mm_add_epi16(mapxy, mapfrac);
@@ -180,8 +200,8 @@ int HafCpu_Remap_U8_U8_Nearest
 		if (extra_pixels){
 			unsigned char *pd = (unsigned char *)pdst;
 			for (unsigned int i = 0; i < extra_pixels; i++, pMapY_X++){
-				int x = (pMapY_X->x != -1) ? (pMapY_X->x >> 3) + ((pMapY_X->x&7)>>2): 0;
-				int y = (pMapY_X->y != -1) ? (pMapY_X->y >> 3) + ((pMapY_X->y&7)>>2) : 0;
+				int x = (pMapY_X->x != 0xFFFF) ? (pMapY_X->x >> fractionalBits) + (((pMapY_X->x & fracMask) > (vx_uint32)(fracMask >> 1)) ? 1 : 0) : 0;
+				int y = (pMapY_X->y != 0xFFFF) ? (pMapY_X->y >> fractionalBits) + (((pMapY_X->y & fracMask) > (vx_uint32)(fracMask >> 1)) ? 1 : 0) : 0;
 				pd[i] = pSrcImage[y*srcImageStrideInBytes + x];
 			}
 		}
@@ -211,7 +231,8 @@ int HafCpu_Remap_U8_U8_Nearest_Constant
 	vx_uint32              srcImageStrideInBytes,
 	ago_coord2d_ushort_t  * pMap,
 	vx_uint32              mapStrideInBytes,
-	vx_uint8               border
+	vx_uint8               border,
+	vx_uint32              fractionalBits
 )
 {
 	__m128i zeromask = _mm_setzero_si128();
@@ -219,6 +240,14 @@ int HafCpu_Remap_U8_U8_Nearest_Constant
 
 	const __m128i srcb = _mm_set1_epi32((srcHeight*srcImageStrideInBytes) - 1);
 	sstride = _mm_set1_epi32(srcImageStrideInBytes);
+	// #1806: see HafCpu_Remap_U8_U8_Nearest -- decode with the actual
+	// fractional-bit count (adaptive per source size) instead of a hardcoded
+	// 3, via a logical (unsigned) shift so large coordinates are not
+	// sign-extended into negative, spuriously-out-of-bounds values.
+	const int fracMask = (1 << fractionalBits) - 1;
+	const __m128i vFracMask = _mm_set1_epi16((short)fracMask);
+	const __m128i vHalfMask = _mm_set1_epi16((short)(fracMask >> 1));
+	const __m128i vFracBits = _mm_cvtsi32_si128((int)fractionalBits);
 	unsigned char *pchDst = (unsigned char*)pDstImage;
 	unsigned char *pchDstlast = (unsigned char*)pDstImage + dstHeight*dstImageStrideInBytes;
 	unsigned char *pchMap = (unsigned char *)pMap;
@@ -226,7 +255,7 @@ int HafCpu_Remap_U8_U8_Nearest_Constant
 
 	while (pchDst < pchDstlast)
 	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)pchMap;
+		ago_coord2d_ushort_t *pMapY_X = (ago_coord2d_ushort_t *)pchMap;
 		unsigned int *pdst = (unsigned int *)pchDst;
 		unsigned int *pdstLast = pdst + (dstWidth>> 2);
 		while (pdst < pdstLast)
@@ -242,10 +271,10 @@ int HafCpu_Remap_U8_U8_Nearest_Constant
 			mapxy = _mm_or_si128(mapxy, temp0);			// combined result
 
 			// get the fractional part for rounding
-			mapfrac = _mm_and_si128(mapxy, CONST_7);
-			mapxy = _mm_srli_epi16(mapxy, 3);
-			// check if the fractional part if >3, then round to next location
-			mapfrac = _mm_cmpgt_epi16(mapfrac, CONST_3);
+			mapfrac = _mm_and_si128(mapxy, vFracMask);
+			mapxy = _mm_srl_epi16(mapxy, vFracBits);
+			// check if the fractional part is more than half, then round to next location
+			mapfrac = _mm_cmpgt_epi16(mapfrac, vHalfMask);
 			mapfrac = _mm_and_si128(mapfrac, _mm_set1_epi16((short)1));
 			// add rounding
 			mapxy = _mm_add_epi16(mapxy, mapfrac);
@@ -290,13 +319,13 @@ int HafCpu_Remap_U8_U8_Nearest_Constant
 		if (extra_pixels){
 			unsigned char *pd = (unsigned char *)pdst;
 			for (unsigned int i = 0; i < extra_pixels; i++, pMapY_X++){
-				int mx = pMapY_X->x;
-				int my = pMapY_X->y;
-				if (mx == -1 || my == -1) {
+				vx_uint32 mx16 = pMapY_X->x;
+				vx_uint32 my16 = pMapY_X->y;
+				if (mx16 == 0xFFFF || my16 == 0xFFFF) {
 					pd[i] = border;
 				} else {
-					int x = (mx >> 3) + ((mx & 7) >> 2);
-					int y = (my >> 3) + ((my & 7) >> 2);
+					int x = (int)(mx16 >> fractionalBits) + (((mx16 & fracMask) > (vx_uint32)(fracMask >> 1)) ? 1 : 0);
+					int y = (int)(my16 >> fractionalBits) + (((my16 & fracMask) > (vx_uint32)(fracMask >> 1)) ? 1 : 0);
 					pd[i] = ((x >= 0) && (y >= 0) && (x < (int)srcWidth) && (y < (int)srcHeight)) ? pSrcImage[y*srcImageStrideInBytes + x] : border;
 				}
 			}
@@ -319,21 +348,34 @@ int HafCpu_Remap_U8_U8_Bilinear
 	vx_uint8             * pSrcImage,
 	vx_uint32              srcImageStrideInBytes,
 	ago_coord2d_ushort_t  * pMap,
-	vx_uint32              mapStrideInBytes
+	vx_uint32              mapStrideInBytes,
+	vx_uint32              fractionalBits
 )
 {
 	__m128i zeromask = _mm_setzero_si128();
 	__m128i mapxy, mapfrac;
 
 	const __m128i sstride = _mm_set1_epi32(srcImageStrideInBytes);
-	const __m128i round = _mm_set1_epi32((int)32);
+	// #1806: generalize from the hardcoded 3 fractional bits -- see
+	// HafCpu_Remap_U8_U8_Nearest for the decode side. The bilinear weight
+	// range scales with fractionalBits too: full weight is scale*scale where
+	// scale = 1 << fractionalBits (8*8=64 at the original 3 bits), so the
+	// final normalizing shift is 2*fractionalBits and the rounding constant
+	// is half of that range (0 when fractionalBits is 0, i.e. no fraction).
+	const int fracMask = (1 << fractionalBits) - 1;
+	const int scale = 1 << fractionalBits;
+	const int normShift = 2 * (int)fractionalBits;
+	const int normRound = (normShift > 0) ? (1 << (normShift - 1)) : 0;
 	const __m128i cFFFF = _mm_set1_epi16((short)0xFFFF);
-	const __m128i c7 = _mm_set1_epi16(7);
-	const __m128i c8 = _mm_set1_epi16(8);
+	const __m128i c7 = _mm_set1_epi16((short)fracMask);
+	const __m128i c8 = _mm_set1_epi16((short)scale);
 	const __m128i c0000FFFF = _mm_set1_epi32(0x0000FFFF);
-	const __m128i c8_16 = _mm_set1_epi16(0x8);
+	const __m128i c8_16 = _mm_set1_epi16((short)scale);
+	const __m128i round = _mm_set1_epi32(normRound);
+	const __m128i vFracBits = _mm_cvtsi32_si128((int)fractionalBits);
+	const __m128i vNormShift = _mm_cvtsi32_si128(normShift);
 
-	auto process_block4 = [&](ago_coord2d_short_t *pMapY_X, unsigned char *pDst) -> __m128i {
+	auto process_block4 = [&](ago_coord2d_ushort_t *pMapY_X, unsigned char *pDst) -> __m128i {
 		__m128i temp0, temp1, w_xy, oneminusxy, p12, p34;
 		unsigned char *p0;
 		mapxy = _mm_loadu_si128((__m128i *)pMapY_X);
@@ -344,7 +386,7 @@ int HafCpu_Remap_U8_U8_Bilinear
 
 		mapfrac = _mm_and_si128(mapxy, c7);
 		oneminusxy = _mm_sub_epi16(c8, mapfrac);
-		mapxy = _mm_srli_epi16(mapxy, 3);
+		mapxy = _mm_srl_epi16(mapxy, vFracBits);
 		temp0 = _mm_srli_epi32(mapxy, 16);
 		mapxy = _mm_and_si128(mapxy, c0000FFFF);
 		temp0 = _mm_mullo_epi32(temp0, sstride);
@@ -393,7 +435,7 @@ int HafCpu_Remap_U8_U8_Bilinear
 		temp0 = _mm_hadd_epi32(p12, p12);
 		p34 = _mm_unpacklo_epi64(p34, temp0);
 		p34 = _mm_add_epi32(p34, round);
-		p34 = _mm_srli_epi32(p34, 6);
+		p34 = _mm_srl_epi32(p34, vNormShift);
 		p34 = _mm_packus_epi32(p34, zeromask);
 		p34 = _mm_packus_epi16(p34, zeromask);
 		return p34;
@@ -401,7 +443,7 @@ int HafCpu_Remap_U8_U8_Bilinear
 
 	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + (size_t)y * mapStrideInBytes);
+		ago_coord2d_ushort_t *pMapY_X = (ago_coord2d_ushort_t *)((vx_uint8 *)pMap + (size_t)y * mapStrideInBytes);
 		unsigned int *pdst = (unsigned int *)(pDstImage + (size_t)y * dstImageStrideInBytes);
 		vx_uint32 x = 0;
 		// Main loop: 8 pixels per iteration
@@ -424,18 +466,18 @@ int HafCpu_Remap_U8_U8_Bilinear
 		// Scalar tail
 		for (; x < dstWidth; ++x, ++pdst, ++pMapY_X)
 		{
-			int mx = pMapY_X->x >> 3;
-			int my = pMapY_X->y >> 3;
-			int fx = pMapY_X->x & 7;
-			int fy = pMapY_X->y & 7;
+			int mx = pMapY_X->x >> fractionalBits;
+			int my = pMapY_X->y >> fractionalBits;
+			int fx = pMapY_X->x & fracMask;
+			int fy = pMapY_X->y & fracMask;
 			int sx = std::max(0, std::min((int)srcWidth - 2, mx));
 			int sy = std::max(0, std::min((int)srcHeight - 2, my));
-			int w00 = (8 - fx) * (8 - fy), w10 = fx * (8 - fy), w01 = (8 - fx) * fy, w11 = fx * fy;
+			int w00 = (scale - fx) * (scale - fy), w10 = fx * (scale - fy), w01 = (scale - fx) * fy, w11 = fx * fy;
 			int v00 = pSrcImage[(size_t)sy * srcImageStrideInBytes + (size_t)sx];
 			int v10 = pSrcImage[(size_t)sy * srcImageStrideInBytes + (size_t)(sx + 1)];
 			int v01 = pSrcImage[(size_t)(sy + 1) * srcImageStrideInBytes + (size_t)sx];
 			int v11 = pSrcImage[(size_t)(sy + 1) * srcImageStrideInBytes + (size_t)(sx + 1)];
-			*(unsigned char *)pdst = (vx_uint8)((v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + 32) >> 6);
+			*(unsigned char *)pdst = (vx_uint8)((v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + normRound) >> normShift);
 		}
 	}
 
@@ -455,11 +497,20 @@ int HafCpu_Remap_U24_U24_Bilinear
 	vx_uint8             * pSrcImage,
 	vx_uint32              srcImageStrideInBytes,
 	ago_coord2d_ushort_t  * pMap,
-	vx_uint32              mapStrideInBytes
+	vx_uint32              mapStrideInBytes,
+	vx_uint32              fractionalBits
 )
 {
 	const __m128i sstride = _mm_set1_epi32((int)srcImageStrideInBytes);
-	const __m128i round32 = _mm_set1_epi32(32);
+	// #1806: see HafCpu_Remap_U8_U8_Bilinear -- the weight scale and
+	// normalization shift/round both derive from fractionalBits, not the
+	// original hardcoded 3/8/32/6.
+	const int fracMask = (1 << fractionalBits) - 1;
+	const int scale = 1 << fractionalBits;
+	const int normShift = 2 * (int)fractionalBits;
+	const int normRound = (normShift > 0) ? (1 << (normShift - 1)) : 0;
+	const __m128i round32 = _mm_set1_epi32(normRound);
+	const __m128i vNormShift128 = _mm_cvtsi32_si128(normShift);
 	const __m128i rgbMask = _mm_set1_epi32(0x00FFFFFF);
 	// 24-bit RGB pixels are loaded into 32-bit dwords (low 3 bytes valid, high byte zero).
 	// Therefore channel bytes within the SSE register are spaced by 4, not 3.
@@ -470,7 +521,7 @@ int HafCpu_Remap_U24_U24_Bilinear
 	const __m128i shufB = _mm_setr_epi8(2, (char)0x80, 6, (char)0x80, 10, (char)0x80, 14, (char)0x80,
 	                                    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80);
 	const __m128i zero128 = _mm_setzero_si128();
-	const __m256i round32_avx = _mm256_set1_epi32(32);
+	const __m256i round32_avx = _mm256_set1_epi32(normRound);
 	const __m256i shufR_avx = _mm256_setr_epi8(
 	    0, (char)0x80, 4, (char)0x80, 8, (char)0x80, 12, (char)0x80,
 	    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
@@ -491,13 +542,13 @@ int HafCpu_Remap_U24_U24_Bilinear
 
 	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
+		ago_coord2d_ushort_t *pMapY_X = (ago_coord2d_ushort_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
 		vx_uint32 x = 0;
 		for (; x + 4 <= dstWidth; x += 4, pd += 12, pMapY_X += 4)
 		{
 			__m128i mapfrac, mapxy;
-			__m128i off = AgoRemapComputeOffsets_SSE(pMapY_X, sstride, 3, srcWidth, srcHeight, mapfrac, mapxy);
+			__m128i off = AgoRemapComputeOffsets_SSE(pMapY_X, sstride, 3, srcWidth, srcHeight, (int)fractionalBits, mapfrac, mapxy);
 
 			int fx0 = M128I(mapfrac).m128i_i16[0];
 			int fy0 = M128I(mapfrac).m128i_i16[1];
@@ -542,18 +593,18 @@ int HafCpu_Remap_U24_U24_Bilinear
 			__m256i BR = _mm256_set_m128i(zero128, br128);
 
 			__m256i wx = _mm256_setr_epi16(
-			    (short)(8 - fx0), (short)fx0, (short)(8 - fx1), (short)fx1,
-			    (short)(8 - fx2), (short)fx2, (short)(8 - fx3), (short)fx3,
-			    (short)(8 - fx0), (short)fx0, (short)(8 - fx1), (short)fx1,
-			    (short)(8 - fx2), (short)fx2, (short)(8 - fx3), (short)fx3);
+			    (short)(scale - fx0), (short)fx0, (short)(scale - fx1), (short)fx1,
+			    (short)(scale - fx2), (short)fx2, (short)(scale - fx3), (short)fx3,
+			    (short)(scale - fx0), (short)fx0, (short)(scale - fx1), (short)fx1,
+			    (short)(scale - fx2), (short)fx2, (short)(scale - fx3), (short)fx3);
 			__m256i wy = _mm256_setr_epi16(
-			    (short)(8 - fy0), (short)fy0, (short)(8 - fy1), (short)fy1,
-			    (short)(8 - fy2), (short)fy2, (short)(8 - fy3), (short)fy3,
-			    (short)(8 - fy0), (short)fy0, (short)(8 - fy1), (short)fy1,
-			    (short)(8 - fy2), (short)fy2, (short)(8 - fy3), (short)fy3);
+			    (short)(scale - fy0), (short)fy0, (short)(scale - fy1), (short)fy1,
+			    (short)(scale - fy2), (short)fy2, (short)(scale - fy3), (short)fy3,
+			    (short)(scale - fy0), (short)fy0, (short)(scale - fy1), (short)fy1,
+			    (short)(scale - fy2), (short)fy2, (short)(scale - fy3), (short)fy3);
 
 			__m256i fy_vec = _mm256_setr_epi32(fy0, fy1, fy2, fy3, 0, 0, 0, 0);
-			__m256i onemyf_vec = _mm256_sub_epi32(_mm256_set1_epi32(8), fy_vec);
+			__m256i onemyf_vec = _mm256_sub_epi32(_mm256_set1_epi32(scale), fy_vec);
 
 			__m256i cR0 = _mm256_shuffle_epi8(TL, shufR_avx);
 			__m256i cR1 = _mm256_shuffle_epi8(TR, shufR_avx);
@@ -567,7 +618,7 @@ int HafCpu_Remap_U24_U24_Bilinear
 			    _mm256_mullo_epi32(topR32, onemyf_vec),
 			    _mm256_mullo_epi32(botR32, fy_vec));
 			resR32 = _mm256_add_epi32(resR32, round32_avx);
-			resR32 = _mm256_srli_epi32(resR32, 6);
+			resR32 = _mm256_srl_epi32(resR32, vNormShift128);
 			__m256i resR16 = _mm256_packus_epi32(resR32, resR32);
 			__m256i resR8 = _mm256_packus_epi16(resR16, resR16);
 			int rv = _mm_cvtsi128_si32(_mm256_castsi256_si128(resR8));
@@ -584,7 +635,7 @@ int HafCpu_Remap_U24_U24_Bilinear
 			    _mm256_mullo_epi32(topG32, onemyf_vec),
 			    _mm256_mullo_epi32(botG32, fy_vec));
 			resG32 = _mm256_add_epi32(resG32, round32_avx);
-			resG32 = _mm256_srli_epi32(resG32, 6);
+			resG32 = _mm256_srl_epi32(resG32, vNormShift128);
 			__m256i resG16 = _mm256_packus_epi32(resG32, resG32);
 			__m256i resG8 = _mm256_packus_epi16(resG16, resG16);
 			int gv = _mm_cvtsi128_si32(_mm256_castsi256_si128(resG8));
@@ -601,7 +652,7 @@ int HafCpu_Remap_U24_U24_Bilinear
 			    _mm256_mullo_epi32(topB32, onemyf_vec),
 			    _mm256_mullo_epi32(botB32, fy_vec));
 			resB32 = _mm256_add_epi32(resB32, round32_avx);
-			resB32 = _mm256_srli_epi32(resB32, 6);
+			resB32 = _mm256_srl_epi32(resB32, vNormShift128);
 			__m256i resB16 = _mm256_packus_epi32(resB32, resB32);
 			__m256i resB8 = _mm256_packus_epi16(resB16, resB16);
 			int bv = _mm_cvtsi128_si32(_mm256_castsi256_si128(resB8));
@@ -624,14 +675,14 @@ int HafCpu_Remap_U24_U24_Bilinear
 			// Decode one entry at a time: a four-entry SSE load would read past
 			// the remap allocation when fewer than four entries remain in the row.
 			int fx0, fy0, fx1, fy1;
-			int o0 = AgoRemapComputeOffset1(pMapY_X,     (int)srcImageStrideInBytes, 3, (int)srcWidth, (int)srcHeight, fx0, fy0);
-			int o1 = AgoRemapComputeOffset1(pMapY_X + 1, (int)srcImageStrideInBytes, 3, (int)srcWidth, (int)srcHeight, fx1, fy1);
+			int o0 = AgoRemapComputeOffset1(pMapY_X,     (int)srcImageStrideInBytes, 3, (int)srcWidth, (int)srcHeight, (int)fractionalBits, fx0, fy0);
+			int o1 = AgoRemapComputeOffset1(pMapY_X + 1, (int)srcImageStrideInBytes, 3, (int)srcWidth, (int)srcHeight, (int)fractionalBits, fx1, fy1);
 
 			__m128i weights = _mm_setr_epi16(
-			    (short)((8 - fx0) * (8 - fy0)), (short)(fx0 * (8 - fy0)),
-			    (short)((8 - fx0) * fy0),       (short)(fx0 * fy0),
-			    (short)((8 - fx1) * (8 - fy1)), (short)(fx1 * (8 - fy1)),
-			    (short)((8 - fx1) * fy1),       (short)(fx1 * fy1));
+			    (short)((scale - fx0) * (scale - fy0)), (short)(fx0 * (scale - fy0)),
+			    (short)((scale - fx0) * fy0),       (short)(fx0 * fy0),
+			    (short)((scale - fx1) * (scale - fy1)), (short)(fx1 * (scale - fy1)),
+			    (short)((scale - fx1) * fy1),       (short)(fx1 * fy1));
 
 			// Pack exactly three bytes per pixel to avoid reading a fourth byte
 			// off the final 3-byte pixel of the allocation.
@@ -652,7 +703,7 @@ int HafCpu_Remap_U24_U24_Bilinear
 			__m128i accR = _mm_madd_epi16(p01R, weights);
 			accR = _mm_hadd_epi32(accR, accR);
 			accR = _mm_add_epi32(accR, round32);
-			accR = _mm_srli_epi32(accR, 6);
+			accR = _mm_srl_epi32(accR, vNormShift128);
 			accR = _mm_packus_epi32(accR, accR);
 			accR = _mm_packus_epi16(accR, accR);
 			int rv = _mm_cvtsi128_si32(accR) & 0xFFFF;
@@ -663,7 +714,7 @@ int HafCpu_Remap_U24_U24_Bilinear
 			__m128i accG = _mm_madd_epi16(p01G, weights);
 			accG = _mm_hadd_epi32(accG, accG);
 			accG = _mm_add_epi32(accG, round32);
-			accG = _mm_srli_epi32(accG, 6);
+			accG = _mm_srl_epi32(accG, vNormShift128);
 			accG = _mm_packus_epi32(accG, accG);
 			accG = _mm_packus_epi16(accG, accG);
 			int gv = _mm_cvtsi128_si32(accG) & 0xFFFF;
@@ -674,7 +725,7 @@ int HafCpu_Remap_U24_U24_Bilinear
 			__m128i accB = _mm_madd_epi16(p01B, weights);
 			accB = _mm_hadd_epi32(accB, accB);
 			accB = _mm_add_epi32(accB, round32);
-			accB = _mm_srli_epi32(accB, 6);
+			accB = _mm_srl_epi32(accB, vNormShift128);
 			accB = _mm_packus_epi32(accB, accB);
 			accB = _mm_packus_epi16(accB, accB);
 			int bv = _mm_cvtsi128_si32(accB) & 0xFFFF;
@@ -690,13 +741,13 @@ int HafCpu_Remap_U24_U24_Bilinear
 		for (; x < dstWidth; ++x, pd += 3, ++pMapY_X)
 		{
 			int mx, my, fx, fy;
-			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
+			if (pMapY_X->x == 0xFFFF || pMapY_X->y == 0xFFFF) {
 				mx = 1; my = 1; fx = 0; fy = 0;
 			} else {
-				mx = pMapY_X->x >> 3;
-				my = pMapY_X->y >> 3;
-				fx = pMapY_X->x & 7;
-				fy = pMapY_X->y & 7;
+				mx = pMapY_X->x >> fractionalBits;
+				my = pMapY_X->y >> fractionalBits;
+				fx = pMapY_X->x & fracMask;
+				fy = pMapY_X->y & fracMask;
 			}
 			if (mx < 0) { mx = 0; fx = 0; }
 			if (my < 0) { my = 0; fy = 0; }
@@ -704,16 +755,17 @@ int HafCpu_Remap_U24_U24_Bilinear
 			if (my >= (int)srcHeight - 1) { my = (int)srcHeight - 2; fy = 0; }
 			const vx_uint8 *p = pSrcImage + (size_t)my * srcImageStrideInBytes + (size_t)mx * 3;
 			const vx_uint8 *p2 = p + srcImageStrideInBytes;
-			int w00 = (8 - fx) * (8 - fy), w10 = fx * (8 - fy), w01 = (8 - fx) * fy, w11 = fx * fy;
+			int w00 = (scale - fx) * (scale - fy), w10 = fx * (scale - fy), w01 = (scale - fx) * fy, w11 = fx * fy;
 			for (int c = 0; c < 3; ++c)
 			{
-				int v = (p[c] * w00 + p[c + 3] * w10 + p2[c] * w01 + p2[c + 3] * w11 + 32) >> 6;
+				int v = (p[c] * w00 + p[c + 3] * w10 + p2[c] * w01 + p2[c + 3] * w11 + normRound) >> normShift;
 				pd[c] = (vx_uint8)v;
 			}
 		}
 	}
 	return AGO_SUCCESS;
 }
+
 
 int HafCpu_Remap_U32_U32_Bilinear
 (
@@ -726,13 +778,22 @@ int HafCpu_Remap_U32_U32_Bilinear
 	vx_uint8             * pSrcImage,
 	vx_uint32              srcImageStrideInBytes,
 	ago_coord2d_ushort_t  * pMap,
-	vx_uint32              mapStrideInBytes
+	vx_uint32              mapStrideInBytes,
+	vx_uint32              fractionalBits
 )
 {
 	const __m128i sstride = _mm_set1_epi32((int)srcImageStrideInBytes);
-	const __m128i round32 = _mm_set1_epi32(32);
+	// #1806: see HafCpu_Remap_U8_U8_Bilinear -- the weight scale and
+	// normalization shift/round both derive from fractionalBits, not the
+	// original hardcoded 3/8/32/6.
+	const int fracMask = (1 << fractionalBits) - 1;
+	const int scale = 1 << fractionalBits;
+	const int normShift = 2 * (int)fractionalBits;
+	const int normRound = (normShift > 0) ? (1 << (normShift - 1)) : 0;
+	const __m128i round32 = _mm_set1_epi32(normRound);
+	const __m128i vNormShift128 = _mm_cvtsi32_si128(normShift);
 	const __m128i zero128 = _mm_setzero_si128();
-	const __m256i round32_avx = _mm256_set1_epi32(32);
+	const __m256i round32_avx = _mm256_set1_epi32(normRound);
 	const __m128i shufR = _mm_setr_epi8(0, (char)0x80, 4, (char)0x80, 8, (char)0x80, 12, (char)0x80,
 	                                    (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80);
 	const __m128i shufG = _mm_setr_epi8(1, (char)0x80, 5, (char)0x80, 9, (char)0x80, 13, (char)0x80,
@@ -764,13 +825,13 @@ int HafCpu_Remap_U32_U32_Bilinear
 
 	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
+		ago_coord2d_ushort_t *pMapY_X = (ago_coord2d_ushort_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
 		vx_uint32 x = 0;
 		for (; x + 4 <= dstWidth; x += 4, pd += 16, pMapY_X += 4)
 		{
 			__m128i mapfrac, mapxy;
-			__m128i off = AgoRemapComputeOffsets_SSE(pMapY_X, sstride, 4, srcWidth, srcHeight, mapfrac, mapxy);
+			__m128i off = AgoRemapComputeOffsets_SSE(pMapY_X, sstride, 4, srcWidth, srcHeight, (int)fractionalBits, mapfrac, mapxy);
 
 			int fx0 = M128I(mapfrac).m128i_i16[0];
 			int fy0 = M128I(mapfrac).m128i_i16[1];
@@ -813,18 +874,18 @@ int HafCpu_Remap_U32_U32_Bilinear
 			__m256i BR = _mm256_set_m128i(zero128, br128);
 
 			__m256i wx = _mm256_setr_epi16(
-			    (short)(8 - fx0), (short)fx0, (short)(8 - fx1), (short)fx1,
-			    (short)(8 - fx2), (short)fx2, (short)(8 - fx3), (short)fx3,
-			    (short)(8 - fx0), (short)fx0, (short)(8 - fx1), (short)fx1,
-			    (short)(8 - fx2), (short)fx2, (short)(8 - fx3), (short)fx3);
+			    (short)(scale - fx0), (short)fx0, (short)(scale - fx1), (short)fx1,
+			    (short)(scale - fx2), (short)fx2, (short)(scale - fx3), (short)fx3,
+			    (short)(scale - fx0), (short)fx0, (short)(scale - fx1), (short)fx1,
+			    (short)(scale - fx2), (short)fx2, (short)(scale - fx3), (short)fx3);
 			__m256i wy = _mm256_setr_epi16(
-			    (short)(8 - fy0), (short)fy0, (short)(8 - fy1), (short)fy1,
-			    (short)(8 - fy2), (short)fy2, (short)(8 - fy3), (short)fy3,
-			    (short)(8 - fy0), (short)fy0, (short)(8 - fy1), (short)fy1,
-			    (short)(8 - fy2), (short)fy2, (short)(8 - fy3), (short)fy3);
+			    (short)(scale - fy0), (short)fy0, (short)(scale - fy1), (short)fy1,
+			    (short)(scale - fy2), (short)fy2, (short)(scale - fy3), (short)fy3,
+			    (short)(scale - fy0), (short)fy0, (short)(scale - fy1), (short)fy1,
+			    (short)(scale - fy2), (short)fy2, (short)(scale - fy3), (short)fy3);
 
 			__m256i fy_vec = _mm256_setr_epi32(fy0, fy1, fy2, fy3, 0, 0, 0, 0);
-			__m256i onemyf_vec = _mm256_sub_epi32(_mm256_set1_epi32(8), fy_vec);
+			__m256i onemyf_vec = _mm256_sub_epi32(_mm256_set1_epi32(scale), fy_vec);
 
 			__m256i cR0 = _mm256_shuffle_epi8(TL, shufR_avx);
 			__m256i cR1 = _mm256_shuffle_epi8(TR, shufR_avx);
@@ -838,7 +899,7 @@ int HafCpu_Remap_U32_U32_Bilinear
 			    _mm256_mullo_epi32(topR32, onemyf_vec),
 			    _mm256_mullo_epi32(botR32, fy_vec));
 			resR32 = _mm256_add_epi32(resR32, round32_avx);
-			resR32 = _mm256_srli_epi32(resR32, 6);
+			resR32 = _mm256_srl_epi32(resR32, vNormShift128);
 			__m256i resR16 = _mm256_packus_epi32(resR32, resR32);
 			__m256i resR8 = _mm256_packus_epi16(resR16, resR16);
 			int rv = _mm_cvtsi128_si32(_mm256_castsi256_si128(resR8));
@@ -855,7 +916,7 @@ int HafCpu_Remap_U32_U32_Bilinear
 			    _mm256_mullo_epi32(topG32, onemyf_vec),
 			    _mm256_mullo_epi32(botG32, fy_vec));
 			resG32 = _mm256_add_epi32(resG32, round32_avx);
-			resG32 = _mm256_srli_epi32(resG32, 6);
+			resG32 = _mm256_srl_epi32(resG32, vNormShift128);
 			__m256i resG16 = _mm256_packus_epi32(resG32, resG32);
 			__m256i resG8 = _mm256_packus_epi16(resG16, resG16);
 			int gv = _mm_cvtsi128_si32(_mm256_castsi256_si128(resG8));
@@ -872,7 +933,7 @@ int HafCpu_Remap_U32_U32_Bilinear
 			    _mm256_mullo_epi32(topB32, onemyf_vec),
 			    _mm256_mullo_epi32(botB32, fy_vec));
 			resB32 = _mm256_add_epi32(resB32, round32_avx);
-			resB32 = _mm256_srli_epi32(resB32, 6);
+			resB32 = _mm256_srl_epi32(resB32, vNormShift128);
 			__m256i resB16 = _mm256_packus_epi32(resB32, resB32);
 			__m256i resB8 = _mm256_packus_epi16(resB16, resB16);
 			int bv = _mm_cvtsi128_si32(_mm256_castsi256_si128(resB8));
@@ -889,7 +950,7 @@ int HafCpu_Remap_U32_U32_Bilinear
 			    _mm256_mullo_epi32(topA32, onemyf_vec),
 			    _mm256_mullo_epi32(botA32, fy_vec));
 			resA32 = _mm256_add_epi32(resA32, round32_avx);
-			resA32 = _mm256_srli_epi32(resA32, 6);
+			resA32 = _mm256_srl_epi32(resA32, vNormShift128);
 			__m256i resA16 = _mm256_packus_epi32(resA32, resA32);
 			__m256i resA8 = _mm256_packus_epi16(resA16, resA16);
 			int av = _mm_cvtsi128_si32(_mm256_castsi256_si128(resA8));
@@ -904,14 +965,14 @@ int HafCpu_Remap_U32_U32_Bilinear
 			// Decode one entry at a time: a four-entry SSE load would read past
 			// the remap allocation when fewer than four entries remain in the row.
 			int fx0, fy0, fx1, fy1;
-			int o0 = AgoRemapComputeOffset1(pMapY_X,     (int)srcImageStrideInBytes, 4, (int)srcWidth, (int)srcHeight, fx0, fy0);
-			int o1 = AgoRemapComputeOffset1(pMapY_X + 1, (int)srcImageStrideInBytes, 4, (int)srcWidth, (int)srcHeight, fx1, fy1);
+			int o0 = AgoRemapComputeOffset1(pMapY_X,     (int)srcImageStrideInBytes, 4, (int)srcWidth, (int)srcHeight, (int)fractionalBits, fx0, fy0);
+			int o1 = AgoRemapComputeOffset1(pMapY_X + 1, (int)srcImageStrideInBytes, 4, (int)srcWidth, (int)srcHeight, (int)fractionalBits, fx1, fy1);
 
 			__m128i weights = _mm_setr_epi16(
-			    (short)((8 - fx0) * (8 - fy0)), (short)(fx0 * (8 - fy0)),
-			    (short)((8 - fx0) * fy0),       (short)(fx0 * fy0),
-			    (short)((8 - fx1) * (8 - fy1)), (short)(fx1 * (8 - fy1)),
-			    (short)((8 - fx1) * fy1),       (short)(fx1 * fy1));
+			    (short)((scale - fx0) * (scale - fy0)), (short)(fx0 * (scale - fy0)),
+			    (short)((scale - fx0) * fy0),       (short)(fx0 * fy0),
+			    (short)((scale - fx1) * (scale - fy1)), (short)(fx1 * (scale - fy1)),
+			    (short)((scale - fx1) * fy1),       (short)(fx1 * fy1));
 
 			__m128i c0 = _mm_setr_epi32(
 			    (int)((const vx_uint32 *)(pSrcImage + o0))[0],
@@ -930,7 +991,7 @@ int HafCpu_Remap_U32_U32_Bilinear
 			__m128i accR = _mm_madd_epi16(p01R, weights);
 			accR = _mm_hadd_epi32(accR, accR);
 			accR = _mm_add_epi32(accR, round32);
-			accR = _mm_srli_epi32(accR, 6);
+			accR = _mm_srl_epi32(accR, vNormShift128);
 			accR = _mm_packus_epi32(accR, accR);
 			accR = _mm_packus_epi16(accR, accR);
 			int rv = _mm_cvtsi128_si32(accR) & 0xFFFF;
@@ -941,7 +1002,7 @@ int HafCpu_Remap_U32_U32_Bilinear
 			__m128i accG = _mm_madd_epi16(p01G, weights);
 			accG = _mm_hadd_epi32(accG, accG);
 			accG = _mm_add_epi32(accG, round32);
-			accG = _mm_srli_epi32(accG, 6);
+			accG = _mm_srl_epi32(accG, vNormShift128);
 			accG = _mm_packus_epi32(accG, accG);
 			accG = _mm_packus_epi16(accG, accG);
 			int gv = _mm_cvtsi128_si32(accG) & 0xFFFF;
@@ -952,7 +1013,7 @@ int HafCpu_Remap_U32_U32_Bilinear
 			__m128i accB = _mm_madd_epi16(p01B, weights);
 			accB = _mm_hadd_epi32(accB, accB);
 			accB = _mm_add_epi32(accB, round32);
-			accB = _mm_srli_epi32(accB, 6);
+			accB = _mm_srl_epi32(accB, vNormShift128);
 			accB = _mm_packus_epi32(accB, accB);
 			accB = _mm_packus_epi16(accB, accB);
 			int bv = _mm_cvtsi128_si32(accB) & 0xFFFF;
@@ -963,7 +1024,7 @@ int HafCpu_Remap_U32_U32_Bilinear
 			__m128i accA = _mm_madd_epi16(p01A, weights);
 			accA = _mm_hadd_epi32(accA, accA);
 			accA = _mm_add_epi32(accA, round32);
-			accA = _mm_srli_epi32(accA, 6);
+			accA = _mm_srl_epi32(accA, vNormShift128);
 			accA = _mm_packus_epi32(accA, accA);
 			accA = _mm_packus_epi16(accA, accA);
 			int av = _mm_cvtsi128_si32(accA) & 0xFFFF;
@@ -981,13 +1042,13 @@ int HafCpu_Remap_U32_U32_Bilinear
 		for (; x < dstWidth; ++x, pd += 4, ++pMapY_X)
 		{
 			int mx, my, fx, fy;
-			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
+			if (pMapY_X->x == 0xFFFF || pMapY_X->y == 0xFFFF) {
 				mx = 1; my = 1; fx = 0; fy = 0;
 			} else {
-				mx = pMapY_X->x >> 3;
-				my = pMapY_X->y >> 3;
-				fx = pMapY_X->x & 7;
-				fy = pMapY_X->y & 7;
+				mx = pMapY_X->x >> fractionalBits;
+				my = pMapY_X->y >> fractionalBits;
+				fx = pMapY_X->x & fracMask;
+				fy = pMapY_X->y & fracMask;
 			}
 			if (mx < 0) { mx = 0; fx = 0; }
 			if (my < 0) { my = 0; fy = 0; }
@@ -995,10 +1056,10 @@ int HafCpu_Remap_U32_U32_Bilinear
 			if (my >= (int)srcHeight - 1) { my = (int)srcHeight - 2; fy = 0; }
 			const vx_uint8 *p = pSrcImage + (size_t)my * srcImageStrideInBytes + (size_t)mx * 4;
 			const vx_uint8 *p2 = p + srcImageStrideInBytes;
-			int w00 = (8 - fx) * (8 - fy), w10 = fx * (8 - fy), w01 = (8 - fx) * fy, w11 = fx * fy;
+			int w00 = (scale - fx) * (scale - fy), w10 = fx * (scale - fy), w01 = (scale - fx) * fy, w11 = fx * fy;
 			for (int c = 0; c < 4; ++c)
 			{
-				int v = (p[c] * w00 + p[c + 4] * w10 + p2[c] * w01 + p2[c + 4] * w11 + 32) >> 6;
+				int v = (p[c] * w00 + p[c + 4] * w10 + p2[c] * w01 + p2[c + 4] * w11 + normRound) >> normShift;
 				pd[c] = (vx_uint8)v;
 			}
 		}
@@ -1017,21 +1078,23 @@ int HafCpu_Remap_U24_U24_Nearest
 	vx_uint8             * pSrcImage,
 	vx_uint32              srcImageStrideInBytes,
 	ago_coord2d_ushort_t  * pMap,
-	vx_uint32              mapStrideInBytes
+	vx_uint32              mapStrideInBytes,
+	vx_uint32              fractionalBits
 )
 {
+	const int fracMask = (1 << fractionalBits) - 1;
 	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
+		ago_coord2d_ushort_t *pMapY_X = (ago_coord2d_ushort_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
 		for (vx_uint32 x = 0; x < dstWidth; ++x, pd += 3, ++pMapY_X)
 		{
 			int mx, my;
-			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
+			if (pMapY_X->x == 0xFFFF || pMapY_X->y == 0xFFFF) {
 				mx = 1; my = 1;
 			} else {
-				mx = (pMapY_X->x >> 3) + ((pMapY_X->x & 7) >> 2);
-				my = (pMapY_X->y >> 3) + ((pMapY_X->y & 7) >> 2);
+				mx = (pMapY_X->x >> fractionalBits) + (((pMapY_X->x & fracMask) > (vx_uint32)(fracMask >> 1)) ? 1 : 0);
+				my = (pMapY_X->y >> fractionalBits) + (((pMapY_X->y & fracMask) > (vx_uint32)(fracMask >> 1)) ? 1 : 0);
 			}
 			if (mx < 0) mx = 0;
 			if (my < 0) my = 0;
@@ -1056,21 +1119,23 @@ int HafCpu_Remap_U32_U32_Nearest
 	vx_uint8             * pSrcImage,
 	vx_uint32              srcImageStrideInBytes,
 	ago_coord2d_ushort_t  * pMap,
-	vx_uint32              mapStrideInBytes
+	vx_uint32              mapStrideInBytes,
+	vx_uint32              fractionalBits
 )
 {
+	const int fracMask = (1 << fractionalBits) - 1;
 	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
+		ago_coord2d_ushort_t *pMapY_X = (ago_coord2d_ushort_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
 		for (vx_uint32 x = 0; x < dstWidth; ++x, pd += 4, ++pMapY_X)
 		{
 			int mx, my;
-			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
+			if (pMapY_X->x == 0xFFFF || pMapY_X->y == 0xFFFF) {
 				mx = 1; my = 1;
 			} else {
-				mx = (pMapY_X->x >> 3) + ((pMapY_X->x & 7) >> 2);
-				my = (pMapY_X->y >> 3) + ((pMapY_X->y & 7) >> 2);
+				mx = (pMapY_X->x >> fractionalBits) + (((pMapY_X->x & fracMask) > (vx_uint32)(fracMask >> 1)) ? 1 : 0);
+				my = (pMapY_X->y >> fractionalBits) + (((pMapY_X->y & fracMask) > (vx_uint32)(fracMask >> 1)) ? 1 : 0);
 			}
 			if (mx < 0) mx = 0;
 			if (my < 0) my = 0;
@@ -1096,32 +1161,37 @@ int HafCpu_Remap_U24_U24_Bilinear_Constant
 	vx_uint32				  srcImageStrideInBytes,
 	ago_coord2d_ushort_t  * pMap,
 	vx_uint32				  mapStrideInBytes,
-	vx_uint8				  borderValue
+	vx_uint8				  borderValue,
+	vx_uint32				  fractionalBits
 )
 {
+	const int fracMask = (1 << fractionalBits) - 1;
+	const int scale = 1 << fractionalBits;
+	const int normShift = 2 * (int)fractionalBits;
+	const int normRound = (normShift > 0) ? (1 << (normShift - 1)) : 0;
 	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + (size_t)y * mapStrideInBytes);
+		ago_coord2d_ushort_t *pMapY_X = (ago_coord2d_ushort_t *)((vx_uint8 *)pMap + (size_t)y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
 		for (vx_uint32 x = 0; x < dstWidth; ++x, ++pMapY_X, pd += 3)
 		{
-			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
+			if (pMapY_X->x == 0xFFFF || pMapY_X->y == 0xFFFF) {
 				pd[0] = borderValue;
 				pd[1] = borderValue;
 				pd[2] = borderValue;
 			} else {
-				int mx = pMapY_X->x >> 3;
-				int my = pMapY_X->y >> 3;
-				int fx = pMapY_X->x & 7;
-				int fy = pMapY_X->y & 7;
-				int w00 = (8 - fx) * (8 - fy), w10 = fx * (8 - fy), w01 = (8 - fx) * fy, w11 = fx * fy;
+				int mx = pMapY_X->x >> fractionalBits;
+				int my = pMapY_X->y >> fractionalBits;
+				int fx = pMapY_X->x & fracMask;
+				int fy = pMapY_X->y & fracMask;
+				int w00 = (scale - fx) * (scale - fy), w10 = fx * (scale - fy), w01 = (scale - fx) * fy, w11 = fx * fy;
 				for (int c = 0; c < 3; ++c)
 				{
 					int v00 = ((mx	   >= 0) && (my	   >= 0) && (mx	   < (int)srcWidth) && (my	   < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)mx * 3 + c] : borderValue;
 					int v10 = ((mx + 1 >= 0) && (my	   >= 0) && (mx + 1 < (int)srcWidth) && (my	   < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)(mx + 1) * 3 + c] : borderValue;
 					int v01 = ((mx	   >= 0) && (my + 1 >= 0) && (mx	   < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)mx * 3 + c] : borderValue;
 					int v11 = ((mx + 1 >= 0) && (my + 1 >= 0) && (mx + 1 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)(mx + 1) * 3 + c] : borderValue;
-					pd[c] = (vx_uint8)((v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + 32) >> 6);
+					pd[c] = (vx_uint8)((v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + normRound) >> normShift);
 				}
 			}
 		}
@@ -1141,23 +1211,25 @@ int HafCpu_Remap_U24_U24_Nearest_Constant
 	vx_uint32				  srcImageStrideInBytes,
 	ago_coord2d_ushort_t  * pMap,
 	vx_uint32				  mapStrideInBytes,
-	vx_uint8				  borderValue
+	vx_uint8				  borderValue,
+	vx_uint32				  fractionalBits
 )
 {
+	const int fracMask = (1 << fractionalBits) - 1;
 	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
+		ago_coord2d_ushort_t *pMapY_X = (ago_coord2d_ushort_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
 		for (vx_uint32 x = 0; x < dstWidth; ++x, pd += 3, ++pMapY_X)
 		{
 			int mx, my;
 			bool useBorder = false;
-			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
+			if (pMapY_X->x == 0xFFFF || pMapY_X->y == 0xFFFF) {
 				useBorder = true;
 				mx = 0; my = 0;
 			} else {
-				mx = (pMapY_X->x >> 3) + ((pMapY_X->x & 7) >> 2);
-				my = (pMapY_X->y >> 3) + ((pMapY_X->y & 7) >> 2);
+				mx = (pMapY_X->x >> fractionalBits) + (((pMapY_X->x & fracMask) > (vx_uint32)(fracMask >> 1)) ? 1 : 0);
+				my = (pMapY_X->y >> fractionalBits) + (((pMapY_X->y & fracMask) > (vx_uint32)(fracMask >> 1)) ? 1 : 0);
 			}
 			for (int c = 0; c < 3; ++c)
 			{
@@ -1185,33 +1257,38 @@ int HafCpu_Remap_U32_U32_Bilinear_Constant
 	vx_uint32				  srcImageStrideInBytes,
 	ago_coord2d_ushort_t  * pMap,
 	vx_uint32				  mapStrideInBytes,
-	vx_uint8				  borderValue
+	vx_uint8				  borderValue,
+	vx_uint32				  fractionalBits
 )
 {
+	const int fracMask = (1 << fractionalBits) - 1;
+	const int scale = 1 << fractionalBits;
+	const int normShift = 2 * (int)fractionalBits;
+	const int normRound = (normShift > 0) ? (1 << (normShift - 1)) : 0;
 	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + (size_t)y * mapStrideInBytes);
+		ago_coord2d_ushort_t *pMapY_X = (ago_coord2d_ushort_t *)((vx_uint8 *)pMap + (size_t)y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
 		for (vx_uint32 x = 0; x < dstWidth; ++x, ++pMapY_X, pd += 4)
 		{
-			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
+			if (pMapY_X->x == 0xFFFF || pMapY_X->y == 0xFFFF) {
 				pd[0] = borderValue;
 				pd[1] = borderValue;
 				pd[2] = borderValue;
 				pd[3] = borderValue;
 			} else {
-				int mx = pMapY_X->x >> 3;
-				int my = pMapY_X->y >> 3;
-				int fx = pMapY_X->x & 7;
-				int fy = pMapY_X->y & 7;
-				int w00 = (8 - fx) * (8 - fy), w10 = fx * (8 - fy), w01 = (8 - fx) * fy, w11 = fx * fy;
+				int mx = pMapY_X->x >> fractionalBits;
+				int my = pMapY_X->y >> fractionalBits;
+				int fx = pMapY_X->x & fracMask;
+				int fy = pMapY_X->y & fracMask;
+				int w00 = (scale - fx) * (scale - fy), w10 = fx * (scale - fy), w01 = (scale - fx) * fy, w11 = fx * fy;
 				for (int c = 0; c < 4; ++c)
 				{
 					int v00 = ((mx	   >= 0) && (my	   >= 0) && (mx	   < (int)srcWidth) && (my	   < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)mx * 4 + c] : borderValue;
 					int v10 = ((mx + 1 >= 0) && (my	   >= 0) && (mx + 1 < (int)srcWidth) && (my	   < (int)srcHeight)) ? pSrcImage[(size_t)my * srcImageStrideInBytes + (size_t)(mx + 1) * 4 + c] : borderValue;
 					int v01 = ((mx	   >= 0) && (my + 1 >= 0) && (mx	   < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)mx * 4 + c] : borderValue;
 					int v11 = ((mx + 1 >= 0) && (my + 1 >= 0) && (mx + 1 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)(mx + 1) * 4 + c] : borderValue;
-					pd[c] = (vx_uint8)((v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + 32) >> 6);
+					pd[c] = (vx_uint8)((v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + normRound) >> normShift);
 				}
 			}
 		}
@@ -1231,23 +1308,25 @@ int HafCpu_Remap_U32_U32_Nearest_Constant
 	vx_uint32				  srcImageStrideInBytes,
 	ago_coord2d_ushort_t  * pMap,
 	vx_uint32				  mapStrideInBytes,
-	vx_uint8				  borderValue
+	vx_uint8				  borderValue,
+	vx_uint32				  fractionalBits
 )
 {
+	const int fracMask = (1 << fractionalBits) - 1;
 	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
-		ago_coord2d_short_t *pMapY_X = (ago_coord2d_short_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
+		ago_coord2d_ushort_t *pMapY_X = (ago_coord2d_ushort_t *)((vx_uint8 *)pMap + y * mapStrideInBytes);
 		vx_uint8 *pd = pDstImage + (size_t)y * dstImageStrideInBytes;
 		for (vx_uint32 x = 0; x < dstWidth; ++x, pd += 4, ++pMapY_X)
 		{
 			int mx, my;
 			bool useBorder = false;
-			if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
+			if (pMapY_X->x == 0xFFFF || pMapY_X->y == 0xFFFF) {
 				useBorder = true;
 				mx = 0; my = 0;
 			} else {
-				mx = (pMapY_X->x >> 3) + ((pMapY_X->x & 7) >> 2);
-				my = (pMapY_X->y >> 3) + ((pMapY_X->y & 7) >> 2);
+				mx = (pMapY_X->x >> fractionalBits) + (((pMapY_X->x & fracMask) > (vx_uint32)(fracMask >> 1)) ? 1 : 0);
+				my = (pMapY_X->y >> fractionalBits) + (((pMapY_X->y & fracMask) > (vx_uint32)(fracMask >> 1)) ? 1 : 0);
 			}
 			for (int c = 0; c < 4; ++c)
 			{
@@ -1275,7 +1354,8 @@ int HafCpu_Remap_U8_U8_Bilinear_Constant
 	vx_uint32              srcImageStrideInBytes,
 	ago_coord2d_ushort_t  * pMap,
 	vx_uint32              mapStrideInBytes,
-	vx_uint8               borderValue
+	vx_uint8               borderValue,
+	vx_uint32              fractionalBits
 )
 {
 	__m128i zeromask = _mm_setzero_si128();
@@ -1283,24 +1363,33 @@ int HafCpu_Remap_U8_U8_Bilinear_Constant
 
 	const __m128i sstride = _mm_set1_epi32(srcImageStrideInBytes);
 	const __m128i pborder = _mm_set1_epi32(borderValue);
-	const __m128i round = _mm_set1_epi32((int)32);
+	// #1806: see HafCpu_Remap_U8_U8_Bilinear for why the decode shift/mask and
+	// the weight-normalization shift/rounding both need to scale with
+	// fractionalBits instead of the hardcoded 3/8/32/6.
+	const int fracMask = (1 << fractionalBits) - 1;
+	const int scale = 1 << fractionalBits;
+	const int normShift = 2 * (int)fractionalBits;
+	const int normRound = (normShift > 0) ? (1 << (normShift - 1)) : 0;
+	const __m128i round = _mm_set1_epi32(normRound);
+	const __m128i vFracBits = _mm_cvtsi32_si128((int)fractionalBits);
+	const __m128i vNormShift = _mm_cvtsi32_si128(normShift);
 
 	unsigned char *pchDst = (unsigned char*)pDstImage;
 	unsigned char *pchMap = (unsigned char *)pMap;
 
-	auto scalar_pixel = [&](ago_coord2d_short_t *pMapY_X) -> vx_uint8 {
+	auto scalar_pixel = [&](ago_coord2d_ushort_t *pMapY_X) -> vx_uint8 {
 		int mx, my, fx, fy;
 		bool useBorder = false;
-		if (pMapY_X->x == (vx_int16)0xFFFF || pMapY_X->y == (vx_int16)0xFFFF) {
+		if (pMapY_X->x == 0xFFFF || pMapY_X->y == 0xFFFF) {
 			useBorder = true;
 			mx = 0; my = 0; fx = 0; fy = 0;
 		} else {
-			mx = pMapY_X->x >> 3;
-			my = pMapY_X->y >> 3;
-			fx = pMapY_X->x & 7;
-			fy = pMapY_X->y & 7;
+			mx = pMapY_X->x >> fractionalBits;
+			my = pMapY_X->y >> fractionalBits;
+			fx = pMapY_X->x & fracMask;
+			fy = pMapY_X->y & fracMask;
 		}
-		int w00 = (8 - fx) * (8 - fy), w10 = fx * (8 - fy), w01 = (8 - fx) * fy, w11 = fx * fy;
+		int w00 = (scale - fx) * (scale - fy), w10 = fx * (scale - fy), w01 = (scale - fx) * fy, w11 = fx * fy;
 		int v00, v10, v01, v11;
 		if (useBorder) {
 			v00 = v10 = v01 = v11 = borderValue;
@@ -1310,7 +1399,7 @@ int HafCpu_Remap_U8_U8_Bilinear_Constant
 			v01 = ((mx		 >= 0) && (my + 1 >= 0) && (mx		 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)mx] : borderValue;
 			v11 = ((mx + 1 >= 0) && (my + 1 >= 0) && (mx + 1 < (int)srcWidth) && (my + 1 < (int)srcHeight)) ? pSrcImage[(size_t)(my + 1) * srcImageStrideInBytes + (size_t)(mx + 1)] : borderValue;
 		}
-		return (vx_uint8)((v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + 32) >> 6);
+		return (vx_uint8)((v00 * w00 + v10 * w10 + v01 * w01 + v11 * w11 + normRound) >> normShift);
 	};
 
 	// The SIMD path for a 4-pixel block is only valid when every pixel's 2x2 sample
@@ -1321,12 +1410,12 @@ int HafCpu_Remap_U8_U8_Bilinear_Constant
 	// derived from srcWidth is wrong for non-identity maps (e.g. a mirror table) and
 	// both over-reads the source buffer and skips constant-border substitution. Blocks
 	// that are not fully safe, and the sub-4-pixel tail, use the scalar per-neighbor path.
-	auto block_simd_safe = [&](const ago_coord2d_short_t *pMapY_X) -> bool {
+	auto block_simd_safe = [&](const ago_coord2d_ushort_t *pMapY_X) -> bool {
 		for (int k = 0; k < 4; ++k) {
-			const ago_coord2d_short_t &m = pMapY_X[k];
-			if (m.x == (vx_int16)0xFFFF || m.y == (vx_int16)0xFFFF)
+			const ago_coord2d_ushort_t &m = pMapY_X[k];
+			if (m.x == 0xFFFF || m.y == 0xFFFF)
 				return false;
-			int mx = m.x >> 3, my = m.y >> 3;
+			int mx = m.x >> fractionalBits, my = m.y >> fractionalBits;
 			if (mx < 0 || my < 0 || (mx + 3) >= (int)srcWidth || (my + 1) >= (int)srcHeight)
 				return false;
 		}
@@ -1335,13 +1424,13 @@ int HafCpu_Remap_U8_U8_Bilinear_Constant
 
 	for (vx_uint32 y = 0; y < dstHeight; ++y)
 	{
-		ago_coord2d_short_t *pMapRow = (ago_coord2d_short_t *)(pchMap + y * mapStrideInBytes);
+		ago_coord2d_ushort_t *pMapRow = (ago_coord2d_ushort_t *)(pchMap + y * mapStrideInBytes);
 		unsigned char *pDstRow = pchDst + y * dstImageStrideInBytes;
 
 		vx_uint32 x = 0;
 		for (; x + 4 <= dstWidth; x += 4)
 		{
-			ago_coord2d_short_t *pMapY_X = pMapRow + x;
+			ago_coord2d_ushort_t *pMapY_X = pMapRow + x;
 			if (!block_simd_safe(pMapY_X))
 			{
 				for (int k = 0; k < 4; ++k)
@@ -1357,9 +1446,9 @@ int HafCpu_Remap_U8_U8_Bilinear_Constant
 			mapxy = _mm_andnot_si128(mask, mapxy);
 			mapxy = _mm_or_si128(mapxy, _mm_and_si128(mask, zeromask));
 
-			mapfrac = _mm_and_si128(mapxy, CONST_7);
-			oneminusxy = _mm_sub_epi16(_mm_set1_epi16(8), mapfrac);
-			mapxy = _mm_srli_epi16(mapxy, 3);
+			mapfrac = _mm_and_si128(mapxy, _mm_set1_epi16((short)fracMask));
+			oneminusxy = _mm_sub_epi16(_mm_set1_epi16((short)scale), mapfrac);
+			mapxy = _mm_srl_epi16(mapxy, vFracBits);
 			temp0 = _mm_srli_epi32(mapxy, 16);
 			mapxy = _mm_and_si128(mapxy, CONST_0000FFFF);
 			temp0 = _mm_mullo_epi32(temp0, sstride);
@@ -1408,7 +1497,7 @@ int HafCpu_Remap_U8_U8_Bilinear_Constant
 			temp0 = _mm_hadd_epi32(p12, p12);
 			p34 = _mm_unpacklo_epi64(p34, temp0);
 			p34 = _mm_add_epi32(p34, round);
-			p34 = _mm_srli_epi32(p34, 6);
+			p34 = _mm_srl_epi32(p34, vNormShift);
 			p34 = _mm_andnot_si128(mask, p34);
 			mask = _mm_and_si128(mask, pborder);
 			p34 = _mm_or_si128(p34, mask);
@@ -3629,6 +3718,19 @@ vx_uint32     srcImageStrideInBytes
 	return AGO_SUCCESS;
 }
 
+// Map an AREA output coordinate to the first source coordinate it covers.
+//
+// The general path below builds its Xmap/Ymap by *rounding*
+// ((pos + FP_ROUND) >> FP_BITS), which turns the -0.5 offset the AREA scale
+// matrix carries (agoKernel_ScaleImage_U8_U8_Area) back into pos * scale. The
+// 1:1 and 2:1 fast paths used a plain (int) cast instead, which truncates
+// toward zero: (int)(-0.5f + 2) is 1, not 2, so every output row but the first
+// was built from the source rows one above the correct pair.
+static inline int agoAreaFirstSrcCoord(float offset, int pos)
+{
+	return (int)floorf(offset + (float)pos + 0.5f);
+}
+
 int HafCpu_ScaleImage_U8_U8_Area
 (
 vx_uint32            dstWidth,
@@ -3648,7 +3750,7 @@ ago_scale_matrix_t * matrix
 		// no scaling. Just do a copy from src to dst
 		for (unsigned int y = 0; y < dstHeight; y++)
 		{
-			vx_uint8 *pSrc = pSrcImage + (int)(matrix->yoffset+y)*srcImageStrideInBytes + (int)matrix->xoffset;
+			vx_uint8 *pSrc = pSrcImage + agoAreaFirstSrcCoord(matrix->yoffset, y)*srcImageStrideInBytes + agoAreaFirstSrcCoord(matrix->xoffset, 0);
 			// clamp to boundary
 			if (pSrc < pSrcImage) pSrc = pSrcImage;
 			if (pSrc > pSrcB) pSrc = pSrcB;
@@ -3676,7 +3778,7 @@ ago_scale_matrix_t * matrix
 		// 2x2 image scaling
 		for (unsigned int y = 0; y < dstHeight; y++)
 		{
-			vx_uint8 *S0 = pSrcImage + (int)(matrix->yoffset+(y*2))*srcImageStrideInBytes + (int)(matrix->xoffset);
+			vx_uint8 *S0 = pSrcImage + agoAreaFirstSrcCoord(matrix->yoffset, y*2)*srcImageStrideInBytes + agoAreaFirstSrcCoord(matrix->xoffset, 0);
 			if (S0 < pSrcImage) S0 = pSrcImage;
 			if (S0 > pSrcB) S0 = pSrcB;
 			vx_uint8 *S1 = S0 + srcImageStrideInBytes;
@@ -3734,7 +3836,10 @@ ago_scale_matrix_t * matrix
 		int yscale = (int)(matrix->yscale + 0.5);
 		float inv_scale = 1.0f / (xscale*yscale);
 		int area_div = (int)(FP_MUL * inv_scale);
-		vx_uint8 *src_b = pSrcImage + srcWidth*(srcHeight - 1);
+		// the last row starts a stride, not a width, from the row before it: rows are
+		// padded to a multiple of 16 bytes, so using srcWidth here made the bottom
+		// clamp point into an earlier row
+		vx_uint8 *src_b = pSrcImage + (size_t)srcImageStrideInBytes*(srcHeight - 1);
 		//int area_sz = (area + (1 << (FP_BITS - 1))) >> FP_BITS;
 		// generate xmap;
 		for (x = 0, xpos = xoffs; x <= (int)dstWidth; x++, xpos += xinc)
@@ -3758,7 +3863,8 @@ ago_scale_matrix_t * matrix
 			// compute vertical sum and store in intermediate buffer
 			vx_uint8 *S0 = pSrcImage + (int)ymap*srcImageStrideInBytes;
 			vx_uint8 *D = pDstImage;
-			for (x = Xmap[0]; x <= (Xmap[dstWidth] - 7); x += 8)
+			int xLast = (int)Xmap[dstWidth];	// last source column the horizontal pass can read
+			for (x = Xmap[0]; x <= (xLast - 7); x += 8)
 			{
 				__m128i r0 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(S0 + x)), z);
 				vx_uint8 *S1 = S0 + srcImageStrideInBytes;
@@ -3769,6 +3875,20 @@ ago_scale_matrix_t * matrix
 					S1 += srcImageStrideInBytes;
 				}
 				_mm_store_si128((__m128i*)&Ymap[x], r0);
+			}
+			// The loop above walks 8 source columns at a time and had no tail, so when the
+			// source width was not a multiple of 8 the last source columns were never
+			// summed and the last output column added Ymap entries left from an earlier row.
+			for (; x <= xLast; x++)
+			{
+				vx_uint8 *S1 = S0 + srcImageStrideInBytes;
+				int sum = S0[x];
+				for (int i = 1; i < yscale; i++){
+					if (S1 > src_b)S1 = src_b;
+					sum += S1[x];
+					S1 += srcImageStrideInBytes;
+				}
+				Ymap[x] = (vx_uint16)sum;
 			}
 			// do horizontal scaling on intermediate buffer
 			for (x = 0; x < (int)dstWidth; x++)
@@ -3809,7 +3929,7 @@ vx_uint8             border
 		// no scaling. Just do a copy from src to dst
 		for (unsigned int y = 0; y < dstHeight; y++)
 		{
-			vx_uint8 *pSrc = pSrcImage + (int)(matrix->yoffset + y)*srcImageStrideInBytes + (int)matrix->xoffset;
+			vx_uint8 *pSrc = pSrcImage + agoAreaFirstSrcCoord(matrix->yoffset, y)*srcImageStrideInBytes + agoAreaFirstSrcCoord(matrix->xoffset, 0);
 			// clamp to boundary
 			if ((pSrc < pSrcImage) || (pSrc > pSrcB)){
 				memset(pDstImage, border, dstWidth) ;
@@ -3829,7 +3949,7 @@ vx_uint8             border
 		// 2x2 image scaling
 		for (unsigned int y = 0; y < dstHeight; y++)
 		{
-			vx_uint8 *S0 = pSrcImage + (int)(matrix->yoffset + (y*2))*srcImageStrideInBytes + (int)(matrix->xoffset);
+			vx_uint8 *S0 = pSrcImage + agoAreaFirstSrcCoord(matrix->yoffset, y*2)*srcImageStrideInBytes + agoAreaFirstSrcCoord(matrix->xoffset, 0);
 			if (S0 < pSrcImage) S0 = pSrcImage;
 			if (S0 > pSrcB) S0 = pSrcB;
 			vx_uint8 *S1 = S0 + srcImageStrideInBytes;
@@ -3864,7 +3984,10 @@ vx_uint8             border
 		int yscale = (int)(matrix->yscale + 0.5);
 		float inv_scale = 1.0f / (xscale*yscale);
 		int area_div = (int)(FP_MUL * inv_scale);
-		vx_uint8 *src_b = pSrcImage + srcWidth*(srcHeight - 1);
+		// the last row starts a stride, not a width, from the row before it: rows are
+		// padded to a multiple of 16 bytes, so using srcWidth here made the bottom
+		// clamp point into an earlier row
+		vx_uint8 *src_b = pSrcImage + (size_t)srcImageStrideInBytes*(srcHeight - 1);
 		// generate xmap;
 		for (x = 0, xpos = xoffs; x <= (int)dstWidth; x++, xpos += xinc)
 		{
@@ -3887,7 +4010,8 @@ vx_uint8             border
 			// compute vertical sum and store in intermediate buffer
 			vx_uint8 *S0 = pSrcImage + (int)ymap*srcImageStrideInBytes;
 			vx_uint8 *D = pDstImage;
-			for (x = Xmap[0]; x <= (Xmap[dstWidth] - 7); x += 8)
+			int xLast = (int)Xmap[dstWidth];	// last source column the horizontal pass can read
+			for (x = Xmap[0]; x <= (xLast - 7); x += 8)
 			{
 				__m128i r0 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(S0 + x)), z);
 				vx_uint8 *S1 = S0 + srcImageStrideInBytes;
@@ -3898,6 +4022,20 @@ vx_uint8             border
 					S1 += srcImageStrideInBytes;
 				}
 				_mm_store_si128((__m128i*)&Ymap[x], r0);
+			}
+			// The loop above walks 8 source columns at a time and had no tail, so when the
+			// source width was not a multiple of 8 the last source columns were never
+			// summed and the last output column added Ymap entries left from an earlier row.
+			for (; x <= xLast; x++)
+			{
+				vx_uint8 *S1 = S0 + srcImageStrideInBytes;
+				int sum = S0[x];
+				for (int i = 1; i < yscale; i++){
+					if (S1 > src_b)S1 = src_b;
+					sum += S1[x];
+					S1 += srcImageStrideInBytes;
+				}
+				Ymap[x] = (vx_uint16)sum;
 			}
 			// do horizontal scaling on intermediate buffer
 			for (x = 0; x < (int)dstWidth; x++)

@@ -22,7 +22,9 @@ from datetime import datetime
 from subprocess import Popen, PIPE
 import argparse
 import os
+import shlex
 import shutil
+import subprocess
 import sys
 import platform
 
@@ -88,8 +90,12 @@ backendType = args.backend_type.upper()
 profilingOption = args.profiling.upper()
 width = args.width
 height = args.height
-widthDiv2 = int(width / 2)
-heightDiv2 = int(height / 2)
+# 1799: match the OpenVX spec's ceiling division for half-scale output size
+# ((W+1)/2, (H+1)/2), as used by agoKernel_ScaleGaussianHalf_U8_U8_5x5's own
+# meta-format computation -- floor division declared the wrong output size
+# for odd width/height (e.g. 5x3 -> 2x1 instead of the spec's 3x2).
+widthDiv2 = int((width + 1) / 2)
+heightDiv2 = int((height + 1) / 2)
 perfCounters = args.perf_counters.upper()
 if backendType == "OPENCL":
     backendType = 'OCL'
@@ -192,7 +198,7 @@ openvxNodes = [
     ('ChannelExtract_U8_U16_Pos0',                'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + \
      ',YUYV !CHANNEL_Y image:' + str(width) + ',' + str(height) + ',U008'),
     ('ChannelExtract_U8_U16_Pos1',                'org.khronos.openvx.channel_extract uniform-image:' + str(width) + ',' + str(height) + \
-     ',YUYV !CHANNEL_Y image:' + str(width) + ',' + str(height) + ',U008'),
+     ',UYVY !CHANNEL_Y image:' + str(width) + ',' + str(height) + ',U008'),
     ('ChannelExtract_U8_U24_Pos0',                'org.khronos.openvx.channel_extract uniform-image:' + \
      str(width) + ',' + str(height) + ',RGB2,0xaabbcc !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
     ('ChannelExtract_U8_U24_Pos1',                'org.khronos.openvx.channel_extract uniform-image:' + \
@@ -208,24 +214,25 @@ openvxNodes = [
     ('ChannelExtract_U8_U32_Pos3_YUYV',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
      ',' + str(height) + ',YUYV,0xaabbcc !CHANNEL_V image:' + str(widthDiv2) + ',' + str(height) + ',U008'),
     ('ChannelExtract_U8_U32_Pos0_RGBX',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
-     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
+     ',' + str(height) + ',RGBX,0xaabbccdd !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
     ('ChannelExtract_U8_U32_Pos1_RGBX',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
-     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_G image:' + str(width) + ',' + str(height) + ',U008'),
+     ',' + str(height) + ',RGBX,0xaabbccdd !CHANNEL_G image:' + str(width) + ',' + str(height) + ',U008'),
     ('ChannelExtract_U8_U32_Pos2_RGBX',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
-     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_B image:' + str(width) + ',' + str(height) + ',U008'),
+     ',' + str(height) + ',RGBX,0xaabbccdd !CHANNEL_B image:' + str(width) + ',' + str(height) + ',U008'),
     ('ChannelExtract_U8_U32_Pos3_RGBX',           'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
-     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_A image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8U8U8_U24',                 'org.khronos.openvx.channel_extract uniform-image:' + \
-     str(width) + ',' + str(height) + ',RGB2,0xaabbcc !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8U8U8_U32',                 'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
-     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
-    ('ChannelExtract_U8U8U8U8_U32',               'org.khronos.openvx.channel_extract uniform-image:' + str(width) + \
-     ',' + str(height) + ',RGBA,0xaabbccdd !CHANNEL_R image:' + str(width) + ',' + str(height) + ',U008'),
+     ',' + str(height) + ',RGBX,0xaabbccdd !CHANNEL_A image:' + str(width) + ',' + str(height) + ',U008'),
+    # ChannelExtract_U8U8U8_U24, ChannelExtract_U8U8U8_U32 and ChannelExtract_U8U8U8U8_U32 are
+    # removed here: they need several channel_extract nodes reading one shared input image,
+    # which a single runvx "node <format>" command cannot express, and as written they
+    # duplicated other single-channel cases above instead of exercising the 3/4-channel
+    # kernels (#1792). Covered by tests/amd_openvx_gdfs/color/ChannelExtract_U8U8U8_U24.gdf,
+    # ChannelExtract_U8U8U8_U32.gdf and ChannelExtract_U8U8U8U8_U32.gdf via
+    # openvx_gdf_tests_CPU/_GPU instead.
     ('ChannelCombine_U32_U8U8U8U8_RGBX',          'org.khronos.openvx.channel_combine uniform-image:' + str(width) + ',' + str(height) + \
      ',U008,0xaa uniform-image:' + str(width) + ',' + str(height) + ',U008,0xbb uniform-image:' + str(width) + ',' + str(height) + \
-     ',U008,0xcc uniform-image:' + str(width) + ',' + str(height) + ',U008,0xdd image:' + str(width) + ',' + str(height) + ',RGBA'),
+     ',U008,0xcc uniform-image:' + str(width) + ',' + str(height) + ',U008,0xdd image:' + str(width) + ',' + str(height) + ',RGBX'),
     ('ColorConvert_RGB_RGBX',                     'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',RGBA,0xaabbccdd image:' + str(width) + ',' + str(height) + ',RGB2'),
+     str(width) + ',' + str(height) + ',RGBX,0xaabbccdd image:' + str(width) + ',' + str(height) + ',RGB2'),
     ('ColorConvert_RGB_UYVY',                     'org.khronos.openvx.color_convert uniform-image:' + \
      str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGB2'),
     ('ColorConvert_RGB_YUYV',                     'org.khronos.openvx.color_convert uniform-image:' + \
@@ -237,21 +244,21 @@ openvxNodes = [
     ('ColorConvert_RGB_NV21',                     'org.khronos.openvx.color_convert uniform-image:' + \
      str(width) + ',' + str(height) + ',NV21,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGB2'),
     ('ColorConvert_RGBX_RGB',                     'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+     str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBX'),
     ('ColorConvert_RGBX_UYVY',                    'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+     str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBX'),
     ('ColorConvert_RGBX_YUYV',                    'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',YUYV,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+     str(width) + ',' + str(height) + ',YUYV,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBX'),
     ('ColorConvert_RGBX_IYUV',                    'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',IYUV,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+     str(width) + ',' + str(height) + ',IYUV,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBX'),
     ('ColorConvert_RGBX_NV12',                    'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',NV12,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+     str(width) + ',' + str(height) + ',NV12,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBX'),
     ('ColorConvert_RGBX_NV21',                    'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',NV21,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBA'),
+     str(width) + ',' + str(height) + ',NV21,0xaabbcc image:' + str(width) + ',' + str(height) + ',RGBX'),
     ('ColorConvert_IYUV_RGB',                     'org.khronos.openvx.color_convert uniform-image:' + \
      str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',IYUV'),
     ('ColorConvert_IYUV_RGBX',                    'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',RGBA,0xaabbccdd image:' + str(width) + ',' + str(height) + ',IYUV'),
+     str(width) + ',' + str(height) + ',RGBX,0xaabbccdd image:' + str(width) + ',' + str(height) + ',IYUV'),
     ('FormatConvert_IYUV_UYVY',                   'org.khronos.openvx.color_convert uniform-image:' + \
      str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',IYUV'),
     ('FormatConvert_IYUV_YUYV',                   'org.khronos.openvx.color_convert uniform-image:' + \
@@ -259,7 +266,7 @@ openvxNodes = [
     ('ColorConvert_NV12_RGB',                     'org.khronos.openvx.color_convert uniform-image:' + \
      str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',NV12'),
     ('ColorConvert_NV12_RGBX',                    'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',RGBA,0xaabbccdd image:' + str(width) + ',' + str(height) + ',NV12'),
+     str(width) + ',' + str(height) + ',RGBX,0xaabbccdd image:' + str(width) + ',' + str(height) + ',NV12'),
     ('FormatConvert_NV12_UYVY',                   'org.khronos.openvx.color_convert uniform-image:' + \
      str(width) + ',' + str(height) + ',UYVY,0xaabbcc image:' + str(width) + ',' + str(height) + ',NV12'),
     ('FormatConvert_NV12_YUYV',                   'org.khronos.openvx.color_convert uniform-image:' + \
@@ -267,7 +274,7 @@ openvxNodes = [
     ('ColorConvert_YUV4_RGB',                     'org.khronos.openvx.color_convert uniform-image:' + \
      str(width) + ',' + str(height) + ',RGB2,0xaabbcc image:' + str(width) + ',' + str(height) + ',YUV4'),
     ('ColorConvert_YUV4_RGBX',                    'org.khronos.openvx.color_convert uniform-image:' + \
-     str(width) + ',' + str(height) + ',RGBA,0xaabbccdd image:' + str(width) + ',' + str(height) + ',YUV4'),
+     str(width) + ',' + str(height) + ',RGBX,0xaabbccdd image:' + str(width) + ',' + str(height) + ',YUV4'),
     ('FormatConvert_IUV_UV12',                    'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + \
      ',NV12,0xaabbcc image:' + str(width) + ',' + str(height) + ',IYUV'),
     ('FormatConvert_UV12_IUV',                    'org.khronos.openvx.color_convert uniform-image:' + str(width) + ',' + str(height) + \
@@ -346,9 +353,9 @@ openvxNodes = [
     # ',U008 remap:' + str(width) + ',' + str(height) + ',' + str(width) + ',' + str(height) + ' !BILINEAR image:' + str(width) + ',' + str(height) + ',U008 attr:BORDER_MODE:CONSTANT,0'),
     # vision kernels
     ('FastCorners_XY_U8_NoSupression',            'org.khronos.openvx.fast_corners uniform-image:' + str(width) + ',' + str(height) + \
-    ',U008 scalar:FLOAT32,80.0 scalar:BOOL,1 array:KEYPOINT,1000 scalar:SIZE,0'),
-    ('FastCorners_XY_U8_Supression',              'org.khronos.openvx.fast_corners uniform-image:' + str(width) + ',' + str(height) + \
     ',U008 scalar:FLOAT32,80.0 scalar:BOOL,0 array:KEYPOINT,1000 scalar:SIZE,0'),
+    ('FastCorners_XY_U8_Supression',              'org.khronos.openvx.fast_corners uniform-image:' + str(width) + ',' + str(height) + \
+    ',U008 scalar:FLOAT32,80.0 scalar:BOOL,1 array:KEYPOINT,1000 scalar:SIZE,0'),
     ('Canny_3x3_L1Norm',                          'org.khronos.openvx.canny_edge_detector uniform-image:' + str(width) + ',' + str(height) + \
     ',U008,0xab threshold:RANGE,U008,U008:INIT,80,100 scalar:INT32,3 !NORM_L1 image:' + str(width) + ',' + str(height) + ',U008'),
     ('Canny_3x3_L2Norm',                          'org.khronos.openvx.canny_edge_detector uniform-image:' + str(width) + ',' + str(height) + \
@@ -452,16 +459,123 @@ cwd = os.getcwd()
 # OpenVX Performance Tests
 print("\nrunVisionTests - OpenVX Node Performance\n")
 outputDirectory = 'openvx_node_results'
-if not os.path.exists(outputDirectory):
-    os.makedirs(outputDirectory)
-else:
-    shutil.rmtree(outputDirectory)
-    os.makedirs(outputDirectory)
+os.makedirs(outputDirectory, exist_ok=True)
+# Only remove the two files this script itself ever writes here, so a pre-existing
+# directory (e.g. a user's own files, or just last run's results) is never wiped
+# wholesale (#1802). A fresh log/report still starts each run.
+for ownedFile in ('nodePerformanceOutput.log', 'nodePerformance.md'):
+    ownedPath = os.path.join(outputDirectory, ownedFile)
+    if os.path.exists(ownedPath):
+        os.remove(ownedPath)
 
 # Option A - All cases / single case with GPU profiling
 
 nodeList = []
 case_num_list = []
+
+# Cases known to fail at a given image size. A listed case that fails is
+# tolerated, one that passes is only noted, and anything else that fails fails
+# the run. Delete an entry when the issue it cites is fixed.
+EXPECTED_FAILURES = {
+    # 1920x1080: the case table's invalid 'RGBA' entries (#1792)
+    (1920, 1080): (
+        'ChannelExtract_U8_U32_Pos0_RGBX',
+        'ChannelExtract_U8_U32_Pos1_RGBX',
+        'ChannelExtract_U8_U32_Pos2_RGBX',
+        'ChannelExtract_U8_U32_Pos3_RGBX',
+        'ChannelExtract_U8U8U8_U32',
+        'ChannelExtract_U8U8U8U8_U32',
+        'ChannelCombine_U32_U8U8U8U8_RGBX',
+        'ColorConvert_RGB_RGBX',
+        'ColorConvert_RGBX_RGB',
+        'ColorConvert_RGBX_UYVY',
+        'ColorConvert_RGBX_YUYV',
+        'ColorConvert_RGBX_IYUV',
+        'ColorConvert_RGBX_NV12',
+        'ColorConvert_RGBX_NV21',
+        'ColorConvert_IYUV_RGBX',
+        'ColorConvert_NV12_RGBX',
+        'ColorConvert_YUV4_RGBX',
+    ),
+    # 10x10: the same invalid 'RGBA' entries (#1792), plus Box3x3 (#1772)
+    # and GPU FastCorners (#1799)
+    (10, 10): (
+        'Box_U8_U8_3x3',
+        'FastCorners_XY_U8_NoSupression',
+        'FastCorners_XY_U8_Supression',
+        'ChannelExtract_U8_U32_Pos0_RGBX',
+        'ChannelExtract_U8_U32_Pos1_RGBX',
+        'ChannelExtract_U8_U32_Pos2_RGBX',
+        'ChannelExtract_U8_U32_Pos3_RGBX',
+        'ChannelExtract_U8U8U8_U32',
+        'ChannelExtract_U8U8U8U8_U32',
+        'ChannelCombine_U32_U8U8U8U8_RGBX',
+        'ColorConvert_RGB_RGBX',
+        'ColorConvert_RGBX_RGB',
+        'ColorConvert_RGBX_UYVY',
+        'ColorConvert_RGBX_YUYV',
+        'ColorConvert_RGBX_IYUV',
+        'ColorConvert_RGBX_NV12',
+        'ColorConvert_RGBX_NV21',
+        'ColorConvert_IYUV_RGBX',
+        'ColorConvert_NV12_RGBX',
+        'ColorConvert_YUV4_RGBX',
+    ),
+    # 5x3: invalid 'RGBA' entries (#1792), sizes these kernels reject and GPU
+    # FastCorners (#1799) and Box3x3 (#1772)
+    (5, 3): (
+        'Box_U8_U8_3x3',
+        'FastCorners_XY_U8_NoSupression',
+        'FastCorners_XY_U8_Supression',
+        'ChannelExtract_U8_U16_Pos0',
+        'ChannelExtract_U8_U16_Pos1',
+        'ChannelExtract_U8_U24_Pos0',
+        'ChannelExtract_U8_U24_Pos1',
+        'ChannelExtract_U8_U24_Pos2',
+        'ChannelExtract_U8_U32_Pos0_UYVY',
+        'ChannelExtract_U8_U32_Pos1_YUYV',
+        'ChannelExtract_U8_U32_Pos2_UYVY',
+        'ChannelExtract_U8_U32_Pos3_YUYV',
+        'ChannelExtract_U8_U32_Pos0_RGBX',
+        'ChannelExtract_U8_U32_Pos1_RGBX',
+        'ChannelExtract_U8_U32_Pos2_RGBX',
+        'ChannelExtract_U8_U32_Pos3_RGBX',
+        'ChannelExtract_U8U8U8_U24',
+        'ChannelExtract_U8U8U8_U32',
+        'ChannelExtract_U8U8U8U8_U32',
+        'ChannelCombine_U32_U8U8U8U8_RGBX',
+        'ColorConvert_RGB_RGBX',
+        'ColorConvert_RGB_UYVY',
+        'ColorConvert_RGB_YUYV',
+        'ColorConvert_RGB_IYUV',
+        'ColorConvert_RGB_NV12',
+        'ColorConvert_RGB_NV21',
+        'ColorConvert_RGBX_RGB',
+        'ColorConvert_RGBX_UYVY',
+        'ColorConvert_RGBX_YUYV',
+        'ColorConvert_RGBX_IYUV',
+        'ColorConvert_RGBX_NV12',
+        'ColorConvert_RGBX_NV21',
+        'ColorConvert_IYUV_RGB',
+        'ColorConvert_IYUV_RGBX',
+        'FormatConvert_IYUV_UYVY',
+        'FormatConvert_IYUV_YUYV',
+        'ColorConvert_NV12_RGB',
+        'ColorConvert_NV12_RGBX',
+        'FormatConvert_NV12_UYVY',
+        'FormatConvert_NV12_YUYV',
+        'ColorConvert_YUV4_RGB',
+        'ColorConvert_YUV4_RGBX',
+        'FormatConvert_IUV_UV12',
+        'FormatConvert_UV12_IUV',
+        'FormatConvert_UV_UV12',
+        'ScaleUp2x2_U8_U8',
+        'ScaleGaussianHalf_U8_U8_3x3',
+        'ScaleGaussianHalf_U8_U8_5x5',
+    ),
+}
+failedCases = []
+unexpectedlyPassed = []
 
 
 def multiCaseProfilerOCL(nodeList, case_num_list):
@@ -470,7 +584,7 @@ def multiCaseProfilerOCL(nodeList, case_num_list):
         echo1 = 'Running OpenVX Node - '+nodeName
         os.system('echo '+echo1 +  # nosec B605 - internal benchmark harness, fixed command strings
                 ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-        os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))  # nosec B605 - internal benchmark harness, fixed command strings
+        os.makedirs(os.path.join(cwd, 'rocprof_vision_tests_outputs', 'case_'+str(i+1)), exist_ok=True)
         if perfCounters == "YES":
             print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                 hardwareMode+' -dump-profile node '+nodeFormat)
@@ -510,8 +624,10 @@ def multiCaseProfilerOCL(nodeList, case_num_list):
             continue
 
     new_file.close()
-    os.system('chown $USER:$USER '+RESULTS_DIR +  # nosec B605 - internal benchmark harness, fixed command strings
-            '/consolidated_results.stats.csv')
+    try:
+        os.chown(os.path.join(RESULTS_DIR, 'consolidated_results.stats.csv'), os.getuid(), os.getgid())
+    except OSError:
+        pass
 
     try:
         import pandas as pd
@@ -533,7 +649,7 @@ def multiCaseProfilerHIP(nodeList, case_num_list):
         echo1 = 'Running OpenVX Node - '+nodeName
         os.system('echo '+echo1 +  # nosec B605 - internal benchmark harness, fixed command strings
                 ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-        os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))  # nosec B605 - internal benchmark harness, fixed command strings
+        os.makedirs(os.path.join(cwd, 'rocprof_vision_tests_outputs', 'case_'+str(i+1)), exist_ok=True)
         if perfCounters == "YES":
             print('rocprof -i rocprof_counters.txt -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                 hardwareMode+' -dump-profile node '+nodeFormat)
@@ -572,8 +688,10 @@ def multiCaseProfilerHIP(nodeList, case_num_list):
             continue
 
     new_file.close()
-    os.system('chown $USER:$USER '+RESULTS_DIR +  # nosec B605 - internal benchmark harness, fixed command strings
-            '/consolidated_results.stats.csv')
+    try:
+        os.chown(os.path.join(RESULTS_DIR, 'consolidated_results.stats.csv'), os.getuid(), os.getgid())
+    except OSError:
+        pass
 
     try:
         import pandas as pd
@@ -600,8 +718,8 @@ else:
 
 if profilingOption == "YES":
 
-    os.system('rm -rvf '+cwd+'/rocprof_vision_tests_outputs')  # nosec B605 - internal benchmark harness, fixed command strings
-    os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs')  # nosec B605 - internal benchmark harness, fixed command strings
+    shutil.rmtree(os.path.join(cwd, 'rocprof_vision_tests_outputs'), ignore_errors=True)
+    os.makedirs(os.path.join(cwd, 'rocprof_vision_tests_outputs'), exist_ok=True)
 
     if backendType == "OCL":
         multiCaseProfilerOCL(nodeList=nodeList, case_num_list=case_num_list)
@@ -610,16 +728,32 @@ if profilingOption == "YES":
 
 # Option B - All cases / single case without GPU profiling
 else:
-    for i in nodeList:
-        nodeName, nodeFormat = openvxNodes[i]
-        echo1 = 'Running OpenVX Node - '+str(i+1)+':'+nodeName
-        os.system('echo '+echo1 +  # nosec B605 - internal benchmark harness, fixed command strings
-                ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-        print(RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
-            hardwareMode+' -dump-gdf -dump-profile node '+nodeFormat)
-        os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode +  # nosec B605 - internal benchmark harness, fixed command strings
-                ' -dump-gdf -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
-        print("\n")
+    # Run over an argument list so the exit code survives. The log keeps the shape
+    # the awk post-processor below depends on: the 'Running OpenVX Node - N:name'
+    # marker interleaved with runvx's own 'CPU,GRAPH'/'GPU,GRAPH' lines, in order.
+    expected = EXPECTED_FAILURES.get((width, height), ())
+    with open('openvx_node_results/nodePerformanceOutput.log', 'a') as logFile:
+        for i in nodeList:
+            nodeName, nodeFormat = openvxNodes[i]
+            echo1 = 'Running OpenVX Node - '+str(i+1)+':'+nodeName
+            print(echo1)
+            logFile.write(echo1+'\n')
+            runvxCmd = [RunVXapp, '-frames:'+str(numFrames), '-affinity:'+hardwareMode,
+                        '-dump-gdf', '-dump-profile', 'node'] + shlex.split(nodeFormat)
+            print(' '.join(runvxCmd))
+            completed = subprocess.run(runvxCmd, stdout=subprocess.PIPE,
+                                       stderr=subprocess.STDOUT, text=True, check=False)
+            print(completed.stdout, end='')
+            logFile.write(completed.stdout)
+            logFile.flush()
+            if completed.returncode != 0:
+                if nodeName in expected:
+                    print('EXPECTED FAILURE: '+nodeName+' exit '+str(completed.returncode))
+                else:
+                    failedCases.append(nodeName+' (exit '+str(completed.returncode)+')')
+            elif nodeName in expected:
+                unexpectedlyPassed.append(nodeName)
+            print("\n")
     orig_stdout = sys.stdout
     sys.stdout = open('openvx_node_results/nodePerformance.md', 'a')
     echo_1 = '| OpenVX Node                             |Frames Count| tmp (ms) | avg (ms) | min (ms) | max (ms) |'
@@ -715,4 +849,15 @@ else:
         reportFileDir = os.path.abspath(reportFilename)
         print("\nSTATUS: Output Report File - "+reportFileDir)
 
+if unexpectedlyPassed:
+    print("\nNOTE: %d case(s) listed as expected failures at %dx%d passed: %s"
+          % (len(unexpectedlyPassed), width, height, ', '.join(unexpectedlyPassed)))
+
 print("\nrunVisionTests.py completed - V:"+__version__+"\n")
+
+if failedCases:
+    print("ERROR: %d of %d runvx case(s) failed at %dx%d on %s:"
+          % (len(failedCases), len(nodeList), width, height, hardwareMode))
+    for case in failedCases:
+        print("    "+case)
+    sys.exit(len(failedCases))

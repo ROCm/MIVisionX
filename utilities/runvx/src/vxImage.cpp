@@ -184,17 +184,12 @@ int CVxParamImage::Shutdown(void)
 		if (plugin) plugin->CloseCapture(m_cvCapDev);
 		m_cvCapDev = NULL;
 	}
-	if (!m_cvImageBuffer.empty()) {
-		g_numCvUse--;
-		changed_numCvUse = true;
-	}
 	if (m_cvWriter) {
 		if (plugin) plugin->CloseVideoWriter(m_cvWriter);
 		m_cvWriter = NULL;
 	}
 	m_cvDispBuffer.clear();
 	m_cvCapBuffer.clear();
-	m_cvImageBuffer.clear();
 	m_cvCapWidth = 0;
 	m_cvCapHeight = 0;
 	m_cvCapType = 0;
@@ -790,31 +785,9 @@ int CVxParamImage::ReadFrame(int frameNumber)
 			ERROR_CHECK(vxCommitImagePatch(m_image, &rect, 0, &addr, dst));
 		}
 	}
-	else if (!m_cvImageBuffer.empty()) {
-		// read image from camera (legacy alternate path -- not used by current InitializeIO)
-		if (!plugin) {
-			printf("ERROR: image plugin is no longer available for capture\n");
-			return -1;
-		}
-		int capW = 0, capH = 0, capT = 0;
-		if (!plugin->CaptureFrame(m_cvCapDev, capW, capH, capT, m_cvImageBuffer)) {
-			printf("ERROR: Can't read camera input. Camera is not supported.\n");
-			return -1;
-		}
-		size_t srcStride = (size_t)capW * ((capT == VX_DF_IMAGE_RGB) ? 3 : 1);
-		vx_imagepatch_addressing_t addr = { 0 };
-		vx_uint8 * dst = NULL;
-		ERROR_CHECK(vxAccessImagePatch(m_image, &m_rectFull, 0, &addr, (void **)&dst, VX_WRITE_ONLY));
-		vx_int32 rowSize = ((vx_int32)srcStride < addr.stride_y) ? (vx_int32)srcStride : addr.stride_y;
-		for (vx_uint32 y = 0; y < m_height; y++) {
-			memcpy(dst + y * addr.stride_y, m_cvImageBuffer.data() + y * srcStride, rowSize);
-		}
-		ERROR_CHECK(vxCommitImagePatch(m_image, &m_rectFull, 0, &addr, dst));
-	}
 
-	// make sure that input file is open when plugin camera is not active and input filename is specified
-	if (!m_cvImageBuffer.empty()) { /* nothing */ }
-	else if (!m_fpRead) {
+	// make sure that input file is open when camera is not active and input filename is specified
+	if (!m_fpRead) {
 		if (m_fileNameRead.length() > 0) {
 			char fileName[MAX_FILE_NAME_LENGTH];
 			if (!IsSafeFilenameTemplate(m_fileNameRead.c_str(), 3)) ReportError("ERROR: unsafe filename template: %s\n", m_fileNameRead.c_str());

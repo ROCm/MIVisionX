@@ -182,6 +182,13 @@ __device__ __forceinline__ short hip_convert_short_sat_rte(float a) {
     return (short)hip_clamp(a, (float)INT16_MIN, (float)INT16_MAX);
 }
 
+// scale * a * b rounded half to even, for the 16-bit operands of the S16 multiply. The product needs up to
+// 30 bits and does not fit a float, so it is formed as an integer and only scaled in double when scale is not 1.
+__device__ __forceinline__ int hip_mul_s16_rte(float scale, int a, int b) {
+    int p = a * b;
+    return (scale == 1.0f) ? p : (int)rint((double)scale * (double)p);
+}
+
 __device__ __forceinline__ void hip_convert_U8_U1(uint2 *p0, unsigned char p1) {
     uint2 r;
     r.x  = (-(p1 &   1)) & 0x000000ff;

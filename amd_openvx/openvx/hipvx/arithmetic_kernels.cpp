@@ -1616,14 +1616,14 @@ Hip_Mul_S16_S16S16_Wrap_Round(uint dstWidth, uint dstHeight,
     int4 src2 = *((int4 *)(&pSrcImage2[src2Idx]));
     int4 dst;
 
-    dst.x  = ((int)hip_convert_short_rte(scale * (float)((((int)(src1.x)) << 16) >> 16) * (float)((((int)(src2.x)) << 16) >> 16))) & 0x0000ffff;
-    dst.x |= ((int)hip_convert_short_rte(scale * (float)(( (int)(src1.x)) >> 16)        * (float)(( (int)(src2.x)) >> 16)))        << 16;
-    dst.y  = ((int)hip_convert_short_rte(scale * (float)((((int)(src1.y)) << 16) >> 16) * (float)((((int)(src2.y)) << 16) >> 16))) & 0x0000ffff;
-    dst.y |= ((int)hip_convert_short_rte(scale * (float)(( (int)(src1.y)) >> 16)        * (float)(( (int)(src2.y)) >> 16)))        << 16;
-    dst.z  = ((int)hip_convert_short_rte(scale * (float)((((int)(src1.z)) << 16) >> 16) * (float)((((int)(src2.z)) << 16) >> 16))) & 0x0000ffff;
-    dst.z |= ((int)hip_convert_short_rte(scale * (float)(( (int)(src1.z)) >> 16)        * (float)(( (int)(src2.z)) >> 16)))        << 16;
-    dst.w  = ((int)hip_convert_short_rte(scale * (float)((((int)(src1.w)) << 16) >> 16) * (float)((((int)(src2.w)) << 16) >> 16))) & 0x0000ffff;
-    dst.w |= ((int)hip_convert_short_rte(scale * (float)(( (int)(src1.w)) >> 16)        * (float)(( (int)(src2.w)) >> 16)))        << 16;
+    dst.x  = (hip_mul_s16_rte(scale, (((int)(src1.x)) << 16) >> 16, (((int)(src2.x)) << 16) >> 16)) & 0x0000ffff;
+    dst.x |= (hip_mul_s16_rte(scale, ((int)(src1.x)) >> 16, ((int)(src2.x)) >> 16)) << 16;
+    dst.y  = (hip_mul_s16_rte(scale, (((int)(src1.y)) << 16) >> 16, (((int)(src2.y)) << 16) >> 16)) & 0x0000ffff;
+    dst.y |= (hip_mul_s16_rte(scale, ((int)(src1.y)) >> 16, ((int)(src2.y)) >> 16)) << 16;
+    dst.z  = (hip_mul_s16_rte(scale, (((int)(src1.z)) << 16) >> 16, (((int)(src2.z)) << 16) >> 16)) & 0x0000ffff;
+    dst.z |= (hip_mul_s16_rte(scale, ((int)(src1.z)) >> 16, ((int)(src2.z)) >> 16)) << 16;
+    dst.w  = (hip_mul_s16_rte(scale, (((int)(src1.w)) << 16) >> 16, (((int)(src2.w)) << 16) >> 16)) & 0x0000ffff;
+    dst.w |= (hip_mul_s16_rte(scale, ((int)(src1.w)) >> 16, ((int)(src2.w)) >> 16)) << 16;
 
     *((int4 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1720,14 +1720,14 @@ Hip_Mul_S16_S16S16_Sat_Round(uint dstWidth, uint dstHeight,
     int4 src2 = *((int4 *)(&pSrcImage2[src2Idx]));
     int4 dst;
 
-    dst.x  = (((int)hip_convert_short_sat_rte(scale * (float)((((int)(src1.x)) << 16) >> 16) * (float)((((int)(src2.x)) << 16) >> 16))) & 0x0000ffff)      ;
-    dst.x |= (((int)hip_convert_short_sat_rte(scale * (float)(( (int)(src1.x))        >> 16) * (float)(( (int)(src2.x))        >> 16)))             ) << 16;
-    dst.y  = (((int)hip_convert_short_sat_rte(scale * (float)((((int)(src1.y)) << 16) >> 16) * (float)((((int)(src2.y)) << 16) >> 16))) & 0x0000ffff)      ;
-    dst.y |= (((int)hip_convert_short_sat_rte(scale * (float)(( (int)(src1.y))        >> 16) * (float)(( (int)(src2.y))        >> 16)))             ) << 16;
-    dst.z  = (((int)hip_convert_short_sat_rte(scale * (float)((((int)(src1.z)) << 16) >> 16) * (float)((((int)(src2.z)) << 16) >> 16))) & 0x0000ffff)      ;
-    dst.z |= (((int)hip_convert_short_sat_rte(scale * (float)(( (int)(src1.z))        >> 16) * (float)(( (int)(src2.z))        >> 16)))             ) << 16;
-    dst.w  = (((int)hip_convert_short_sat_rte(scale * (float)((((int)(src1.w)) << 16) >> 16) * (float)((((int)(src2.w)) << 16) >> 16))) & 0x0000ffff)      ;
-    dst.w |= (((int)hip_convert_short_sat_rte(scale * (float)(( (int)(src1.w))        >> 16) * (float)(( (int)(src2.w))        >> 16)))             ) << 16;
+    dst.x  = (hip_clamp(hip_mul_s16_rte(scale, (((int)(src1.x)) << 16) >> 16, (((int)(src2.x)) << 16) >> 16), (int)INT16_MIN, (int)INT16_MAX)) & 0x0000ffff;
+    dst.x |= (hip_clamp(hip_mul_s16_rte(scale, ((int)(src1.x)) >> 16, ((int)(src2.x)) >> 16), (int)INT16_MIN, (int)INT16_MAX)) << 16;
+    dst.y  = (hip_clamp(hip_mul_s16_rte(scale, (((int)(src1.y)) << 16) >> 16, (((int)(src2.y)) << 16) >> 16), (int)INT16_MIN, (int)INT16_MAX)) & 0x0000ffff;
+    dst.y |= (hip_clamp(hip_mul_s16_rte(scale, ((int)(src1.y)) >> 16, ((int)(src2.y)) >> 16), (int)INT16_MIN, (int)INT16_MAX)) << 16;
+    dst.z  = (hip_clamp(hip_mul_s16_rte(scale, (((int)(src1.z)) << 16) >> 16, (((int)(src2.z)) << 16) >> 16), (int)INT16_MIN, (int)INT16_MAX)) & 0x0000ffff;
+    dst.z |= (hip_clamp(hip_mul_s16_rte(scale, ((int)(src1.z)) >> 16, ((int)(src2.z)) >> 16), (int)INT16_MIN, (int)INT16_MAX)) << 16;
+    dst.w  = (hip_clamp(hip_mul_s16_rte(scale, (((int)(src1.w)) << 16) >> 16, (((int)(src2.w)) << 16) >> 16), (int)INT16_MIN, (int)INT16_MAX)) & 0x0000ffff;
+    dst.w |= (hip_clamp(hip_mul_s16_rte(scale, ((int)(src1.w)) >> 16, ((int)(src2.w)) >> 16), (int)INT16_MIN, (int)INT16_MAX)) << 16;
 
     *((int4 *)(&pDstImage[dstIdx])) = dst;
 }

@@ -184,6 +184,15 @@ add_test(
 set_property(TEST openvx_graph PROPERTY ENVIRONMENT "AGO_DUMP_GRAPH=1;ROCM_PATH=${ROCM_PATH}")
 
 # 11_b - graph API - graph API test
+# The test checks VX_CONTEXT_EXTENSIONS against the pipelining setting the library was built with.
+set(GRAPH_API_BUILD_OPTIONS "")
+if(DEFINED OPENVX_USE_PIPELINING)
+  if(OPENVX_USE_PIPELINING)
+    set(GRAPH_API_BUILD_OPTIONS --build-options -DEXPECT_PIPELINING=1)
+  else()
+    set(GRAPH_API_BUILD_OPTIONS --build-options -DEXPECT_PIPELINING=0)
+  endif()
+endif()
 add_test(
   NAME
     openvx_graph_api
@@ -192,6 +201,7 @@ add_test(
             --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/graph_api"
                               "${CMAKE_CURRENT_BINARY_DIR}/graph_api"
             --build-generator "${CMAKE_GENERATOR}"
+            ${GRAPH_API_BUILD_OPTIONS}
             --test-command "openvx_graph_api"
 )
 set_property(TEST openvx_graph_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")

@@ -3476,7 +3476,7 @@ Hip_FastCorners_XY_U8_NoSupression(uint capacityOfDstCorner, char *pDstCorners, 
     int idx = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) + 3;
     int idy = (hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y) + 3;
     int stride = (int) srcImageStrideInBytes;
-    if((idx > (int)srcWidth - 3) || (idy > (int)srcHeight - 3))
+    if((idx > (int)srcWidth - 4) || (idy > (int)srcHeight - 4))
         return;
     const uchar *pTempImg = pSrcImage + hip_mad24(idy, stride, idx);
     int centerPixel_neg = pTempImg[0];
@@ -3600,7 +3600,7 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners, ui
     const uchar *pTempImg = pSrcImage + hip_mad24(yoffset, srcImageStrideInBytes, xoffset);
     __shared__ int pLocalStrengthShare[16][16];
     bool doCompute = true;
-    if((xoffset > (int)srcWidth - 3) || (yoffset > (int)srcHeight - 3) || (xoffset < 3) || (yoffset < 3)) {
+    if((xoffset > (int)srcWidth - 4) || (yoffset > (int)srcHeight - 4) || (xoffset < 3) || (yoffset < 3)) {
         doCompute = false;
         pLocalStrengthShare[lidy][lidx] = 0;
     }

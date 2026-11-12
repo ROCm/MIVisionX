@@ -1,0 +1,43 @@
+/*
+MIT License
+
+Copyright (c) 2026 Advanced Micro Devices, Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+#ifndef GUARD_VX_EXT_RPP_AUDIO_SUPPORT_H_IN
+#define GUARD_VX_EXT_RPP_AUDIO_SUPPORT_H_IN
+
+/*!
+ * \file
+ * \brief Whether this vx_rpp build has audio kernels
+ * \defgroup group_vx_rpp_audio_support
+ * \brief vx_rpp audio support
+ *
+ * vx_rpp builds its audio kernels only when the RPP it was built against has audio
+ * augmentations. The audio entry points in vx_ext_rpp.h are declared and exported either way,
+ * and a build without them registers its audio kernels with no audio tensor layouts, so an
+ * application can only discover the difference when a graph fails to verify. This header is
+ * written at configure time so that a consumer can tell the two apart before it builds a graph.
+ */
+
+#cmakedefine01 VX_EXT_RPP_AUDIO_SUPPORT
+
+#endif

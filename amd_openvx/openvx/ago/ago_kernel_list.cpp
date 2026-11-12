@@ -483,6 +483,8 @@ static struct {
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_BILINEAR_REPLICATE                    , 1, 1, ScaleImage_U8_U8_Bilinear_Replicate, AOUT_AIN,                ATYPE_II                , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_BILINEAR_CONSTANT                     , 1, 1, ScaleImage_U8_U8_Bilinear_Constant, AOUT_AINx2,               ATYPE_IIS               , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA                                  , 1, 1, ScaleImage_U8_U8_Area, AOUT_AIN,                              ATYPE_II                , KOP_UNKNOWN   , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA_REPLICATE                        , 1, 1, ScaleImage_U8_U8_Area_Replicate, AOUT_AIN,                    ATYPE_II                , KOP_UNKNOWN   , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA_CONSTANT                         , 1, 1, ScaleImage_U8_U8_Area_Constant, AOUT_AINx2,                   ATYPE_IIS               , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_OPTICAL_FLOW_PYR_LK_XY_XY                               , 1, 1, OpticalFlowPyrLK_XY_XY, AOUT_AINx9,                           ATYPE_APPAASSSSS        , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_OPTICAL_FLOW_PREPARE_LK_XY_XY                           , 1, 1, OpticalFlowPrepareLK_XY_XY, AOUT_AINx4,                       ATYPE_AAAAS             , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_OPTICAL_FLOW_IMAGE_LK_XY_XY                             , 1, 1, OpticalFlowImageLK_XY_XY, AOUT_AINx8,                         ATYPE_AAIISSSSS         , KOP_UNKNOWN   , false ),

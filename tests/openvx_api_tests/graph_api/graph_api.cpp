@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+#include <vector>
 #include <cstring>
 #include <iostream>
 #include <chrono>
@@ -169,7 +170,8 @@ int main(int argc, char **argv)
     ERROR_CHECK_STATUS(vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_VERSION, &device, sizeof(device)));
     vx_size device_1 = -1;
     ERROR_CHECK_STATUS(vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_EXTENSIONS_SIZE, &device_1, sizeof(device_1)));
-    ERROR_CHECK_STATUS(vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_EXTENSIONS, &device_1, sizeof(device_1)));
+    std::vector<vx_char> extensions(device_1);
+    ERROR_CHECK_STATUS(vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_EXTENSIONS, extensions.data(), extensions.size()));
     ERROR_CHECK_STATUS(vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_NONLINEAR_MAX_DIMENSION, &device_1, sizeof(device_1)));
     ERROR_CHECK_STATUS(vxQueryContext(context, VX_CONTEXT_MAX_TENSOR_DIMS, &device_1, sizeof(device_1)));
 

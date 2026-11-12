@@ -3564,7 +3564,11 @@ AgoContext::AgoContext()
     // functions is VX_BORDER_UNDEFINED; leaving it zero makes vxQueryContext
     // report a value that vxSetContextAttribute then refuses to take back
     immediate_border_mode.mode = VX_BORDER_UNDEFINED;
+    // VX_CONTEXT_EXTENSIONS: the space separated names of the extensions this build implements
     memset(&extensions, 0, sizeof(extensions));
+#if OPENVX_USE_PIPELINING
+    strncpy(extensions, OPENVX_KHR_PIPELINING, sizeof(extensions) - 1);
+#endif
 #if ENABLE_OPENCL
     // NOTE: opencl_extensions is a std::string and is already default-constructed
     //       to empty; memset() on it corrupts the object (UB) and breaks OpenCL

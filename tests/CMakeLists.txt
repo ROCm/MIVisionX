@@ -204,7 +204,13 @@ add_test(
             ${GRAPH_API_BUILD_OPTIONS}
             --test-command "openvx_graph_api"
 )
-set_property(TEST openvx_graph_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+# The test is linked against the installed MIVisionX but must check the library this build produces
+# (EXPECT_PIPELINING above), so run it against the build tree's libopenvx when there is one.
+if(TARGET openvx)
+  set_property(TEST openvx_graph_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU" "LD_LIBRARY_PATH=$<TARGET_FILE_DIR:openvx>:$ENV{LD_LIBRARY_PATH}")
+else()
+  set_property(TEST openvx_graph_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+endif()
 
 # 11_c - tensor_api - tensor API test
 add_test(

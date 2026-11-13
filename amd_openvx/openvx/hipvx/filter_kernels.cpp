@@ -3541,6 +3541,35 @@ Hip_Convolve_U8_U8_9x9(uint dstWidth, uint dstHeight,
     }
 }
 
+// Any odd shape up to the context's maximum that has no unrolled kernel above: one thread per output
+// pixel, reading the source through global memory. The coefficients are applied exactly as the unrolled
+// kernels apply them (row-major, no flip, rows and columns in increasing order), so the two agree.
+__global__ void __attribute__((visibility("default")))
+Hip_Convolve_U8_U8_Generic(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
+    int srcImageBufferSize, int srcImageBufferOffset, float *conv,
+    int convolutionWidth, int convolutionHeight) {
+
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if (x >= (int)dstWidth || y >= (int)dstHeight)
+        return;
+
+    int halfWidth = convolutionWidth >> 1;
+    int halfHeight = convolutionHeight >> 1;
+    float sum = 0.0f;
+    for (int j = 0; j < convolutionHeight; j++) {
+        for (int i = 0; i < convolutionWidth; i++) {
+            int goffset = (y + j - halfHeight) * srcImageStrideInBytes + x + i - halfWidth;
+            float fval = (goffset > -srcImageBufferOffset && goffset < srcImageBufferSize) ? (float)pSrcImage[goffset] : 0.0f;
+            sum = fmaf(fval, conv[j * convolutionWidth + i], sum);
+        }
+    }
+    sum += -4.999899864197e-01f;
+    pDstImage[y * dstImageStrideInBytes + x] = (uchar)(hip_pack(make_float4(sum, 0.0f, 0.0f, 0.0f)) & 0xff);
+}
+
 int HipExec_Convolve_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes, vx_uint32 srcImageBufferSize,
@@ -3581,7 +3610,10 @@ int HipExec_Convolve_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dst
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                             srcImageBufferSize, srcImageBufferOffset, conv);
     } else {
-        return VX_ERROR_NOT_IMPLEMENTED;
+        dim3 genericGrid = dim3(ceil((float)dstWidth / localThreads_x), ceil((float)dstHeight / localThreads_y));
+        hipLaunchKernelGGL(Hip_Convolve_U8_U8_Generic, genericGrid, blockDim, 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            srcImageBufferSize, srcImageBufferOffset, conv, (int)convolutionWidth, (int)convolutionHeight);
     }
     HIP_CHECK(hipGetLastError()); // Check for launch error
     
@@ -6291,6 +6323,34 @@ Hip_Convolve_S16_U8_9x9(uint dstWidth, uint dstHeight,
     }
 }
 
+// Any odd shape up to the context's maximum that has no unrolled kernel above: one thread per output
+// pixel, reading the source through global memory. The coefficients are applied exactly as the unrolled
+// kernels apply them (row-major, no flip, rows and columns in increasing order), so the two agree.
+__global__ void __attribute__((visibility("default")))
+Hip_Convolve_S16_U8_Generic(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
+    int srcImageBufferSize, int srcImageBufferOffset, float *conv,
+    int convolutionWidth, int convolutionHeight) {
+
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if (x >= (int)dstWidth || y >= (int)dstHeight)
+        return;
+
+    int halfWidth = convolutionWidth >> 1;
+    int halfHeight = convolutionHeight >> 1;
+    float sum = 0.0f;
+    for (int j = 0; j < convolutionHeight; j++) {
+        for (int i = 0; i < convolutionWidth; i++) {
+            int goffset = (y + j - halfHeight) * srcImageStrideInBytes + x + i - halfWidth;
+            float fval = (goffset > -srcImageBufferOffset && goffset < srcImageBufferSize) ? (float)pSrcImage[goffset] : 0.0f;
+            sum = fmaf(fval, conv[j * convolutionWidth + i], sum);
+        }
+    }
+    *((short *)(&pDstImage[y * dstImageStrideInBytes + x + x])) = (short)((int)hip_clamp(sum, -32768.0f, 32767.0f));
+}
+
 int HipExec_Convolve_S16_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes, vx_uint32 srcImageBufferSize, vx_uint32 srcImageBufferOffset,
@@ -6331,7 +6391,10 @@ int HipExec_Convolve_S16_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 ds
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize, srcImageBufferOffset,
                             conv);
     } else {
-        return VX_ERROR_NOT_IMPLEMENTED;
+        dim3 genericGrid = dim3(ceil((float)dstWidth / localThreads_x), ceil((float)dstHeight / localThreads_y));
+        hipLaunchKernelGGL(Hip_Convolve_S16_U8_Generic, genericGrid, blockDim, 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            srcImageBufferSize, srcImageBufferOffset, conv, (int)convolutionWidth, (int)convolutionHeight);
     }
     HIP_CHECK(hipGetLastError()); // Check for launch error
     

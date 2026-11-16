@@ -20,6 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+#include <string>
+#include <vector>
 #include <cstring>
 #include <iostream>
 #include <chrono>
@@ -27,6 +29,7 @@ THE SOFTWARE.
 #include <VX/vx.h>
 #include <VX/vx_compatibility.h>
 #include <VX/vx_khr_icd.h>
+#include <VX/vx_khr_pipelining.h>
 #include <vx_ext_amd.h>
 
 
@@ -169,7 +172,26 @@ int main(int argc, char **argv)
     ERROR_CHECK_STATUS(vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_VERSION, &device, sizeof(device)));
     vx_size device_1 = -1;
     ERROR_CHECK_STATUS(vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_EXTENSIONS_SIZE, &device_1, sizeof(device_1)));
-    ERROR_CHECK_STATUS(vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_EXTENSIONS, &device_1, sizeof(device_1)));
+    std::vector<vx_char> extensions(device_1);
+    ERROR_CHECK_STATUS(vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_EXTENSIONS, extensions.data(), extensions.size()));
+    // the size counts the terminator, and vx_khr_pipelining is listed exactly when this build implements it
+    // (EXPECT_PIPELINING is the library's OPENVX_USE_PIPELINING, passed in by the build)
+    if (device_1 != strlen(extensions.data()) + 1)
+    {
+        printf("ERROR: VX_CONTEXT_EXTENSIONS_SIZE = %zu but the string \"%s\" is %zu characters long\n", (size_t)device_1, extensions.data(), strlen(extensions.data()));
+        exit(1);
+    }
+#ifdef EXPECT_PIPELINING
+    {
+        bool listed = (" " + string(extensions.data()) + " ").find(" " OPENVX_KHR_PIPELINING " ") != string::npos;
+        if (listed != (EXPECT_PIPELINING != 0))
+        {
+            printf("ERROR: VX_CONTEXT_EXTENSIONS = \"%s\": " OPENVX_KHR_PIPELINING " is %s, expected %s\n", extensions.data(),
+                   listed ? "listed" : "missing", EXPECT_PIPELINING ? "listed" : "missing");
+            exit(1);
+        }
+    }
+#endif
     ERROR_CHECK_STATUS(vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_NONLINEAR_MAX_DIMENSION, &device_1, sizeof(device_1)));
     ERROR_CHECK_STATUS(vxQueryContext(context, VX_CONTEXT_MAX_TENSOR_DIMS, &device_1, sizeof(device_1)));
 

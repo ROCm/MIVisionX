@@ -3562,7 +3562,7 @@ Hip_Convolve_U8_U8_Generic(uint dstWidth, uint dstHeight,
     for (int j = 0; j < convolutionHeight; j++) {
         for (int i = 0; i < convolutionWidth; i++) {
             int goffset = (y + j - halfHeight) * srcImageStrideInBytes + x + i - halfWidth;
-            float fval = (goffset > -srcImageBufferOffset && goffset < srcImageBufferSize) ? (float)pSrcImage[goffset] : 0.0f;
+            float fval = (goffset >= -srcImageBufferOffset && goffset < srcImageBufferSize) ? (float)pSrcImage[goffset] : 0.0f;
             sum = fmaf(fval, conv[j * convolutionWidth + i], sum);
         }
     }
@@ -6344,7 +6344,7 @@ Hip_Convolve_S16_U8_Generic(uint dstWidth, uint dstHeight,
     for (int j = 0; j < convolutionHeight; j++) {
         for (int i = 0; i < convolutionWidth; i++) {
             int goffset = (y + j - halfHeight) * srcImageStrideInBytes + x + i - halfWidth;
-            float fval = (goffset > -srcImageBufferOffset && goffset < srcImageBufferSize) ? (float)pSrcImage[goffset] : 0.0f;
+            float fval = (goffset >= -srcImageBufferOffset && goffset < srcImageBufferSize) ? (float)pSrcImage[goffset] : 0.0f;
             sum = fmaf(fval, conv[j * convolutionWidth + i], sum);
         }
     }

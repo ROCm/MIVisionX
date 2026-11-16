@@ -1039,13 +1039,15 @@ int HafCpu_CannySobel_U16_U8_3x3_L2NORM
 			__m128i t0 = _mm_sub_epi16(s1, s0);
 			__m128i t1 = _mm_add_epi16(_mm_add_epi16(s2, s4), _mm_slli_epi16(s3, 1));
 			t1 = _mm_sub_epi16(z, t1);
+			// squares of the 16-bit gradients need 32 bits: interleave the low and high halves
 			s0 = _mm_mullo_epi16(t0, t0);
 			s1 = _mm_mullo_epi16(t1, t1);
-			// unpack to dwords for multiplication
-			s2 = _mm_unpackhi_epi16(s0, z);
-			s0 = _mm_unpacklo_epi16(s0, z);
-			s3 = _mm_unpackhi_epi16(s1, z);
-			s1 = _mm_unpacklo_epi16(s1, z);
+			__m128i h0 = _mm_mulhi_epi16(t0, t0);
+			__m128i h1 = _mm_mulhi_epi16(t1, t1);
+			s2 = _mm_unpackhi_epi16(s0, h0);
+			s0 = _mm_unpacklo_epi16(s0, h0);
+			s3 = _mm_unpackhi_epi16(s1, h1);
+			s1 = _mm_unpacklo_epi16(s1, h1);
 			__m128 f0 = _mm_cvtepi32_ps(s0);
 			__m128 f1 = _mm_cvtepi32_ps(s2);
 			__m128 f2 = _mm_cvtepi32_ps(s1);

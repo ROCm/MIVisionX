@@ -10793,7 +10793,7 @@ int HafCpu_Phase_U8_S16S16
 			float scale = (float)128 / 180.f;
 			float arct = HafCpu_FastAtan2_deg(pGx[x], pGy[x]);
 			// normalize and copy to dst
-			*pdst++ = (vx_uint8)((vx_uint32)(arct*scale + 0.5) & 0xFF);
+			pdst[x] = (vx_uint8)((vx_uint32)(arct*scale + 0.5) & 0xFF);
 #endif
 		}
 		pPhaseImage += phaseImageStrideInBytes;

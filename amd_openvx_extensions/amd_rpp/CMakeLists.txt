@@ -31,7 +31,7 @@ endif()
 
 # VX_RPP Version
 # * must match with include/vx_ext_rpp_version.h
-set(VERSION "3.3.2")
+set(VERSION "3.3.3")
 
 project(vx_rpp VERSION ${VERSION} LANGUAGES CXX)
 
@@ -180,13 +180,17 @@ endif()
 # Audio features for VX_RPP
 # Compare the version as a whole, not MAJOR/MINOR/PATCH one at a time.
 if(rpp_VERSION VERSION_GREATER_EQUAL 3.1.1 AND RPP_AUDIO_AUGMENTATIONS_SUPPORT_FOUND)
+    set(VX_EXT_RPP_AUDIO_SUPPORT 1)
     target_compile_definitions(vx_rpp PRIVATE AUDIO_SUPPORT=1)
     message("-- ${White}vx_rpp Audio Features Included${ColourReset}")
-    target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=1)
 else()
-    target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=0)
+    set(VX_EXT_RPP_AUDIO_SUPPORT 0)
     message("-- ${Yellow}vx_rpp Audio Features Excluded${ColourReset}")
 endif()
+target_compile_definitions(vx_rpp PUBLIC RPP_AUDIO=${VX_EXT_RPP_AUDIO_SUPPORT})
+# RPP_AUDIO reaches only a target that links vx_rpp through CMake, and vx_rpp exports none, so
+# record the same answer in an installed header the way openvx records its backend type.
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vx_ext_rpp_audio_support.h.in" "${PROJECT_BINARY_DIR}/include/mivisionx/vx_ext_rpp_audio_support.h")
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(LINK_LIBRARY_LIST ${LINK_LIBRARY_LIST} OpenVX)
@@ -218,4 +222,5 @@ install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMP
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
 install(FILES include/vx_ext_rpp.h include/vx_ext_rpp_version.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+install(FILES ${PROJECT_BINARY_DIR}/include/mivisionx/vx_ext_rpp_audio_support.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
 install(DIRECTORY ${MIVISIONX_ROOT_DIR}/tests/vx_rpp_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)

@@ -1102,7 +1102,8 @@ Hip_ChannelCombine_U24_U8U8U8_RGB(uint dstWidth, uint dstHeight,
     dst.data[4] = hip_pack(make_float4(hip_unpack1(src2.y), hip_unpack1(src3.y), hip_unpack2(src1.y), hip_unpack2(src2.y)));
     dst.data[5] = hip_pack(make_float4(hip_unpack2(src3.y), hip_unpack3(src1.y), hip_unpack3(src2.y), hip_unpack3(src3.y)));
 
-    *((d_uint6 *)(&pDstImage[dstIdx])) = dst;
+    // the last group of a row is partial when dstWidth % 8 != 0
+    hip_store_RGB8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_ChannelCombine_U24_U8U8U8_RGB(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -1260,7 +1261,8 @@ Hip_ChannelCombine_U32_U8U8U8U8_RGBX(uint dstWidth, uint dstHeight,
     dst.data[6] = hip_pack(make_float4(hip_unpack2(src1.y), hip_unpack2(src2.y), hip_unpack2(src3.y), hip_unpack2(src4.y)));
     dst.data[7] = hip_pack(make_float4(hip_unpack3(src1.y), hip_unpack3(src2.y), hip_unpack3(src3.y), hip_unpack3(src4.y)));
 
-    *((d_uint8 *)(&pDstImage[dstIdx])) = dst;
+    // the last group of a row is partial when dstWidth % 8 != 0
+    hip_store_RGBX8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_ChannelCombine_U32_U8U8U8U8_RGBX(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -1316,7 +1318,8 @@ Hip_ColorConvert_RGB_RGBX(uint dstWidth, uint dstHeight,
     dst.data[4] = hip_pack(make_float4(hip_unpack1(src.data[5]), hip_unpack2(src.data[5]), hip_unpack0(src.data[6]), hip_unpack1(src.data[6])));
     dst.data[5] = hip_pack(make_float4(hip_unpack2(src.data[6]), hip_unpack0(src.data[7]), hip_unpack1(src.data[7]), hip_unpack2(src.data[7])));
 
-    *((d_uint6 *)(&pDstImage[dstIdx])) = dst;
+    // the last group of a row is partial when dstWidth % 8 != 0
+    hip_store_RGB8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_ColorConvert_RGB_RGBX(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage1, vx_uint32 dstImageStrideInBytes,
@@ -1344,7 +1347,10 @@ Hip_ColorConvert_RGB_UYVY(uint dstWidth, uint dstHeight,
 
     if ((x < dstWidthComp) && (y < dstHeightComp)) {
         uint L0Idx = y * srcImageStrideInBytesComp + (x << 4);
-        uint L1Idx = L0Idx + srcImageStrideInBytes;
+        // the second source row does not exist when dstHeight is odd (#1828); clamp
+        // rather than read past the end -- the loaded value is unused in that case
+        // since the corresponding store is already guarded (#1778/#1822).
+        uint L1Idx = L0Idx + (((uint)(2 * y + 1) < dstHeight) ? srcImageStrideInBytes : 0);
         uint4 L0 = *((uint4 *)(&pSrcImage[L0Idx]));
         uint4 L1 = *((uint4 *)(&pSrcImage[L1Idx]));
 
@@ -1544,8 +1550,14 @@ Hip_ColorConvert_RGB_UYVY(uint dstWidth, uint dstHeight,
         f.w = fmaf(cB.x, yuv.y, yuv.x);
         pRGB1.data[5] = hip_pack(f);
 
-        *((d_uint6 *)(&pDstImage[RGB0Idx])) = pRGB0;
-        *((d_uint6 *)(&pDstImage[RGB1Idx])) = pRGB1;
+        // x indexes a group of 8 destination pixels; the last group of a row
+        // is partial when dstWidth is not a multiple of 8, and the second row
+        // does not exist when dstHeight is odd (dstHeightComp rounds up).
+        int validPixels = (int)min(dstWidth - ((uint)x * 8), 8u);
+        hip_store_RGB8(pDstImage, RGB0Idx, pRGB0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_RGB8(pDstImage, RGB1Idx, pRGB1, validPixels);
+        }
     }
 }
 int HipExec_ColorConvert_RGB_UYVY(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -1580,7 +1592,10 @@ Hip_ColorConvert_RGB_YUYV(uint dstWidth, uint dstHeight,
 
     if ((x < dstWidthComp) && (y < dstHeightComp)) {
         uint L0Idx = y * srcImageStrideInBytesComp + (x << 4);
-        uint L1Idx = L0Idx + srcImageStrideInBytes;
+        // the second source row does not exist when dstHeight is odd (#1828); clamp
+        // rather than read past the end -- the loaded value is unused in that case
+        // since the corresponding store is already guarded (#1778/#1822).
+        uint L1Idx = L0Idx + (((uint)(2 * y + 1) < dstHeight) ? srcImageStrideInBytes : 0);
         uint4 L0 = *((uint4 *)(&pSrcImage[L0Idx]));
         uint4 L1 = *((uint4 *)(&pSrcImage[L1Idx]));
 
@@ -1780,8 +1795,14 @@ Hip_ColorConvert_RGB_YUYV(uint dstWidth, uint dstHeight,
         f.w = fmaf(cB.x, yuv.y, yuv.x);
         pRGB1.data[5] = hip_pack(f);
 
-        *((d_uint6 *)(&pDstImage[RGB0Idx])) = pRGB0;
-        *((d_uint6 *)(&pDstImage[RGB1Idx])) = pRGB1;
+        // x indexes a group of 8 destination pixels; the last group of a row
+        // is partial when dstWidth is not a multiple of 8, and the second row
+        // does not exist when dstHeight is odd (dstHeightComp rounds up).
+        int validPixels = (int)min(dstWidth - ((uint)x * 8), 8u);
+        hip_store_RGB8(pDstImage, RGB0Idx, pRGB0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_RGB8(pDstImage, RGB1Idx, pRGB1, validPixels);
+        }
     }
 }
 int HipExec_ColorConvert_RGB_YUYV(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -1839,7 +1860,8 @@ Hip_ColorConvert_RGBX_RGB(uint dstWidth, uint dstHeight,
     dst.data[6] = hip_pack(make_float4(hip_unpack2(src.data[4]), hip_unpack3(src.data[4]), hip_unpack0(src.data[5]), 255.0f));
     dst.data[7] = hip_pack(make_float4(hip_unpack1(src.data[5]), hip_unpack2(src.data[5]), hip_unpack3(src.data[5]), 255.0f));
 
-    *((d_uint8 *)(&pDstImage[dstIdx])) = dst;
+    // the last group of a row is partial when dstWidth % 8 != 0
+    hip_store_RGBX8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_ColorConvert_RGBX_RGB(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage1, vx_uint32 dstImageStrideInBytes,
@@ -1868,7 +1890,10 @@ Hip_ColorConvert_RGBX_UYVY(uint dstWidth, uint dstHeight,
 
     if ((x < dstWidthComp) && (y < dstHeightComp)) {
         uint L0Idx = y * srcImageStrideInBytesComp + (x << 4);
-        uint L1Idx = L0Idx + srcImageStrideInBytes;
+        // the second source row does not exist when dstHeight is odd (#1828); clamp
+        // rather than read past the end -- the loaded value is unused in that case
+        // since the corresponding store is already guarded (#1778/#1822).
+        uint L1Idx = L0Idx + (((uint)(2 * y + 1) < dstHeight) ? srcImageStrideInBytes : 0);
         uint4 L0 = *((uint4 *)(&pSrcImage[L0Idx]));
         uint4 L1 = *((uint4 *)(&pSrcImage[L1Idx]));
 
@@ -2077,8 +2102,14 @@ Hip_ColorConvert_RGBX_UYVY(uint dstWidth, uint dstHeight,
         f.z = fmaf(cB.x, yuv.y, yuv.x);
         pRGB1.data[7] = hip_pack(f);
 
-        *((d_uint8 *)(&pDstImage[RGB0Idx])) = pRGB0;
-        *((d_uint8 *)(&pDstImage[RGB1Idx])) = pRGB1;
+        // x indexes a group of 8 destination pixels; the last group of a row
+        // is partial when dstWidth is not a multiple of 8, and the second row
+        // does not exist when dstHeight is odd (dstHeightComp rounds up).
+        int validPixels = (int)min(dstWidth - ((uint)x * 8), 8u);
+        hip_store_RGBX8(pDstImage, RGB0Idx, pRGB0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_RGBX8(pDstImage, RGB1Idx, pRGB1, validPixels);
+        }
     }
 }
 int HipExec_ColorConvert_RGBX_UYVY(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -2114,7 +2145,10 @@ Hip_ColorConvert_RGBX_YUYV(uint dstWidth, uint dstHeight,
 
     if ((x < dstWidthComp) && (y < dstHeightComp)) {
         uint L0Idx = y * srcImageStrideInBytesComp + (x << 4);
-        uint L1Idx = L0Idx + srcImageStrideInBytes;
+        // the second source row does not exist when dstHeight is odd (#1828); clamp
+        // rather than read past the end -- the loaded value is unused in that case
+        // since the corresponding store is already guarded (#1778/#1822).
+        uint L1Idx = L0Idx + (((uint)(2 * y + 1) < dstHeight) ? srcImageStrideInBytes : 0);
         uint4 L0 = *((uint4 *)(&pSrcImage[L0Idx]));
         uint4 L1 = *((uint4 *)(&pSrcImage[L1Idx]));
 
@@ -2323,8 +2357,14 @@ Hip_ColorConvert_RGBX_YUYV(uint dstWidth, uint dstHeight,
         f.z = fmaf(cB.x, yuv.y, yuv.x);
         pRGB1.data[7] = hip_pack(f);
 
-        *((d_uint8 *)(&pDstImage[RGB0Idx])) = pRGB0;
-        *((d_uint8 *)(&pDstImage[RGB1Idx])) = pRGB1;
+        // x indexes a group of 8 destination pixels; the last group of a row
+        // is partial when dstWidth is not a multiple of 8, and the second row
+        // does not exist when dstHeight is odd (dstHeightComp rounds up).
+        int validPixels = (int)min(dstWidth - ((uint)x * 8), 8u);
+        hip_store_RGBX8(pDstImage, RGB0Idx, pRGB0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_RGBX8(pDstImage, RGB1Idx, pRGB1, validPixels);
+        }
     }
 }
 int HipExec_ColorConvert_RGBX_YUYV(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -2587,8 +2627,14 @@ Hip_ColorConvert_RGB_IYUV(uint dstWidth, uint dstHeight,
         f.w = fmaf(cB.x, yuv.y, yuv.x);
         pRGB1.data[5] = hip_pack(f);
 
-        *((d_uint6 *)(&pDstImage[RGB0Idx])) = pRGB0;
-        *((d_uint6 *)(&pDstImage[RGB1Idx])) = pRGB1;
+        // x indexes a group of 8 destination pixels; the last group of a row
+        // is partial when dstWidth is not a multiple of 8, and the second row
+        // does not exist when dstHeight is odd (dstHeightComp rounds up).
+        int validPixels = (int)min(dstWidth - ((uint)x * 8), 8u);
+        hip_store_RGB8(pDstImage, RGB0Idx, pRGB0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_RGB8(pDstImage, RGB1Idx, pRGB1, validPixels);
+        }
     }
 }
 int HipExec_ColorConvert_RGB_IYUV(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -2844,8 +2890,14 @@ Hip_ColorConvert_RGB_NV12(uint dstWidth, uint dstHeight,
         f.w = fmaf(cB.x, yuv.y, yuv.x);
         pRGB1.data[5] = hip_pack(f);
 
-        *((d_uint6 *)(&pDstImage[RGB0Idx])) = pRGB0;
-        *((d_uint6 *)(&pDstImage[RGB1Idx])) = pRGB1;
+        // x indexes a group of 8 destination pixels; the last group of a row
+        // is partial when dstWidth is not a multiple of 8, and the second row
+        // does not exist when dstHeight is odd (dstHeightComp rounds up).
+        int validPixels = (int)min(dstWidth - ((uint)x * 8), 8u);
+        hip_store_RGB8(pDstImage, RGB0Idx, pRGB0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_RGB8(pDstImage, RGB1Idx, pRGB1, validPixels);
+        }
     }
 }
 int HipExec_ColorConvert_RGB_NV12(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -3100,8 +3152,14 @@ Hip_ColorConvert_RGB_NV21(uint dstWidth, uint dstHeight,
         f.w = fmaf(cB.x, yuv.y, yuv.x);
         pRGB1.data[5] = hip_pack(f);
 
-        *((d_uint6 *)(&pDstImage[RGB0Idx])) = pRGB0;
-        *((d_uint6 *)(&pDstImage[RGB1Idx])) = pRGB1;
+        // x indexes a group of 8 destination pixels; the last group of a row
+        // is partial when dstWidth is not a multiple of 8, and the second row
+        // does not exist when dstHeight is odd (dstHeightComp rounds up).
+        int validPixels = (int)min(dstWidth - ((uint)x * 8), 8u);
+        hip_store_RGB8(pDstImage, RGB0Idx, pRGB0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_RGB8(pDstImage, RGB1Idx, pRGB1, validPixels);
+        }
     }
 }
 int HipExec_ColorConvert_RGB_NV21(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -3374,8 +3432,14 @@ Hip_ColorConvert_RGBX_IYUV(uint dstWidth, uint dstHeight,
         f.z = fmaf(cB.x, yuv.y, yuv.x);
         pRGB1.data[7] = hip_pack(f);
 
-        *((d_uint8 *)(&pDstImage[RGB0Idx])) = pRGB0;
-        *((d_uint8 *)(&pDstImage[RGB1Idx])) = pRGB1;
+        // x indexes a group of 8 destination pixels; the last group of a row
+        // is partial when dstWidth is not a multiple of 8, and the second row
+        // does not exist when dstHeight is odd (dstHeightComp rounds up).
+        int validPixels = (int)min(dstWidth - ((uint)x * 8), 8u);
+        hip_store_RGBX8(pDstImage, RGB0Idx, pRGB0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_RGBX8(pDstImage, RGB1Idx, pRGB1, validPixels);
+        }
     }
 }
 int HipExec_ColorConvert_RGBX_IYUV(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -3640,8 +3704,14 @@ Hip_ColorConvert_RGBX_NV12(uint dstWidth, uint dstHeight,
         f.z = fmaf(cB.x, yuv.y, yuv.x);
         pRGB1.data[7] = hip_pack(f);
 
-        *((d_uint8 *)(&pDstImage[RGB0Idx])) = pRGB0;
-        *((d_uint8 *)(&pDstImage[RGB1Idx])) = pRGB1;
+        // x indexes a group of 8 destination pixels; the last group of a row
+        // is partial when dstWidth is not a multiple of 8, and the second row
+        // does not exist when dstHeight is odd (dstHeightComp rounds up).
+        int validPixels = (int)min(dstWidth - ((uint)x * 8), 8u);
+        hip_store_RGBX8(pDstImage, RGB0Idx, pRGB0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_RGBX8(pDstImage, RGB1Idx, pRGB1, validPixels);
+        }
     }
 }
 int HipExec_ColorConvert_RGBX_NV12(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -3905,8 +3975,14 @@ Hip_ColorConvert_RGBX_NV21(uint dstWidth, uint dstHeight,
         f.z = fmaf(cB.x, yuv.y, yuv.x);
         pRGB1.data[7] = hip_pack(f);
 
-        *((d_uint8 *)(&pDstImage[RGB0Idx])) = pRGB0;
-        *((d_uint8 *)(&pDstImage[RGB1Idx])) = pRGB1;
+        // x indexes a group of 8 destination pixels; the last group of a row
+        // is partial when dstWidth is not a multiple of 8, and the second row
+        // does not exist when dstHeight is odd (dstHeightComp rounds up).
+        int validPixels = (int)min(dstWidth - ((uint)x * 8), 8u);
+        hip_store_RGBX8(pDstImage, RGB0Idx, pRGB0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_RGBX8(pDstImage, RGB1Idx, pRGB1, validPixels);
+        }
     }
 }
 int HipExec_ColorConvert_RGBX_NV21(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,

@@ -28,10 +28,6 @@ THE SOFTWARE.
 #ifndef ENABLE_OPENCL
 #define ENABLE_OPENCL  1
 #endif
-// OpenCV: enabled unless disabled explicitly by setting ENABLE_OPENCV=0
-#ifndef ENABLE_OPENCV
-#define ENABLE_OPENCV 1
-#endif
 
 #include <VX/vx.h>
 #include <VX/vx_compatibility.h>
@@ -55,10 +51,6 @@ THE SOFTWARE.
 #else
 #include <chrono>
 #include <unistd.h>
-#if HAVE_OpenSSL
-#include <openssl/hmac.h>
-#include <openssl/md5.h>
-#endif
 
 #include <strings.h>
 #define _strnicmp strncasecmp
@@ -80,17 +72,6 @@ THE SOFTWARE.
 #if ENABLE_HIP
 #include "hip/hip_runtime.h"
 #include "hip/hip_runtime_api.h"
-#endif
-
-#if ENABLE_OPENCV
-#include "opencv2/opencv.hpp"
-using namespace cv;
-#if USE_OPENCV_4
-#define CV_BGR2GRAY COLOR_BGR2GRAY
-#define CV_GRAY2RGB COLOR_GRAY2RGB
-#define CV_FONT_HERSHEY_SIMPLEX FONT_HERSHEY_SIMPLEX
-#define CV_FILLED FILLED
-#endif
 #endif
 
 // Scalar to String SIZE
@@ -154,9 +135,9 @@ private:
 #if _WIN32
 	HCRYPTPROV m_cryptProv;
 	HCRYPTHASH m_cryptHash;
-#elif HAVE_OpenSSL
-	MD5_CTX m_handle;
 #endif
+	void * m_handle;
+	bool m_useBuiltInMD5;
 	vx_uint8 m_hash[16];
 	char m_checkSum[33];
 
@@ -207,4 +188,3 @@ vector<string> &split(const string &s, char delim, vector<string> &elems);
 int convert_image_format(string format);
 
 #endif
-

@@ -31,6 +31,7 @@ struct MagnitudeLocalData {
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
     RpptROI *pSrcRoi;
+    RpptROI *pSrcRoiFrames;
     RpptRoiType roiType;
     vxTensorLayout inputLayout;
     vxTensorLayout outputLayout;
@@ -60,12 +61,14 @@ static vx_status VX_CALLBACK refreshMagnitude(vx_node node, const vx_reference *
     // If input is NFHWC/NFCHW, expand ROI entries per frame
     if (data->inputLayout == vxTensorLayout::VX_NFHWC || data->inputLayout == vxTensorLayout::VX_NFCHW) {
         unsigned num_of_frames = data->inputTensorDims[1]; // Num of frames 'F'
+        STATUS_ERROR_CHECK(allocRoiFrames(data->deviceType, &data->pSrcRoiFrames, data->inputTensorDims[0] * num_of_frames));
         for (int n = static_cast<int>(data->inputTensorDims[0]) - 1; n >= 0; n--) {
             unsigned index = n * num_of_frames;
             for (unsigned f = 0; f < num_of_frames; f++) {
-                data->pSrcRoi[index + f].xywhROI = data->pSrcRoi[n].xywhROI;
+                data->pSrcRoiFrames[index + f].xywhROI = data->pSrcRoi[n].xywhROI;
             }
         }
+        data->pSrcRoi = data->pSrcRoiFrames;
     }
 
     return status;
@@ -184,6 +187,7 @@ static vx_status VX_CALLBACK uninitializeMagnitude(vx_node node, const vx_refere
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
+    freeRoiFrames(data->deviceType, data->pSrcRoiFrames);
     delete data;
     return VX_SUCCESS;
 }

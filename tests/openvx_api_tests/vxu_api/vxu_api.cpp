@@ -489,6 +489,73 @@ static int test_vxuBox3x3(vx_context context) {
 }
 
 // ---------------------------------------------------------------------------
+// Test 17b: vxuBox3x3 bit-exact output
+// Regression for the HIP Box3x3 kernel, which used float math (fmaf by
+// 0.1111111f, then round) and returned sum/9 - 1 for some 3x3 sums divisible
+// by 9. The CTS tolerates +/-1, so assert exact integer sum/9 here. Run with
+// AGO_DEFAULT_TARGET=GPU to cover the HIP kernel.
+// ---------------------------------------------------------------------------
+static int test_vxuBox3x3_exact(vx_context context) {
+    int errors = 0;
+    printf("\n--- Test: vxuBox3x3 exact (sum / 9) ---\n");
+
+    // Varied pattern: ~3000 interior sums divisible by 9, ~90 of which the
+    // old float kernel got wrong.
+    static vx_uint8 srcData[HEIGHT][WIDTH];
+    static vx_uint8 dstData[HEIGHT][WIDTH];
+    for (vx_uint32 y = 0; y < HEIGHT; y++)
+        for (vx_uint32 x = 0; x < WIDTH; x++)
+            srcData[y][x] = (vx_uint8)((x * 7 + y * 13) % 256);
+
+    vx_image src = vxCreateImage(context, WIDTH, HEIGHT, VX_DF_IMAGE_U8);
+    vx_image dst = vxCreateImage(context, WIDTH, HEIGHT, VX_DF_IMAGE_U8);
+    CHECK_NULL(src, "src");
+    CHECK_NULL(dst, "dst");
+    if (!src || !dst) {
+        if (src) vxReleaseImage(&src);
+        if (dst) vxReleaseImage(&dst);
+        return errors;
+    }
+
+    vx_rectangle_t rect = {0, 0, WIDTH, HEIGHT};
+    vx_imagepatch_addressing_t addr = {};
+    addr.dim_x = WIDTH;
+    addr.dim_y = HEIGHT;
+    addr.stride_x = 1;
+    addr.stride_y = WIDTH;
+    CHECK_STATUS(vxCopyImagePatch(src, &rect, 0, &addr, srcData, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+    CHECK_STATUS(vxuBox3x3(context, src, dst));
+    CHECK_STATUS(vxCopyImagePatch(dst, &rect, 0, &addr, dstData, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+
+    // Immediate border mode is UNDEFINED, so only compare interior pixels
+    int mismatches = 0;
+    for (vx_uint32 y = 1; y < HEIGHT - 1; y++) {
+        for (vx_uint32 x = 1; x < WIDTH - 1; x++) {
+            vx_uint32 sum = 0;
+            for (int dy = -1; dy <= 1; dy++)
+                for (int dx = -1; dx <= 1; dx++)
+                    sum += srcData[y + dy][x + dx];
+            vx_uint8 expected = (vx_uint8)(sum / 9);
+            if (dstData[y][x] != expected) {
+                if (mismatches < 5)
+                    printf("  FAIL: (%u,%u) sum=%u expected=%u got=%u\n", x, y, sum, expected, dstData[y][x]);
+                mismatches++;
+            }
+        }
+    }
+    if (mismatches) {
+        printf("  FAIL: vxuBox3x3 exact: %d mismatched pixels\n", mismatches);
+        errors++;
+    } else {
+        printf("  PASS: vxuBox3x3 exact\n");
+    }
+
+    vxReleaseImage(&src);
+    vxReleaseImage(&dst);
+    return errors;
+}
+
+// ---------------------------------------------------------------------------
 // Test 18: vxuGaussian3x3
 // ---------------------------------------------------------------------------
 static int test_vxuGaussian3x3(vx_context context) {
@@ -1365,6 +1432,7 @@ int main() {
     total_errors += test_vxuDilate3x3(context);
     total_errors += test_vxuMedian3x3(context);
     total_errors += test_vxuBox3x3(context);
+    total_errors += test_vxuBox3x3_exact(context);
     total_errors += test_vxuGaussian3x3(context);
     total_errors += test_vxuNonLinearFilter(context);
 

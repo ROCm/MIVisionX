@@ -88,6 +88,21 @@ if(VX_RPP_LIBRARY)
             -dump-profile file ${CMAKE_CURRENT_SOURCE_DIR}/vx_rpp_tests/gdf/test_vx_rpp.gdf
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
+  # 2_b - vx_rpp video layouts: the ROI tensors must come back unchanged and repeated
+  # executions must agree. GPU only; the program drives the HIP buffers directly.
+  if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
+    add_test(
+      NAME
+        vx_rpp_roi_frames
+      COMMAND
+        "${CMAKE_CTEST_COMMAND}"
+                --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/vx_rpp_roi_frames"
+                                  "${CMAKE_CURRENT_BINARY_DIR}/vx_rpp_roi_frames"
+                --build-generator "${CMAKE_GENERATOR}"
+                --test-command "vx_rpp_roi_frames"
+    )
+    set_property(TEST vx_rpp_roi_frames PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+  endif()
 endif(VX_RPP_LIBRARY)
 
 # 7 - runvx Tests
@@ -110,6 +125,9 @@ add_test(
             --build-generator "${CMAKE_GENERATOR}"
             --test-command "openvx_canny"
 )
+# #1800: canny_CPU/_GPU reuse the binary --build-and-test places in canny/; a
+# fixture guarantees ctest -j always runs this test first, regardless of scheduling.
+set_property(TEST openvx_canny PROPERTY FIXTURES_SETUP canny_fixture)
 
 # 9 - channel extract - vision graph
 add_test(
@@ -122,6 +140,8 @@ add_test(
             --build-generator "${CMAKE_GENERATOR}"
             --test-command "openvx_channel_extract"
 )
+# #1800: see openvx_canny's fixture comment above; same race, same fix.
+set_property(TEST openvx_channel_extract PROPERTY FIXTURES_SETUP channel_extract_fixture)
 
 # 10 - color convert - vision graph
 add_test(
@@ -134,6 +154,8 @@ add_test(
             --build-generator "${CMAKE_GENERATOR}"
             --test-command "openvx_color_convert"
 )
+# #1800: see openvx_canny's fixture comment above; same race, same fix.
+set_property(TEST openvx_color_convert PROPERTY FIXTURES_SETUP color_convert_fixture)
 
 # 11 - accumulate - vision graph
 add_test(
@@ -162,6 +184,15 @@ add_test(
 set_property(TEST openvx_graph PROPERTY ENVIRONMENT "AGO_DUMP_GRAPH=1;ROCM_PATH=${ROCM_PATH}")
 
 # 11_b - graph API - graph API test
+# The test checks VX_CONTEXT_EXTENSIONS against the pipelining setting the library was built with.
+set(GRAPH_API_BUILD_OPTIONS "")
+if(DEFINED OPENVX_USE_PIPELINING)
+  if(OPENVX_USE_PIPELINING)
+    set(GRAPH_API_BUILD_OPTIONS --build-options -DEXPECT_PIPELINING=1)
+  else()
+    set(GRAPH_API_BUILD_OPTIONS --build-options -DEXPECT_PIPELINING=0)
+  endif()
+endif()
 add_test(
   NAME
     openvx_graph_api
@@ -170,9 +201,16 @@ add_test(
             --build-and-test "${CMAKE_CURRENT_SOURCE_DIR}/openvx_api_tests/graph_api"
                               "${CMAKE_CURRENT_BINARY_DIR}/graph_api"
             --build-generator "${CMAKE_GENERATOR}"
+            ${GRAPH_API_BUILD_OPTIONS}
             --test-command "openvx_graph_api"
 )
-set_property(TEST openvx_graph_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+# The test is linked against the installed MIVisionX but must check the library this build produces
+# (EXPECT_PIPELINING above), so run it against the build tree's libopenvx when there is one.
+if(TARGET openvx)
+  set_property(TEST openvx_graph_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU" "LD_LIBRARY_PATH=$<TARGET_FILE_DIR:openvx>:$ENV{LD_LIBRARY_PATH}")
+else()
+  set_property(TEST openvx_graph_api PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+endif()
 
 # 11_c - tensor_api - tensor API test
 add_test(
@@ -323,6 +361,7 @@ add_test(NAME openvx_canny_CPU
               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/canny
 )
 set_property(TEST openvx_canny_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+set_property(TEST openvx_canny_CPU PROPERTY FIXTURES_REQUIRED canny_fixture)
 
 # 13 - channel extract - vision graph force to CPU
 add_test(NAME openvx_channel_extract_CPU 
@@ -330,6 +369,7 @@ add_test(NAME openvx_channel_extract_CPU
               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/channel_extract
 )
 set_property(TEST openvx_channel_extract_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+set_property(TEST openvx_channel_extract_CPU PROPERTY FIXTURES_REQUIRED channel_extract_fixture)
 
 # 14 - color convert - vision graph force to CPU
 add_test(NAME openvx_color_convert_CPU 
@@ -337,6 +377,7 @@ add_test(NAME openvx_color_convert_CPU
               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/color_convert
 )
 set_property(TEST openvx_color_convert_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+set_property(TEST openvx_color_convert_CPU PROPERTY FIXTURES_REQUIRED color_convert_fixture)
 
 # OpenVX Tests
 if(Python3_FOUND)
@@ -397,6 +438,29 @@ if(Python3_FOUND)
       )
       set_property(TEST openvx_remap_${gdf_base}_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
     endforeach()
+
+    # 16_c - Large-source-image Remap regression test (issue #1806): the
+    # remap table's fractional-bit count is adaptive (reduced as source
+    # width/height crosses 8192/16384/32768px) and the CPU kernels must not
+    # assume it is always 3, nor reinterpret the unsigned fixed-point table
+    # as signed. See tests/large_image_remap_tests/test_large_image_remap.py.
+    add_test(NAME openvx_remap_large_image_CPU
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/large_image_remap_tests/test_large_image_remap.py
+          --runvx ${RUNVX_EXECUTABLE}
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+    set_property(TEST openvx_remap_large_image_CPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=CPU")
+
+    # 16_d - Exact-value correctness test for the CPU AREA scale paths. The
+    # shipped AREA GDFs use a uniform image, where a row shift is invisible.
+    # Registered here, in the CPU section, because the defects it guards are
+    # CPU-side: the script sets AGO_DEFAULT_TARGET=CPU itself and the test must
+    # run on a CPU/HOST configuration, not only on a GPU one.
+    add_test(NAME openvx_scale_area_cpu
+          COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scale_area_tests/test_scale_area.py
+          --runvx ${RUNVX_EXECUTABLE}
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
   endif()
 endif(Python3_FOUND)
 
@@ -408,6 +472,7 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/canny
   )
   set_property(TEST openvx_canny_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+  set_property(TEST openvx_canny_GPU PROPERTY FIXTURES_REQUIRED canny_fixture)
 
   # 18 - channel extract - vision graph force to GPU
   add_test(NAME openvx_channel_extract_GPU 
@@ -415,6 +480,7 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/channel_extract
   )
   set_property(TEST openvx_channel_extract_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+  set_property(TEST openvx_channel_extract_GPU PROPERTY FIXTURES_REQUIRED channel_extract_fixture)
 
   # 19 - color convert - vision graph force to GPU
   add_test(NAME openvx_color_convert_GPU 
@@ -422,6 +488,7 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/color_convert
   )
   set_property(TEST openvx_color_convert_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
+  set_property(TEST openvx_color_convert_GPU PROPERTY FIXTURES_REQUIRED color_convert_fixture)
 
   # OpenVX Tests
   if(Python3_FOUND)
@@ -478,6 +545,36 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
         set_property(TEST openvx_remap_${gdf_base}_GPU PROPERTY ENVIRONMENT "AGO_DEFAULT_TARGET=GPU")
       endforeach()
 
+    # Both of the tests below target the HIP kernels specifically, so they are
+    # registered only for a HIP build rather than for the whole GPU block.
+    #
+    # The two backends differ for each, in opposite directions. The AREA defect
+    # does not exist on OpenCL at all: agoKernel_ScaleImage_U8_U8_Area generates
+    # a kernel per node with the real Nx x Ny window baked in, so it never sends
+    # one ratio to a kernel shaped for another. The RGB/RGBX overrun does exist
+    # there - ago_haf_gpu_conversion.cpp emits an unconditional vstore4 + vstore2
+    # at gx * 24 - but this change does not fix it; that half is #1829. Widen
+    # the colour test to OpenCL once it is.
+    if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
+      # 23_b - Exact-value correctness test for the HIP AREA scale paths. The
+      # shipped AREA GDFs assert only that runvx exits 0 and use a uniform
+      # image, so a wrong kernel selection is invisible to them.
+      add_test(NAME openvx_scale_area_gpu
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scale_area_gpu_tests/test_scale_area_gpu.py
+            --runvx ${RUNVX_EXECUTABLE}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
+
+      # 23_c - RGB/RGBX stores must stay inside the destination row. Needs a
+      # width that is not a multiple of 8, which no other colour test uses, and
+      # repeated runs, because the overrun is a race between adjacent rows.
+      add_test(NAME openvx_color_convert_partial_store
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/color_convert_partial_tests/test_color_convert_partial.py
+            --runvx ${RUNVX_EXECUTABLE}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
+    endif()
+
       # 24 - Constant-border correctness test for RGB/RGBX Remap
       add_test(NAME openvx_remap_rgb_rgbx_constant_border
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/remap_constant_border_tests/test_remap_constant_border.py
@@ -485,6 +582,23 @@ if(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "
             --gdf-dir ${CMAKE_CURRENT_SOURCE_DIR}/amd_openvx_gdfs/geometric
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       )
+
+      # 25 - Exact-value correctness test for the threshold kernels. Covers the
+      # U1 lowering (threshold -> and/or/xor through virtual images) across all
+      # four float4 lanes, and S16 thresholds outside 0..255. The script runs
+      # both the CPU and the GPU backend itself.
+      #
+      # HIP only for now. The OpenCL threshold codegen still narrows the
+      # threshold with amd_unpack0 (agoCodeGenOpenCL_Threshold_S16_S16_Binary
+      # and _Range), so the S16 cases outside 0..255 fail there. Drop this
+      # guard once that path is fixed.
+      if("${MIVISIONX_BACKEND}" STREQUAL "HIP")
+        add_test(NAME openvx_threshold_kernels
+              COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/threshold_tests/test_threshold_kernels.py
+              --runvx ${RUNVX_EXECUTABLE}
+              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
+      endif()
     endif()
   endif(Python3_FOUND)
 endif(("${MIVISIONX_BACKEND}" STREQUAL "HIP") OR ("${MIVISIONX_BACKEND}" STREQUAL "OPENCL"))

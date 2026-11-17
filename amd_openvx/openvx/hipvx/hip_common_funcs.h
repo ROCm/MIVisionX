@@ -182,6 +182,33 @@ __device__ __forceinline__ short hip_convert_short_sat_rte(float a) {
     return (short)hip_clamp(a, (float)INT16_MIN, (float)INT16_MAX);
 }
 
+// scale * a * b rounded half to even, for the 16-bit operands of the S16 multiply. The product needs up to
+// 30 bits and does not fit a float. It is formed as an integer and, unless scale is 1, scaled in double: the
+// double product can land exactly on a tie that the true product is not on, so a tie is resolved with the
+// exact rounding residual of the multiplication.
+__device__ __forceinline__ double hip_mul_s16_rte_value(float scale, int a, int b) {
+#pragma clang fp contract(off)  // the rounded product must not be fused into the tie test below
+    int p = a * b;
+    double prod = (double)scale * (double)p;
+    double err = fma((double)scale, (double)p, -prod);
+    double lo = floor(prod);
+    if (prod - lo == 0.5 && err != 0.0)
+        return err > 0.0 ? lo + 1.0 : lo;
+    return rint(prod);
+}
+
+__device__ __forceinline__ int hip_mul_s16_wrap_rte(float scale, int a, int b) {
+    if (scale == 1.0f)
+        return a * b;  // exact in 32 bits; the caller keeps the low 16
+    return (int)(long long)hip_mul_s16_rte_value(scale, a, b);
+}
+
+__device__ __forceinline__ int hip_mul_s16_sat_rte(float scale, int a, int b) {
+    if (scale == 1.0f)
+        return hip_clamp(a * b, -32768, 32767);
+    return (int)hip_clamp(hip_mul_s16_rte_value(scale, a, b), -32768.0, 32767.0);
+}
+
 __device__ __forceinline__ void hip_convert_U8_U1(uint2 *p0, unsigned char p1) {
     uint2 r;
     r.x  = (-(p1 &   1)) & 0x000000ff;
@@ -381,6 +408,109 @@ __device__ __forceinline__ uint hip_canny_mag_phase_L2_7x7(float gx, float gy) {
 
 __device__ __forceinline__ uint hip_bfe(uint src0, uint src1, uint src2) {
     return __builtin_amdgcn_ubfe(src0, src1, src2);
+}
+
+// Bounded stores for kernels that produce 8 RGB or RGBX pixels per thread.
+//
+// Image rows are padded only to a multiple of 16 bytes (agoDataSanityCheckAndUpdate
+// uses ALIGN16), so a full-block store of 24 bytes (RGB) or 32 bytes (RGBX) runs
+// past the end of the row whenever the width is not a multiple of 8 - an RGB row
+// of width 1282 is 3846 bytes long with a 3856-byte stride, and the last thread
+// writes bytes 3840..3863, i.e. the first 8 bytes of the next row. Whether those
+// bytes or the correct ones written by the next row's first thread land last
+// depends on scheduling, so the corruption is non-deterministic.
+//
+// `valid` is the number of destination pixels the store may touch, normally
+// min(dstWidth - firstPixelOfBlock, 8). A partial block is written pixel-wise so
+// only the valid bytes are modified.
+
+__device__ __forceinline__ void hip_store_RGB8(uchar *pDstImage, uint dstIdx, const d_uint6 &pix, int valid) {
+    if (valid >= 8) {
+        *((d_uint6 *)(&pDstImage[dstIdx])) = pix;
+    } else {
+        // Byte-wise, matching hip_remap_store_RGB below, which handles the same
+        // pixel format the same way. A dword copy would need dstIdx to be 4-byte
+        // aligned, and that only holds for a top-level image: for a child image
+        // or ROI the base pointer already carries 3 * x0 from
+        // ImageWidthInBytesFloor (ago_util.cpp:1318-1320), and x0 is not
+        // constrained to a multiple of 8, so x0 = 1 makes every dstIdx here odd.
+        // d_uint6 is 6 tightly packed uints, so pixel i occupies bytes
+        // 3*i .. 3*i+2 and a flat byte copy is correct. The tail runs at most
+        // once per row, so the cost is immaterial.
+        uchar *dst = pDstImage + dstIdx;
+        const uchar *src = (const uchar *)&pix;
+        int bytes = valid * 3;
+        for (int i = 0; i < bytes; i++) {
+            dst[i] = src[i];
+        }
+    }
+}
+
+__device__ __forceinline__ void hip_store_RGBX8(uchar *pDstImage, uint dstIdx, const d_uint8 &pix, int valid) {
+    if (valid >= 8) {
+        *((d_uint8 *)(&pDstImage[dstIdx])) = pix;
+    } else {
+        // Dwords are safe here where they are not in hip_store_RGB8 above:
+        // RGBX is 4 bytes per pixel, so a child image / ROI shifts the base by
+        // 4 * x0 and dstIdx stays dword aligned for any origin. A partial store
+        // is exactly `valid` whole dwords with no byte remainder.
+        uint *dstWord = (uint *)(pDstImage + dstIdx);
+        const uint *srcWord = (const uint *)&pix;
+        for (int i = 0; i < valid; i++) {
+            dstWord[i] = srcWord[i];
+        }
+    }
+}
+
+// Same idea for single-plane U8 kernels that produce 8 pixels per thread. The
+// last group of a row is partial when dstWidth % 8 != 0; a whole uint2 would
+// write into the row padding, and would overrun a row whose stride is not
+// ALIGN16 - an imported handle via vxSwapImageHandle, for instance.
+__device__ __forceinline__ void hip_store_U8x8(uchar *pDstImage, uint dstIdx, const uint2 &pix, int valid) {
+    if (valid >= 8) {
+        *((uint2 *)(&pDstImage[dstIdx])) = pix;
+    } else {
+        uchar *dst = pDstImage + dstIdx;
+        const uchar *src = (const uchar *)&pix;
+        for (int i = 0; i < valid; i++) {
+            dst[i] = src[i];
+        }
+    }
+}
+
+// Same idea for the remap kernels, whose 8 pixels are held in uint3[2] / two uint4.
+__device__ __forceinline__ void hip_remap_store_RGB(uchar *pDstImage, uint dstIdx, const uint3 *out, int valid)
+{
+    if (valid >= 8) {
+        uint *dst = (uint *)(pDstImage + dstIdx);
+        dst[0] = out[0].x; dst[1] = out[0].y; dst[2] = out[0].z;
+        dst[3] = out[1].x; dst[4] = out[1].y; dst[5] = out[1].z;
+    } else {
+        uchar *dst = pDstImage + dstIdx;
+        for (int i = 0; i < valid; i++) {
+            const uchar *src = (const uchar *)&out[i >> 2] + (i & 3) * 3;
+            dst[i * 3 + 0] = src[0];
+            dst[i * 3 + 1] = src[1];
+            dst[i * 3 + 2] = src[2];
+        }
+    }
+}
+
+__device__ __forceinline__ void hip_remap_store_RGBX(uchar *pDstImage, uint dstIdx, uint4 out0, uint4 out1, int valid)
+{
+    if (valid >= 8) {
+        *((uint4 *)(pDstImage + dstIdx)) = out0;
+        *((uint4 *)(pDstImage + dstIdx + 16)) = out1;
+    } else {
+        uchar *dst = pDstImage + dstIdx;
+        for (int i = 0; i < valid; i++) {
+            const uchar *src = ((i < 4) ? (const uchar *)&out0 : (const uchar *)&out1) + (i & 3) * 4;
+            dst[i * 4 + 0] = src[0];
+            dst[i * 4 + 1] = src[1];
+            dst[i * 4 + 2] = src[2];
+            dst[i * 4 + 3] = src[3];
+        }
+    }
 }
 
 #endif //MIVISIONX_HIP_COMMON_FUNCS_H

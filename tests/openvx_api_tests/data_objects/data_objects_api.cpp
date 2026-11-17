@@ -251,6 +251,65 @@ static int test_image_api(vx_context context) {
     return errors;
 }
 
+// An ROI image must stay usable, and releasable, after its parent is released.
+static int test_image_roi_release_order(vx_context context) {
+    int errors = 0;
+    printf("\n=== Image ROI release order ===\n");
+
+    const vx_df_image formats[] = {VX_DF_IMAGE_U8, VX_DF_IMAGE_NV12};
+    for (vx_df_image format : formats) {
+        for (int parentFirst = 0; parentFirst < 2; parentFirst++) {
+            vx_image parent = vxCreateImage(context, 64, 48, format);
+            CHECK_OBJ(parent);
+            vx_rectangle_t rect = {8, 8, 40, 32};
+            vx_image roiA = vxCreateImageFromROI(parent, &rect);
+            vx_image roiB = vxCreateImageFromROI(parent, &rect);
+            CHECK_OBJ(roiA);
+            CHECK_OBJ(roiB);
+            if (parentFirst) {
+                CHECK_STATUS(vxReleaseImage(&parent));
+                CHECK_STATUS(vxReleaseImage(&roiA));
+                CHECK_STATUS(vxReleaseImage(&roiB));
+            } else {
+                CHECK_STATUS(vxReleaseImage(&roiA));
+                CHECK_STATUS(vxReleaseImage(&roiB));
+                CHECK_STATUS(vxReleaseImage(&parent));
+            }
+        }
+    }
+
+    // pixels written through the parent are still readable through the ROI
+    vx_image parent = vxCreateImage(context, 64, 48, VX_DF_IMAGE_U8);
+    CHECK_OBJ(parent);
+    vx_rectangle_t full = {0, 0, 64, 48};
+    vx_imagepatch_addressing_t addr = {};
+    addr.dim_x = 64; addr.dim_y = 48; addr.stride_x = 1; addr.stride_y = 64;
+    vx_uint8 pix[64 * 48];
+    for (int i = 0; i < 64 * 48; i++) pix[i] = (vx_uint8)(i * 7);
+    CHECK_STATUS(vxCopyImagePatch(parent, &full, 0, &addr, pix, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+    vx_rectangle_t rect = {8, 8, 40, 32};
+    vx_image roi = vxCreateImageFromROI(parent, &rect);
+    CHECK_OBJ(roi);
+    CHECK_STATUS(vxReleaseImage(&parent));
+    vx_uint8 out[32 * 24];
+    vx_imagepatch_addressing_t oaddr = {};
+    oaddr.dim_x = 32; oaddr.dim_y = 24; oaddr.stride_x = 1; oaddr.stride_y = 32;
+    vx_rectangle_t whole = {0, 0, 32, 24};
+    CHECK_STATUS(vxCopyImagePatch(roi, &whole, 0, &oaddr, out, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    int bad = 0;
+    for (int y = 0; y < 24; y++)
+        for (int x = 0; x < 32; x++)
+            if (out[y * 32 + x] != pix[(y + 8) * 64 + (x + 8)]) bad++;
+    if (bad) {
+        printf("ERROR: %d ROI pixels differ after the parent was released\n", bad);
+        errors++;
+    }
+    CHECK_STATUS(vxReleaseImage(&roi));
+
+    printf("Image ROI release order: %s\n", errors ? "FAIL" : "PASS");
+    return errors;
+}
+
 static int test_array_api(vx_context context) {
     int errors = 0;
     printf("\n=== Array API ===\n");
@@ -850,6 +909,7 @@ int main() {
     }
 
     errors += test_image_api(context);
+    errors += test_image_roi_release_order(context);
     errors += test_array_api(context);
     errors += test_scalar_api(context);
     errors += test_convolution_api(context);

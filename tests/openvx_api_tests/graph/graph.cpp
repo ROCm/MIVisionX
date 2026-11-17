@@ -115,7 +115,7 @@ int main(int argc, char **argv)
         printf("\nINSTALL PATH:%s\n", installLocation);
     }
     char gdfFile[2048];
-    const char gdfLocation[] = "/share/mivisionx/samples/gdf/read-gdf-sample.gdf";
+    const char gdfLocation[] = "/share/mivisionx/test/openvx_api_tests/graph/read-gdf-sample.gdf";
     snprintf(gdfFile, sizeof(gdfFile), "%s%s", installLocation, gdfLocation);
     printf("GDF load file:%s\n", gdfFile);
 

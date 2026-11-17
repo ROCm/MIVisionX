@@ -32,6 +32,7 @@ struct MedianFilterLocalData {
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
     RpptROI *pSrcRoi;
+    RpptROI *pSrcRoiFrames;
     RpptRoiType roiType;
     vxTensorLayout inputLayout;
     vxTensorLayout outputLayout;
@@ -59,12 +60,14 @@ static vx_status VX_CALLBACK refreshMedianFilter(vx_node node, const vx_referenc
     // Replicate ROI for NF layouts to match expanded batch n*f
     if (data->inputLayout == vxTensorLayout::VX_NFHWC || data->inputLayout == vxTensorLayout::VX_NFCHW) {
         unsigned num_of_frames = data->inputTensorDims[1]; // Num of frames 'F'
+        STATUS_ERROR_CHECK(allocRoiFrames(data->deviceType, &data->pSrcRoiFrames, data->inputTensorDims[0] * num_of_frames));
         for (int n = static_cast<int>(data->inputTensorDims[0]) - 1; n >= 0; --n) {
             unsigned index = static_cast<unsigned>(n) * num_of_frames;
             for (unsigned f = 0; f < num_of_frames; ++f) {
-                data->pSrcRoi[index + f].xywhROI = data->pSrcRoi[n].xywhROI;
+                data->pSrcRoiFrames[index + f].xywhROI = data->pSrcRoi[n].xywhROI;
             }
         }
+        data->pSrcRoi = data->pSrcRoiFrames;
     }
 
     return status;
@@ -171,8 +174,7 @@ static vx_status VX_CALLBACK initializeMedianFilter(vx_node node, const vx_refer
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, &data->inputTensorDims, sizeof(vx_size) * data->pSrcDesc->numDims));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_tensor_dtype, sizeof(input_tensor_dtype)));
     data->pSrcDesc->dataType = getRpptDataType(input_tensor_dtype);
-    // For filter ops, use offset to handle border reads
-    data->pSrcDesc->offsetInBytes = (12 * (data->kernelSize / 2));
+    data->pSrcDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pSrcDesc, data->inputLayout, data->inputTensorDims);
 
     // Querying for output tensor
@@ -196,6 +198,7 @@ static vx_status VX_CALLBACK uninitializeMedianFilter(vx_node node, const vx_ref
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
+    freeRoiFrames(data->deviceType, data->pSrcRoiFrames);
     delete data;
     return VX_SUCCESS;
 }

@@ -256,7 +256,7 @@ static int test_vxSetThresholdAttribute(vx_context context) {
         vx_df_image cur_in = 0, cur_out = 0;
         vxQueryThreshold(thr_binary, VX_THRESHOLD_INPUT_FORMAT, &cur_in, sizeof(cur_in));
         vxQueryThreshold(thr_binary, VX_THRESHOLD_OUTPUT_FORMAT, &cur_out, sizeof(cur_out));
-        if (si == VX_SUCCESS || so == VX_SUCCESS || cur_in != VX_DF_IMAGE_U8 || cur_out != VX_DF_IMAGE_U8) {
+        if (si != VX_ERROR_NOT_SUPPORTED || so != VX_ERROR_NOT_SUPPORTED || cur_in != VX_DF_IMAGE_U8 || cur_out != VX_DF_IMAGE_U8) {
             printf("  FAIL: threshold formats must be read-only (status %d/%d, formats 0x%x/0x%x)\n", si, so, cur_in, cur_out);
             errors++;
         } else {

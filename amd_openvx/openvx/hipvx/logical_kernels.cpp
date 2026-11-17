@@ -47,7 +47,7 @@ Hip_And_U8_U8U8(uint dstWidth, uint dstHeight,
     uint2 src1 = *((uint2 *)(&pSrcImage1[src1Idx]));
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = src1 & src2;
+    hip_store_U8x8(pDstImage, dstIdx, src1 & src2, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_And_U8_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -90,7 +90,7 @@ Hip_And_U8_U8U1(uint dstWidth, uint dstHeight,
     hip_convert_U8_U1(&dst, src2);
     dst = src1 & dst;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_And_U8_U8U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -133,7 +133,7 @@ Hip_And_U8_U1U8(uint dstWidth, uint dstHeight,
     hip_convert_U8_U1(&dst, src1);
     dst = src2 & dst;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_And_U8_U1U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -177,7 +177,7 @@ Hip_And_U8_U1U1(uint dstWidth, uint dstHeight,
     hip_convert_U8_U1(&dst2, src2);
     dst1 = dst1 & dst2;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst1;
+    hip_store_U8x8(pDstImage, dstIdx, dst1, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_And_U8_U1U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -388,7 +388,7 @@ Hip_Or_U8_U8U8(uint dstWidth, uint dstHeight,
     uint2 src1 = *((uint2 *)(&pSrcImage1[src1Idx]));
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = src1 | src2;
+    hip_store_U8x8(pDstImage, dstIdx, src1 | src2, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_Or_U8_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -431,7 +431,7 @@ Hip_Or_U8_U8U1(uint dstWidth, uint dstHeight,
     hip_convert_U8_U1(&dst, src2);
     dst = src1 | dst;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_Or_U8_U8U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -474,7 +474,7 @@ Hip_Or_U8_U1U8(uint dstWidth, uint dstHeight,
     hip_convert_U8_U1(&dst, src1);
     dst = src2 | dst;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_Or_U8_U1U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -518,7 +518,7 @@ Hip_Or_U8_U1U1(uint dstWidth, uint dstHeight,
     hip_convert_U8_U1(&dst2, src2);
     dst1 = dst1 | dst2;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst1;
+    hip_store_U8x8(pDstImage, dstIdx, dst1, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_Or_U8_U1U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -729,7 +729,7 @@ Hip_Xor_U8_U8U8(uint dstWidth, uint dstHeight,
     uint2 src1 = *((uint2 *)(&pSrcImage1[src1Idx]));
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = src1 ^ src2;
+    hip_store_U8x8(pDstImage, dstIdx, src1 ^ src2, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_Xor_U8_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -772,7 +772,7 @@ Hip_Xor_U8_U8U1(uint dstWidth, uint dstHeight,
     hip_convert_U8_U1(&dst, src2);
     dst = src1 ^ dst;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_Xor_U8_U8U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -815,7 +815,7 @@ Hip_Xor_U8_U1U8(uint dstWidth, uint dstHeight,
     hip_convert_U8_U1(&dst, src1);
     dst = src2 ^ dst;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_Xor_U8_U1U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -859,7 +859,7 @@ Hip_Xor_U8_U1U1(uint dstWidth, uint dstHeight,
     hip_convert_U8_U1(&dst2, src2);
     dst1 = dst1 ^ dst2;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst1;
+    hip_store_U8x8(pDstImage, dstIdx, dst1, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_Xor_U8_U1U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -1065,7 +1065,7 @@ Hip_Not_U8_U8(uint dstWidth, uint dstHeight,
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
     uint2 src1 = *((uint2 *)(&pSrcImage1[src1Idx]));
-    *((uint2 *)(&pDstImage[dstIdx])) = ~src1;
+    hip_store_U8x8(pDstImage, dstIdx, ~src1, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_Not_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -1104,7 +1104,7 @@ Hip_Not_U8_U1(uint dstWidth, uint dstHeight,
     hip_convert_U8_U1(&dst, src1);
     dst = ~dst;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_Not_U8_U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,

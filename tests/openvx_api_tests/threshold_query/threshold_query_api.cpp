@@ -248,18 +248,20 @@ static int test_vxSetThresholdAttribute(vx_context context) {
         }
     }
 
-    // Set VX_THRESHOLD_INPUT_FORMAT attribute
+    // VX_THRESHOLD_INPUT_FORMAT and VX_THRESHOLD_OUTPUT_FORMAT are read-only (REQ-1378)
     {
-        vx_df_image input_fmt = VX_DF_IMAGE_U8;
-        CHECK_STATUS(vxSetThresholdAttribute(thr_binary, VX_THRESHOLD_INPUT_FORMAT, &input_fmt, sizeof(vx_df_image)));
-        printf("  PASS: Set VX_THRESHOLD_INPUT_FORMAT\n");
-    }
-
-    // Set VX_THRESHOLD_OUTPUT_FORMAT attribute
-    {
-        vx_df_image output_fmt = VX_DF_IMAGE_U8;
-        CHECK_STATUS(vxSetThresholdAttribute(thr_binary, VX_THRESHOLD_OUTPUT_FORMAT, &output_fmt, sizeof(vx_df_image)));
-        printf("  PASS: Set VX_THRESHOLD_OUTPUT_FORMAT\n");
+        vx_df_image new_in = VX_DF_IMAGE_S16, new_out = VX_DF_IMAGE_U16;
+        vx_status si = vxSetThresholdAttribute(thr_binary, VX_THRESHOLD_INPUT_FORMAT, &new_in, sizeof(vx_df_image));
+        vx_status so = vxSetThresholdAttribute(thr_binary, VX_THRESHOLD_OUTPUT_FORMAT, &new_out, sizeof(vx_df_image));
+        vx_df_image cur_in = 0, cur_out = 0;
+        vxQueryThreshold(thr_binary, VX_THRESHOLD_INPUT_FORMAT, &cur_in, sizeof(cur_in));
+        vxQueryThreshold(thr_binary, VX_THRESHOLD_OUTPUT_FORMAT, &cur_out, sizeof(cur_out));
+        if (si == VX_SUCCESS || so == VX_SUCCESS || cur_in != VX_DF_IMAGE_U8 || cur_out != VX_DF_IMAGE_U8) {
+            printf("  FAIL: threshold formats must be read-only (status %d/%d, formats 0x%x/0x%x)\n", si, so, cur_in, cur_out);
+            errors++;
+        } else {
+            printf("  PASS: VX_THRESHOLD_INPUT_FORMAT and VX_THRESHOLD_OUTPUT_FORMAT are read-only\n");
+        }
     }
 
     CHECK_STATUS(vxReleaseThreshold(&thr_binary));

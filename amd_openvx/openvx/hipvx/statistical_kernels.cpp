@@ -53,7 +53,7 @@ Hip_Threshold_U8_U8_Binary(uint dstWidth, uint dstHeight,
     dst.x = hip_pack((hip_unpack(src.x) - thr) * make_float4(256.0f, 256.0f, 256.0f, 256.0f));
     dst.y = hip_pack((hip_unpack(src.y) - thr) * make_float4(256.0f, 256.0f, 256.0f, 256.0f));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_Threshold_U8_U8_Binary(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -102,7 +102,7 @@ Hip_Threshold_U8_U8_Range(uint dstWidth, uint dstHeight,
     dst.y  = hip_pack((pix1 - thr0) * make_float4(256.0f, 256.0f, 256.0f, 256.0f));
     dst.y &= hip_pack((thr1 - pix1) * make_float4(256.0f, 256.0f, 256.0f, 256.0f));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_Threshold_U8_U8_Range(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,

@@ -87,7 +87,7 @@ Hip_Box_U8_U8_3x3(uint dstWidth, uint dstHeight,
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 int HipExec_Box_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -233,7 +233,7 @@ Hip_Dilate_U8_U8_3x3(uint dstWidth, uint dstHeight,
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 int HipExec_Dilate_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -379,7 +379,7 @@ Hip_Erode_U8_U8_3x3(uint dstWidth, uint dstHeight,
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 int HipExec_Erode_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -643,7 +643,7 @@ Hip_Median_U8_U8_3x3(uint dstWidth, uint dstHeight,
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 int HipExec_Median_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -831,7 +831,7 @@ Hip_Gaussian_U8_U8_3x3(uint dstWidth, uint dstHeight,
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 int HipExec_Gaussian_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -1022,7 +1022,7 @@ Hip_Convolve_U8_U8_3x3(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -1358,7 +1358,7 @@ Hip_Convolve_U8_U8_5x5(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -1930,7 +1930,7 @@ Hip_Convolve_U8_U8_7x7(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -2324,7 +2324,7 @@ Hip_Convolve_U8_U8_3x9(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -2658,7 +2658,7 @@ Hip_Convolve_U8_U8_9x3(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -3537,7 +3537,7 @@ Hip_Convolve_U8_U8_9x9(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -3753,7 +3753,7 @@ Hip_Convolve_S16_U8_3x3(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -4095,7 +4095,7 @@ Hip_Convolve_S16_U8_5x5(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -4672,7 +4672,7 @@ Hip_Convolve_S16_U8_7x7(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -5071,7 +5071,7 @@ Hip_Convolve_S16_U8_3x9(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -5411,7 +5411,7 @@ Hip_Convolve_S16_U8_9x3(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -6287,7 +6287,7 @@ Hip_Convolve_S16_U8_9x9(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -6480,7 +6480,7 @@ Hip_Sobel_S16_U8_3x3_GX(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 int HipExec_Sobel_S16_U8_3x3_GX(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -6625,7 +6625,7 @@ Hip_Sobel_S16_U8_3x3_GY(uint dstWidth, uint dstHeight,
     uint dstIdx =  y * dstImageStrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 int HipExec_Sobel_S16_U8_3x3_GY(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -6843,8 +6843,9 @@ Hip_Sobel_S16S16_U8_3x3_GXY(uint dstWidth, uint dstHeight,
     uint dst2Idx =  y * dstImage2StrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage1[dst1Idx])) = dst1;
-        *((int4 *)(&pDstImage2[dst2Idx])) = dst2;
+        int n = (int)min(dstWidth - (uint)x, 8u);
+        hip_store_S16x8(pDstImage1, dst1Idx, dst1, n);
+        hip_store_S16x8(pDstImage2, dst2Idx, dst2, n);
     }
 }
 int HipExec_Sobel_S16S16_U8_3x3_GXY(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -6956,7 +6957,7 @@ Hip_ScaleGaussianHalf_U8_U8_3x3(uint dstWidth, uint dstHeight,
     sum = sum * make_float4(0.0625f, 0.0625f, 0.0625f, 0.0625f);
 
     if (valid) {
-        *((uint *)(&pDstImage[dstIdx])) = hip_pack(sum);
+        hip_store_U8x4(pDstImage, dstIdx, hip_pack(sum), (int)min(dstWidth - ((uint)x << 2), 4u));
     }
 }
 int HipExec_ScaleGaussianHalf_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -7211,7 +7212,7 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
 
     sum = sum * make_float4(0.00390625f, 0.00390625f, 0.00390625f, 0.00390625f);
     if (valid) {
-        *((uint *)(&pDstImage[dstIdx])) = hip_pack(sum);
+        hip_store_U8x4(pDstImage, dstIdx, hip_pack(sum), (int)min(dstWidth - ((uint)x << 2), 4u));
     }
 }
 int HipExec_ScaleGaussianHalf_U8_U8_5x5(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,

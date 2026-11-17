@@ -169,10 +169,13 @@ static vx_status VX_CALLBACK initializeResize(vx_node node, const vx_reference *
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
 
 #if ENABLE_HIP
-    CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pDstImgSize, data->pSrcDesc->n * sizeof(RpptImagePatch)));
-#else
-    data->pDstImgSize = new RpptImagePatch[data->pSrcDesc->n];
-#endif    
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pDstImgSize, data->pSrcDesc->n * sizeof(RpptImagePatch)));
+    } else
+#endif
+    {
+        data->pDstImgSize = new RpptImagePatch[data->pSrcDesc->n];
+    }
     data->pResizeWidth = new vx_uint32[data->pSrcDesc->n];
     data->pResizeHeight = new vx_uint32[data->pSrcDesc->n];
     refreshResize(node, parameters, num, data);
@@ -187,10 +190,13 @@ static vx_status VX_CALLBACK uninitializeResize(vx_node node, const vx_reference
     delete[] data->pResizeWidth;
     delete[] data->pResizeHeight;
 #if ENABLE_HIP
-    if (data->pDstImgSize != nullptr)  CHECK_HIP_RETURN_STATUS(hipHostFree(data->pDstImgSize));
-#else
-    delete[] data->pDstImgSize;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+        if (data->pDstImgSize != nullptr) CHECK_HIP_RETURN_STATUS(hipHostFree(data->pDstImgSize));
+    } else
 #endif
+    {
+        delete[] data->pDstImgSize;
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

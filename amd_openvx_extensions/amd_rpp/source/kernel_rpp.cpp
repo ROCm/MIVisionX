@@ -1942,18 +1942,23 @@ vx_status createRPPHandle(vx_node node, vxRppHandle **pHandle, Rpp32u batchSize,
         handle = new vxRppHandle;
         memset(handle, 0, sizeof(*handle));
         handle->count = 1;
-        
+        rppStatus_t rppStatus = rppStatusSuccess;
+
         if (deviceType == AGO_TARGET_AFFINITY_GPU) {
             // RPP supports the HIP and CPU backends only (OpenCL backend support has been dropped in RPP).
             // Under an OpenCL core build ENABLE_HIP is 0, so RPP nodes run on the CPU host backend instead.
 #if ENABLE_HIP
             STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &handle->hipstream, sizeof(handle->hipstream)));
-            rppCreate(&handle->rppHandle, batchSize, 0, handle->hipstream, RppBackend::RPP_HIP_BACKEND);
+            rppStatus = rppCreate(&handle->rppHandle, batchSize, 0, handle->hipstream, RppBackend::RPP_HIP_BACKEND);
 #endif
         } else if (deviceType == AGO_TARGET_AFFINITY_CPU) {
-            rppCreate(&handle->rppHandle, batchSize, cpu_num_threads, NULL, RppBackend::RPP_HOST_BACKEND);
+            rppStatus = rppCreate(&handle->rppHandle, batchSize, cpu_num_threads, NULL, RppBackend::RPP_HOST_BACKEND);
         }
-        
+        if (rppStatus != rppStatusSuccess) {
+            delete handle;
+            return ERRMSG(VX_FAILURE, "createRPPHandle: rppCreate failed with status %d\n", (int)rppStatus);
+        }
+
         STATUS_ERROR_CHECK(vxSetModuleHandle(node, OPENVX_KHR_RPP, handle));
     }
     *pHandle = handle;

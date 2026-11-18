@@ -39,6 +39,14 @@ OpenCL backend
 
     If both the HIP and OpenCL backends will be installed on the same system, use ``-DCMAKE_INSTALL_PREFIX`` to install each into a separate directory so they do not overwrite each other. For example: ``cmake -DCMAKE_INSTALL_PREFIX=/opt/mivisionx-ocl/ -DBACKEND=OCL ../``
 
+After installation, MIVisionX files are found under ``/opt/rocm/`` unless ``-DCMAKE_INSTALL_PREFIX`` was specified.
+
+To run tests after building:
+
+.. code:: shell
+
+    make test
+
 OpenCL ICD loader setup
 -----------------------
 
@@ -64,14 +72,6 @@ Until the ROCm packaging registers the vendor ICD by default, point the loader a
     Use the absolute path to ``libamdocl64.so``; a relative path is not resolved by the ICD loader. If ROCm is installed under a versioned prefix (for example ``/opt/rocm/core-7.13``), adjust the path to match (``/opt/rocm/core-7.13/lib/opencl/libamdocl64.so``).
 
 Confirm the platform is now visible with ``clinfo`` (``Number of platforms  1``, ``AMD Accelerated Parallel Processing``) before running the OpenCL tests.
-
-After installation, MIVisionX files are found under ``/opt/rocm/`` unless ``-DCMAKE_INSTALL_PREFIX`` was specified.
-
-To run tests after building:
-
-.. code:: shell
-
-    make test
 
 CPU-only build
 ==============

@@ -182,6 +182,15 @@ int main() {
         vxAddArrayItems(cond, N, e, sizeof(vx_int32));
         return vxExtRppBrightness(g, src, rois[0].tensor, dst, alpha, beta, cond, i32(ctx, NFHWC), i32(ctx, NFHWC), i32(ctx, XYWH));
     }});
+    cases.push_back({"LensCorrection", [&](vx_context ctx, vx_graph g, vx_tensor src, vx_tensor dst, std::vector<RoiTensor> &rois) {
+        rois.push_back(makeRoiTensor(ctx, A, B));
+        vx_array camera = vxCreateArray(ctx, VX_TYPE_FLOAT32, N * 9), coeffs = vxCreateArray(ctx, VX_TYPE_FLOAT32, N * 8);
+        vx_float32 m[N * 9] = {16.f, 0.f, 8.f, 0.f, 16.f, 4.f, 0.f, 0.f, 1.f, 16.f, 0.f, 8.f, 0.f, 16.f, 4.f, 0.f, 0.f, 1.f};
+        vx_float32 d[N * 8] = {0.1f, 0.01f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.1f, 0.01f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f};
+        vxAddArrayItems(camera, N * 9, m, sizeof(vx_float32));
+        vxAddArrayItems(coeffs, N * 8, d, sizeof(vx_float32));
+        return vxExtRppLensCorrection(g, src, rois[0].tensor, dst, camera, coeffs, i32(ctx, NFHWC), i32(ctx, NFHWC), i32(ctx, XYWH));
+    }});
 
     int failed = 0, ran = 0;
     for (int gpu = 1; gpu >= 0; gpu--) {

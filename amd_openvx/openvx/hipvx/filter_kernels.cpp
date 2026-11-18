@@ -4105,15 +4105,6 @@ Hip_Convolve_S16_U8_5x5(uint dstWidth, uint dstHeight,
     fval = hip_unpack1(pix.y);
     sum.data[7] = fmaf(fval, conv[24], sum.data[7]);
 
-    sum.data[0] = sum.data[0] + -4.999899864197e-01f;
-    sum.data[1] = sum.data[1] + -4.999899864197e-01f;
-    sum.data[2] = sum.data[2] + -4.999899864197e-01f;
-    sum.data[3] = sum.data[3] + -4.999899864197e-01f;
-    sum.data[4] = sum.data[4] + -4.999899864197e-01f;
-    sum.data[5] = sum.data[5] + -4.999899864197e-01f;
-    sum.data[6] = sum.data[6] + -4.999899864197e-01f;
-    sum.data[7] = sum.data[7] + -4.999899864197e-01f;
-
     int4 dst;
     dst.x = ((int)hip_clamp(sum.data[0], -32768.0f, 32767.0f)) & 0xffff;
     dst.x |= ((int)hip_clamp(sum.data[1], -32768.0f, 32767.0f)) << 16;
@@ -4682,14 +4673,6 @@ Hip_Convolve_S16_U8_7x7(uint dstWidth, uint dstHeight,
     sum.data[7] = fmaf(fval, conv[47], sum.data[7]);
     fval = hip_unpack2(pix.y);
     sum.data[7] = fmaf(fval, conv[48], sum.data[7]);
-    sum.data[0] += -4.999899864197e-01f;
-    sum.data[1] += -4.999899864197e-01f;
-    sum.data[2] += -4.999899864197e-01f;
-    sum.data[3] += -4.999899864197e-01f;
-    sum.data[4] += -4.999899864197e-01f;
-    sum.data[5] += -4.999899864197e-01f;
-    sum.data[6] += -4.999899864197e-01f;
-    sum.data[7] += -4.999899864197e-01f;
 
     int4 dst;
     dst.x = ((int)hip_clamp(sum.data[0], -32768.0f, 32767.0f)) & 0xffff;
@@ -5081,14 +5064,6 @@ Hip_Convolve_S16_U8_3x9(uint dstWidth, uint dstHeight,
     sum.data[7] = fmaf(fval, conv[25], sum.data[7]);
     fval = hip_unpack0(pix.y);
     sum.data[7] = fmaf(fval, conv[26], sum.data[7]);
-    sum.data[0] += -4.999899864197e-01f;
-    sum.data[1] += -4.999899864197e-01f;
-    sum.data[2] += -4.999899864197e-01f;
-    sum.data[3] += -4.999899864197e-01f;
-    sum.data[4] += -4.999899864197e-01f;
-    sum.data[5] += -4.999899864197e-01f;
-    sum.data[6] += -4.999899864197e-01f;
-    sum.data[7] += -4.999899864197e-01f;
 
     int4 dst;
     dst.x = ((int)hip_clamp(sum.data[0], -32768.0f, 32767.0f)) & 0xffff;
@@ -5421,14 +5396,6 @@ Hip_Convolve_S16_U8_9x3(uint dstWidth, uint dstHeight,
     fval = hip_unpack3(pix.y);
     sum.data[7] = fmaf(fval, conv[26], sum.data[7]);
 
-    sum.data[0] += -4.999899864197e-01f;
-    sum.data[1] += -4.999899864197e-01f;
-    sum.data[2] += -4.999899864197e-01f;
-    sum.data[3] += -4.999899864197e-01f;
-    sum.data[4] += -4.999899864197e-01f;
-    sum.data[5] += -4.999899864197e-01f;
-    sum.data[6] += -4.999899864197e-01f;
-    sum.data[7] += -4.999899864197e-01f;
 
     int4 dst;
     dst.x = ((int)hip_clamp(sum.data[0], -32768.0f, 32767.0f)) & 0xffff;

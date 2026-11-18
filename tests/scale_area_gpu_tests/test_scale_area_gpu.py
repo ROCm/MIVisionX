@@ -41,6 +41,11 @@ answer, independent of how the kernel rounds:
    4,297,011,375, which overflows a 32-bit accumulator and returns 0 instead of
    255. 4105 is the first square side that does so.
 
+5. "fractional": non-integer ratios, including ones above 2 that need more than
+   two rows or three columns per output pixel. The reference is the exact
+   overlap-weighted box average computed in the script from a textured source;
+   the kernel's float arithmetic and rounding may differ from it by 1.
+
 GPU only. The CPU AREA paths have separate defects, covered by
 tests/scale_area_tests.
 """
@@ -202,6 +207,76 @@ def check_accumulate(work_dir, runvx_exe):
     return []
 
 
+def texture(x, y):
+    return (x * 37 + y * 91 + (x * y) % 17) % 256
+
+
+def overlap(lo, hi, i):
+    return max(0.0, min(hi, i + 1) - max(lo, i))
+
+
+def check_fractional(work_dir, runvx_exe, src_w, src_h, dst_w, dst_h, tight=False):
+    """Non-integer ratio: every output within 1 of the exact box average.
+
+    With tight set the destination is an imported handle whose stride is dst_w.
+    """
+    tag = f"fractional {src_w}x{src_h}->{dst_w}x{dst_h}" + (" tight stride" if tight else "")
+    src = work_dir / f"frac_src_{src_w}x{src_h}.u8"
+    dst = work_dir / f"frac_out_{src_w}x{src_h}.u8"
+    gdf = work_dir / f"frac_{src_w}x{src_h}.gdf"
+    with open(src, "wb") as f:
+        for y in range(src_h):
+            f.write(bytes(texture(x, y) for x in range(src_w)))
+    if tight:
+        gdf.write_text(
+            f"data in  = image:{src_w},{src_h},U008:read,{src}\n"
+            f"data out = image-from-handle:U008,{{{dst_w};{dst_h};1;{dst_w}}},"
+            f"VX_MEMORY_TYPE_HOST:write,{dst}\n"
+            "node org.khronos.openvx.scale_image in out !AREA\n")
+    else:
+        build_gdf(gdf, src, src_w, src_h, dst, dst_w, dst_h)
+
+    result = run_runvx(runvx_exe, gdf)
+    if result.returncode != 0:
+        return [(tag, f"runvx exited {result.returncode}:\n{result.stdout[-1000:]}")]
+    data = dst.read_bytes()
+    if len(data) != dst_w * dst_h:
+        return [(tag, f"size mismatch: expected {dst_w * dst_h}, got {len(data)}")]
+
+    sx = src_w / dst_w
+    sy = src_h / dst_h
+    wrong = 0
+    worst = 0
+    first = None
+    for by in range(dst_h):
+        y0, y1 = by * sy, min((by + 1) * sy, src_h)
+        for bx in range(dst_w):
+            x0, x1 = bx * sx, min((bx + 1) * sx, src_w)
+            total = 0.0
+            for y in range(int(y0), min(int(y1) + 1, src_h)):
+                wy = overlap(y0, y1, y)
+                if wy == 0.0:
+                    continue
+                for x in range(int(x0), min(int(x1) + 1, src_w)):
+                    total += texture(x, y) * wy * overlap(x0, x1, x)
+            want = total / (sx * sy)
+            got = data[by * dst_w + bx]
+            err = abs(got - want)
+            worst = max(worst, err)
+            if err > 1.0:
+                wrong += 1
+                if first is None:
+                    first = (bx, by, got, want)
+    if wrong:
+        bx, by, got, want = first
+        return [(tag, f"{wrong} of {dst_w * dst_h} outputs more than 1 from the exact "
+                      f"box average; first at (x={bx}, y={by}) got {got}, "
+                      f"expected {want:.2f}")]
+    print(f"PASS [{tag}]: {dst_w * dst_h} outputs within 1 of the exact box average "
+          f"(worst {worst:.2f}, ratio {sx:.3f}x{sy:.3f})")
+    return []
+
+
 def main():
     parser = argparse.ArgumentParser(description="HIP AREA scale correctness test")
     parser.add_argument("--runvx", required=True, help="path to runvx executable")
@@ -240,6 +315,18 @@ def main():
             failures += check_tight_stride(work_dir, runvx_exe, 101, 40, nx, nx)
 
         failures += check_accumulate(work_dir, runvx_exe)
+
+        # Non-integer ratios below and above 2, one axis or both, a ratio just
+        # above 1 and a very large ratio on one axis.
+        for src_w, src_h, dst_w, dst_h in ((150, 90, 100, 60), (250, 60, 100, 30),
+                                           (260, 60, 100, 30), (200, 100, 60, 30),
+                                           (100, 100, 30, 29), (101, 50, 40, 25),
+                                           (33, 17, 32, 16), (1000, 9, 7, 4)):
+            failures += check_fractional(work_dir, runvx_exe, src_w, src_h, dst_w, dst_h)
+
+        # Non-integer ratio into a tight imported stride, 101 wide so the last
+        # group of every row is partial.
+        failures += check_fractional(work_dir, runvx_exe, 253, 121, 101, 40, tight=True)
 
     if failures:
         print(f"\n{len(failures)} test(s) failed:", file=sys.stderr)

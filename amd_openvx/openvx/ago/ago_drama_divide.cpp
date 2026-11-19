@@ -595,7 +595,10 @@ int agoDramaDivideScaleImageNode(AgoNodeList * nodeList, AgoNode * anode)
 		else if (anode->attr_border_mode.mode == VX_BORDER_MODE_REPLICATE) {
 			if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_NEAREST; // TBD remove -- this should be an error
 			else if (interpolation == VX_INTERPOLATION_TYPE_BILINEAR) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_BILINEAR_REPLICATE;
-			else if (interpolation == VX_INTERPOLATION_TYPE_AREA) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA; // TBD remove -- this should be an error
+			// #1827: previously routed to the plain VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA,
+			// silently ignoring the requested border mode. Route to the dedicated
+			// (CPU-only) replicate-border AREA kernel instead.
+			else if (interpolation == VX_INTERPOLATION_TYPE_AREA) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA_REPLICATE;
 		}
 		else if (anode->attr_border_mode.mode == VX_BORDER_MODE_CONSTANT) {
 			if (interpolation == VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_NEAREST; // TBD remove -- this should be an error
@@ -611,7 +614,19 @@ int agoDramaDivideScaleImageNode(AgoNodeList * nodeList, AgoNode * anode)
 				// make it 3rd argument
 				anode->paramList[anode->paramCount++] = dataBorder;
 			}
-			else if (interpolation == VX_INTERPOLATION_TYPE_AREA) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA; // TBD remove -- this should be an error
+			else if (interpolation == VX_INTERPOLATION_TYPE_AREA) {
+				// #1827: previously routed to the plain VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA,
+				// silently ignoring the requested border mode. Route to the dedicated
+				// (CPU-only) constant-border AREA kernel instead.
+				new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA_CONSTANT;
+				AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
+				char desc[64]; snprintf(desc, sizeof(desc), "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
+				AgoData * dataBorder = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
+				if (!dataBorder) return -1;
+				agoGenerateVirtualDataName(agraph, "scalar", dataBorder->name);
+				agoAddData(&agraph->dataList, dataBorder);
+				anode->paramList[anode->paramCount++] = dataBorder;
+			}
 		}
 	}
 	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);

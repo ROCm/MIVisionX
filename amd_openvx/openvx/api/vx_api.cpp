@@ -6693,20 +6693,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetThresholdAttribute(vx_threshold thresh, 
                     status = VX_SUCCESS;
                 }
                 break;
-            // VX_THRESHOLD_TYPE is read-only [REQ-1378]: it falls through to the default
-            // case and reports VX_ERROR_NOT_SUPPORTED
-            case VX_THRESHOLD_INPUT_FORMAT:
-                if (size == sizeof(vx_df_image)) {
-                    data->u.thr.input_format = *(vx_df_image *)ptr;
-                    status = VX_SUCCESS;
-                }
-                break;
-            case VX_THRESHOLD_OUTPUT_FORMAT:
-                if (size == sizeof(vx_df_image)) {
-                    data->u.thr.output_format = *(vx_df_image *)ptr;
-                    status = VX_SUCCESS;
-                }
-                break;
+            // VX_THRESHOLD_TYPE, VX_THRESHOLD_INPUT_FORMAT and VX_THRESHOLD_OUTPUT_FORMAT are
+            // read-only [REQ-1378]: they fall through to the default case and report VX_ERROR_NOT_SUPPORTED
             case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER:
                 if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
                     data->u.thr.threshold_lower = *(vx_pixel_value_t *)ptr;

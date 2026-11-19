@@ -502,6 +502,10 @@ __device__ __forceinline__ void hip_store_S16x8(uchar *pDstImage, uint dstIdx, c
     }
 }
 
+__device__ __forceinline__ void hip_store_S16x8(uchar *pDstImage, uint dstIdx, const uint4 &pix, int valid) {
+    hip_store_S16x8(pDstImage, dstIdx, make_int4((int)pix.x, (int)pix.y, (int)pix.z, (int)pix.w), valid);
+}
+
 // Same idea for the remap kernels, whose 8 pixels are held in uint3[2] / two uint4.
 __device__ __forceinline__ void hip_remap_store_RGB(uchar *pDstImage, uint dstIdx, const uint3 *out, int valid)
 {

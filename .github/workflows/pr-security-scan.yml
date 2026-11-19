@@ -2,9 +2,8 @@
 # SPDX-License-Identifier: MIT
 #
 # Pre-commit security gate: fast, PR-side security scanners that run on
-# every pull request. The security counterpart to `pre-commit.yml`. The
-# set of scanners lives in `security-baseline.yml`, so scanners coming
-# online are picked up here without touching this file.
+# every pull request. Scanner selection and policy are defined by the pinned
+# ROCm/rocm-security-gh `security-baseline.yml` reusable workflow.
 #
 # Requests human-readable reports only: findings are uploaded as a build
 # artifact and printed to the job summary, never to the Security tab, so
@@ -29,6 +28,10 @@ concurrency:
 jobs:
   security:
     name: Security scan
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
     uses: ROCm/rocm-security-gh/.github/workflows/security-baseline.yml@35d3060c4b2ed48f950f85bd414a1302a431fc0b # v1.0.8
     with:
       report_formats: human

@@ -58,7 +58,7 @@ Hip_Lut_U8_U8(uint dstWidth, uint dstHeight,
     f.w = (float) lut[(int)( src.y >> 24       )];
     dst.y = hip_pack(f);
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_Lut_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -96,7 +96,7 @@ Hip_ChannelCopy_U8_U8(uint dstWidth, uint dstHeight,
     uint srcIdx = y * srcImageStrideInBytes + x;
     uint dstIdx = y * dstImageStrideInBytes + x;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = *((uint2 *)(&pSrcImage[srcIdx]));
+    hip_store_U8x8(pDstImage, dstIdx, *((uint2 *)(&pSrcImage[srcIdx])), (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_ChannelCopy_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -134,7 +134,7 @@ Hip_ChannelCopy_U8_U1(uint dstWidth, uint dstHeight,
 
     hip_convert_U8_U1(&dst, src);
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_ChannelCopy_U8_U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -257,7 +257,7 @@ Hip_ColorDepth_U8_S16_Wrap(uint dstWidth, uint dstHeight,
     dst.y |= (((src.w  << 16) >> sr) & 0xff) << 16;
     dst.y |= ((src.w          >> sr) & 0xff) << 24;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_ColorDepth_U8_S16_Wrap(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -309,7 +309,7 @@ Hip_ColorDepth_U8_S16_Sat(uint dstWidth, uint dstHeight,
     f.w = (float)( src.w        >> sr);
     dst.y = hip_pack(f);
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_ColorDepth_U8_S16_Sat(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -356,7 +356,7 @@ Hip_ColorDepth_S16_U8(uint dstWidth, uint dstHeight,
     dst.w  =  (src.y & 0x00ff0000) >> (16 - shift);
     dst.w |=  (src.y & 0xff000000) >> ( 8 - shift);
 
-    *((int4 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_ColorDepth_S16_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -400,7 +400,7 @@ Hip_ChannelExtract_U8_U16_Pos0(uint dstWidth, uint dstHeight,
     dst.x = hip_pack(make_float4(hip_unpack0(src.x), hip_unpack2(src.x), hip_unpack0(src.y), hip_unpack2(src.y)));
     dst.y = hip_pack(make_float4(hip_unpack0(src.z), hip_unpack2(src.z), hip_unpack0(src.w), hip_unpack2(src.w)));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_ChannelExtract_U8_U16_Pos0(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -438,7 +438,7 @@ Hip_ChannelExtract_U8_U16_Pos1(uint dstWidth, uint dstHeight,
     dst.x = hip_pack(make_float4(hip_unpack1(src.x), hip_unpack3(src.x), hip_unpack1(src.y), hip_unpack3(src.y)));
     dst.y = hip_pack(make_float4(hip_unpack1(src.z), hip_unpack3(src.z), hip_unpack1(src.w), hip_unpack3(src.w)));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_ChannelExtract_U8_U16_Pos1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -476,7 +476,7 @@ Hip_ChannelExtract_U8_U24_Pos0(uint dstWidth, uint dstHeight,
     dst.x = hip_pack(make_float4(hip_unpack0(src1.data[0]), hip_unpack3(src1.data[0]), hip_unpack2(src1.data[1]), hip_unpack1(src1.data[2])));
     dst.y = hip_pack(make_float4(hip_unpack0(src1.data[3]), hip_unpack3(src1.data[3]), hip_unpack2(src1.data[4]), hip_unpack1(src1.data[5])));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_ChannelExtract_U8_U24_Pos0(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -515,7 +515,7 @@ Hip_ChannelExtract_U8_U24_Pos1(uint dstWidth, uint dstHeight,
     dst.x = hip_pack(make_float4(hip_unpack1(src1.data[0]), hip_unpack0(src1.data[1]), hip_unpack3(src1.data[1]), hip_unpack2(src1.data[2])));
     dst.y = hip_pack(make_float4(hip_unpack1(src1.data[3]), hip_unpack0(src1.data[4]), hip_unpack3(src1.data[4]), hip_unpack2(src1.data[5])));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_ChannelExtract_U8_U24_Pos1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -554,7 +554,7 @@ Hip_ChannelExtract_U8_U24_Pos2(uint dstWidth, uint dstHeight,
     dst.x = hip_pack(make_float4(hip_unpack2(src1.data[0]), hip_unpack1(src1.data[1]), hip_unpack0(src1.data[2]), hip_unpack3(src1.data[2])));
     dst.y = hip_pack(make_float4(hip_unpack2(src1.data[3]), hip_unpack1(src1.data[4]), hip_unpack0(src1.data[5]), hip_unpack3(src1.data[5])));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_ChannelExtract_U8_U24_Pos2(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -593,7 +593,7 @@ Hip_ChannelExtract_U8_U32_Pos0_RGBX(uint dstWidth, uint dstHeight,
     dst.x = hip_pack(make_float4(hip_unpack0(src1.data[0]), hip_unpack0(src1.data[1]), hip_unpack0(src1.data[2]), hip_unpack0(src1.data[3])));
     dst.y = hip_pack(make_float4(hip_unpack0(src1.data[4]), hip_unpack0(src1.data[5]), hip_unpack0(src1.data[6]), hip_unpack0(src1.data[7])));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 __global__ void __attribute__((visibility("default")))
 Hip_ChannelExtract_U8_U32_Pos0_UYVY(uint dstWidth, uint dstHeight,
@@ -614,7 +614,7 @@ Hip_ChannelExtract_U8_U32_Pos0_UYVY(uint dstWidth, uint dstHeight,
         dst.x = hip_pack(make_float4(hip_unpack0(src.data[0]), hip_unpack0(src.data[1]), hip_unpack0(src.data[2]), hip_unpack0(src.data[3])));
         dst.y = hip_pack(make_float4(hip_unpack0(src.data[4]), hip_unpack0(src.data[5]), hip_unpack0(src.data[6]), hip_unpack0(src.data[7])));
 
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - ((uint)x << 2), 8u));
     }
 }
 int HipExec_ChannelExtract_U8_U32_Pos0(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -671,7 +671,7 @@ Hip_ChannelExtract_U8_U32_Pos1_RGBX(uint dstWidth, uint dstHeight,
     dst.x = hip_pack(make_float4(hip_unpack1(src1.data[0]), hip_unpack1(src1.data[1]), hip_unpack1(src1.data[2]), hip_unpack1(src1.data[3])));
     dst.y = hip_pack(make_float4(hip_unpack1(src1.data[4]), hip_unpack1(src1.data[5]), hip_unpack1(src1.data[6]), hip_unpack1(src1.data[7])));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 __global__ void __attribute__((visibility("default")))
 Hip_ChannelExtract_U8_U32_Pos1_YUYV(uint dstWidth, uint dstHeight,
@@ -692,7 +692,7 @@ Hip_ChannelExtract_U8_U32_Pos1_YUYV(uint dstWidth, uint dstHeight,
         dst.x = hip_pack(make_float4(hip_unpack1(src.data[0]), hip_unpack1(src.data[1]), hip_unpack1(src.data[2]), hip_unpack1(src.data[3])));
         dst.y = hip_pack(make_float4(hip_unpack1(src.data[4]), hip_unpack1(src.data[5]), hip_unpack1(src.data[6]), hip_unpack1(src.data[7])));
 
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - ((uint)x << 2), 8u));
     }
 }
 int HipExec_ChannelExtract_U8_U32_Pos1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -749,7 +749,7 @@ Hip_ChannelExtract_U8_U32_Pos2_RGBX(uint dstWidth, uint dstHeight,
     dst.x = hip_pack(make_float4(hip_unpack2(src1.data[0]), hip_unpack2(src1.data[1]), hip_unpack2(src1.data[2]), hip_unpack2(src1.data[3])));
     dst.y = hip_pack(make_float4(hip_unpack2(src1.data[4]), hip_unpack2(src1.data[5]), hip_unpack2(src1.data[6]), hip_unpack2(src1.data[7])));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 __global__ void __attribute__((visibility("default")))
 Hip_ChannelExtract_U8_U32_Pos2_UYVY(uint dstWidth, uint dstHeight,
@@ -770,7 +770,7 @@ Hip_ChannelExtract_U8_U32_Pos2_UYVY(uint dstWidth, uint dstHeight,
         dst.x = hip_pack(make_float4(hip_unpack2(src.data[0]), hip_unpack2(src.data[1]), hip_unpack2(src.data[2]), hip_unpack2(src.data[3])));
         dst.y = hip_pack(make_float4(hip_unpack2(src.data[4]), hip_unpack2(src.data[5]), hip_unpack2(src.data[6]), hip_unpack2(src.data[7])));
 
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - ((uint)x << 2), 8u));
     }
 }
 int HipExec_ChannelExtract_U8_U32_Pos2(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -827,7 +827,7 @@ Hip_ChannelExtract_U8_U32_Pos3_RGBX(uint dstWidth, uint dstHeight,
     dst.x = hip_pack(make_float4(hip_unpack3(src1.data[0]), hip_unpack3(src1.data[1]), hip_unpack3(src1.data[2]), hip_unpack3(src1.data[3])));
     dst.y = hip_pack(make_float4(hip_unpack3(src1.data[4]), hip_unpack3(src1.data[5]), hip_unpack3(src1.data[6]), hip_unpack3(src1.data[7])));
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 __global__ void __attribute__((visibility("default")))
 Hip_ChannelExtract_U8_U32_Pos3_YUYV(uint dstWidth, uint dstHeight,
@@ -848,7 +848,7 @@ Hip_ChannelExtract_U8_U32_Pos3_YUYV(uint dstWidth, uint dstHeight,
         dst.x = hip_pack(make_float4(hip_unpack3(src.data[0]), hip_unpack3(src.data[1]), hip_unpack3(src.data[2]), hip_unpack3(src.data[3])));
         dst.y = hip_pack(make_float4(hip_unpack3(src.data[4]), hip_unpack3(src.data[5]), hip_unpack3(src.data[6]), hip_unpack3(src.data[7])));
 
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - ((uint)x << 2), 8u));
     }
 }
 int HipExec_ChannelExtract_U8_U32_Pos3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -909,9 +909,10 @@ Hip_ChannelExtract_U8U8U8_U24(uint dstWidth, uint dstHeight,
     dst3.x = hip_pack(make_float4(hip_unpack2(src1.data[0]), hip_unpack1(src1.data[1]), hip_unpack0(src1.data[2]), hip_unpack3(src1.data[2])));
     dst3.y = hip_pack(make_float4(hip_unpack2(src1.data[3]), hip_unpack1(src1.data[4]), hip_unpack0(src1.data[5]), hip_unpack3(src1.data[5])));
 
-    *((uint2 *)(&pDstImage1[dstIdx])) = dst1;
-    *((uint2 *)(&pDstImage2[dstIdx])) = dst2;
-    *((uint2 *)(&pDstImage3[dstIdx])) = dst3;
+    int validPixels = (int)min(dstWidth - (uint)x, 8u);
+    hip_store_U8x8(pDstImage1, dstIdx, dst1, validPixels);
+    hip_store_U8x8(pDstImage2, dstIdx, dst2, validPixels);
+    hip_store_U8x8(pDstImage3, dstIdx, dst3, validPixels);
 }
 int HipExec_ChannelExtract_U8U8U8_U24(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage1, vx_uint8 *pHipDstImage2, vx_uint8 *pHipDstImage3, vx_uint32 dstImageStrideInBytes,
@@ -954,9 +955,10 @@ Hip_ChannelExtract_U8U8U8_U32(uint dstWidth, uint dstHeight,
     dst3.x = hip_pack(make_float4(hip_unpack2(src1.data[0]), hip_unpack2(src1.data[1]), hip_unpack2(src1.data[2]), hip_unpack2(src1.data[3])));
     dst3.y = hip_pack(make_float4(hip_unpack2(src1.data[4]), hip_unpack2(src1.data[5]), hip_unpack2(src1.data[6]), hip_unpack2(src1.data[7])));
 
-    *((uint2 *)(&pDstImage1[dstIdx])) = dst1;
-    *((uint2 *)(&pDstImage2[dstIdx])) = dst2;
-    *((uint2 *)(&pDstImage3[dstIdx])) = dst3;
+    int validPixels = (int)min(dstWidth - (uint)x, 8u);
+    hip_store_U8x8(pDstImage1, dstIdx, dst1, validPixels);
+    hip_store_U8x8(pDstImage2, dstIdx, dst2, validPixels);
+    hip_store_U8x8(pDstImage3, dstIdx, dst3, validPixels);
 }
 int HipExec_ChannelExtract_U8U8U8_U32(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage1, vx_uint8 *pHipDstImage2, vx_uint8 *pHipDstImage3, vx_uint32 dstImageStrideInBytes,
@@ -1001,10 +1003,11 @@ Hip_ChannelExtract_U8U8U8U8_U32(uint dstWidth, uint dstHeight,
     dst4.x = hip_pack(make_float4(hip_unpack3(src1.data[0]), hip_unpack3(src1.data[1]), hip_unpack3(src1.data[2]), hip_unpack3(src1.data[3])));
     dst4.y = hip_pack(make_float4(hip_unpack3(src1.data[4]), hip_unpack3(src1.data[5]), hip_unpack3(src1.data[6]), hip_unpack3(src1.data[7])));
 
-    *((uint2 *)(&pDstImage1[dstIdx])) = dst1;
-    *((uint2 *)(&pDstImage2[dstIdx])) = dst2;
-    *((uint2 *)(&pDstImage3[dstIdx])) = dst3;
-    *((uint2 *)(&pDstImage4[dstIdx])) = dst4;
+    int validPixels = (int)min(dstWidth - (uint)x, 8u);
+    hip_store_U8x8(pDstImage1, dstIdx, dst1, validPixels);
+    hip_store_U8x8(pDstImage2, dstIdx, dst2, validPixels);
+    hip_store_U8x8(pDstImage3, dstIdx, dst3, validPixels);
+    hip_store_U8x8(pDstImage4, dstIdx, dst4, validPixels);
 }
 int HipExec_ChannelExtract_U8U8U8U8_U32(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage1, vx_uint8 *pHipDstImage2, vx_uint8 *pHipDstImage3, vx_uint8 *pHipDstImage4, vx_uint32 dstImageStrideInBytes,
@@ -1052,7 +1055,7 @@ Hip_ChannelCombine_U16_U8U8(uint dstWidth, uint dstHeight,
     dst.z = hip_pack(make_float4(hip_unpack0(src1.y), hip_unpack0(src2.y), hip_unpack1(src1.y), hip_unpack1(src2.y)));
     dst.w = hip_pack(make_float4(hip_unpack2(src1.y), hip_unpack2(src2.y), hip_unpack3(src1.y), hip_unpack3(src2.y)));
 
-    *((uint4 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_ChannelCombine_U16_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -1150,7 +1153,7 @@ Hip_ChannelCombine_U32_U8U8U8_UYVY(uint dstWidth, uint dstHeight,
         dst.z = hip_pack(make_float4(hip_unpack2(src2), hip_unpack0(src1.y), hip_unpack2(src3), hip_unpack1(src1.y)));
         dst.w = hip_pack(make_float4(hip_unpack3(src2), hip_unpack2(src1.y), hip_unpack3(src3), hip_unpack3(src1.y)));
 
-        *((uint4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - ((uint)x << 3), 8u));
     }
 }
 int HipExec_ChannelCombine_U32_U8U8U8_UYVY(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -1201,7 +1204,7 @@ Hip_ChannelCombine_U32_U8U8U8_YUYV(uint dstWidth, uint dstHeight,
         dst.z = hip_pack(make_float4(hip_unpack0(src1.y), hip_unpack2(src2), hip_unpack1(src1.y), hip_unpack2(src3)));
         dst.w = hip_pack(make_float4(hip_unpack2(src1.y), hip_unpack3(src2), hip_unpack3(src1.y), hip_unpack3(src3)));
 
-        *((uint4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - ((uint)x << 3), 8u));
     }
 }
 int HipExec_ChannelCombine_U32_U8U8U8_YUYV(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -4112,10 +4115,14 @@ Hip_ColorConvert_IYUV_RGB(uint dstWidth, uint dstHeight,
         pV1.x = hip_lerp(pV1.x, pV1.y, 0);
         pV0.x = hip_lerp(pV0.x, pV1.x, 0);
 
-        *((uint2 *)(&pDstYImage[dstY0Idx])) = pY0;
-        *((uint2 *)(&pDstYImage[dstY1Idx])) = pY1;
-        *((uint *)(&pDstUImage[dstUIdx])) = pU0.x;
-        *((uint *)(&pDstVImage[dstVIdx])) = pV0.x;
+        int validPixels = (int)min(dstWidth - ((uint)x << 3), 8u);
+        hip_store_U8x8(pDstYImage, dstY0Idx, pY0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_U8x8(pDstYImage, dstY1Idx, pY1, validPixels);
+        }
+        int validChroma = (validPixels + 1) >> 1;
+        hip_store_U8x4(pDstUImage, dstUIdx, pU0.x, validChroma);
+        hip_store_U8x4(pDstVImage, dstVIdx, pV0.x, validChroma);
     }
 }
 int HipExec_ColorConvert_IYUV_RGB(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -4240,10 +4247,14 @@ Hip_ColorConvert_IYUV_RGBX(uint dstWidth, uint dstHeight,
         pV1.x = hip_lerp(pV1.x, pV1.y, 0);
         pV0.x = hip_lerp(pV0.x, pV1.x, 0);
 
-        *((uint2 *)(&pDstYImage[dstY0Idx])) = pY0;
-        *((uint2 *)(&pDstYImage[dstY1Idx])) = pY1;
-        *((uint *)(&pDstUImage[dstUIdx])) = pU0.x;
-        *((uint *)(&pDstVImage[dstVIdx])) = pV0.x;
+        int validPixels = (int)min(dstWidth - ((uint)x << 3), 8u);
+        hip_store_U8x8(pDstYImage, dstY0Idx, pY0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_U8x8(pDstYImage, dstY1Idx, pY1, validPixels);
+        }
+        int validChroma = (validPixels + 1) >> 1;
+        hip_store_U8x4(pDstUImage, dstUIdx, pU0.x, validChroma);
+        hip_store_U8x4(pDstVImage, dstVIdx, pV0.x, validChroma);
     }
 }
 int HipExec_ColorConvert_IYUV_RGBX(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -4303,10 +4314,14 @@ Hip_FormatConvert_IYUV_UYVY(uint dstWidth, uint dstHeight,
         pU = hip_pack(make_float4(hip_unpack0(L0.x), hip_unpack0(L0.y), hip_unpack0(L0.z), hip_unpack0(L0.w)));
         pV = hip_pack(make_float4(hip_unpack2(L0.x), hip_unpack2(L0.y), hip_unpack2(L0.z), hip_unpack2(L0.w)));
 
-        *((uint2 *)(&pDstYImage[dstY0Idx])) = pY0;
-        *((uint2 *)(&pDstYImage[dstY1Idx])) = pY1;
-        *((uint *)(&pDstUImage[dstUIdx])) = pU;
-        *((uint *)(&pDstVImage[dstVIdx])) = pV;
+        int validPixels = (int)min(dstWidth - ((uint)x << 3), 8u);
+        hip_store_U8x8(pDstYImage, dstY0Idx, pY0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_U8x8(pDstYImage, dstY1Idx, pY1, validPixels);
+        }
+        int validChroma = (validPixels + 1) >> 1;
+        hip_store_U8x4(pDstUImage, dstUIdx, pU, validChroma);
+        hip_store_U8x4(pDstVImage, dstVIdx, pV, validChroma);
     }
 }
 int HipExec_FormatConvert_IYUV_UYVY(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -4366,10 +4381,14 @@ Hip_FormatConvert_IYUV_YUYV(uint dstWidth, uint dstHeight,
         pU = hip_pack(make_float4(hip_unpack1(L0.x), hip_unpack1(L0.y), hip_unpack1(L0.z), hip_unpack1(L0.w)));
         pV = hip_pack(make_float4(hip_unpack3(L0.x), hip_unpack3(L0.y), hip_unpack3(L0.z), hip_unpack3(L0.w)));
 
-        *((uint2 *)(&pDstYImage[dstY0Idx])) = pY0;
-        *((uint2 *)(&pDstYImage[dstY1Idx])) = pY1;
-        *((uint *)(&pDstUImage[dstUIdx])) = pU;
-        *((uint *)(&pDstVImage[dstVIdx])) = pV;
+        int validPixels = (int)min(dstWidth - ((uint)x << 3), 8u);
+        hip_store_U8x8(pDstYImage, dstY0Idx, pY0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_U8x8(pDstYImage, dstY1Idx, pY1, validPixels);
+        }
+        int validChroma = (validPixels + 1) >> 1;
+        hip_store_U8x4(pDstUImage, dstUIdx, pU, validChroma);
+        hip_store_U8x4(pDstVImage, dstVIdx, pV, validChroma);
     }
 }
 int HipExec_FormatConvert_IYUV_YUYV(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -4511,9 +4530,12 @@ Hip_ColorConvert_NV12_RGB(uint dstWidth, uint dstHeight,
         f.w = hip_unpack3(pV0.x);
         pUV.y = hip_pack(f);
 
-        *((uint2 *)(&pDstImageLuma[dstY0Idx])) = pY0;
-        *((uint2 *)(&pDstImageLuma[dstY1Idx])) = pY1;
-        *((uint2 *)(&pDstImageChroma[dstUVIdx])) = pUV;
+        int validPixels = (int)min(dstWidth - ((uint)x << 3), 8u);
+        hip_store_U8x8(pDstImageLuma, dstY0Idx, pY0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_U8x8(pDstImageLuma, dstY1Idx, pY1, validPixels);
+        }
+        hip_store_U8x8(pDstImageChroma, dstUVIdx, pUV, ((validPixels + 1) >> 1) << 1);
     }
 }
 int HipExec_ColorConvert_NV12_RGB(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -4648,9 +4670,12 @@ Hip_ColorConvert_NV12_RGBX(uint dstWidth, uint dstHeight,
         f.w = hip_unpack3(pV0.x);
         pUV.y = hip_pack(f);
 
-        *((uint2 *)(&pDstImageLuma[dstY0Idx])) = pY0;
-        *((uint2 *)(&pDstImageLuma[dstY1Idx])) = pY1;
-        *((uint2 *)(&pDstImageChroma[dstUVIdx])) = pUV;
+        int validPixels = (int)min(dstWidth - ((uint)x << 3), 8u);
+        hip_store_U8x8(pDstImageLuma, dstY0Idx, pY0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_U8x8(pDstImageLuma, dstY1Idx, pY1, validPixels);
+        }
+        hip_store_U8x8(pDstImageChroma, dstUVIdx, pUV, ((validPixels + 1) >> 1) << 1);
     }
 }
 int HipExec_ColorConvert_NV12_RGBX(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -4707,9 +4732,12 @@ Hip_FormatConvert_NV12_UYVY(uint dstWidth, uint dstHeight,
         pUV.x = hip_pack(make_float4(hip_unpack0(L0.x), hip_unpack2(L0.x), hip_unpack0(L0.y), hip_unpack2(L0.y)));
         pUV.y = hip_pack(make_float4(hip_unpack0(L0.z), hip_unpack2(L0.z), hip_unpack0(L0.w), hip_unpack2(L0.w)));
 
-        *((uint2 *)(&pDstImageLuma[dstY0Idx])) = pY0;
-        *((uint2 *)(&pDstImageLuma[dstY1Idx])) = pY1;
-        *((uint2 *)(&pDstImageChroma[dstUVIdx])) = pUV;
+        int validPixels = (int)min(dstWidth - ((uint)x << 3), 8u);
+        hip_store_U8x8(pDstImageLuma, dstY0Idx, pY0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_U8x8(pDstImageLuma, dstY1Idx, pY1, validPixels);
+        }
+        hip_store_U8x8(pDstImageChroma, dstUVIdx, pUV, ((validPixels + 1) >> 1) << 1);
     }
 }
 int HipExec_FormatConvert_NV12_UYVY(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -4766,9 +4794,12 @@ Hip_FormatConvert_NV12_YUYV(uint dstWidth, uint dstHeight,
         pUV.x = hip_pack(make_float4(hip_unpack1(L0.x), hip_unpack3(L0.x), hip_unpack1(L0.y), hip_unpack3(L0.y)));
         pUV.y = hip_pack(make_float4(hip_unpack1(L0.z), hip_unpack3(L0.z), hip_unpack1(L0.w), hip_unpack3(L0.w)));
 
-        *((uint2 *)(&pDstImageLuma[dstY0Idx])) = pY0;
-        *((uint2 *)(&pDstImageLuma[dstY1Idx])) = pY1;
-        *((uint2 *)(&pDstImageChroma[dstUVIdx])) = pUV;
+        int validPixels = (int)min(dstWidth - ((uint)x << 3), 8u);
+        hip_store_U8x8(pDstImageLuma, dstY0Idx, pY0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_U8x8(pDstImageLuma, dstY1Idx, pY1, validPixels);
+        }
+        hip_store_U8x8(pDstImageChroma, dstUVIdx, pUV, ((validPixels + 1) >> 1) << 1);
     }
 }
 int HipExec_FormatConvert_NV12_YUYV(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -4854,9 +4885,10 @@ Hip_ColorConvert_YUV4_RGB(uint dstWidth, uint dstHeight,
         f.w = hip_dot3(cV, make_float3(hip_unpack1(pRGB.data[5]), hip_unpack2(pRGB.data[5]), hip_unpack3(pRGB.data[5]))) + 128.0f;
         vChannel.y = hip_pack(f);
 
-        *((uint2 *)(&pDstYImage[dstYIdx])) = yChannel;
-        *((uint2 *)(&pDstUImage[dstUIdx])) = uChannel;
-        *((uint2 *)(&pDstVImage[dstVIdx])) = vChannel;
+        int validPixels = (int)min(dstWidth - (uint)x, 8u);
+        hip_store_U8x8(pDstYImage, dstYIdx, yChannel, validPixels);
+        hip_store_U8x8(pDstUImage, dstUIdx, uChannel, validPixels);
+        hip_store_U8x8(pDstVImage, dstVIdx, vChannel, validPixels);
     }
 }
 int HipExec_ColorConvert_YUV4_RGB(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -4931,9 +4963,10 @@ Hip_ColorConvert_YUV4_RGBX(uint dstWidth, uint dstHeight,
         f.w = hip_dot3(cV, make_float3(hip_unpack0(pRGB.data[7]), hip_unpack1(pRGB.data[7]), hip_unpack2(pRGB.data[7]))) + 128.0f;
         vChannel.y = hip_pack(f);
 
-        *((uint2 *)(&pDstYImage[dstYIdx])) = yChannel;
-        *((uint2 *)(&pDstUImage[dstUIdx])) = uChannel;
-        *((uint2 *)(&pDstVImage[dstVIdx])) = vChannel;
+        int validPixels = (int)min(dstWidth - (uint)x, 8u);
+        hip_store_U8x8(pDstYImage, dstYIdx, yChannel, validPixels);
+        hip_store_U8x8(pDstUImage, dstUIdx, uChannel, validPixels);
+        hip_store_U8x8(pDstVImage, dstVIdx, vChannel, validPixels);
     }
 }
 int HipExec_ColorConvert_YUV4_RGBX(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -4990,10 +5023,13 @@ Hip_FormatConvert_IUV_UV12(uint dstWidth, uint dstHeight,
         pV1.x = hip_pack(make_float4(hip_unpack1(L1.x), hip_unpack3(L1.x), hip_unpack1(L1.y), hip_unpack3(L1.y)));
         pV1.y = hip_pack(make_float4(hip_unpack1(L1.z), hip_unpack3(L1.z), hip_unpack1(L1.w), hip_unpack3(L1.w)));
 
-        *((uint2 *)(&pDstUImage[dstU0Idx])) = pU0;
-        *((uint2 *)(&pDstUImage[dstU1Idx])) = pU1;
-        *((uint2 *)(&pDstVImage[dstV0Idx])) = pV0;
-        *((uint2 *)(&pDstVImage[dstV1Idx])) = pV1;
+        int validPixels = (int)min(dstWidth - ((uint)x << 3), 8u);
+        hip_store_U8x8(pDstUImage, dstU0Idx, pU0, validPixels);
+        hip_store_U8x8(pDstVImage, dstV0Idx, pV0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_U8x8(pDstUImage, dstU1Idx, pU1, validPixels);
+            hip_store_U8x8(pDstVImage, dstV1Idx, pV1, validPixels);
+        }
     }
 }
 int HipExec_FormatConvert_IUV_UV12(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -5052,8 +5088,11 @@ Hip_FormatConvert_UV12_IUV(uint dstWidth, uint dstHeight,
         L1.z = hip_pack(make_float4(hip_unpack0(pU1.y), hip_unpack0(pV1.y), hip_unpack1(pU1.y), hip_unpack1(pV1.y)));
         L1.w = hip_pack(make_float4(hip_unpack2(pU1.y), hip_unpack2(pV1.y), hip_unpack3(pU1.y), hip_unpack3(pV1.y)));
 
-        *((uint4 *)(&pDstChromaImage[L0Idx])) = L0;
-        *((uint4 *)(&pDstChromaImage[L1Idx])) = L1;
+        int validPixels = (int)min(dstWidth - ((uint)x << 3), 8u);
+        hip_store_S16x8(pDstChromaImage, L0Idx, L0, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_S16x8(pDstChromaImage, L1Idx, L1, validPixels);
+        }
     }
 }
 int HipExec_FormatConvert_UV12_IUV(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -5104,10 +5143,13 @@ Hip_FormatConvert_UV_UV12(uint dstWidth, uint dstHeight,
         pV.x = hip_pack(make_float4(hip_unpack1(L0.x), hip_unpack1(L0.x), hip_unpack3(L0.x), hip_unpack3(L0.x)));
         pV.y = hip_pack(make_float4(hip_unpack1(L0.y), hip_unpack1(L0.y), hip_unpack3(L0.y), hip_unpack3(L0.y)));
 
-        *((uint2 *)(&pDstUImage[dstU0Idx])) = pU;
-        *((uint2 *)(&pDstUImage[dstU1Idx])) = pU;
-        *((uint2 *)(&pDstVImage[dstV0Idx])) = pV;
-        *((uint2 *)(&pDstVImage[dstV1Idx])) = pV;
+        int validPixels = (int)min(dstWidth - ((uint)x << 3), 8u);
+        hip_store_U8x8(pDstUImage, dstU0Idx, pU, validPixels);
+        hip_store_U8x8(pDstVImage, dstV0Idx, pV, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_U8x8(pDstUImage, dstU1Idx, pU, validPixels);
+            hip_store_U8x8(pDstVImage, dstV1Idx, pV, validPixels);
+        }
     }
 }
 int HipExec_FormatConvert_UV_UV12(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -5153,8 +5195,11 @@ Hip_ScaleUp2x2_U8_U8(uint dstWidth, uint dstHeight,
         dst.x = hip_pack(make_float4(hip_unpack0(src), hip_unpack0(src), hip_unpack1(src), hip_unpack1(src)));
         dst.y = hip_pack(make_float4(hip_unpack2(src), hip_unpack2(src), hip_unpack3(src), hip_unpack3(src)));
 
-        *((uint2 *)(&pDstImage[dstIdx0])) = dst;
-        *((uint2 *)(&pDstImage[dstIdx1])) = dst;
+        int validPixels = (int)min(dstWidth - ((uint)x << 3), 8u);
+        hip_store_U8x8(pDstImage, dstIdx0, dst, validPixels);
+        if ((uint)(2 * y + 1) < dstHeight) {
+            hip_store_U8x8(pDstImage, dstIdx1, dst, validPixels);
+        }
     }
 }
 int HipExec_ScaleUp2x2_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,

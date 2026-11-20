@@ -5431,10 +5431,14 @@ int HafCpu_Lut_S16_S16
 {
 	for (int height = 0; height < (int) dstHeight; height++)
 	{
-		for (int width = 0; width < (int) dstWidth; width++, pSrcImage++, pDstImage++)
+		vx_int16 * pLocalSrc = pSrcImage;
+		vx_int16 * pLocalDst = pDstImage;
+		for (int width = 0; width < (int) dstWidth; width++)
 		{
-			*pDstImage = pLut[*pSrcImage+offset];
+			pLocalDst[width] = pLut[pLocalSrc[width] + offset];
 		}
+		pSrcImage = (vx_int16 *) ((vx_uint8 *) pSrcImage + srcImageStrideInBytes);
+		pDstImage = (vx_int16 *) ((vx_uint8 *) pDstImage + dstImageStrideInBytes);
 	}
 	//TBD: Implement SSE Version
 	/*int prefixWidth = intptr_t(pDstImage) & 15;

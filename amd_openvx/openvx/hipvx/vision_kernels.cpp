@@ -5634,6 +5634,7 @@ Hip_HarrisScore_HVC_HG3_3x3(uint dstWidth, uint dstHeight,
     sum2 += *(float4 *)&lbuf_ptr[272];
     sum2 += *(float4 *)&lbuf_ptr[544];
 
+    // from here gx is the first pixel of this thread's group of 4
     gx = gx << 2;
     if ((gx < dstWidth) && (gy < dstHeight)) {
         float4 score = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -5970,6 +5971,7 @@ Hip_HarrisScore_HVC_HG3_5x5(uint dstWidth, uint dstHeight,
     sum2 += *(float4 *)&lbuf_ptr[816];
     sum2 += *(float4 *)&lbuf_ptr[1088];
 
+    // from here gx is the first pixel of this thread's group of 4
     gx = gx << 2;
     if ((gx < dstWidth) && (gy < dstHeight)) {
         float4 score = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -6373,6 +6375,7 @@ Hip_HarrisScore_HVC_HG3_7x7(uint dstWidth, uint dstHeight,
     sum2 += *(float4 *)&lbuf_ptr[1440];
     sum2 += *(float4 *)&lbuf_ptr[1728];
 
+    // from here gx is the first pixel of this thread's group of 4
     gx = gx << 2;
     if ((gx < dstWidth) && (gy < dstHeight)) {
         float4 score = make_float4(0.0f, 0.0f, 0.0f, 0.0f);

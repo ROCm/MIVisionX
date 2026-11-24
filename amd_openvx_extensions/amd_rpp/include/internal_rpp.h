@@ -104,32 +104,40 @@ void fillAudioDescriptionPtrFromDims(RpptDescPtr &descPtr, size_t *maxTensorDims
 RpptDataType getRpptDataType(vx_enum dataType);
 size_t getDataTypeSize(vx_enum dataType);
 
-//! Brief Node-owned buffer holding per-frame copies of the per-sample ROIs, so the ROI tensor itself is never modified
-static vx_status allocRoiFrames(Rpp32u deviceType, RpptROI **ppRoi, size_t count) {
-    if (*ppRoi)
+//! Brief Node-owned buffer for per-frame copies of per-sample parameters, so the graph's tensors are never modified
+static vx_status allocFrameBuffer(Rpp32u deviceType, void **ppBuffer, size_t bytes) {
+    if (*ppBuffer)
         return VX_SUCCESS;
     if (deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        CHECK_HIP_RETURN_STATUS(hipHostMalloc(ppRoi, count * sizeof(RpptROI)));
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(ppBuffer, bytes));
 #else
         return VX_ERROR_NOT_SUPPORTED;
 #endif
     } else {
-        *ppRoi = new RpptROI[count];
+        *ppBuffer = new char[bytes];
     }
     return VX_SUCCESS;
 }
 
-static void freeRoiFrames(Rpp32u deviceType, RpptROI *pRoi) {
-    if (!pRoi)
+static void freeFrameBuffer(Rpp32u deviceType, void *pBuffer) {
+    if (!pBuffer)
         return;
     if (deviceType == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_HIP
-        hipHostFree(pRoi);
+        hipHostFree(pBuffer);
 #endif
     } else {
-        delete[] pRoi;
+        delete[] static_cast<char *>(pBuffer);
     }
+}
+
+static vx_status allocRoiFrames(Rpp32u deviceType, RpptROI **ppRoi, size_t count) {
+    return allocFrameBuffer(deviceType, reinterpret_cast<void **>(ppRoi), count * sizeof(RpptROI));
+}
+
+static void freeRoiFrames(Rpp32u deviceType, RpptROI *pRoi) {
+    freeFrameBuffer(deviceType, pRoi);
 }
 
 static vx_status computeTensorLength(vx_tensor tensor, Rpp32u *tensorLength) {

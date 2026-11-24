@@ -87,7 +87,7 @@ Hip_Box_U8_U8_3x3(uint dstWidth, uint dstHeight,
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 int HipExec_Box_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -233,7 +233,7 @@ Hip_Dilate_U8_U8_3x3(uint dstWidth, uint dstHeight,
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 int HipExec_Dilate_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -379,7 +379,7 @@ Hip_Erode_U8_U8_3x3(uint dstWidth, uint dstHeight,
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 int HipExec_Erode_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -643,7 +643,7 @@ Hip_Median_U8_U8_3x3(uint dstWidth, uint dstHeight,
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 int HipExec_Median_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -831,7 +831,7 @@ Hip_Gaussian_U8_U8_3x3(uint dstWidth, uint dstHeight,
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 int HipExec_Gaussian_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -1022,7 +1022,7 @@ Hip_Convolve_U8_U8_3x3(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -1358,7 +1358,7 @@ Hip_Convolve_U8_U8_5x5(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -1930,7 +1930,7 @@ Hip_Convolve_U8_U8_7x7(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -2324,7 +2324,7 @@ Hip_Convolve_U8_U8_3x9(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -2658,7 +2658,7 @@ Hip_Convolve_U8_U8_9x3(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -3537,8 +3537,37 @@ Hip_Convolve_U8_U8_9x9(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
+}
+
+// Any odd shape up to the context's maximum that has no unrolled kernel above: one thread per output
+// pixel, reading the source through global memory. The coefficients are applied exactly as the unrolled
+// kernels apply them (row-major, no flip, rows and columns in increasing order), so the two agree.
+__global__ void __attribute__((visibility("default")))
+Hip_Convolve_U8_U8_Generic(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
+    int srcImageBufferSize, int srcImageBufferOffset, float *conv,
+    int convolutionWidth, int convolutionHeight) {
+
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if (x >= (int)dstWidth || y >= (int)dstHeight)
+        return;
+
+    int halfWidth = convolutionWidth >> 1;
+    int halfHeight = convolutionHeight >> 1;
+    float sum = 0.0f;
+    for (int j = 0; j < convolutionHeight; j++) {
+        for (int i = 0; i < convolutionWidth; i++) {
+            int goffset = (y + j - halfHeight) * srcImageStrideInBytes + x + i - halfWidth;
+            float fval = (goffset >= -srcImageBufferOffset && goffset < srcImageBufferSize) ? (float)pSrcImage[goffset] : 0.0f;
+            sum = fmaf(fval, conv[j * convolutionWidth + i], sum);
+        }
+    }
+    sum += -4.999899864197e-01f;
+    pDstImage[y * dstImageStrideInBytes + x] = (uchar)(hip_pack(make_float4(sum, 0.0f, 0.0f, 0.0f)) & 0xff);
 }
 
 int HipExec_Convolve_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -3581,7 +3610,10 @@ int HipExec_Convolve_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dst
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                             srcImageBufferSize, srcImageBufferOffset, conv);
     } else {
-        return VX_ERROR_NOT_IMPLEMENTED;
+        dim3 genericGrid = dim3(ceil((float)dstWidth / localThreads_x), ceil((float)dstHeight / localThreads_y));
+        hipLaunchKernelGGL(Hip_Convolve_U8_U8_Generic, genericGrid, blockDim, 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            srcImageBufferSize, srcImageBufferOffset, conv, (int)convolutionWidth, (int)convolutionHeight);
     }
     HIP_CHECK(hipGetLastError()); // Check for launch error
     
@@ -3753,7 +3785,7 @@ Hip_Convolve_S16_U8_3x3(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -4073,15 +4105,6 @@ Hip_Convolve_S16_U8_5x5(uint dstWidth, uint dstHeight,
     fval = hip_unpack1(pix.y);
     sum.data[7] = fmaf(fval, conv[24], sum.data[7]);
 
-    sum.data[0] = sum.data[0] + -4.999899864197e-01f;
-    sum.data[1] = sum.data[1] + -4.999899864197e-01f;
-    sum.data[2] = sum.data[2] + -4.999899864197e-01f;
-    sum.data[3] = sum.data[3] + -4.999899864197e-01f;
-    sum.data[4] = sum.data[4] + -4.999899864197e-01f;
-    sum.data[5] = sum.data[5] + -4.999899864197e-01f;
-    sum.data[6] = sum.data[6] + -4.999899864197e-01f;
-    sum.data[7] = sum.data[7] + -4.999899864197e-01f;
-
     int4 dst;
     dst.x = ((int)hip_clamp(sum.data[0], -32768.0f, 32767.0f)) & 0xffff;
     dst.x |= ((int)hip_clamp(sum.data[1], -32768.0f, 32767.0f)) << 16;
@@ -4095,7 +4118,7 @@ Hip_Convolve_S16_U8_5x5(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -4650,14 +4673,6 @@ Hip_Convolve_S16_U8_7x7(uint dstWidth, uint dstHeight,
     sum.data[7] = fmaf(fval, conv[47], sum.data[7]);
     fval = hip_unpack2(pix.y);
     sum.data[7] = fmaf(fval, conv[48], sum.data[7]);
-    sum.data[0] += -4.999899864197e-01f;
-    sum.data[1] += -4.999899864197e-01f;
-    sum.data[2] += -4.999899864197e-01f;
-    sum.data[3] += -4.999899864197e-01f;
-    sum.data[4] += -4.999899864197e-01f;
-    sum.data[5] += -4.999899864197e-01f;
-    sum.data[6] += -4.999899864197e-01f;
-    sum.data[7] += -4.999899864197e-01f;
 
     int4 dst;
     dst.x = ((int)hip_clamp(sum.data[0], -32768.0f, 32767.0f)) & 0xffff;
@@ -4672,7 +4687,7 @@ Hip_Convolve_S16_U8_7x7(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -5049,14 +5064,6 @@ Hip_Convolve_S16_U8_3x9(uint dstWidth, uint dstHeight,
     sum.data[7] = fmaf(fval, conv[25], sum.data[7]);
     fval = hip_unpack0(pix.y);
     sum.data[7] = fmaf(fval, conv[26], sum.data[7]);
-    sum.data[0] += -4.999899864197e-01f;
-    sum.data[1] += -4.999899864197e-01f;
-    sum.data[2] += -4.999899864197e-01f;
-    sum.data[3] += -4.999899864197e-01f;
-    sum.data[4] += -4.999899864197e-01f;
-    sum.data[5] += -4.999899864197e-01f;
-    sum.data[6] += -4.999899864197e-01f;
-    sum.data[7] += -4.999899864197e-01f;
 
     int4 dst;
     dst.x = ((int)hip_clamp(sum.data[0], -32768.0f, 32767.0f)) & 0xffff;
@@ -5071,7 +5078,7 @@ Hip_Convolve_S16_U8_3x9(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -5389,14 +5396,6 @@ Hip_Convolve_S16_U8_9x3(uint dstWidth, uint dstHeight,
     fval = hip_unpack3(pix.y);
     sum.data[7] = fmaf(fval, conv[26], sum.data[7]);
 
-    sum.data[0] += -4.999899864197e-01f;
-    sum.data[1] += -4.999899864197e-01f;
-    sum.data[2] += -4.999899864197e-01f;
-    sum.data[3] += -4.999899864197e-01f;
-    sum.data[4] += -4.999899864197e-01f;
-    sum.data[5] += -4.999899864197e-01f;
-    sum.data[6] += -4.999899864197e-01f;
-    sum.data[7] += -4.999899864197e-01f;
 
     int4 dst;
     dst.x = ((int)hip_clamp(sum.data[0], -32768.0f, 32767.0f)) & 0xffff;
@@ -5411,7 +5410,7 @@ Hip_Convolve_S16_U8_9x3(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -6287,8 +6286,36 @@ Hip_Convolve_S16_U8_9x9(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
+}
+
+// Any odd shape up to the context's maximum that has no unrolled kernel above: one thread per output
+// pixel, reading the source through global memory. The coefficients are applied exactly as the unrolled
+// kernels apply them (row-major, no flip, rows and columns in increasing order), so the two agree.
+__global__ void __attribute__((visibility("default")))
+Hip_Convolve_S16_U8_Generic(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
+    int srcImageBufferSize, int srcImageBufferOffset, float *conv,
+    int convolutionWidth, int convolutionHeight) {
+
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if (x >= (int)dstWidth || y >= (int)dstHeight)
+        return;
+
+    int halfWidth = convolutionWidth >> 1;
+    int halfHeight = convolutionHeight >> 1;
+    float sum = 0.0f;
+    for (int j = 0; j < convolutionHeight; j++) {
+        for (int i = 0; i < convolutionWidth; i++) {
+            int goffset = (y + j - halfHeight) * srcImageStrideInBytes + x + i - halfWidth;
+            float fval = (goffset >= -srcImageBufferOffset && goffset < srcImageBufferSize) ? (float)pSrcImage[goffset] : 0.0f;
+            sum = fmaf(fval, conv[j * convolutionWidth + i], sum);
+        }
+    }
+    *((short *)(&pDstImage[y * dstImageStrideInBytes + x + x])) = (short)((int)hip_clamp(sum, -32768.0f, 32767.0f));
 }
 
 int HipExec_Convolve_S16_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -6331,7 +6358,10 @@ int HipExec_Convolve_S16_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 ds
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize, srcImageBufferOffset,
                             conv);
     } else {
-        return VX_ERROR_NOT_IMPLEMENTED;
+        dim3 genericGrid = dim3(ceil((float)dstWidth / localThreads_x), ceil((float)dstHeight / localThreads_y));
+        hipLaunchKernelGGL(Hip_Convolve_S16_U8_Generic, genericGrid, blockDim, 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            srcImageBufferSize, srcImageBufferOffset, conv, (int)convolutionWidth, (int)convolutionHeight);
     }
     HIP_CHECK(hipGetLastError()); // Check for launch error
     
@@ -6480,7 +6510,7 @@ Hip_Sobel_S16_U8_3x3_GX(uint dstWidth, uint dstHeight,
     uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 int HipExec_Sobel_S16_U8_3x3_GX(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -6625,7 +6655,7 @@ Hip_Sobel_S16_U8_3x3_GY(uint dstWidth, uint dstHeight,
     uint dstIdx =  y * dstImageStrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 int HipExec_Sobel_S16_U8_3x3_GY(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -6843,8 +6873,9 @@ Hip_Sobel_S16S16_U8_3x3_GXY(uint dstWidth, uint dstHeight,
     uint dst2Idx =  y * dstImage2StrideInBytes + x + x;
 
     if (valid) {
-        *((int4 *)(&pDstImage1[dst1Idx])) = dst1;
-        *((int4 *)(&pDstImage2[dst2Idx])) = dst2;
+        int n = (int)min(dstWidth - (uint)x, 8u);
+        hip_store_S16x8(pDstImage1, dst1Idx, dst1, n);
+        hip_store_S16x8(pDstImage2, dst2Idx, dst2, n);
     }
 }
 int HipExec_Sobel_S16S16_U8_3x3_GXY(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -6956,7 +6987,7 @@ Hip_ScaleGaussianHalf_U8_U8_3x3(uint dstWidth, uint dstHeight,
     sum = sum * make_float4(0.0625f, 0.0625f, 0.0625f, 0.0625f);
 
     if (valid) {
-        *((uint *)(&pDstImage[dstIdx])) = hip_pack(sum);
+        hip_store_U8x4(pDstImage, dstIdx, hip_pack(sum), (int)min(dstWidth - ((uint)x << 2), 4u));
     }
 }
 int HipExec_ScaleGaussianHalf_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -7211,7 +7242,7 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
 
     sum = sum * make_float4(0.00390625f, 0.00390625f, 0.00390625f, 0.00390625f);
     if (valid) {
-        *((uint *)(&pDstImage[dstIdx])) = hip_pack(sum);
+        hip_store_U8x4(pDstImage, dstIdx, hip_pack(sum), (int)min(dstWidth - ((uint)x << 2), 4u));
     }
 }
 int HipExec_ScaleGaussianHalf_U8_U8_5x5(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,

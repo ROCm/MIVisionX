@@ -23,6 +23,33 @@ THE SOFTWARE.
 #include "hip_common_funcs.h"
 #include "hip_host_decls.h"
 
+// Bounded stores for the float outputs: a thread holds 8 (or 4) pixels but only `valid` of them lie inside the row.
+static __device__ __forceinline__ void vk_store_F32x8(uchar *pDst, uint dstIdx, const d_float8 &pix, int valid) {
+    if (__builtin_expect(valid >= 8, 1)) {
+        *((d_float8 *)(&pDst[dstIdx])) = pix;
+    } else {
+        float *dst = (float *)(pDst + dstIdx);
+        if (valid > 0) dst[0] = pix.data[0];
+        if (valid > 1) dst[1] = pix.data[1];
+        if (valid > 2) dst[2] = pix.data[2];
+        if (valid > 3) dst[3] = pix.data[3];
+        if (valid > 4) dst[4] = pix.data[4];
+        if (valid > 5) dst[5] = pix.data[5];
+        if (valid > 6) dst[6] = pix.data[6];
+    }
+}
+
+static __device__ __forceinline__ void vk_store_F32x4(uchar *pDst, uint dstIdx, const float4 &pix, int valid) {
+    if (__builtin_expect(valid >= 4, 1)) {
+        *((float4 *)(&pDst[dstIdx])) = pix;
+    } else {
+        float *dst = (float *)(pDst + dstIdx);
+        if (valid > 0) dst[0] = pix.x;
+        if (valid > 1) dst[1] = pix.y;
+        if (valid > 2) dst[2] = pix.z;
+    }
+}
+
 // ----------------------------------------------------------------------------
 // VxCannyEdgeDetector kernels for hip backend
 // ----------------------------------------------------------------------------
@@ -243,7 +270,7 @@ Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
 
     uint dstIdx =  y * dstImageStrideInBytes + x + x;
     if (valid) {
-        *((uint4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, make_int4((int)dst.x, (int)dst.y, (int)dst.z, (int)dst.w), (int)min(dstWidth - (uint)x, 8u));
     }
 }
 int HipExec_CannySobel_U16_U8_3x3_L1NORM(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -743,7 +770,7 @@ Hip_CannySobel_U16_U8_5x5_L1NORM(uint dstWidth, uint dstHeight,
 
     uint dstIdx =  y * dstImageStrideInBytes + x + x;
     if (valid) {
-        *((uint4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, make_int4((int)dst.x, (int)dst.y, (int)dst.z, (int)dst.w), (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -1639,7 +1666,7 @@ Hip_CannySobel_U16_U8_7x7_L1NORM(uint dstWidth, uint dstHeight,
 
     uint dstIdx =  y * dstImageStrideInBytes + x + x;
     if (valid) {
-        *((uint4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, make_int4((int)dst.x, (int)dst.y, (int)dst.z, (int)dst.w), (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -1874,7 +1901,7 @@ Hip_CannySobel_U16_U8_3x3_L2NORM(uint dstWidth, uint dstHeight,
 
     uint dstIdx =  y * dstImageStrideInBytes + x + x;
     if (valid) {
-        *((uint4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, make_int4((int)dst.x, (int)dst.y, (int)dst.z, (int)dst.w), (int)min(dstWidth - (uint)x, 8u));
     }
 }
 int HipExec_CannySobel_U16_U8_3x3_L2NORM(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -2372,7 +2399,7 @@ Hip_CannySobel_U16_U8_5x5_L2NORM(uint dstWidth, uint dstHeight,
 
     uint dstIdx =  y * dstImageStrideInBytes + x + x;
     if (valid) {
-        *((uint4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, make_int4((int)dst.x, (int)dst.y, (int)dst.z, (int)dst.w), (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -3267,7 +3294,7 @@ Hip_CannySobel_U16_U8_7x7_L2NORM(uint dstWidth, uint dstHeight,
 
     uint dstIdx =  y * dstImageStrideInBytes + x + x;
     if (valid) {
-        *((uint4 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_S16x8(pDstImage, dstIdx, make_int4((int)dst.x, (int)dst.y, (int)dst.z, (int)dst.w), (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -3417,7 +3444,7 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
     p0 += P.w << 24;
 
     if (valid) {
-        *((uint *)(&pDstImage[dstIdx])) = p0;
+        hip_store_U8x4(pDstImage, dstIdx, p0, (int)min(dstWidth - ((uint)x << 2), 4u));
         uint stack_icount;
         stack_icount  = HIPSELECT(0u, 1u, P.x == 255u);
         stack_icount += HIPSELECT(0u, 1u, P.y == 255u);
@@ -3476,7 +3503,7 @@ Hip_FastCorners_XY_U8_NoSupression(uint capacityOfDstCorner, char *pDstCorners, 
     int idx = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) + 3;
     int idy = (hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y) + 3;
     int stride = (int) srcImageStrideInBytes;
-    if((idx > (int)srcWidth - 3) || (idy > (int)srcHeight - 3))
+    if((idx > (int)srcWidth - 4) || (idy > (int)srcHeight - 4))
         return;
     const uchar *pTempImg = pSrcImage + hip_mad24(idy, stride, idx);
     int centerPixel_neg = pTempImg[0];
@@ -3600,7 +3627,7 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners, ui
     const uchar *pTempImg = pSrcImage + hip_mad24(yoffset, srcImageStrideInBytes, xoffset);
     __shared__ int pLocalStrengthShare[16][16];
     bool doCompute = true;
-    if((xoffset > (int)srcWidth - 3) || (yoffset > (int)srcHeight - 3) || (xoffset < 3) || (yoffset < 3)) {
+    if((xoffset > (int)srcWidth - 4) || (yoffset > (int)srcHeight - 4) || (xoffset < 3) || (yoffset < 3)) {
         doCompute = false;
         pLocalStrengthShare[lidy][lidx] = 0;
     }
@@ -3979,15 +4006,15 @@ Hip_HarrisSobel_HG3_U8_3x3(uint dstWidth, uint dstHeight,
 
         *(float4 *)(&dst.data[0]) = sum1X * sum1X;
         *(float4 *)(&dst.data[4]) = sum1Y * sum1Y;
-        *((d_float8 *)(&pDstGxy[dstIdx])) = dst;
+        vk_store_F32x8(pDstGxy, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 
         *(float4 *)(&dst.data[0]) = sum1X * sum2X;
         *(float4 *)(&dst.data[4]) = sum1Y * sum2Y;
-        *((d_float8 *)(&pDstGxy[dstIdx + dstWidthComp1])) = dst;
+        vk_store_F32x8(pDstGxy, dstIdx + dstWidthComp1, dst, (int)min(dstWidth - (uint)x, 8u));
 
         *(float4 *)(&dst.data[0]) = sum2X * sum2X;
         *(float4 *)(&dst.data[4]) = sum2Y * sum2Y;
-        *((d_float8 *)(&pDstGxy[dstIdx + dstWidthComp2])) = dst;
+        vk_store_F32x8(pDstGxy, dstIdx + dstWidthComp2, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 
 }
@@ -4466,15 +4493,15 @@ Hip_HarrisSobel_HG3_U8_5x5(uint dstWidth, uint dstHeight,
 
         *(float4 *)(&dst.data[0]) = sum1X * sum1X;
         *(float4 *)(&dst.data[4]) = sum1Y * sum1Y;
-        *((d_float8 *)(&pDstGxy[dstIdx])) = dst;
+        vk_store_F32x8(pDstGxy, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 
         *(float4 *)(&dst.data[0]) = sum1X * sum2X;
         *(float4 *)(&dst.data[4]) = sum1Y * sum2Y;
-        *((d_float8 *)(&pDstGxy[dstIdx + dstWidthComp1])) = dst;
+        vk_store_F32x8(pDstGxy, dstIdx + dstWidthComp1, dst, (int)min(dstWidth - (uint)x, 8u));
 
         *(float4 *)(&dst.data[0]) = sum2X * sum2X;
         *(float4 *)(&dst.data[4]) = sum2Y * sum2Y;
-        *((d_float8 *)(&pDstGxy[dstIdx + dstWidthComp2])) = dst;
+        vk_store_F32x8(pDstGxy, dstIdx + dstWidthComp2, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -5349,15 +5376,15 @@ Hip_HarrisSobel_HG3_U8_7x7(uint dstWidth, uint dstHeight,
 
         *(float4 *)(&dst.data[0]) = sum1X * sum1X;
         *(float4 *)(&dst.data[4]) = sum1Y * sum1Y;
-        *((d_float8 *)(&pDstGxy[dstIdx])) = dst;
+        vk_store_F32x8(pDstGxy, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 
         *(float4 *)(&dst.data[0]) = sum1X * sum2X;
         *(float4 *)(&dst.data[4]) = sum1Y * sum2Y;
-        *((d_float8 *)(&pDstGxy[dstIdx + dstWidthComp1])) = dst;
+        vk_store_F32x8(pDstGxy, dstIdx + dstWidthComp1, dst, (int)min(dstWidth - (uint)x, 8u));
 
         *(float4 *)(&dst.data[0]) = sum2X * sum2X;
         *(float4 *)(&dst.data[4]) = sum2Y * sum2Y;
-        *((d_float8 *)(&pDstGxy[dstIdx + dstWidthComp2])) = dst;
+        vk_store_F32x8(pDstGxy, dstIdx + dstWidthComp2, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 
@@ -5607,6 +5634,7 @@ Hip_HarrisScore_HVC_HG3_3x3(uint dstWidth, uint dstHeight,
     sum2 += *(float4 *)&lbuf_ptr[272];
     sum2 += *(float4 *)&lbuf_ptr[544];
 
+    // from here gx is the first pixel of this thread's group of 4
     gx = gx << 2;
     if ((gx < dstWidth) && (gy < dstHeight)) {
         float4 score = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -5632,7 +5660,7 @@ Hip_HarrisScore_HVC_HG3_3x3(uint dstWidth, uint dstHeight,
             score.z = HIPSELECT(score.z, 0.0f, gx > dstWidth - 3 - border);
             score.w = HIPSELECT(score.w, 0.0f, gx > dstWidth - 4 - border);
         }
-        *((float4 *)(&pDstVc[dstIdx])) = score;
+        vk_store_F32x4(pDstVc, dstIdx, score, (int)min(dstWidth - (uint)gx, 4u));
     }
 }
 int HipExec_HarrisScore_HVC_HG3_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -5943,6 +5971,7 @@ Hip_HarrisScore_HVC_HG3_5x5(uint dstWidth, uint dstHeight,
     sum2 += *(float4 *)&lbuf_ptr[816];
     sum2 += *(float4 *)&lbuf_ptr[1088];
 
+    // from here gx is the first pixel of this thread's group of 4
     gx = gx << 2;
     if ((gx < dstWidth) && (gy < dstHeight)) {
         float4 score = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -5968,7 +5997,7 @@ Hip_HarrisScore_HVC_HG3_5x5(uint dstWidth, uint dstHeight,
             score.z = HIPSELECT(score.z, 0.0f, gx > dstWidth - 3 - border);
             score.w = HIPSELECT(score.w, 0.0f, gx > dstWidth - 4 - border);
         }
-        *((float4 *)(&pDstVc[dstIdx])) = score;
+        vk_store_F32x4(pDstVc, dstIdx, score, (int)min(dstWidth - (uint)gx, 4u));
     }
 }
 
@@ -6346,6 +6375,7 @@ Hip_HarrisScore_HVC_HG3_7x7(uint dstWidth, uint dstHeight,
     sum2 += *(float4 *)&lbuf_ptr[1440];
     sum2 += *(float4 *)&lbuf_ptr[1728];
 
+    // from here gx is the first pixel of this thread's group of 4
     gx = gx << 2;
     if ((gx < dstWidth) && (gy < dstHeight)) {
         float4 score = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -6371,7 +6401,7 @@ Hip_HarrisScore_HVC_HG3_7x7(uint dstWidth, uint dstHeight,
             score.z = HIPSELECT(score.z, 0.0f, gx > dstWidth - 3 - border);
             score.w = HIPSELECT(score.w, 0.0f, gx > dstWidth - 4 - border);
         }
-        *((float4 *)(&pDstVc[dstIdx])) = score;
+        vk_store_F32x4(pDstVc, dstIdx, score, (int)min(dstWidth - (uint)gx, 4u));
     }
 }
 

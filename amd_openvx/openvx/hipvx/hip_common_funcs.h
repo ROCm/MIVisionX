@@ -467,15 +467,43 @@ __device__ __forceinline__ void hip_store_RGBX8(uchar *pDstImage, uint dstIdx, c
 // write into the row padding, and would overrun a row whose stride is not
 // ALIGN16 - an imported handle via vxSwapImageHandle, for instance.
 __device__ __forceinline__ void hip_store_U8x8(uchar *pDstImage, uint dstIdx, const uint2 &pix, int valid) {
-    if (valid >= 8) {
+    if (__builtin_expect(valid >= 8, 1)) {
         *((uint2 *)(&pDstImage[dstIdx])) = pix;
     } else {
         uchar *dst = pDstImage + dstIdx;
-        const uchar *src = (const uchar *)&pix;
         for (int i = 0; i < valid; i++) {
-            dst[i] = src[i];
+            dst[i] = (uchar)((i < 4 ? pix.x : pix.y) >> ((i & 3) * 8));
         }
     }
+}
+
+// Same for kernels that produce 4 pixels (one uint) per thread.
+__device__ __forceinline__ void hip_store_U8x4(uchar *pDstImage, uint dstIdx, uint pix, int valid) {
+    if (__builtin_expect(valid >= 4, 1)) {
+        *((uint *)(&pDstImage[dstIdx])) = pix;
+    } else {
+        uchar *dst = pDstImage + dstIdx;
+        for (int i = 0; i < valid; i++) {
+            dst[i] = (uchar)(pix >> (8 * i));
+        }
+    }
+}
+
+// Same for single-plane 16-bit kernels that produce 8 pixels (16 bytes) per thread.
+__device__ __forceinline__ void hip_store_S16x8(uchar *pDstImage, uint dstIdx, const int4 &pix, int valid) {
+    if (__builtin_expect(valid >= 8, 1)) {
+        *((int4 *)(&pDstImage[dstIdx])) = pix;
+    } else {
+        short *dst = (short *)(pDstImage + dstIdx);
+        for (int i = 0; i < valid; i++) {
+            int w = i < 2 ? pix.x : i < 4 ? pix.y : i < 6 ? pix.z : pix.w;
+            dst[i] = (short)(w >> ((i & 1) * 16));
+        }
+    }
+}
+
+__device__ __forceinline__ void hip_store_S16x8(uchar *pDstImage, uint dstIdx, const uint4 &pix, int valid) {
+    hip_store_S16x8(pDstImage, dstIdx, make_int4((int)pix.x, (int)pix.y, (int)pix.z, (int)pix.w), valid);
 }
 
 // Same idea for the remap kernels, whose 8 pixels are held in uint3[2] / two uint4.

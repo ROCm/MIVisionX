@@ -68,7 +68,7 @@ Hip_ScaleImage_U8_U8_Nearest(uint dstWidth, uint dstHeight,
     fx += scaleInfo.x;
     dst.y |= pSrcImage[(int)fx] << 24;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_ScaleImage_U8_U8_Nearest(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -155,7 +155,7 @@ Hip_ScaleImage_U8_U8_Bilinear(uint dstWidth, uint dstHeight,
     f.w = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
     dst.y = hip_pack(f);
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_ScaleImage_U8_U8_Bilinear(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -246,7 +246,7 @@ Hip_ScaleImage_U8_U8_Bilinear_Replicate(uint dstWidth, uint dstHeight,
         f.w = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         dst.y = hip_pack(f);
 
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     } else {
         float fy0, fy1;
         fy0 = floorf(fy);
@@ -296,7 +296,7 @@ Hip_ScaleImage_U8_U8_Bilinear_Replicate(uint dstWidth, uint dstHeight,
         f.w = hip_bilinear_sample(pSrcImage, ycoord.y, xcoord.y, fy0, fy1, xcoord.x, 1.0f - frac, frac);
         dst.y = hip_pack(f);
 
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 }
 int HipExec_ScaleImage_U8_U8_Bilinear_Replicate(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -388,7 +388,7 @@ Hip_ScaleImage_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
         f.w = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         dst.y = hip_pack(f);
 
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     } else {
         float fy1 = fy - floorf(fy);
         float fy0 = 1.0f - fy1;
@@ -424,7 +424,7 @@ Hip_ScaleImage_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
         f.w = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, srcWidth, srcHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
         dst.y = hip_pack(f);
 
-        *((uint2 *)(&pDstImage[dstIdx])) = dst;
+        hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
     }
 
 }
@@ -606,174 +606,76 @@ Hip_ScaleImage_U8_U8_Area_Int(uint dstWidth, uint dstHeight,
     hip_store_U8x8(pDstImage, dstIdx, dst, valid);
 }
 
+// General area average for non-integer ratios.
+//
+// Each destination pixel covers the source box [x * SX, (x + 1) * SX) x
+// [y * SY, (y + 1) * SY). Every source pixel is weighted by its overlap with
+// that box, so the sum of the weights is SX * SY and iSxSy = 1 / (SX * SY)
+// normalizes it. The box end is clamped to the source size to absorb float
+// rounding at the last destination row/column.
 __global__ void __attribute__((visibility("default")))
-Hip_ScaleImage_U8_U8_Area_Bytealign(uint dstWidth, uint dstHeight,
+Hip_ScaleImage_U8_U8_Area_Frac(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
     const uchar *pSrcImage, uint srcImageStrideInBytes,
-    float SX, float SY, float factorc, float iSxSy) {
+    uint srcWidth, uint srcHeight,
+    float SX, float SY, float iSxSy) {
+
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
 
     if (x >= dstWidth || y >= dstHeight) {
         return;
     }
-    uint dstIdx =  y * dstImageStrideInBytes + x;
 
-    float X = (float)x * SX;
-    float Y = (float)y * SY;
-    float fX = hip_fract(X, &X);
-    float fY = hip_fract(Y, &Y);
-    uint offset = srcImageStrideInBytes * (int)Y + (int)X;
-    uint align = offset & 3;
-    offset -= align;
-    pSrcImage += offset;
-    d_float8 ftotal{0.0f};
-    float Sy = SY;
-    float Syf = 1.0f - fY;
-    for (uint iy = 0; iy < 2; iy++) {
-        uint4 dw;
-        uint2 d2;
-        d_float8 f {0.0f};
-        float Xs = fX, factor, Xi, Xf;
-        uint offset, align;
-        Xf = hip_fract(Xs, &Xi);
-        offset = (uint)Xi;
-        align = offset & 3;
-        offset -= align;
-        Xs += SX;
+    uint dstIdx = y * dstImageStrideInBytes + x;
+    int valid = (int)min(dstWidth - (uint)x, 8u);
 
-        d2 = *((uint2 *)(&pSrcImage[offset]));
-        dw.x = d2.x;
-        dw.y = d2.y;
+    float y0 = (float)y * SY;
+    float y1 = fminf((float)(y + 1) * SY, (float)srcHeight);
+    uint iy0 = (uint)y0;
+    uint iy1 = min((uint)ceilf(y1), srcHeight);
 
-        dw.x = hip_bytealign(dw.y, dw.x, align);
-        f.data[0] += hip_unpack0(dw.x) * (1.0f - Xf);
-        factor = factorc + Xf;
-        f.data[0] += hip_unpack1(dw.x) * hip_clamp(factor, 0.0f, 1.0f) + hip_unpack2(dw.x) * hip_clamp(factor - 1.0f, 0.0f, 1.0f);
-        Xf = hip_fract(Xs, &Xi);
-        offset = (uint)Xi;
-        align = offset & 3;
-        offset -= align;
-        Xs += SX;
+    // The first and last source row of the box are weighted by their overlap
+    // with it; every row in between has weight 1.
+    float wyFirst = fminf(y1, (float)(iy0 + 1)) - y0;
+    float wyLast = y1 - (float)(iy1 - 1);
 
-        d2 = *((uint2 *)(&pSrcImage[offset]));
-        dw.x = d2.x;
-        dw.y = d2.y;
+    d_float8 f = {0.0f};
+    #pragma unroll
+    for (int i = 0; i < 8; i++) {
+        if (i >= valid) {
+            break;
+        }
+        float x0 = (float)(x + i) * SX;
+        float x1 = fminf((float)(x + i + 1) * SX, (float)srcWidth);
+        uint ix0 = (uint)x0;
+        uint ix1 = min((uint)ceilf(x1), srcWidth);
+        uint nx = ix1 - ix0;
+        float wxFirst = fminf(x1, (float)(ix0 + 1)) - x0;
+        float wxLast = x1 - (float)(ix1 - 1);
 
-        dw.x = hip_bytealign(dw.y, dw.x, align);
-        f.data[1] += hip_unpack0(dw.x) * (1.0f - Xf);
-        factor = factorc + Xf;
-        f.data[1] += hip_unpack1(dw.x) * hip_clamp(factor, 0.0f, 1.0f) + hip_unpack2(dw.x) * hip_clamp(factor - 1.0f, 0.0f, 1.0f);
-        Xf = hip_fract(Xs, &Xi);
-        offset = (uint)Xi;
-        align = offset & 3;
-        offset -= align;
-        Xs += SX;
-
-        d2 = *((uint2 *)(&pSrcImage[offset]));
-        dw.x = d2.x;
-        dw.y = d2.y;
-
-        dw.x = hip_bytealign(dw.y, dw.x, align);
-        f.data[2] += hip_unpack0(dw.x) * (1.0f - Xf);
-        factor = factorc + Xf;
-        f.data[2] += hip_unpack1(dw.x) * hip_clamp(factor, 0.0f, 1.0f) + hip_unpack2(dw.x) * hip_clamp(factor - 1.0f, 0.0f, 1.0f);
-        Xf = hip_fract(Xs, &Xi); offset = (uint)Xi;
-        align = offset & 3;
-        offset -= align;
-        Xs += SX;
-
-        d2 = *((uint2 *)(&pSrcImage[offset]));
-        dw.x = d2.x;
-        dw.y = d2.y;
-
-        dw.x = hip_bytealign(dw.y, dw.x, align);
-        f.data[3] += hip_unpack0(dw.x) * (1.0f - Xf);
-        factor = factorc + Xf;
-        f.data[3] += hip_unpack1(dw.x) * hip_clamp(factor, 0.0f, 1.0f) + hip_unpack2(dw.x) * hip_clamp(factor - 1.0f, 0.0f, 1.0f);
-        Xf = hip_fract(Xs, &Xi);
-        offset = (uint)Xi;
-        align = offset & 3;
-        offset -= align;
-        Xs += SX;
-
-        d2 = *((uint2 *)(&pSrcImage[offset]));
-        dw.x = d2.x;
-        dw.y = d2.y;
-
-        dw.x = hip_bytealign(dw.y, dw.x, align);
-        f.data[4] += hip_unpack0(dw.x) * (1.0f - Xf);
-        factor = factorc + Xf;
-        f.data[4] += hip_unpack1(dw.x) * hip_clamp(factor, 0.0f, 1.0f) + hip_unpack2(dw.x) * hip_clamp(factor - 1.0f, 0.0f, 1.0f);
-        Xf = hip_fract(Xs, &Xi);
-        offset = (uint)Xi;
-        align = offset & 3;
-        offset -= align;
-        Xs += SX;
-
-        d2 = *((uint2 *)(&pSrcImage[offset]));
-        dw.x = d2.x;
-        dw.y = d2.y;
-
-        dw.x = hip_bytealign(dw.y, dw.x, align);
-        f.data[5] += hip_unpack0(dw.x) * (1.0f - Xf);
-        factor = factorc + Xf;
-        f.data[5] += hip_unpack1(dw.x) * hip_clamp(factor, 0.0f, 1.0f) + hip_unpack2(dw.x) * hip_clamp(factor - 1.0f, 0.0f, 1.0f);
-        Xf = hip_fract(Xs, &Xi);
-        offset = (uint)Xi;
-        align = offset & 3;
-        offset -= align;
-        Xs += SX;
-
-        d2 = *((uint2 *)(&pSrcImage[offset]));
-        dw.x = d2.x;
-        dw.y = d2.y;
-
-        dw.x = hip_bytealign(dw.y, dw.x, align);
-        f.data[6] += hip_unpack0(dw.x) * (1.0f - Xf);
-        factor = factorc + Xf;
-        f.data[6] += hip_unpack1(dw.x) * hip_clamp(factor, 0.0f, 1.0f) + hip_unpack2(dw.x) * hip_clamp(factor - 1.0f, 0.0f, 1.0f);
-        Xf = hip_fract(Xs, &Xi);
-        offset = (uint)Xi;
-        align = offset & 3;
-        offset -= align;
-
-        d2 = *((uint2 *)(&pSrcImage[offset]));
-        dw.x = d2.x;
-        dw.y = d2.y;
-
-        dw.x = hip_bytealign(dw.y, dw.x, align);
-        f.data[7] += hip_unpack0(dw.x) * (1.0f - Xf);
-        factor = factorc + Xf;
-        f.data[7] += hip_unpack1(dw.x) * hip_clamp(factor, 0.0f, 1.0f) + hip_unpack2(dw.x) * hip_clamp(factor - 1.0f, 0.0f, 1.0f);
-
-        f.data[0] *= Syf;
-        f.data[1] *= Syf;
-        f.data[2] *= Syf;
-        f.data[3] *= Syf;
-        f.data[4] *= Syf;
-        f.data[5] *= Syf;
-        f.data[6] *= Syf;
-        f.data[7] *= Syf;
-
-        ftotal.data[0] += f.data[0];
-        ftotal.data[1] += f.data[1];
-        ftotal.data[2] += f.data[2];
-        ftotal.data[3] += f.data[3];
-        ftotal.data[4] += f.data[4];
-        ftotal.data[5] += f.data[5];
-        ftotal.data[6] += f.data[6];
-        ftotal.data[7] += f.data[7];
-
-        Sy -= Syf;
-        Syf = hip_clamp(Sy, 0.0f, 1.0f);
-        pSrcImage += srcImageStrideInBytes;
+        float total = 0.0f;
+        for (uint sy = iy0; sy < iy1; sy++) {
+            float wy = (sy == iy0) ? wyFirst : ((sy == iy1 - 1) ? wyLast : 1.0f);
+            const uchar *pSrcRow = pSrcImage + sy * srcImageStrideInBytes + ix0;
+            float rowSum = (float)pSrcRow[0] * wxFirst;
+            if (nx > 1) {
+                uint inner = 0;
+                for (uint sx = 1; sx < nx - 1; sx++) {
+                    inner += pSrcRow[sx];
+                }
+                rowSum += (float)pSrcRow[nx - 1] * wxLast + (float)inner;
+            }
+            total += rowSum * wy;
+        }
+        f.data[i] = total;
     }
 
     uint2 dst;
-    dst.x = hip_pack(make_float4(ftotal.data[0], ftotal.data[1], ftotal.data[2], ftotal.data[3]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
-    dst.y = hip_pack(make_float4(ftotal.data[4], ftotal.data[5], ftotal.data[6], ftotal.data[7]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
+    dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * make_float4(iSxSy, iSxSy, iSxSy, iSxSy));
+
+    hip_store_U8x8(pDstImage, dstIdx, dst, valid);
 }
 
 int HipExec_ScaleImage_U8_U8_Area(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -795,16 +697,7 @@ int HipExec_ScaleImage_U8_U8_Area(hipStream_t stream, vx_uint32 dstWidth, vx_uin
     // gave 14, 6:1 gave 10 and 8:1 gave 22), so select on the block shape
     // explicitly and send everything else to the general kernel. A ratio that
     // is not an exact integer has fractional edge weights and goes to the
-    // bytealign path - the old `need_align` test let ratios such as 1.5 through
-    // to the 2x2 kernel as well.
-    //
-    // NOTE: Hip_ScaleImage_U8_U8_Area_Bytealign is itself hand-unrolled - two
-    // source rows and three x-taps per output pixel - so it is only correct for
-    // roughly Sx < 3 and Sy <= 2. Larger fractional ratios such as 3.5:1 are
-    // still wrong there. That is pre-existing rather than introduced here (the
-    // old selector sent them to the 2x2 kernel, equally wrong) and is tracked
-    // separately. Giving Hip_ScaleImage_U8_U8_Area_Int fractional edge weights
-    // would let it absorb those cases and retire this kernel.
+    // fractional-weight kernel.
     bool exact_int = ((srcWidth % dstWidth) == 0) && ((srcHeight % dstHeight) == 0);
 
     if (exact_int) {
@@ -834,14 +727,12 @@ int HipExec_ScaleImage_U8_U8_Area(hipStream_t stream, vx_uint32 dstWidth, vx_uin
                             Nx, Ny, iSxSy);
         }
     } else {
-        int Nx = (int)ceilf(Sx);
-        float factorc = Sx - (Nx - 1);
         float iSxSy = 1.0 / (double)(Sx * Sy);
 
-        hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Bytealign, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+        hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Frac, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
-                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                        Sx, Sy, factorc, iSxSy);
+                        (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcWidth, srcHeight,
+                        Sx, Sy, iSxSy);
     }
     HIP_CHECK(hipGetLastError()); // Check for launch error
 
@@ -926,7 +817,7 @@ Hip_WarpAffine_U8_U8_Nearest(uint dstWidth, uint dstHeight,
     if (srcIdx < srcImageBufferSize)
         dst.y |= pSrcImage[srcIdx] << 24;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_WarpAffine_U8_U8_Nearest(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes, vx_uint32 srcWidth, vx_uint32 srcHeight,
@@ -960,6 +851,7 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     }
 
     uint dstIdx =  y * dstImageStrideInBytes + x;
+    int valid = (int)min(dstWidth - (uint)x, 8u);
 
     // Cache the affine matrix in registers once (uniform across all threads).
     const float m00 = affineMatrix->m[0][0];
@@ -1082,7 +974,7 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     v = HIPSELECT(borderValue, v, mask);
     dst.y |= v << 24;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, valid);
 }
 int HipExec_WarpAffine_U8_U8_Nearest_Constant(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -1163,7 +1055,7 @@ Hip_WarpAffine_U8_U8_Bilinear(uint dstWidth, uint dstHeight,
     f.w = hip_bilinear_sample_FXY(pSrcImage, srcImageBufferSize, srcImageStrideInBytes, sx, sy);
     dst.y = hip_pack(f);
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_WarpAffine_U8_U8_Bilinear(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -1244,7 +1136,7 @@ Hip_WarpAffine_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     f.w = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
     dst.y = hip_pack(f);
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_WarpAffine_U8_U8_Bilinear_Constant(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -1350,7 +1242,7 @@ Hip_WarpPerspective_U8_U8_Nearest(uint dstWidth, uint dstHeight,
     if (srcIdx < srcImageBufferSize)
         dst.y |= pSrcImage[srcIdx] << 24;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_WarpPerspective_U8_U8_Nearest(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -1385,6 +1277,7 @@ Hip_WarpPerspective_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     }
 
     uint dstIdx =  y * dstImageStrideInBytes + x;
+    int valid = (int)min(dstWidth - (uint)x, 8u);
 
     srcWidth -= 2;
     srcHeight -= 2;
@@ -1512,7 +1405,7 @@ Hip_WarpPerspective_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     v = HIPSELECT(borderValue, v, mask);
     dst.y |= (v << 24);
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, valid);
 }
 int HipExec_WarpPerspective_U8_U8_Nearest_Constant(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -1603,7 +1496,7 @@ Hip_WarpPerspective_U8_U8_Bilinear(uint dstWidth, uint dstHeight,
     f.w = hip_bilinear_sample_FXY(pSrcImage, srcImageBufferSize, srcImageStrideInBytes, sx * isz, sy * isz);
     dst.y = hip_pack(f);
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_WarpPerspective_U8_U8_Bilinear(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -1694,7 +1587,7 @@ Hip_WarpPerspective_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     f.w = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, sx * isz, sy * isz, borderValue);
     dst.y = hip_pack(f);
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_WarpPerspective_U8_U8_Bilinear_Constant(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -1733,6 +1626,7 @@ Hip_Remap_U8_U8_Nearest(uint dstWidth, uint dstHeight,
     }
 
     uint dstIdx =  y * dstImageStrideInBytes + x;
+    int valid = (int)min(dstWidth - (uint)x, 8u);
 
     int *remap = (int *) (remap_ + y * remapStrideInBytes + (x << 2));
     uint2 dst = (uint2)0;
@@ -1803,7 +1697,7 @@ Hip_Remap_U8_U8_Nearest(uint dstWidth, uint dstHeight,
         v = pSrcImage[srcIdx];
     dst.y |= v << 24;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, valid);
 }
 int HipExec_Remap_U8_U8_Nearest(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes, vx_uint32 srcWidth, vx_uint32 srcHeight,
@@ -1837,6 +1731,7 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     }
 
     uint dstIdx =  y * dstImageStrideInBytes + x;
+    int valid = (int)min(dstWidth - (uint)x, 8u);
 
     int *remap = (int *) (remap_ + y * remapStrideInBytes + (x << 2));
     uint2 dst = (uint2)0;
@@ -1949,7 +1844,7 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     v = HIPSELECT(borderValue, v, mask);
     dst.y |= v << 24;
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, valid);
 }
 int HipExec_Remap_U8_U8_Nearest_Constant(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes, vx_uint32 srcWidth, vx_uint32 srcHeight,
@@ -2009,7 +1904,7 @@ Hip_Remap_U8_U8_Bilinear(uint dstWidth, uint dstHeight,
     f.w = hip_bilinear_sample_FXY(pSrcImage, srcImageBufferSize, srcImageStrideInBytes, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f);
     dst.y = hip_pack_half_up(f);
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_Remap_U8_U8_Bilinear(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -2078,7 +1973,7 @@ Hip_Remap_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     f.w = useBorder7 ? hip_unpack0(borderValue) : hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     dst.y = hip_pack_half_up(f);
 
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    hip_store_U8x8(pDstImage, dstIdx, dst, (int)min(dstWidth - (uint)x, 8u));
 }
 int HipExec_Remap_U8_U8_Bilinear_Constant(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,

@@ -50,3 +50,7 @@ link_directories    (${ROCM_PATH}/lib)
 
 add_executable(${PROJECT_NAME} graph_api.cpp)
 target_link_libraries(${PROJECT_NAME} openvx)
+# whether the library under test implements vx_khr_pipelining, when the caller knows
+if(DEFINED EXPECT_PIPELINING)
+  target_compile_definitions(${PROJECT_NAME} PRIVATE EXPECT_PIPELINING=${EXPECT_PIPELINING})
+endif()

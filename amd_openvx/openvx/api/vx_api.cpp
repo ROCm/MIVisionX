@@ -5039,7 +5039,7 @@ VX_API_ENTRY vx_delay VX_API_CALL vxCreateDelay(vx_context context,
     AgoData * data = NULL;
     if (agoIsValidContext(context) && agoIsValidReference(exemplar) && slots > 0) {
         CAgoLock lock(context->cs);
-        char desc_exemplar[MAX_DESCRIPTION_DATA_SIZE]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
+        char desc_exemplar[MAX_DESCRIPTION_DATA_SIZE]; agoGetDescriptionFromData(context, desc_exemplar, sizeof(desc_exemplar), (AgoData *)exemplar);
         char desc[2048]; snprintf(desc, sizeof(desc), "delay:" VX_FMT_SIZE ",[%s]", slots, desc_exemplar);
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
@@ -6693,20 +6693,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetThresholdAttribute(vx_threshold thresh, 
                     status = VX_SUCCESS;
                 }
                 break;
-            // VX_THRESHOLD_TYPE is read-only [REQ-1378]: it falls through to the default
-            // case and reports VX_ERROR_NOT_SUPPORTED
-            case VX_THRESHOLD_INPUT_FORMAT:
-                if (size == sizeof(vx_df_image)) {
-                    data->u.thr.input_format = *(vx_df_image *)ptr;
-                    status = VX_SUCCESS;
-                }
-                break;
-            case VX_THRESHOLD_OUTPUT_FORMAT:
-                if (size == sizeof(vx_df_image)) {
-                    data->u.thr.output_format = *(vx_df_image *)ptr;
-                    status = VX_SUCCESS;
-                }
-                break;
+            // VX_THRESHOLD_TYPE, VX_THRESHOLD_INPUT_FORMAT and VX_THRESHOLD_OUTPUT_FORMAT are
+            // read-only [REQ-1378]: they fall through to the default case and report VX_ERROR_NOT_SUPPORTED
             case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER:
                 if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
                     data->u.thr.threshold_lower = *(vx_pixel_value_t *)ptr;
@@ -9143,7 +9131,7 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateObjectArray(vx_context context,
     AgoData * data = NULL;
     if (agoIsValidContext(context) && agoIsValidReference(exemplar) && count > 0) {
         CAgoLock lock(context->cs);
-        char desc_exemplar[MAX_DESCRIPTION_DATA_SIZE]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
+        char desc_exemplar[MAX_DESCRIPTION_DATA_SIZE]; agoGetDescriptionFromData(context, desc_exemplar, sizeof(desc_exemplar), (AgoData *)exemplar);
         char desc[2048]; snprintf(desc, sizeof(desc), "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
         data = agoCreateDataFromDescription(context, NULL, desc, true);
         if (data) {
@@ -9356,7 +9344,7 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateVirtualObjectArray(vx_graph gra
     AgoData * data = NULL;
     if (agoIsValidGraph(graph) && agoIsValidReference(exemplar) && count > 0) {
         CAgoLock lock(graph->cs);
-        char desc_exemplar[MAX_DESCRIPTION_DATA_SIZE]; agoGetDescriptionFromData(graph->ref.context, desc_exemplar, (AgoData *)exemplar);
+        char desc_exemplar[MAX_DESCRIPTION_DATA_SIZE]; agoGetDescriptionFromData(graph->ref.context, desc_exemplar, sizeof(desc_exemplar), (AgoData *)exemplar);
         // the object array and every one of its items are virtual and scoped to the graph, like
         // the other vxCreateVirtual* objects. The parser requires the items to agree with the
         // array, so turn the exemplar's description (a real object's carries no "-virtual"

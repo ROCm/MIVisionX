@@ -952,7 +952,7 @@ AgoData * agoGetSiblingTraceToDelayForInit(AgoData * data, int trace[], int& tra
 AgoData * agoGetSiblingTraceToDelayForUpdate(AgoData * data, int trace[], int& traceCount);
 AgoData * agoGetDataFromTrace(AgoData * data, int trace[], int traceCount);
 int agoUpdateDelaySlots(AgoNode * node);
-void agoGetDescriptionFromData(AgoContext * acontext, char * desc, AgoData * data);
+void agoGetDescriptionFromData(AgoContext * acontext, char * desc, size_t descSize, AgoData * data);
 int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData * data, const char * desc);
 AgoData * agoCreateDataFromDescription(AgoContext * acontext, AgoGraph * agraph, const char * desc, bool isForExternalUse);
 void agoGenerateDataName(AgoContext * acontext, const char * postfix, std::string& name);

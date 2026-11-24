@@ -34,6 +34,11 @@ struct EraseLocalData {
     RpptDescPtr pDstDesc;
     RpptROI *pSrcRoi;
     RpptROI *pSrcRoiFrames;
+    RpptRoiLtrb *pAnchorFrames;
+    RppPtr_t pColorsFrames;
+    Rpp32u *pNumBoxesFrames;
+    size_t boxCapacity;
+    size_t colorElementSize;
     RpptRoiType roiType;
     vxTensorLayout inputLayout;
     vxTensorLayout outputLayout;
@@ -71,18 +76,42 @@ static vx_status VX_CALLBACK refreshErase(vx_node node, const vx_reference *para
     data->pAnchor = reinterpret_cast<RpptRoiLtrb *>(anchor_tensor_ptr);
     data->pColors = reinterpret_cast<RppPtr_t>(colors_tensor_ptr);
 
-    // If input is NFHWC/NFCHW, expand per-sample parameters over frames
+    // If input is NFHWC/NFCHW, expand per-sample parameters over frames into node-owned buffers.
+    // The boxes of image n follow the boxes of the images before it; each frame gets its own copy
+    // at a stride of the largest box count, which is where RPP looks for them.
     if (data->inputLayout == vxTensorLayout::VX_NFHWC || data->inputLayout == vxTensorLayout::VX_NFCHW) {
-        unsigned num_of_frames = data->inputTensorDims[1]; // Num of frames 'F'
-        STATUS_ERROR_CHECK(allocRoiFrames(data->deviceType, &data->pSrcRoiFrames, data->inputTensorDims[0] * num_of_frames));
-        for (int n = static_cast<int>(data->inputTensorDims[0]) - 1; n >= 0; n--) {
-            unsigned index = n * num_of_frames;
-            for (unsigned f = 0; f < num_of_frames; f++) {
-                data->pNumBoxes[index + f] = data->pNumBoxes[n];
-                data->pSrcRoiFrames[index + f].xywhROI = data->pSrcRoi[n].xywhROI;
-                data->pAnchor[index + f] = data->pAnchor[n];
-            }
+        const size_t N = data->inputTensorDims[0];
+        const size_t F = data->inputTensorDims[1]; // Num of frames 'F'
+        const size_t capacity = data->boxCapacity;
+        const size_t colorBytes = data->pSrcDesc->c * data->colorElementSize;
+        STATUS_ERROR_CHECK(allocRoiFrames(data->deviceType, &data->pSrcRoiFrames, N * F));
+        STATUS_ERROR_CHECK(allocFrameBuffer(data->deviceType, reinterpret_cast<void **>(&data->pAnchorFrames), N * F * capacity * sizeof(RpptRoiLtrb)));
+        STATUS_ERROR_CHECK(allocFrameBuffer(data->deviceType, &data->pColorsFrames, N * F * capacity * colorBytes));
+        STATUS_ERROR_CHECK(allocFrameBuffer(data->deviceType, reinterpret_cast<void **>(&data->pNumBoxesFrames), N * F * sizeof(Rpp32u)));
+        memset(data->pAnchorFrames, 0, N * F * capacity * sizeof(RpptRoiLtrb));
+        memset(data->pColorsFrames, 0, N * F * capacity * colorBytes);
+        size_t maxBoxes = 0, total = 0;
+        for (size_t n = 0; n < N; n++) {
+            maxBoxes = std::max(maxBoxes, static_cast<size_t>(data->pNumBoxes[n]));
+            total += data->pNumBoxes[n];
         }
+        if (total > capacity)
+            return ERRMSG(VX_ERROR_INVALID_VALUE, "Erase: the box counts add up to %zu, the anchor tensor holds %zu\n", total, capacity);
+        size_t first = 0;
+        for (size_t n = 0; n < N; n++) {
+            const size_t nb = data->pNumBoxes[n];
+            for (size_t f = 0; f < F; f++) {
+                const size_t index = n * F + f;
+                data->pNumBoxesFrames[index] = static_cast<Rpp32u>(nb);
+                data->pSrcRoiFrames[index].xywhROI = data->pSrcRoi[n].xywhROI;
+                memcpy(data->pAnchorFrames + index * maxBoxes, data->pAnchor + first, nb * sizeof(RpptRoiLtrb));
+                memcpy(static_cast<char *>(data->pColorsFrames) + index * maxBoxes * colorBytes, static_cast<char *>(data->pColors) + first * colorBytes, nb * colorBytes);
+            }
+            first += nb;
+        }
+        data->pAnchor = data->pAnchorFrames;
+        data->pColors = data->pColorsFrames;
+        data->pNumBoxes = data->pNumBoxesFrames;
         data->pSrcRoi = data->pSrcRoiFrames;
     }
 
@@ -189,6 +218,13 @@ static vx_status VX_CALLBACK initializeErase(vx_node node, const vx_reference *p
     data->pDstDesc->offsetInBytes = 0;
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
 
+    vx_size anchorDims[2] = {0, 0};
+    vx_enum colorDtype;
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DIMS, anchorDims, sizeof(anchorDims)));
+    STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DATA_TYPE, &colorDtype, sizeof(colorDtype)));
+    data->boxCapacity = anchorDims[0];
+    data->colorElementSize = getDataTypeSize(colorDtype);
+
     // Initial refresh and create RPP handle
     STATUS_ERROR_CHECK(refreshErase(node, parameters, num, data));
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
@@ -204,6 +240,9 @@ static vx_status VX_CALLBACK uninitializeErase(vx_node node, const vx_reference 
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     freeRoiFrames(data->deviceType, data->pSrcRoiFrames);
+    freeFrameBuffer(data->deviceType, data->pAnchorFrames);
+    freeFrameBuffer(data->deviceType, data->pColorsFrames);
+    freeFrameBuffer(data->deviceType, data->pNumBoxesFrames);
     delete data;
     return VX_SUCCESS;
 }

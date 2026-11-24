@@ -163,6 +163,62 @@ static vx_status computeTensorLength(vx_tensor tensor, Rpp32u *tensorLength) {
     return VX_SUCCESS;
 }
 
+//! Brief Node-owned copy of a source tensor with real lead-in bytes, for RPP builds whose filters reject offsetInBytes below 12 * (kernelSize / 2)
+struct SrcLeadIn {
+    void *pBuf;
+    Rpp32u offsetInBytes;
+};
+
+static void freeSrcLeadIn(Rpp32u deviceType, SrcLeadIn *pLeadIn) {
+    if (!pLeadIn->pBuf)
+        return;
+    if (deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        (void)hipFree(pLeadIn->pBuf);
+#endif
+    } else {
+        delete[] static_cast<Rpp8u *>(pLeadIn->pBuf);
+    }
+    pLeadIn->pBuf = nullptr;
+}
+
+//! Brief Calls rppCall(src) with offsetInBytes = 0; if RPP answers RPP_ERROR_LOW_OFFSET, copies the source into
+//! pLeadIn->pBuf behind a 12 * (kernelSize / 2) byte lead-in (and as much slack after it) and calls again on that copy
+template <typename RppCall>
+static vx_status callWithSrcLeadIn(vxRppHandle *handle, Rpp32u deviceType, vx_tensor srcTensor, RppPtr_t pSrc, RpptDescPtr pSrcDesc,
+                                   Rpp32u kernelSize, SrcLeadIn *pLeadIn, RppCall rppCall) {
+    if (!pLeadIn->offsetInBytes) {
+        pSrcDesc->offsetInBytes = 0;
+        RppStatus rppStatus = rppCall(pSrc);
+        if (rppStatus != RPP_ERROR_LOW_OFFSET)
+            return (rppStatus == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+        pLeadIn->offsetInBytes = 12 * (kernelSize / 2);
+    }
+    Rpp32u length;
+    vx_enum dataType;
+    STATUS_ERROR_CHECK(computeTensorLength(srcTensor, &length));
+    STATUS_ERROR_CHECK(vxQueryTensor(srcTensor, VX_TENSOR_DATA_TYPE, &dataType, sizeof(dataType)));
+    size_t bytes = static_cast<size_t>(length) * getDataTypeSize(dataType);
+    size_t padded = bytes + 2 * pLeadIn->offsetInBytes;
+    if (deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        if (!pLeadIn->pBuf)
+            CHECK_HIP_RETURN_STATUS(hipMalloc(&pLeadIn->pBuf, padded));
+        CHECK_HIP_RETURN_STATUS(hipMemcpyAsync(static_cast<Rpp8u *>(pLeadIn->pBuf) + pLeadIn->offsetInBytes, pSrc, bytes, hipMemcpyDeviceToDevice, handle->hipstream));
+#else
+        return VX_ERROR_NOT_SUPPORTED;
+#endif
+    } else {
+        if (!pLeadIn->pBuf)
+            pLeadIn->pBuf = new Rpp8u[padded]();
+        memcpy(static_cast<Rpp8u *>(pLeadIn->pBuf) + pLeadIn->offsetInBytes, pSrc, bytes);
+    }
+    pSrcDesc->offsetInBytes = pLeadIn->offsetInBytes;
+    RppStatus rppStatus = rppCall(pLeadIn->pBuf);
+    pSrcDesc->offsetInBytes = 0;
+    return (rppStatus == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+}
+
 class Kernellist
 {
 public:

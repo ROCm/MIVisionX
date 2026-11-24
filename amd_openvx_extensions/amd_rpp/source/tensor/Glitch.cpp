@@ -33,6 +33,7 @@ struct GlitchLocalData {
     vx_uint32 *pYOffsetG;
     vx_uint32 *pXOffsetB;
     vx_uint32 *pYOffsetB;
+    RpptChannelOffsets *pRgbOffsets;
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
     RpptROI *pSrcRoi;
@@ -125,22 +126,24 @@ static vx_status VX_CALLBACK validateGlitch(vx_node node, const vx_reference par
 }
 
 static vx_status VX_CALLBACK processGlitch(vx_node node, const vx_reference *parameters, vx_uint32 num) {
-    RppStatus rpp_status = RPP_SUCCESS;
-    vx_status return_status = VX_ERROR_NOT_IMPLEMENTED;
-    GlitchLocalData *data = NULL;
+    GlitchLocalData *data = nullptr;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    refreshGlitch(node, parameters, num, data);
-    // rppt_glitch is not available in RPP TOT, will be enabled once support is added
-    /* if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+    STATUS_ERROR_CHECK(refreshGlitch(node, parameters, num, data));
+    for (Rpp32u i = 0; i < data->pSrcDesc->n; i++) {
+        data->pRgbOffsets[i].r = {static_cast<Rpp32s>(data->pXOffsetR[i]), static_cast<Rpp32s>(data->pYOffsetR[i])};
+        data->pRgbOffsets[i].g = {static_cast<Rpp32s>(data->pXOffsetG[i]), static_cast<Rpp32s>(data->pYOffsetG[i])};
+        data->pRgbOffsets[i].b = {static_cast<Rpp32s>(data->pXOffsetB[i]), static_cast<Rpp32s>(data->pYOffsetB[i])};
+    }
 #if ENABLE_HIP
-        rpp_status = rppt_glitch_gpu(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pXOffsetR, data->pYOffsetR, data->pXOffsetG, data->pYOffsetG, data->pXOffsetB, data->pYOffsetB, data->pSrcRoi, data->roiType, data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+    RppBackend backend = (data->deviceType == AGO_TARGET_AFFINITY_GPU) ? RPP_HIP_BACKEND : RPP_HOST_BACKEND;
+#else
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU)
+        return VX_ERROR_NOT_IMPLEMENTED;
+    RppBackend backend = RPP_HOST_BACKEND;
 #endif
-    } else if (data->deviceType == AGO_TARGET_AFFINITY_CPU) {
-        rpp_status = rppt_glitch_host(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pXOffsetR, data->pYOffsetR, data->pXOffsetG, data->pYOffsetG, data->pXOffsetB, data->pYOffsetB data->pSrcRoi, data->roiType, data->handle->rppHandle);
-        return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
-    }*/
-    return return_status;
+    RppStatus rpp_status = rppt_glitch(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->pRgbOffsets,
+                                       data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
+    return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 }
 
 static vx_status VX_CALLBACK initializeGlitch(vx_node node, const vx_reference *parameters, vx_uint32 num) {
@@ -181,6 +184,13 @@ static vx_status VX_CALLBACK initializeGlitch(vx_node node, const vx_reference *
     data->pYOffsetG = new vx_uint32[data->pSrcDesc->n];
     data->pXOffsetB = new vx_uint32[data->pSrcDesc->n];
     data->pYOffsetB = new vx_uint32[data->pSrcDesc->n];
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        CHECK_HIP_RETURN_STATUS(hipHostMalloc(&data->pRgbOffsets, data->pSrcDesc->n * sizeof(RpptChannelOffsets)));
+#endif
+    } else {
+        data->pRgbOffsets = new RpptChannelOffsets[data->pSrcDesc->n];
+    }
     refreshGlitch(node, parameters, num, data);
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
     STATUS_ERROR_CHECK(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
@@ -196,6 +206,13 @@ static vx_status VX_CALLBACK uninitializeGlitch(vx_node node, const vx_reference
     delete[] data->pYOffsetG;
     delete[] data->pXOffsetB;
     delete[] data->pYOffsetB;
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+#if ENABLE_HIP
+        hipHostFree(data->pRgbOffsets);
+#endif
+    } else {
+        delete[] data->pRgbOffsets;
+    }
     delete data->pSrcDesc;
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));

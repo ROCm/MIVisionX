@@ -30,6 +30,7 @@ struct DilateLocalData {
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
     RpptROI *pSrcRoi;
+    SrcLeadIn srcLeadIn;
     RpptRoiType roiType;
     vxTensorLayout inputLayout;
     vxTensorLayout outputLayout;
@@ -124,8 +125,8 @@ static vx_status VX_CALLBACK processDilate(vx_node node, const vx_reference *par
         return VX_ERROR_NOT_IMPLEMENTED;
     RppBackend backend = RPP_HOST_BACKEND;
 #endif
-    RppStatus rpp_status = rppt_dilate(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->kernelSize, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
-    return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+    return callWithSrcLeadIn(data->handle, data->deviceType, (vx_tensor)parameters[0], data->pSrc, data->pSrcDesc, data->kernelSize, &data->srcLeadIn,
+                             [&](RppPtr_t pSrc) { return rppt_dilate(pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->kernelSize, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend); });
 }
 
 static vx_status VX_CALLBACK initializeDilate(vx_node node, const vx_reference *parameters, vx_uint32 num) {
@@ -178,6 +179,7 @@ static vx_status VX_CALLBACK uninitializeDilate(vx_node node, const vx_reference
 
     if (data->pSrcDesc) delete data->pSrcDesc;
     if (data->pDstDesc) delete data->pDstDesc;
+    freeSrcLeadIn(data->deviceType, &data->srcLeadIn);
     if (data->handle) STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
 
     delete data;

@@ -32,6 +32,7 @@ struct BlurLocalData {
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
     RpptROI *pSrcRoi;
+    SrcLeadIn srcLeadIn;
     RpptRoiType roiType;
     vxTensorLayout inputLayout;
     vxTensorLayout outputLayout;
@@ -107,8 +108,8 @@ static vx_status VX_CALLBACK processBlur(vx_node node, const vx_reference *param
         return VX_ERROR_NOT_IMPLEMENTED;
     RppBackend backend = RPP_HOST_BACKEND;
 #endif
-    RppStatus rpp_status = rppt_box_filter(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->kernelSize, data->borderType, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
-    return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+    return callWithSrcLeadIn(data->handle, data->deviceType, (vx_tensor)parameters[0], data->pSrc, data->pSrcDesc, data->kernelSize, &data->srcLeadIn,
+                             [&](RppPtr_t pSrc) { return rppt_box_filter(pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->kernelSize, data->borderType, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend); });
 }
     
 static vx_status VX_CALLBACK initializeBlur(vx_node node, const vx_reference *parameters, vx_uint32 num) {
@@ -156,6 +157,7 @@ static vx_status VX_CALLBACK uninitializeBlur(vx_node node, const vx_reference *
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     delete data->pSrcDesc;
     delete data->pDstDesc;
+    freeSrcLeadIn(data->deviceType, &data->srcLeadIn);
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     delete data;
     return VX_SUCCESS;

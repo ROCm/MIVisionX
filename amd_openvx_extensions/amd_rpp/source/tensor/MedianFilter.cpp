@@ -32,6 +32,7 @@ struct MedianFilterLocalData {
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
     RpptROI *pSrcRoi;
+    SrcLeadIn srcLeadIn;
     RpptROI *pSrcRoiFrames;
     RpptRoiType roiType;
     vxTensorLayout inputLayout;
@@ -142,10 +143,8 @@ static vx_status VX_CALLBACK processMedianFilter(vx_node node, const vx_referenc
         return VX_ERROR_NOT_IMPLEMENTED;
     RppBackend backend = RPP_HOST_BACKEND;
 #endif
-    RppStatus rpp_status = rppt_median_filter(data->pSrc, data->pSrcDesc, data->pDst, data->pDstDesc,
-                                              data->kernelSize, data->borderType,
-                                              data->pSrcRoi, data->roiType, data->handle->rppHandle, backend);
-    return (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+    return callWithSrcLeadIn(data->handle, data->deviceType, (vx_tensor)parameters[0], data->pSrc, data->pSrcDesc, data->kernelSize, &data->srcLeadIn,
+                             [&](RppPtr_t pSrc) { return rppt_median_filter(pSrc, data->pSrcDesc, data->pDst, data->pDstDesc, data->kernelSize, data->borderType, data->pSrcRoi, data->roiType, data->handle->rppHandle, backend); });
 }
 
 static vx_status VX_CALLBACK initializeMedianFilter(vx_node node, const vx_reference *parameters, vx_uint32 num) {
@@ -197,6 +196,7 @@ static vx_status VX_CALLBACK uninitializeMedianFilter(vx_node node, const vx_ref
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     delete data->pSrcDesc;
     delete data->pDstDesc;
+    freeSrcLeadIn(data->deviceType, &data->srcLeadIn);
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     freeRoiFrames(data->deviceType, data->pSrcRoiFrames);
     delete data;

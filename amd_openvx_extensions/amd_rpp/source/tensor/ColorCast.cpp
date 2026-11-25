@@ -29,6 +29,7 @@ struct ColorCastLocalData {
     RppPtr_t pDst;
     vx_float32 *pAlpha;
     RpptRGB *pRgb;
+    RpptRGB *pRgbFrames;
     RpptDescPtr pSrcDesc;
     RpptDescPtr pDstDesc;
     RpptROI *pSrcRoi;
@@ -67,17 +68,18 @@ static vx_status VX_CALLBACK refreshColorCast(vx_node node, const vx_reference *
         const unsigned N = static_cast<unsigned>(data->inputTensorDims[0]);
         const unsigned F = static_cast<unsigned>(data->inputTensorDims[1]); // Num of frames per sample
         STATUS_ERROR_CHECK(allocRoiFrames(data->deviceType, &data->pSrcRoiFrames, N * F));
-        // Expand alpha and RGB values
+        STATUS_ERROR_CHECK(allocFrameBuffer(data->deviceType, reinterpret_cast<void **>(&data->pRgbFrames), N * F * sizeof(RpptRGB)));
+        // Expand alpha, RGB values and ROI into node-owned buffers
         for (int n = N - 1; n >= 0; n--) {
             unsigned base = n * F;
-            unsigned srcOff = n * 3;
             for (unsigned f = 0; f < F; f++) {
                 data->pAlpha[base + f] = data->pAlpha[n];
                 data->pSrcRoiFrames[base + f].xywhROI = data->pSrcRoi[n].xywhROI;
-                data->pRgb[base + f] = data->pRgb[srcOff];
+                data->pRgbFrames[base + f] = data->pRgb[n];
             }
         }
         data->pSrcRoi = data->pSrcRoiFrames;
+        data->pRgb = data->pRgbFrames;
     }
 
     return status;
@@ -203,6 +205,7 @@ static vx_status VX_CALLBACK uninitializeColorCast(vx_node node, const vx_refere
     delete data->pDstDesc;
     STATUS_ERROR_CHECK(releaseRPPHandle(node, data->handle, data->deviceType));
     freeRoiFrames(data->deviceType, data->pSrcRoiFrames);
+    freeFrameBuffer(data->deviceType, data->pRgbFrames);
     delete data;
     return VX_SUCCESS;
 }

@@ -1301,6 +1301,11 @@ vx_status agoVerifyNode(AgoNode * node)
     AgoKernel * kernel = node->akernel;
     vx_status status = VX_SUCCESS;
 
+    if (!agoIsBorderModeSupported(kernel, node->attr_border_mode.mode)) {
+        agoAddLogEntry(&kernel->ref, VX_ERROR_NOT_SUPPORTED, "ERROR: agoVerifyGraph: kernel %s: border mode %d is not supported\n", kernel->name, (int)node->attr_border_mode.mode);
+        return VX_ERROR_NOT_SUPPORTED;
+    }
+
     // check if node has required arguments and initialize data required for further graph processing
     node->hierarchical_level = 0;
     for (vx_uint32 arg = 0; arg < AGO_MAX_PARAMS; arg++) {

@@ -3043,6 +3043,30 @@ int agoReleaseKernel(AgoKernel * kernel, bool isForExternalUse)
     return 0;
 }
 
+// The built-in kernels that read pixels around the output pixel only have code for some border modes;
+// the others behave as VX_BORDER_UNDEFINED whatever the node asks for.
+bool agoIsBorderModeSupported(AgoKernel * kernel, vx_enum mode)
+{
+    if (mode == VX_BORDER_UNDEFINED || kernel->user_kernel)
+        return true;
+    switch (kernel->id) {
+    case VX_KERNEL_BOX_3x3:
+    case VX_KERNEL_GAUSSIAN_3x3:
+    case VX_KERNEL_ERODE_3x3:
+    case VX_KERNEL_DILATE_3x3:
+    case VX_KERNEL_MEDIAN_3x3:
+    case VX_KERNEL_SOBEL_3x3:
+    case VX_KERNEL_CUSTOM_CONVOLUTION:
+        return false;
+    case VX_KERNEL_REMAP:
+    case VX_KERNEL_WARP_AFFINE:
+    case VX_KERNEL_WARP_PERSPECTIVE:
+        return mode == VX_BORDER_CONSTANT;
+    default:
+        return true;
+    }
+}
+
 AgoNode * agoCreateNode(AgoGraph * graph, AgoKernel * kernel)
 {
     AgoNode * node = new AgoNode;
@@ -3568,6 +3592,7 @@ AgoContext::AgoContext()
     // functions is VX_BORDER_UNDEFINED; leaving it zero makes vxQueryContext
     // report a value that vxSetContextAttribute then refuses to take back
     immediate_border_mode.mode = VX_BORDER_UNDEFINED;
+    immediate_border_policy = VX_BORDER_POLICY_DEFAULT_TO_UNDEFINED;
     // VX_CONTEXT_EXTENSIONS: the space separated names of the extensions this build implements
     memset(&extensions, 0, sizeof(extensions));
 #if OPENVX_USE_PIPELINING

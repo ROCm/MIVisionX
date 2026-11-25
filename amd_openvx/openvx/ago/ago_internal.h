@@ -970,6 +970,7 @@ AgoNode * agoCreateNode(AgoGraph * graph, AgoKernel * kernel);
 AgoNode * agoCreateNode(AgoGraph * graph, vx_enum kernel_id);
 int agoReleaseNode(AgoNode * node);
 vx_status agoVerifyNode(AgoNode * node);
+bool agoIsBorderModeSupported(AgoKernel * kernel, vx_enum mode);
 // sanity checks
 int agoDataSanityCheckAndUpdate(AgoData * data);
 bool agoIsValidReference(AgoReference * ref);

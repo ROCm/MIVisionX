@@ -102,6 +102,14 @@ static vx_status VX_CALLBACK validateColorToGreyscale(vx_node node, const vx_ref
     if (num_tensor_dims < 4)
         return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: ColorToGreyscale: tensor: #2 dimensions=%lu (must be >= 4)\n", num_tensor_dims);
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &tensor_dims, sizeof(tensor_dims)));
+
+    vx_int32 output_layout;
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &output_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    if (output_layout != vxTensorLayout::VX_NCHW && output_layout != vxTensorLayout::VX_NFCHW)
+        return ERRMSG(VX_ERROR_INVALID_FORMAT, "validate: ColorToGreyscale: outputLayout=%d (must be VX_NCHW or VX_NFCHW; a greyscale output is [N,1,H,W])\n", output_layout);
+    size_t output_channels = tensor_dims[(output_layout == vxTensorLayout::VX_NFCHW) ? 2 : 1];
+    if (output_channels != 1)
+        return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: ColorToGreyscale: output channels=%lu (must be 1)\n", output_channels);
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &tensor_dtype, sizeof(tensor_dtype)));
     STATUS_ERROR_CHECK(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_FIXED_POINT_POSITION, &tensor_fixed_point_position, sizeof(tensor_fixed_point_position)));
     STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_NUMBER_OF_DIMS, &num_tensor_dims, sizeof(num_tensor_dims)));

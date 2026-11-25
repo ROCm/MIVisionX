@@ -151,6 +151,11 @@ static vx_status VX_CALLBACK initializeColorJitter(vx_node node, const vx_refere
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[8], &output_layout, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[9], &roi_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[10], &data->deviceType, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
+        vx_uint32 deviceType = data->deviceType;
+        delete data;
+        return ERRMSG(VX_ERROR_NOT_SUPPORTED, "initialize: ColorJitter is not supported on the GPU backend (rppt_color_jitter is HOST only), deviceType=%u\n", deviceType);
+    }
     data->roiType = static_cast<RpptRoiType>(roi_type);
     data->inputLayout = static_cast<vxTensorLayout>(input_layout);
     data->outputLayout = static_cast<vxTensorLayout>(output_layout);
@@ -172,16 +177,10 @@ static vx_status VX_CALLBACK initializeColorJitter(vx_node node, const vx_refere
     fillDescriptionPtrfromDims(data->pDstDesc, data->outputLayout, data->outputTensorDims);
 
     vx_size batch_size = data->pSrcDesc->n;
-    if (data->deviceType == AGO_TARGET_AFFINITY_GPU) {
-#if ENABLE_HIP
-        return VX_ERROR_NOT_IMPLEMENTED;
-#endif
-    } else {
-        data->pBrightness = new vx_float32[batch_size];
-        data->pContrast = new vx_float32[batch_size];
-        data->pHue = new vx_float32[batch_size];
-        data->pSaturation = new vx_float32[batch_size];
-    }
+    data->pBrightness = new vx_float32[batch_size];
+    data->pContrast = new vx_float32[batch_size];
+    data->pHue = new vx_float32[batch_size];
+    data->pSaturation = new vx_float32[batch_size];
 
     STATUS_ERROR_CHECK(refreshColorJitter(node, parameters, num, data));
     STATUS_ERROR_CHECK(createRPPHandle(node, &data->handle, data->pSrcDesc->n, data->deviceType));
@@ -210,13 +209,7 @@ static vx_status VX_CALLBACK uninitializeColorJitter(vx_node node, const vx_refe
 }
 
 static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node, vx_bool use_opencl_1_2, vx_uint32 &supported_target_affinity) {
-    vx_context context = vxGetContext((vx_reference)graph);
-    AgoTargetAffinityInfo affinity;
-    vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity));
-    if (affinity.device_type == AGO_TARGET_AFFINITY_GPU)
-        supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
-    else
-        supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
+    supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
 
     return VX_SUCCESS;
 }

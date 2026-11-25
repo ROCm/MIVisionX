@@ -1086,6 +1086,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         // get configuration
         data->ref.type = VX_TYPE_IMAGE;
         memcpy(&data->u.img.format, desc, sizeof(data->u.img.format));
+        if (data->u.img.format == VX_DF_IMAGE_RGBA) data->u.img.format = VX_DF_IMAGE_RGBX; // same layout; 'RGBA' was the value of VX_DF_IMAGE_RGBX before OpenVX 1.3.2
         if (sscanf(desc + 5, "%d,%d", &data->u.img.width, &data->u.img.height) != 2) return -1;
         if (data->isVirtual && !data->isNotFullyConfigured && (data->u.img.format == VX_DF_IMAGE_VIRT || data->u.img.width == 0 || data->u.img.height == 0)) {
             // incomplete information needs to process this again later
@@ -1140,6 +1141,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
         data->ref.type = VX_TYPE_IMAGE;
         data->u.img.isUniform = vx_true_e;
         memcpy(&data->u.img.format, desc, sizeof(data->u.img.format));
+        if (data->u.img.format == VX_DF_IMAGE_RGBA) data->u.img.format = VX_DF_IMAGE_RGBX; // same layout; 'RGBA' was the value of VX_DF_IMAGE_RGBX before OpenVX 1.3.2
         if (sscanf(desc + 5, "%d,%d," VX_FMT_SIZE "," VX_FMT_SIZE "," VX_FMT_SIZE "," VX_FMT_SIZE "", &data->u.img.width, &data->u.img.height, &data->u.img.uniform[0], &data->u.img.uniform[1], &data->u.img.uniform[2], &data->u.img.uniform[3]) < 2) return -1;
         if (agoGetImageComponentsAndPlanes(acontext, data->u.img.format, &data->u.img.components, &data->u.img.planes, &data->u.img.pixel_size_in_bits_num, &data->u.img.pixel_size_in_bits_denom, &data->u.img.color_space, &data->u.img.channel_range)) return -1;
         // Populate uniform_pixel_value from the parsed per-channel uniform[] so the

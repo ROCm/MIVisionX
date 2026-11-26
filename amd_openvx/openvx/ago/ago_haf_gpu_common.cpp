@@ -270,9 +270,11 @@ int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int 
 //     ly   - local work item [1]
 //     lbuf - local buffer
 //
-int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int gxoffset, int gyoffset, std::string& code, int srcImageBufferSize)
+int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int gxoffset, int gyoffset, std::string& code, int srcImageBufferSize, bool clampTop)
 {
 	char item[1024];
+	size_t codeStart = code.size();
+	if (clampTop) srcImageBufferSize = 0x7fffffff; // every load is clamped into the image, none is skipped
 
 	// configuration parameters
 	int LMdivWGWidthShift = leftmostbit(LMWidth / WGWidth);
@@ -476,9 +478,36 @@ int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHe
 		}
 	}
 
+	if (clampTop) {
+		// the loads that start above the image read the same column of the first row, and the loads that end
+		// below it read the last row: an address outside the image is moved by whole rows until it is inside
+		// (needs p1_buf, p1_offset and p1_height of the source image)
+		std::string seg = code.substr(codeStart);
+		auto replaceAll = [](std::string& str, const std::string& from, const std::string& to) {
+			for (size_t pos = str.find(from); pos != std::string::npos; pos = str.find(from, pos + to.size())) str.replace(pos, from.size(), to);
+		};
+		char from[64], to[96];
+		snprintf(from, sizeof(from), "gbuf + goffset + ry * gstride + (rx << %d)", dTypeShift);
+		snprintf(to, sizeof(to), "gbuf + AGO_CLAMP_GOFF(goffset + ry * gstride + (rx << %d))", dTypeShift);
+		replaceAll(seg, from, to);
+		replaceAll(seg, "gbuf + goffset_t)", "gbuf + AGO_CLAMP_GOFF(goffset_t))");
+		replaceAll(seg, "gbuf + goffset)", "gbuf + AGO_CLAMP_GOFF(goffset))");
+		char decl[640];
+		snprintf(decl, sizeof(decl),
+			"    __global uchar * gbase = p1_buf + p1_offset;\n"
+			"    __global uchar * glimit = gbase + (int)p1_height * gstride;\n"
+			"#define AGO_CLAMP_GOFF(o) ((gbuf + (o)) < gbase ? (o) + (((int)(gbase - (gbuf + (o))) + gstride - 1) / gstride) * gstride : "
+			"((gbuf + (o) + %d) > glimit ? (o) - (((int)(gbuf + (o) + %d - glimit) + gstride - 1) / gstride) * gstride : (o)))\n",
+			1 << dTypeShift, 1 << dTypeShift);
+		seg.insert(seg.find('\n') + 1, decl);
+		code.resize(codeStart);
+		code += seg;
+	}
+
 	code +=
 		"    barrier(CLK_LOCAL_MEM_FENCE);\n"
 		"  }\n";
+	if (clampTop) code += "#undef AGO_CLAMP_GOFF\n";
 
 	return VX_SUCCESS;
 }

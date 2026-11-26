@@ -1412,7 +1412,7 @@ int HafGpu_ScaleGaussianHalf(AgoNode * node)
 	int work_group_width = 16;
 	int work_group_height = 16;
 	int width = node->paramList[0]->u.img.width;
-	int height = node->paramList[0]->u.img.height - 1;
+	int height = node->paramList[0]->u.img.height;
 	int N = 0;
 	if (node->akernel->id == VX_KERNEL_AMD_SCALE_GAUSSIAN_HALF_U8_U8_3x3) {
 		N = 3;
@@ -1447,7 +1447,7 @@ int HafGpu_ScaleGaussianHalf(AgoNode * node)
 		"  int gy = get_global_id(1);\n"
 		"  p0_buf += p0_offset + (gy * p0_stride) + (gx << 2);\n"
 		"  int gstride = p1_stride;\n"
-		"  __global uchar * gbuf = p1_buf + p1_offset + (((gy - ly) << 1) + 1) * gstride + ((gx - lx) << 3);\n"
+		"  __global uchar * gbuf = p1_buf + p1_offset + ((gy - ly) << 1) * gstride + ((gx - lx) << 3) - 1;\n"
 		"  bool valid = ((gx < %d) && (gy < %d)) ? true : false;\n" // (width+3)/4, height
 		"  gx = lx; gy = ly;\n"
 		)
@@ -1455,7 +1455,7 @@ int HafGpu_ScaleGaussianHalf(AgoNode * node)
 	node->opencl_code = item;
 	int srcImageBufferSize = (int) node->paramList[1]->size;
 	// load input image into local
-	if (HafGpu_Load_Local_ImageSize(work_group_width, work_group_height, LMemStride, work_group_height * 2 - 1 + LMemSideTB * 2, LMemSideLR, LMemSideTB, node->opencl_code, srcImageBufferSize) < 0) {
+	if (HafGpu_Load_Local_ImageSize(work_group_width, work_group_height, LMemStride, work_group_height * 2 - 1 + LMemSideTB * 2, LMemSideLR, LMemSideTB, node->opencl_code, srcImageBufferSize, true) < 0) {
 		return -1;
 	}
 	// perform filtering

@@ -823,16 +823,17 @@ static int test_node_border_mode_attr(vx_context context) {
     vx_graph g2 = vxCreateGraph(context);
     const char *t2 = "data i2 = image-uniform:U008,320,240,128\ndata o2 = image:U008,320,240\nnode org.khronos.openvx.gaussian_3x3 i2 o2 attr:BORDER_MODE:REPLICATE\n";
     vx_status s2 = importGraphText(g2, t2);
-    printf("STATUS: BORDER_MODE:REPLICATE - %s\n", s2 == VX_SUCCESS ? "PASS" : "FAIL");
-    if (s2 != VX_SUCCESS) errors++;
+    // the 3x3 filters only have VX_BORDER_UNDEFINED, so importing (which verifies the graph) rejects the other modes
+    printf("STATUS: BORDER_MODE:REPLICATE on a filter is rejected - %s\n", s2 != VX_SUCCESS ? "PASS" : "FAIL");
+    if (s2 == VX_SUCCESS) errors++;
     vxReleaseGraph(&g2);
 
     // CONSTANT
     vx_graph g3 = vxCreateGraph(context);
     const char *t3 = "data i3 = image-uniform:U008,320,240,128\ndata o3 = image:U008,320,240\nnode org.khronos.openvx.box_3x3 i3 o3 attr:BORDER_MODE:CONSTANT,0\n";
     vx_status s3 = importGraphText(g3, t3);
-    printf("STATUS: BORDER_MODE:CONSTANT - %s\n", s3 == VX_SUCCESS ? "PASS" : "FAIL");
-    if (s3 != VX_SUCCESS) errors++;
+    printf("STATUS: BORDER_MODE:CONSTANT on a filter is rejected - %s\n", s3 != VX_SUCCESS ? "PASS" : "FAIL");
+    if (s3 == VX_SUCCESS) errors++;
     vxReleaseGraph(&g3);
 
     return errors;

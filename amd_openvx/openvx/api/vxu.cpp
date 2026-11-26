@@ -117,6 +117,12 @@ static vx_status vx_useImmediateBorderMode(vx_context context, vx_node node)
 {
     vx_border_mode_t border;
     vx_status status = vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_IMMEDIATE_BORDER_MODE, &border, sizeof(border));
+    // VX_BORDER_POLICY_DEFAULT_TO_UNDEFINED, the immediate mode default: a kernel without code for the
+    // mode runs with VX_BORDER_UNDEFINED
+    if (status == VX_SUCCESS && !agoIsBorderModeSupported(((AgoNode *)node)->akernel, border.mode)) {
+        border.mode = VX_BORDER_UNDEFINED;
+        memset(&border.constant_value, 0, sizeof(border.constant_value));
+    }
     if (status == VX_SUCCESS)
         status = vxSetNodeAttribute(node, VX_NODE_ATTRIBUTE_BORDER_MODE, &border, sizeof(border));
     return status;

@@ -1286,8 +1286,8 @@ int agoOptimizeDramaRemoveNodeMerge(AgoGraph * agraph)
 				childnode->paramList[0] = oImg;
 				childnode->paramList[1] = iImg;
 			}
-			// approaximate AREA interpolation mode with scale factors not greater than 1.0f with BILINEAR
-			else if (kernel->id == VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA && !((iImg->u.img.width > oImg->u.img.width) && (iImg->u.img.height > oImg->u.img.height))) {
+			// AREA interpolation of an image that does not shrink in either direction is replaced with NEAREST
+			else if (kernel->id == VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_AREA && !((iImg->u.img.width > oImg->u.img.width) || (iImg->u.img.height > oImg->u.img.height))) {
 				// replace the node with VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_NEAREST
 				childnode = agoCreateNode(agraph, VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_NEAREST);
 				childnode->paramList[0] = oImg;

@@ -336,6 +336,8 @@ int agoKernel_ScaleImage_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_ScaleImage_U8_U8_Bilinear_Replicate(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_ScaleImage_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_ScaleImage_U8_U8_Area_Replicate(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_ScaleImage_U8_U8_Area_Constant(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_OpticalFlowPyrLK_XY_XY(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_OpticalFlowPrepareLK_XY_XY(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_OpticalFlowImageLK_XY_XY(AgoNode * node, AgoKernelCommand cmd);

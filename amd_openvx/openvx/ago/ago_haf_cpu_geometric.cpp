@@ -3972,8 +3972,17 @@ vx_uint8             border
 	else
 	{
 		int xinc, yinc, xoffs, yoffs, xpos, ypos, x, y;
+		// NOTE (#1827): the intermediate Ymap buffer must be offset far enough
+		// past Xmap to account for Ymap being indexed by *source*-space column
+		// (up to srcWidth-1, not dstWidth-1). The original dead code here used
+		// "Xmap + dstWidth", which aliases into Xmap's own tail entries and
+		// corrupts them mid-scan on any non-trivial (non 1:1/2:1) downscale --
+		// this caused a crash once this function was actually wired up and
+		// exercised. Match the layout already proven correct by the sibling
+		// plain HafCpu_ScaleImage_U8_U8_Area's generic path above.
+		int alignWidth = (dstWidth + 15) & ~15;
 		vx_uint16 *Xmap = (unsigned short *)((vx_uint8*)matrix + sizeof(ago_scale_matrix_t));
-		vx_uint16 *Ymap = Xmap + dstWidth;
+		vx_uint16 *Ymap = Xmap + alignWidth + 8;
 		__m128i z = _mm_setzero_si128();
 		// do generic area scaling
 		yinc = (int)(FP_MUL * matrix->yscale);		// to convert to fixed point

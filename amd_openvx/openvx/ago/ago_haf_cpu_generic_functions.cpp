@@ -2148,8 +2148,6 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
     // rows stay at zero (the same border behaviour as the legacy graph path).
     for (vx_size i = 1; i <= levels; i++)
     {
-        bool sampleFirstRow = (lh[i - 1] & 1) ? true : false;
-        bool sampleFirstCol = (lw[i - 1] & 1) ? true : false;
         if (lh[i] >= 3 && lw[i] >= 3 && lw[i - 1] >= 5 && lh[i - 1] >= 5)
         {
             HafCpu_ScaleGaussianHalf_U8_U8_5x5(
@@ -2158,7 +2156,7 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
                 (vx_uint32)gstride[i],
                 gptr[i - 1] + (size_t)2 * gstride[i - 1],
                 (vx_uint32)gstride[i - 1],
-                sampleFirstRow, sampleFirstCol,
+                true, true,
                 scratch.data());
         }
     }

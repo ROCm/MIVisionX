@@ -15709,13 +15709,11 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
-        bool sampleFirstRow = (iImg->u.img.height & 1) ? true : false;
-        bool sampleFirstColumn = (iImg->u.img.width & 1) ? true : false;
         if (iImg->u.img.width < 5 || iImg->u.img.height < 5 || oImg->u.img.width < 3 || oImg->u.img.height < 3) {
             status = VX_ERROR_INVALID_DIMENSION;
         }
         else if (HafCpu_ScaleGaussianHalf_U8_U8_5x5(oImg->u.img.width, oImg->u.img.height - 2, oImg->buffer + oImg->u.img.stride_in_bytes, oImg->u.img.stride_in_bytes,
-            iImg->buffer + (2 * iImg->u.img.stride_in_bytes), iImg->u.img.stride_in_bytes, sampleFirstRow, sampleFirstColumn, node->localDataPtr)) {
+            iImg->buffer + (2 * iImg->u.img.stride_in_bytes), iImg->u.img.stride_in_bytes, true, true, node->localDataPtr)) {
             status = VX_FAILURE;
         }
     }

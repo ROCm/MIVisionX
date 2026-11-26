@@ -6899,6 +6899,13 @@ int HipExec_Sobel_S16S16_U8_3x3_GXY(hipStream_t stream, vx_uint32 dstWidth, vx_u
 // VxScaleGaussianHalf kernels for hip backend
 // ----------------------------------------------------------------------------
 
+// source offset moved down whole rows until it is inside the buffer, so the rows above the image repeat row 0
+__device__ __forceinline__ int hip_src_offset_from_row_above(int idx, int stride) {
+    while (idx < 0)
+        idx += stride;
+    return idx;
+}
+
 __global__ void __attribute__((visibility("default")))
 Hip_ScaleGaussianHalf_U8_U8_3x3(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
@@ -6913,13 +6920,13 @@ Hip_ScaleGaussianHalf_U8_U8_3x3(uint dstWidth, uint dstHeight,
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
 
     uint dstIdx =  y * dstImageStrideInBytes + (x << 2);
-    int srcIdx =  (((y - ly) << 1) + 1) * srcImageStrideInBytes + ((x - lx) << 3);
+    int srcIdx =  (((y - ly) << 1)) * srcImageStrideInBytes + ((x - lx) << 3);
     bool valid = ((x < dstWidthComp) && (y < dstHeight)) ? true : false;
 
     { // load 136x33 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
-        int goffset = (ly - 1) * srcImageStrideInBytes + (lx << 3) - 4;
-        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
+        int goffset = (ly - 1) * srcImageStrideInBytes + (lx << 3) - 5;
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[hip_src_offset_from_row_above(srcIdx + goffset, srcImageStrideInBytes)]));
         loffset += 16 * 136;
         goffset += 16 * srcImageStrideInBytes;
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
@@ -6930,10 +6937,10 @@ Hip_ScaleGaussianHalf_U8_U8_3x3(uint dstWidth, uint dstHeight,
         }
         uchar *lbufptr;
         lbufptr = lbuf + 128;
-        goffset = -srcImageStrideInBytes + 124;
+        goffset = -srcImageStrideInBytes + 123;
         int id = ly * 16 + lx;
         if (id < 33) {
-            *((uint2 *)(&lbufptr[id * 136])) = *((uint2 *)(&pSrcImage[srcIdx + goffset + id * srcImageStrideInBytes]));
+            *((uint2 *)(&lbufptr[id * 136])) = *((uint2 *)(&pSrcImage[hip_src_offset_from_row_above(srcIdx + goffset + id * (int)srcImageStrideInBytes, srcImageStrideInBytes)]));
         }
         __syncthreads();
     }
@@ -7025,13 +7032,13 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
 
     int srcStride = srcImageStrideInBytes;
     uint dstIdx =  y * dstImageStrideInBytes + (x << 2);
-    int srcIdx =  (((y - ly) << 1) + 1) * srcStride + ((x - lx) << 3);
+    int srcIdx =  (((y - ly) << 1)) * srcStride + ((x - lx) << 3);
     bool valid = ((x < dstWidthComp) && (y < dstHeight)) ? true : false;
 
     { // load 136x35 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
-        int goffset = (ly - 2) * srcStride + (lx << 3) - 4;
-        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
+        int goffset = (ly - 2) * srcStride + (lx << 3) - 5;
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[hip_src_offset_from_row_above(srcIdx + goffset, srcStride)]));
         loffset += 16 * 136;
         goffset += 16 * srcStride;
         int sidx = srcIdx + goffset;
@@ -7046,9 +7053,9 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
         }
         uchar *lbufptr;
         lbufptr = lbuf + 128;
-        goffset = -2 * srcStride + 124;
+        goffset = -2 * srcStride + 123;
         int id = ly * 16 + lx;
-        sidx = srcIdx + goffset + id * srcStride;
+        sidx = hip_src_offset_from_row_above(srcIdx + goffset + id * srcStride, srcStride);
         if (id < 35 && sidx < srcImageBufferSize) {
             *((uint2 *)(&lbufptr[id * 136])) = *((uint2 *)(&pSrcImage[sidx]));
         }

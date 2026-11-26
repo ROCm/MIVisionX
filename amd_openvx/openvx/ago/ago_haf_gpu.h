@@ -55,7 +55,7 @@ int HafGpu_Load_Local(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int 
 //     ly      - local work item [1]
 //     lbuf    - local buffer pointer
 //
-int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int gxoffset, int gyoffset, std::string& code, int srcImageBufferSize);
+int HafGpu_Load_Local_ImageSize(int WGWidth, int WGHeight, int LMWidth, int LMHeight, int gxoffset, int gyoffset, std::string& code, int srcImageBufferSize, bool clampTop = false);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Generate OpenCL code for linear filter

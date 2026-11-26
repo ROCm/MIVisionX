@@ -69,8 +69,10 @@ static vx_status VX_CALLBACK refreshLensCorrection(vx_node node, const vx_refere
         for (int n = data->inputTensorDims[0] - 1; n >= 0; n--) {
             unsigned index = n * num_of_frames;
             for (unsigned f = 0; f < num_of_frames; f++) {
-                data->pCameraMatrix[index + f] = data->pCameraMatrix[n];
-                data->pDistortionCoeffs[index + f] = data->pDistortionCoeffs[n];
+                for (unsigned k = 0; k < 9; k++)
+                    data->pCameraMatrix[(index + f) * 9 + k] = data->pCameraMatrix[n * 9 + k];
+                for (unsigned k = 0; k < 8; k++)
+                    data->pDistortionCoeffs[(index + f) * 8 + k] = data->pDistortionCoeffs[n * 8 + k];
                 data->pSrcRoiFrames[index + f].xywhROI = data->pSrcRoi[n].xywhROI;
             }
         }

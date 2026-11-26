@@ -3425,10 +3425,11 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
 
     uint mask = HIPSELECT(0u, 0xffffffffu, x < dstWidthComp);
     mask = HIPSELECT(0u, mask, y < dstHeight);
+    uint px = (uint)x << 2;
     M.x &= mask;
-    M.y &= mask;
-    M.z &= mask;
-    M.w &= mask;
+    M.y &= HIPSELECT(0u, mask, px + 1 < dstWidth);
+    M.z &= HIPSELECT(0u, mask, px + 2 < dstWidth);
+    M.w &= HIPSELECT(0u, mask, px + 3 < dstWidth);
     uint4 P;
     P.x = HIPSELECT(0u, 127u, M.x > hyst.x);
     P.y = HIPSELECT(0u, 127u, M.y > hyst.x);

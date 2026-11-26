@@ -22,6 +22,8 @@ THE SOFTWARE.
 
 
 #include "ago_internal.h"
+#include <algorithm>
+#include <vector>
 
 //=======================================
 //				Types
@@ -3815,6 +3817,55 @@ ago_scale_matrix_t * matrix
 			{
 				int sum = (int)S0[0] + (int)S0[1] + (int)S1[0] + (int)S1[1] + 2;
 				*D = (vx_uint8)(sum >> 2);
+			}
+			pDstImage += dstImageStrideInBytes;
+		}
+	}
+	else if ((srcWidth % dstWidth) != 0 || (srcHeight % dstHeight) != 0)
+	{
+		// Non-integer ratio: destination pixel (x, y) covers the source box
+		// [x * SX, (x + 1) * SX) x [y * SY, (y + 1) * SY) and every source pixel is
+		// weighted by its overlap with that box (the same model as the HIP kernel).
+		// Vertical pass into a float row of column sums, then a horizontal pass.
+		double SX = (double)srcWidth / (double)dstWidth;
+		double SY = (double)srcHeight / (double)dstHeight;
+		float inv = (float)(1.0 / (SX * SY));
+		std::vector<int> ix0(dstWidth), nx(dstWidth);
+		std::vector<float> wxFirst(dstWidth), wxLast(dstWidth);
+		for (unsigned int x = 0; x < dstWidth; x++)
+		{
+			double x0 = x * SX, x1 = std::min((x + 1) * SX, (double)srcWidth);
+			int i0 = (int)x0, i1 = std::min((int)ceil(x1), (int)srcWidth);
+			ix0[x] = i0;
+			nx[x] = i1 - i0;
+			wxFirst[x] = (float)(std::min(x1, (double)(i0 + 1)) - x0);
+			wxLast[x] = (float)(x1 - (double)(i1 - 1));
+		}
+		std::vector<float> col(srcWidth);
+		for (unsigned int y = 0; y < dstHeight; y++)
+		{
+			double y0 = y * SY, y1 = std::min((y + 1) * SY, (double)srcHeight);
+			int iy0 = (int)y0, iy1 = std::min((int)ceil(y1), (int)srcHeight);
+			float wyFirst = (float)(std::min(y1, (double)(iy0 + 1)) - y0);
+			float wyLast = (float)(y1 - (double)(iy1 - 1));
+			for (unsigned int x = 0; x < srcWidth; x++) col[x] = 0.0f;
+			for (int sy = iy0; sy < iy1; sy++)
+			{
+				float wy = (sy == iy0) ? wyFirst : ((sy == iy1 - 1) ? wyLast : 1.0f);
+				const vx_uint8 *S = pSrcImage + (size_t)sy * srcImageStrideInBytes;
+				for (unsigned int x = 0; x < srcWidth; x++) col[x] += wy * (float)S[x];
+			}
+			for (unsigned int x = 0; x < dstWidth; x++)
+			{
+				const float *c = &col[ix0[x]];
+				float sum = c[0] * wxFirst[x];
+				if (nx[x] > 1)
+				{
+					for (int i = 1; i < nx[x] - 1; i++) sum += c[i];
+					sum += c[nx[x] - 1] * wxLast[x];
+				}
+				int v = (int)(sum * inv + 0.5f);
+				pDstImage[x] = (vx_uint8)(v > 255 ? 255 : v);
 			}
 			pDstImage += dstImageStrideInBytes;
 		}

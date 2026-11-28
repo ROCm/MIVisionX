@@ -145,17 +145,47 @@ target_link_libraries(vxu openvx)
 set_target_properties(openvx PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 set_target_properties(vxu PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 
+target_include_directories(openvx PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include/mivisionx>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mivisionx>)
+
+target_include_directories(vxu PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include/mivisionx>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mivisionx>)
+
 # install MIVisionX libs -- {ROCM_PATH}/lib
-install(TARGETS openvx LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
-install(TARGETS openvx LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
-install(TARGETS openvx LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
-install(TARGETS vxu LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_SKIP)
-install(TARGETS vxu LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT dev NAMELINK_ONLY)
-install(TARGETS vxu LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT asan)
+# Only the runtime install is exported; the dev (symlink-only) and asan
+# installs are additional file placements, not additional export entries.
+install(TARGETS openvx
+        EXPORT mivisionxTargets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            COMPONENT runtime NAMELINK_SKIP
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+install(TARGETS openvx
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            COMPONENT dev NAMELINK_ONLY)
+install(TARGETS openvx
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            COMPONENT asan)
+install(TARGETS vxu
+        EXPORT mivisionxTargets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            COMPONENT runtime NAMELINK_SKIP
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx)
+install(TARGETS vxu
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            COMPONENT dev NAMELINK_ONLY)
+install(TARGETS vxu
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            COMPONENT asan)
 
 # install MIVisionX backend type files -- {ROCM_PATH}/include/mivisionx/
 configure_file("${PROJECT_SOURCE_DIR}/include/openvx_backend.h.in" "${PROJECT_BINARY_DIR}/include/mivisionx/openvx_backend.h")
-install(FILES ${PROJECT_BINARY_DIR}/include/mivisionx/openvx_backend.h DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
+install(FILES ${PROJECT_BINARY_DIR}/include/mivisionx/openvx_backend.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)
 
 # install MIVisionX include files -- {ROCM_PATH}/include/mivisionx/
 install(FILES include/vx_ext_amd.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mivisionx COMPONENT dev)

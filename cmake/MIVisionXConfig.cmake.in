@@ -1,0 +1,13 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# MIVisionX public targets currently link to hip::host when built for the HIP
+# backend. Consumers using find_package(MIVisionX CONFIG) from a HIP build
+# therefore need HIP on their path, but we do not require it at find time: the
+# imported target records the link and include information it was built with,
+# and HIP is resolved when the consumer links the target.
+
+include("${CMAKE_CURRENT_LIST_DIR}/mivisionxTargets.cmake")
+
+check_required_components(mivisionx)

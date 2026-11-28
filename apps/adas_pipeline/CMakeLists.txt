@@ -77,4 +77,4 @@ add_executable(${PROJECT_NAME} source/adas_pipeline.cpp)
 
 target_link_libraries(${PROJECT_NAME} ${OPENVX_LIBRARIES} ${OpenCV_LIBRARIES})
 
-install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin COMPONENT dev)

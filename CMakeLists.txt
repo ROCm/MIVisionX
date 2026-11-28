@@ -265,6 +265,28 @@ install(DIRECTORY tests/scale_area_gpu_tests DESTINATION ${CMAKE_INSTALL_DATADIR
 install(DIRECTORY tests/color_convert_partial_tests DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 install(DIRECTORY data/videos DESTINATION ${CMAKE_INSTALL_DATADIR}/mivisionx/test COMPONENT test)
 
+# install CMake package config files
+include(CMakePackageConfigHelpers)
+set(MIVISIONX_CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/mivisionx")
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/MIVisionXConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/mivisionxConfig.cmake"
+    INSTALL_DESTINATION "${MIVISIONX_CONFIG_INSTALL_DIR}")
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/mivisionxConfigVersion.cmake"
+    VERSION "${PROJECT_VERSION}"
+    COMPATIBILITY SameMajorVersion)
+install(EXPORT mivisionxTargets
+        FILE mivisionxTargets.cmake
+        NAMESPACE mivisionx::
+        DESTINATION "${MIVISIONX_CONFIG_INSTALL_DIR}"
+        COMPONENT dev)
+install(FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/mivisionxConfig.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/mivisionxConfigVersion.cmake"
+        DESTINATION "${MIVISIONX_CONFIG_INSTALL_DIR}"
+        COMPONENT dev)
+
 # CTests
 enable_testing()
 include(CTest)
